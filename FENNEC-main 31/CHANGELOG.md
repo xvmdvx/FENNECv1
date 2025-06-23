@@ -69,3 +69,4 @@
   intact while loading.
 - The DNA summary now stays hidden until Adyen data is available and is
   displayed below the Billing section in Gmail Review Mode.
+- DNA summary now includes Network Transactions from the DNA page.
