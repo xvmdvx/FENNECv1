@@ -448,13 +448,8 @@
 
                 const p2 = [];
                 if (addr.city) p2.push(addr.city.trim());
-                if (addr.state && addr.zip) {
-                    p2.push(`${addr.state.trim()} ${addr.zip.trim()}`);
-                } else if (addr.state) {
-                    p2.push(addr.state.trim());
-                } else if (addr.zip) {
-                    p2.push(addr.zip.trim());
-                }
+                if (addr.state) p2.push(addr.state.trim());
+                if (addr.zip) p2.push(addr.zip.trim());
                 if (addr.country) p2.push(addr.country.trim());
                 line2 = p2.join(', ');
                 addr = [line1, line2].filter(Boolean).join(', ');
@@ -476,6 +471,55 @@
             if (line2) lines.push(escapeHtml(line2));
             const escFull = escapeHtml(addr);
             return `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${escFull}">${lines.join('<br>')}</a><span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span></span>`;
+        }
+
+        function normalizeAddr(a) {
+            if (!a) return '';
+            return cleanAddress(a)
+                .toLowerCase()
+                .replace(/[.,]/g, '')
+                .replace(/\s+/g, ' ')
+                .replace(/\s+(?:us|usa|united states(?: of america)?)$/, '')
+                .trim();
+        }
+
+        function getBillingInfo() {
+            const box = document.querySelector('#billing-section-box');
+            if (!box) return null;
+            const info = { cardholder: '', last4: '', address: '' };
+            const divs = box.querySelectorAll(':scope > div');
+            if (divs[0]) info.cardholder = divs[0].textContent.trim();
+            if (divs[1]) {
+                const parts = divs[1].textContent.split('•').map(s => s.trim());
+                if (parts[1]) info.last4 = parts[1];
+            }
+            const addrLink = box.querySelector('.address-wrapper a');
+            if (addrLink) info.address = addrLink.getAttribute('data-address') || addrLink.textContent.trim();
+            return info;
+        }
+
+        function buildDnaMatchTag(info) {
+            const billing = getBillingInfo();
+            if (!billing) return '';
+            const card = info.payment.card || {};
+            const shopper = info.payment.shopper || {};
+            const dnaDigits = (card['Card number'] || '').replace(/\D+/g, '').slice(-4);
+            const billDigits = (billing.last4 || '').replace(/\D+/g, '').slice(-4);
+            const dnaAddr = shopper['Billing address'] || '';
+            const addrMatch = dnaAddr && billing.address && normalizeAddr(dnaAddr) === normalizeAddr(billing.address);
+            const digitsMatch = dnaDigits && billDigits && dnaDigits === billDigits;
+            let text = '';
+            let cls = 'copilot-tag copilot-tag-green';
+            if (digitsMatch && addrMatch) {
+                text = 'ALL MATCH';
+            } else {
+                const parts = [];
+                if (!digitsMatch) parts.push('LAST FOUR');
+                if (!addrMatch) parts.push('ADDRESS');
+                text = parts.join(' AND ') + ' DONT MATCH';
+                cls = 'copilot-tag copilot-tag-red';
+            }
+            return `<div><span class="${cls}">${text}</span></div>`;
         }
 
         function renderCopy(text) {
@@ -740,7 +784,7 @@
             if (card['Payment method']) cardLine.push(escapeHtml(card['Payment method']));
             if (card['Card number']) {
                 const digits = card['Card number'].replace(/\D+/g, '').slice(-4);
-                if (digits) cardLine.push(`****${escapeHtml(digits)}`);
+                if (digits) cardLine.push(escapeHtml(digits));
             }
             if (card['Expiry date']) cardLine.push(escapeHtml(card['Expiry date']));
             if (card['Funding source']) cardLine.push(escapeHtml(card['Funding source']));
@@ -787,6 +831,8 @@
                 const val = (t.count || '') + (t.amount ? ` (${t.amount})` : '');
                 add(k, val.trim());
             });
+            const matchTag = buildDnaMatchTag(info);
+            if (matchTag) parts.push(matchTag);
             if (!parts.length) return null;
             return `<div class="section-label">ADYEN'S DNA</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
         }
