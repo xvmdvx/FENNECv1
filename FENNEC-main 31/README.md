@@ -32,9 +32,10 @@ information scraped from the current page.
 - A tag below the DNA section shows if the billing card info matches.
 - A Refresh button updates information without reloading the page.
 - CODA Search menu item queries the knowledge base using the Coda API.
-- Edit `environments/db/db_launcher.js` to provide your Coda API token. Generate
-  a new token in Coda and replace the value after `Bearer` if searches return
-  "No results".
+- Edit `environments/db/db_launcher.js` to provide your Coda API token and the
+  Coda doc ID. Generate a new token in Coda and replace the value after
+  `Bearer` if searches return "No results". Set the doc ID without the leading
+  `d` (for example `QJWsDF3UZ6`).
 - CODA Search now logs the query and API status in the console. Look for
   `[Copilot] CODA search` messages to confirm access.
 - When the API request fails the results panel shows the status code and
