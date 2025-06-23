@@ -29,6 +29,7 @@ information scraped from the current page.
 - Card holder name now appears in bold followed by concise card details for easier reading.
 - Network transactions from the DNA page appear in the summary.
 - A Refresh button updates information without reloading the page.
+- CODA Search menu item queries the knowledge base using the Coda API.
 
 See [CHANGELOG.md](CHANGELOG.md) for a detailed list of bug fixes.
 ## Known limitations

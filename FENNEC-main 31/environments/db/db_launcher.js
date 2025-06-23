@@ -508,7 +508,7 @@
                         qaMenu.id = 'quick-actions-menu';
                         qaMenu.style.display = 'none';
                         qaMenu.innerHTML = '<div class="qa-title">QUICK ACTIONS</div>' +
-                            '<ul><li id="qa-emails">Emails</li><li id="qa-cancel">Cancel</li></ul>';
+                            '<ul><li id="qa-emails">Emails</li><li id="qa-cancel">Cancel</li><li id="qa-coda">CODA SEARCH</li></ul>';
                         document.body.appendChild(qaMenu);
 
                         function showMenu() {
@@ -571,6 +571,14 @@
                             hideMenu();
                             startCancelProcedure();
                         });
+
+                        const codaItem = qaMenu.querySelector('#qa-coda');
+                        if (codaItem) {
+                            codaItem.addEventListener('click', () => {
+                                hideMenu();
+                                openCodaSearch();
+                            });
+                        }
                     }
                         const refreshBtn = sidebar.querySelector('#copilot-refresh');
                         if (refreshBtn) {
@@ -1704,6 +1712,57 @@
         } else {
             openCancelPopup();
         }
+    }
+
+    function openCodaSearch() {
+        let overlay = document.getElementById('fennec-coda-overlay');
+        if (overlay) overlay.remove();
+        overlay = document.createElement('div');
+        overlay.id = 'fennec-coda-overlay';
+        const close = document.createElement('div');
+        close.className = 'coda-close';
+        close.textContent = '✕';
+        close.addEventListener('click', () => overlay.remove());
+        overlay.appendChild(close);
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Search KB...';
+        overlay.appendChild(input);
+        const btn = document.createElement('button');
+        btn.className = 'copilot-button';
+        btn.textContent = 'SEARCH';
+        overlay.appendChild(btn);
+        const results = document.createElement('div');
+        results.className = 'coda-results';
+        overlay.appendChild(results);
+        document.body.appendChild(overlay);
+
+        const runSearch = () => {
+            const q = input.value.trim();
+            if (!q) return;
+            results.textContent = 'Loading...';
+            fetch('https://coda.io/apis/v1/docs/dQJWsDF3UZ6/search?q=' + encodeURIComponent(q), {
+                headers: { 'Authorization': 'Bearer 146e0ee8-aaa9-4e55-ac1b-062bcb63cc21' }
+            })
+                .then(r => r.json())
+                .then(data => {
+                    if (!data || !data.items || !data.items.length) {
+                        results.textContent = 'No results';
+                        return;
+                    }
+                    results.innerHTML = data.items.map(item => {
+                        const t = item.name || item.title || '';
+                        const link = item.browserLink || item.url || '#';
+                        return `<div class="coda-result-item"><a href="${link}" target="_blank">${escapeHtml(t)}</a></div>`;
+                    }).join('');
+                })
+                .catch(err => {
+                    results.textContent = 'Error';
+                    console.error('[Copilot] Coda search error:', err);
+                });
+        };
+        btn.addEventListener('click', runSearch);
+        input.addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
     }
 
     function getLastIssueInfo() {
