@@ -1951,6 +1951,10 @@
                         const em = text.match(/[\w.+-]+@[\w.-]+\.[\w.-]+(?=\s|$)/);
                         if (em) email = em[0];
                     }
+                    if (email) {
+                        const clean = email.match(/[\w.+-]+@[\w.-]+\.[\w.-]+/);
+                        if (clean) email = clean[0];
+                    }
                     const ph = text.match(/\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}/);
                     if (ph) phone = ph[0];
                 }
