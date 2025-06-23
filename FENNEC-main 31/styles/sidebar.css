@@ -346,6 +346,10 @@
     min-width:100px;
     text-align:center;
 }
+.tx-count{
+    font-weight:bold;
+    font-size:11px;
+}
 .dna-issuer{
     font-size:11px;
     margin-top:2px;

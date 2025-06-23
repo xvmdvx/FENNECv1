@@ -29,6 +29,7 @@ information scraped from the current page.
 - Card holder name now appears in bold followed by concise card details for easier reading.
 - Network transactions from the DNA page appear in the summary.
 - Transactions now display in a table with colored tags for each type.
+- Billing match tag now appears next to the cardholder name, with bank and country initials below the billing address. CVV and AVS results show on one line.
 - A tag below the DNA section shows if the billing card info matches.
 - A Refresh button updates information without reloading the page.
 - CODA Search menu item queries the knowledge base using the Coda API.
