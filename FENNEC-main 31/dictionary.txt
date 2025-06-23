@@ -43,3 +43,4 @@ Bento Mode → Colorful grid layout with looping video background for the sideba
 Light Mode → Minimalist black-on-white style with an inverted Fennec icon
 DNA        → Shortcut button that opens Adyen payment details and shopper DNA
 Network Transactions → Counts and amounts from the DNA page Network section
+CODA Search → Menu option to query the KB via the Coda API

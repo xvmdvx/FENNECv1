@@ -32,6 +32,19 @@
     color: #000 !important;
     border: 1px solid #777;
 }
+.fennec-light-mode #fennec-coda-overlay {
+    background: #fff;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #fennec-coda-overlay input {
+    background: #fff;
+    color: #000;
+    border: 1px solid #777;
+}
+.fennec-light-mode #fennec-coda-overlay .coda-result-item a {
+    color: #0000ee;
+}
 .fennec-light-mode .copilot-tag {
     background-color: #000;
     color: #fff !important;
