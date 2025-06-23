@@ -134,7 +134,31 @@
                         amount: amount ? amount.textContent.trim() : ''
                     };
                 });
-                saveData({ transactions: stats, updated: Date.now() });
+
+                function extractNetworkTransactions() {
+                    const netHeading = Array.from(document.querySelectorAll('.adl-heading'))
+                        .find(h => h.textContent.trim() === 'Network');
+                    if (!netHeading || !netHeading.parentElement) return null;
+                    const txHeading = Array.from(netHeading.parentElement.querySelectorAll('.adl-heading'))
+                        .find(h => h.textContent.trim() === 'Transactions');
+                    if (!txHeading || !txHeading.parentElement) return null;
+                    const data = {};
+                    txHeading.parentElement.querySelectorAll('.item').forEach(item => {
+                        const labelEl = item.querySelector('.u-display-flex div:first-child');
+                        const amountEl = item.querySelector('.u-display-flex div:last-child');
+                        const countEl = item.querySelector('.status');
+                        if (labelEl) {
+                            data[labelEl.textContent.trim()] = {
+                                count: countEl ? countEl.textContent.trim() : '',
+                                amount: amountEl ? amountEl.textContent.trim() : ''
+                            };
+                        }
+                    });
+                    return data;
+                }
+
+                const networkTx = extractNetworkTransactions();
+                saveData({ transactions: stats, networkTransactions: networkTx, updated: Date.now() });
                 console.log('[FENNEC Adyen] DNA stats stored');
             }
 

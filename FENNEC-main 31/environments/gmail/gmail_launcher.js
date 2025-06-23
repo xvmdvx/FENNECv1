@@ -679,7 +679,7 @@
         }
 
         function buildDnaHtml(info) {
-            if (!info || !info.payment || !info.transactions) return null;
+            if (!info || !info.payment) return null;
             const p = info.payment;
             const card = p.card || {};
             const shopper = p.shopper || {};
@@ -706,6 +706,12 @@
             const tx = info.transactions || {};
             Object.keys(tx).forEach(k => {
                 const t = tx[k];
+                const val = (t.count || '') + (t.amount ? ` (${t.amount})` : '');
+                add(k, val.trim());
+            });
+            const network = info.networkTransactions || {};
+            Object.keys(network).forEach(k => {
+                const t = network[k];
                 const val = (t.count || '') + (t.amount ? ` (${t.amount})` : '');
                 add(k, val.trim());
             });
