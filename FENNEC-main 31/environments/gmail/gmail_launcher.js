@@ -519,7 +519,7 @@
                 text = parts.join(' AND ') + ' DONT MATCH';
                 cls = 'copilot-tag copilot-tag-red';
             }
-            return `<div><span class="${cls}">${text}</span></div>`;
+            return `<span class="${cls}">${text}</span>`;
         }
 
         function renderCopy(text) {
@@ -800,9 +800,10 @@
                 const amountVal = parseAmount(e.amount);
                 const pct = totalVal ? Math.round(amountVal / totalVal * 100) : 0;
                 const amount = (e.amount || "").replace("EUR", "€");
-                const pctText = totalVal ? ` (${pct}% )` : "";
-                const text = `${e.label.toUpperCase()}: ${e.count}`;
-                return `<tr><td><span class="copilot-tag tx-label ${cls}">${escapeHtml(text)}</span></td><td>${escapeHtml(amount)}${escapeHtml(pctText)}</td></tr>`;
+                const pctText = totalVal ? ` (${pct}%)` : "";
+                const label = escapeHtml(e.label.toUpperCase() + ": ");
+                const count = `<span class="tx-count">${escapeHtml(e.count)}</span>`;
+                return `<tr><td><span class="copilot-tag tx-label ${cls}">${label}${count}</span></td><td>${escapeHtml(amount)}${escapeHtml(pctText)}</td></tr>`;
             }).join("");
 
             return `<table class="dna-tx-table"><thead><tr><th>Type</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`;
@@ -817,9 +818,12 @@
 
             const parts = [];
 
-            // First line: bold card holder name
+            // First line: bold card holder name with match tag
             if (card['Card holder']) {
-                parts.push(`<div><b>${escapeHtml(card['Card holder'])}</b></div>`);
+                const holder = `<b>${escapeHtml(card['Card holder'])}</b>`;
+                const matchTag = buildDnaMatchTag(info);
+                const line = matchTag ? `<div>${holder} ${matchTag}</div>` : `<div>${holder}</div>`;
+                parts.push(line);
             }
 
             // Second line: card type, last 4 digits, expiry and funding source
@@ -833,45 +837,45 @@
             if (card['Funding source']) cardLine.push(escapeHtml(card['Funding source']));
             if (cardLine.length) parts.push(`<div>${cardLine.join(' \u2022 ')}</div>`);
 
-            // Billing address
+            // Billing address with issuer info below
             if (shopper['Billing address']) {
                 parts.push(`<div>${renderBillingAddress(shopper['Billing address'])}</div>`);
-                const matchTag = buildDnaMatchTag(info);
-                if (matchTag) parts.push(matchTag);
-            }
-
-            // Issuer name and country after the match tag
-            if (card['Issuer name'] || card['Issuer country/region']) {
-                let bank = (card['Issuer name'] || '').trim();
-                if (bank.length > 20) bank = bank.slice(0, 17) + '...';
-                const country = (card['Issuer country/region'] || '').trim();
-                let countryInit = '';
-                if (country) {
-                    countryInit = country.split(/\s+/).map(w => w.charAt(0)).join('').toUpperCase();
-                    countryInit = ` (<b>${escapeHtml(countryInit)}</b>)`;
+                if (card['Issuer name'] || card['Issuer country/region']) {
+                    let bank = (card['Issuer name'] || '').trim();
+                    if (bank.length > 25) bank = bank.slice(0, 22) + '...';
+                    const country = (card['Issuer country/region'] || '').trim();
+                    let countryInit = '';
+                    if (country) {
+                        countryInit = country.split(/\s+/).map(w => w.charAt(0)).join('').toUpperCase();
+                        countryInit = ` (<b>${escapeHtml(countryInit)}</b>)`;
+                    }
+                    parts.push(`<div class="dna-issuer">${escapeHtml(bank)}${countryInit}</div>`);
                 }
-                parts.push(`<div class="dna-issuer">${escapeHtml(bank)}${countryInit}</div>`);
             }
 
-            // CVV and AVS each on their own labeled line
+            // CVV and AVS on the same line
             const cvv = proc['CVC/CVV'];
             const avs = proc['AVS'];
             function matchColor(text) {
                 if (!text) return 'copilot-tag-purple';
                 const t = text.toLowerCase();
-                if (t.includes('full match')) return 'copilot-tag-green';
+                if (t.includes('full') || t.includes('match') || t.includes('supplied')) return 'copilot-tag-green';
                 if (t.includes('no') || t.includes('mismatch') || t.includes('fail')) return 'copilot-tag-red';
                 return 'copilot-tag-purple';
             }
-            if (cvv) {
-                const cls = matchColor(cvv);
-                const text = `CVV: ${cvv}`;
-                parts.push(`<div><span class="copilot-tag ${cls}">${escapeHtml(text)}</span></div>`);
-            }
-            if (avs) {
-                const cls = matchColor(avs);
-                const text = `AVS: ${avs}`;
-                parts.push(`<div><span class="copilot-tag ${cls}">${escapeHtml(text)}</span></div>`);
+            if (cvv || avs) {
+                const tags = [];
+                if (cvv) {
+                    const cls = matchColor(cvv);
+                    const text = `CVV: ${cvv}`;
+                    tags.push(`<span class="copilot-tag ${cls}"><b>${escapeHtml(text)}</b></span>`);
+                }
+                if (avs) {
+                    const cls = matchColor(avs);
+                    const text = `AVS: ${avs}`;
+                    tags.push(`<span class="copilot-tag ${cls}"><b>${escapeHtml(text)}</b></span>`);
+                }
+                parts.push(`<div>${tags.join(' ')}</div>`);
             }
 
             // IP line hidden but keep spacing
