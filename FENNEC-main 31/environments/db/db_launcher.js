@@ -1657,7 +1657,7 @@
             expiry: raw.expiry,
             last4: raw.last4,
             address: buildAddress(raw),
-            street1: raw.street1 || raw.street,
+            street1: raw.street1 || raw.street || raw.address,
             street2: raw.street2,
             cityStateZipCountry: raw.cityStateZipCountry,
             cityStateZip: raw.cityStateZip,
