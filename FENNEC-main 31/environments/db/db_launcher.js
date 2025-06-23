@@ -2030,11 +2030,11 @@
             issueDiv.textContent = r.issue;
             card.appendChild(issueDiv);
 
-            const cancel = document.createElement('span');
-            cancel.className = 'copilot-tag copilot-tag-red diag-cancel';
-            cancel.textContent = 'CANCEL';
-            cancel.addEventListener('click', startCancelProcedure);
-            card.appendChild(cancel);
+            const resolve = document.createElement('span');
+            resolve.className = 'copilot-tag copilot-tag-green diag-resolve';
+            resolve.textContent = 'RESOLVE AND COMMENT';
+            resolve.addEventListener('click', startCancelProcedure);
+            card.appendChild(resolve);
 
             overlay.appendChild(card);
         };
