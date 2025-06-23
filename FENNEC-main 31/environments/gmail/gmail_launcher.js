@@ -684,25 +684,54 @@
             const card = p.card || {};
             const shopper = p.shopper || {};
             const proc = p.processing || {};
+
             const parts = [];
-            const add = (label, val) => { if (val) parts.push(`<div><b>${escapeHtml(label)}:</b> ${escapeHtml(val)}</div>`); };
-            add('Payment method', card['Payment method']);
-            add('Card holder', card['Card holder']);
+
+            // First line: bold card holder name
+            if (card['Card holder']) {
+                parts.push(`<div><b>${escapeHtml(card['Card holder'])}</b></div>`);
+            }
+
+            // Second line: card type, last 4 digits, expiry and funding source
+            const cardLine = [];
+            if (card['Payment method']) cardLine.push(escapeHtml(card['Payment method']));
             if (card['Card number']) {
                 const digits = card['Card number'].replace(/\D+/g, '').slice(-4);
-                add('Card number', digits);
+                if (digits) cardLine.push(`****${escapeHtml(digits)}`);
             }
-            add('Expiry date', card['Expiry date']);
-            add('Funding source', card['Funding source']);
-            add('Issuer name', card['Issuer name']);
-            add('Issuer country/region', card['Issuer country/region']);
-            add('IP', shopper['IP Address'] || shopper['IP']);
-            add('Name', shopper['Name']);
-            add('Telephone number', shopper['Telephone number']);
-            add('Billing address', shopper['Billing address']);
-            add('CVC/CVV', proc['CVC/CVV']);
-            add('AVS', proc['AVS']);
-            add('Fraud scoring', proc['Fraud scoring']);
+            if (card['Expiry date']) cardLine.push(escapeHtml(card['Expiry date']));
+            if (card['Funding source']) cardLine.push(escapeHtml(card['Funding source']));
+            if (cardLine.length) parts.push(`<div>${cardLine.join(' \u2022 ')}</div>`);
+
+            // Billing address
+            if (shopper['Billing address']) parts.push(`<div>${escapeHtml(shopper['Billing address'])}</div>`);
+
+            // Issuer name and country
+            const issuerLine = [];
+            if (card['Issuer name']) issuerLine.push(escapeHtml(card['Issuer name']));
+            if (card['Issuer country/region']) issuerLine.push(escapeHtml(card['Issuer country/region']));
+            if (issuerLine.length) parts.push(`<div>${issuerLine.join(', ')}</div>`);
+
+            // CVC/CVV
+            if (proc['CVC/CVV']) parts.push(`<div><b>CVC/CVV:</b> ${escapeHtml(proc['CVC/CVV'])}</div>`);
+
+            // AVS
+            if (proc['AVS']) parts.push(`<div><b>AVS:</b> ${escapeHtml(proc['AVS'])}</div>`);
+
+            // IP
+            const ip = shopper['IP Address'] || shopper['IP'];
+            if (ip) parts.push(`<div><b>IP:</b> ${escapeHtml(ip)}</div>`);
+
+            // Fraud scoring
+            if (proc['Fraud scoring']) parts.push(`<div><b>Fraud scoring:</b> ${escapeHtml(proc['Fraud scoring'])}</div>`);
+
+            // Separator line before transaction stats
+            if (parts.length) {
+                parts.push('<hr style="border:none;border-top:1px solid #555;margin:6px 0"/>');
+            }
+
+            const add = (label, val) => { if (val) parts.push(`<div><b>${escapeHtml(label)}:</b> ${escapeHtml(val)}</div>`); };
+
             const tx = info.transactions || {};
             Object.keys(tx).forEach(k => {
                 const t = tx[k];

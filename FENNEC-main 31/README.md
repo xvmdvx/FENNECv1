@@ -26,6 +26,7 @@ information scraped from the current page.
 - Family Tree panel shows related orders and can diagnose holds.
 - Review Mode merges order details and fetches Adyen DNA data.
 - The DNA summary is inserted below the Billing section once data is available.
+- Card holder name now appears in bold followed by concise card details for easier reading.
 - Network transactions from the DNA page appear in the summary.
 - A Refresh button updates information without reloading the page.
 
