@@ -435,6 +435,26 @@
             return `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${escFull}">${display}</a><span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span></span>`;
         }
 
+        // Format billing address into two lines and add USPS verification
+        function renderBillingAddress(addr) {
+            if (!addr) return '<span style="color:#aaa">-</span>';
+            addr = cleanAddress(addr);
+            const parts = addr.split(/,\s*/);
+            let line1 = parts.shift() || '';
+            if (parts.length > 1) {
+                const second = parts[0].trim();
+                if (parts.length > 2 || /\d/.test(second) || /(apt|suite|ste|unit|#|floor|bldg|building|po box)/i.test(second)) {
+                    line1 += ' ' + parts.shift();
+                }
+            }
+            const line2 = parts.join(', ');
+            const lines = [];
+            if (line1) lines.push(escapeHtml(line1));
+            if (line2) lines.push(escapeHtml(line2));
+            const escFull = escapeHtml(addr);
+            return `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${escFull}">${lines.join('<br>')}</a><span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span></span>`;
+        }
+
         function renderCopy(text) {
             if (!text) return '<span style="color:#aaa">-</span>';
             const esc = escapeHtml(text);
@@ -704,7 +724,7 @@
             if (cardLine.length) parts.push(`<div>${cardLine.join(' \u2022 ')}</div>`);
 
             // Billing address
-            if (shopper['Billing address']) parts.push(`<div>${escapeHtml(shopper['Billing address'])}</div>`);
+            if (shopper['Billing address']) parts.push(`<div>${renderBillingAddress(shopper['Billing address'])}</div>`);
 
             // Issuer name and country
             const issuerLine = [];
