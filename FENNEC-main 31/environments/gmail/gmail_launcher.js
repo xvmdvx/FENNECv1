@@ -768,7 +768,7 @@
         function buildTransactionTable(tx) {
             if (!tx) return "";
             const colors = {
-                "Total transactions": "white",
+                "Total": "white",
                 "Authorised / Settled": "green",
                 "Settled": "green",
                 "Refused": "red",
@@ -777,11 +777,14 @@
             };
             const rows = Object.keys(tx).map(key => {
                 const t = tx[key];
-                const cls = "copilot-tag-" + (colors[key] || "white");
-                return `<tr><td>${escapeHtml(t.count || "")}</td><td><span class="copilot-tag ${cls}">${escapeHtml(key)}</span></td><td>${escapeHtml(t.amount || "")}</td></tr>`;
+                const label = key === "Authorised / Settled" ? "Settled" :
+                              key === "Total transactions" ? "Total" : key;
+                const cls = "copilot-tag-" + (colors[label] || "white");
+                const amount = (t.amount || "").replace("EUR", "€");
+                return `<tr><td><span class="copilot-tag ${cls}">${escapeHtml(label)}: <b>${escapeHtml(t.count || "")}</b></span></td><td>${escapeHtml(amount)}</td></tr>`;
             }).join("");
             if (!rows) return "";
-            return `<table class="dna-tx-table"><thead><tr><th>#</th><th>Type</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`;
+            return `<table class="dna-tx-table"><thead><tr><th>Type</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`;
         }
 
         function buildDnaHtml(info) {
@@ -810,7 +813,11 @@
             if (cardLine.length) parts.push(`<div>${cardLine.join(' \u2022 ')}</div>`);
 
             // Billing address
-            if (shopper['Billing address']) parts.push(`<div>${renderBillingAddress(shopper['Billing address'])}</div>`);
+            if (shopper['Billing address']) {
+                parts.push(`<div>${renderBillingAddress(shopper['Billing address'])}</div>`);
+                const matchTag = buildDnaMatchTag(info);
+                if (matchTag) parts.push(matchTag);
+            }
 
             // Issuer name and country
             const issuerLine = [];
@@ -818,11 +825,15 @@
             if (card['Issuer country/region']) issuerLine.push(escapeHtml(card['Issuer country/region']));
             if (issuerLine.length) parts.push(`<div>${issuerLine.join(', ')}</div>`);
 
-            // CVC/CVV
-            if (proc['CVC/CVV']) parts.push(`<div><b>CVC/CVV:</b> ${escapeHtml(proc['CVC/CVV'])}</div>`);
-
-            // AVS
-            if (proc['AVS']) parts.push(`<div><b>AVS:</b> ${escapeHtml(proc['AVS'])}</div>`);
+            // CVV and AVS on one line
+            const cvv = proc['CVC/CVV'];
+            const avs = proc['AVS'];
+            if (cvv || avs) {
+                const items = [];
+                if (cvv) items.push(`<b>CVV:</b> ${escapeHtml(cvv)}`);
+                if (avs) items.push(`<b>AVS:</b> ${escapeHtml(avs)}`);
+                parts.push(`<div>${items.join(' \u2022 ')}</div>`);
+            }
 
             // IP
             const ip = shopper['IP Address'] || shopper['IP'];
@@ -839,14 +850,6 @@
             const txTable = buildTransactionTable(info.transactions || {});
             if (txTable) parts.push(txTable);
 
-            const network = info.networkTransactions || {};
-            Object.keys(network).forEach(k => {
-                const t = network[k];
-                const val = (t.count || '') + (t.amount ? ` (${t.amount})` : '');
-                parts.push(`<div><b>${escapeHtml(k)}:</b> ${escapeHtml(val.trim())}</div>`);
-            });
-            const matchTag = buildDnaMatchTag(info);
-            if (matchTag) parts.push(matchTag);
             if (!parts.length) return null;
             return `<div class="section-label">ADYEN'S DNA</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
         }
