@@ -33,7 +33,7 @@
     }
 
     function getText(el) {
-        return el ? (el.textContent || el.innerText || "").trim() : "";
+        return el ? (el.innerText || el.textContent || "").trim() : "";
     }
 
     function loadStoredSummary() {
