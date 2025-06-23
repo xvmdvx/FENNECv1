@@ -438,16 +438,39 @@
         // Format billing address into two lines and add USPS verification
         function renderBillingAddress(addr) {
             if (!addr) return '<span style="color:#aaa">-</span>';
-            addr = cleanAddress(addr);
-            const parts = addr.split(/,\s*/);
-            let line1 = parts.shift() || '';
-            if (parts.length > 1) {
-                const second = parts[0].trim();
-                if (parts.length > 2 || /\d/.test(second) || /(apt|suite|ste|unit|#|floor|bldg|building|po box)/i.test(second)) {
-                    line1 += ' ' + parts.shift();
+            let line1 = '';
+            let line2 = '';
+            if (typeof addr === 'object') {
+                const p1 = [];
+                if (addr.street1) p1.push(addr.street1.trim());
+                if (addr.street2) p1.push(addr.street2.trim());
+                line1 = p1.join(' ');
+
+                const p2 = [];
+                if (addr.city) p2.push(addr.city.trim());
+                if (addr.state && addr.zip) {
+                    p2.push(`${addr.state.trim()} ${addr.zip.trim()}`);
+                } else if (addr.state) {
+                    p2.push(addr.state.trim());
+                } else if (addr.zip) {
+                    p2.push(addr.zip.trim());
                 }
+                if (addr.country) p2.push(addr.country.trim());
+                line2 = p2.join(', ');
+                addr = [line1, line2].filter(Boolean).join(', ');
+            } else {
+                addr = cleanAddress(addr);
+                const parts = addr.split(/,\s*/);
+                line1 = parts.shift() || '';
+                if (parts.length > 1) {
+                    const second = parts[0].trim();
+                    if (parts.length > 2 || /\d/.test(second) || /(apt|suite|ste|unit|#|floor|bldg|building|po box)/i.test(second)) {
+                        line1 += ' ' + parts.shift();
+                    }
+                }
+                line2 = parts.join(', ');
             }
-            const line2 = parts.join(', ');
+
             const lines = [];
             if (line1) lines.push(escapeHtml(line1));
             if (line2) lines.push(escapeHtml(line2));

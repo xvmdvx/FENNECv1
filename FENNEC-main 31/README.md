@@ -36,7 +36,8 @@ information scraped from the current page.
 - CODA Search now logs the query and API status in the console. Look for
   `[Copilot] CODA search` messages to confirm access.
 - Email and phone are shown separately in the Client section.
-- Billing address displays both lines with USPS verification.
+- Billing address shows the full street line followed by city, state, zip and
+  country. The address remains clickable and includes USPS verification.
 
 See [CHANGELOG.md](CHANGELOG.md) for a detailed list of bug fixes.
 ## Known limitations
