@@ -1941,21 +1941,25 @@
                 let email = '';
                 let phone = '';
                 if (contactCell) {
+                    const emailRegex = /[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/;
+                    const phoneRegex = /\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}/;
                     const mailEl = contactCell.querySelector('a[href^="mailto:"]');
                     if (mailEl) {
-                        const href = mailEl.getAttribute("href");
-                        email = href ? decodeURIComponent(href.replace(/^mailto:/, "")) : getText(mailEl);
+                        const href = mailEl.getAttribute("href") || '';
+                        const match = href.replace(/^mailto:/, '').match(emailRegex);
+                        if (match) {
+                            email = match[0];
+                        } else {
+                            const txtMatch = getText(mailEl).match(emailRegex);
+                            if (txtMatch) email = txtMatch[0];
+                        }
                     }
                     const text = getText(contactCell);
                     if (!email) {
-                        const em = text.match(/[\w.+-]+@[\w.-]+\.[\w.-]+(?=\s|$)/);
+                        const em = text.match(emailRegex);
                         if (em) email = em[0];
                     }
-                    if (email) {
-                        const clean = email.match(/[\w.+-]+@[\w.-]+\.[\w.-]+/);
-                        if (clean) email = clean[0];
-                    }
-                    const ph = text.match(/\(?\d{3}\)?[-\s.]?\d{3}[-\s.]?\d{4}/);
+                    const ph = text.match(phoneRegex);
                     if (ph) phone = ph[0];
                 }
                 return { id, orders, ltv, name, email, phone };
