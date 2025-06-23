@@ -46,3 +46,4 @@ Network Transactions → Counts and amounts from the DNA page Network section
 CODA Search → Menu option to query the KB via the Coda API
 Coda API token → Authentication key required for CODA Search
 Amendment orders → Changes to existing filings processed through the DB
+DNA Match Tag → Label indicating if Billing details agree with the DNA data
