@@ -1742,7 +1742,7 @@
             if (!q) return;
             results.textContent = 'Loading...';
             fetch('https://coda.io/apis/v1/docs/dQJWsDF3UZ6/search?q=' + encodeURIComponent(q), {
-                headers: { 'Authorization': 'Bearer 146e0ee8-aaa9-4e55-ac1b-062bcb63cc21' }
+                headers: { 'Authorization': 'Bearer a15eec61-d7fe-4fff-9991-3a35600575b8' }
             })
                 .then(r => r.json())
                 .then(data => {

@@ -30,6 +30,9 @@ information scraped from the current page.
 - Network transactions from the DNA page appear in the summary.
 - A Refresh button updates information without reloading the page.
 - CODA Search menu item queries the knowledge base using the Coda API.
+- Edit `environments/db/db_launcher.js` to provide your Coda API token. Generate
+  a new token in Coda and replace the value after `Bearer` if searches return
+  "No results".
 
 See [CHANGELOG.md](CHANGELOG.md) for a detailed list of bug fixes.
 ## Known limitations
