@@ -166,12 +166,17 @@ function attachCommonListeners(rootEl) {
                 const diagBtn = container.querySelector('#ar-diagnose-btn');
                 if (diagBtn && typeof diagnoseHoldOrders === 'function') {
                     diagBtn.addEventListener('click', () => {
-                        const holds = resp.childOrders.filter(o => /hold/i.test(o.status));
-                        if (!holds.length) {
-                            alert('No HOLD orders found');
+                        const relevant = resp.childOrders.filter(o => {
+                            const status = o.status || '';
+                            const type = o.type || '';
+                            return /hold/i.test(status) ||
+                                (/amendment/i.test(type) && /review/i.test(status));
+                        });
+                        if (!relevant.length) {
+                            alert('No applicable orders found');
                             return;
                         }
-                        diagnoseHoldOrders(holds);
+                        diagnoseHoldOrders(relevant);
                     });
                 }
             });

@@ -23,7 +23,7 @@ information scraped from the current page.
 - Bento Mode uses a holographic video background that plays at 0.2x speed and reverses at each end.
   The FENNEC header and all summary boxes appear above the video in black containers with 95% opacity and
   white text.
-- Family Tree panel shows related orders and can diagnose holds.
+- Family Tree panel shows related orders and can diagnose holds, including amendment orders in review.
 - Review Mode merges order details and fetches Adyen DNA data.
 - The DNA summary is inserted below the Billing section once data is available.
 - Card holder name now appears in bold followed by concise card details for easier reading.

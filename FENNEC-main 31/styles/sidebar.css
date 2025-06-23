@@ -510,7 +510,7 @@
     margin-bottom: 4px;
 }
 
-#fennec-diagnose-overlay .diag-cancel {
+#fennec-diagnose-overlay .diag-resolve {
     cursor: pointer;
     margin-top: 6px;
     display: inline-block;

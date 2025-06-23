@@ -73,3 +73,4 @@
 - Network Transactions wait for the DNA page to fully load so details appear consistently.
 - Fixed the CLIENT summary combining email and phone when DB separates them with a <br> tag.
 - Fixed mailto links including the phone number when contact info is wrapped in a single anchor.
+- Diagnose overlay now lists amendment orders in review and the cancel tag was renamed to "RESOLVE AND COMMENT".
