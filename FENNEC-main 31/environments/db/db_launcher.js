@@ -1740,25 +1740,30 @@
         const runSearch = () => {
             const q = input.value.trim();
             if (!q) return;
-            results.textContent = 'Loading...';
-            fetch('https://coda.io/apis/v1/docs/dQJWsDF3UZ6/search?q=' + encodeURIComponent(q), {
-                headers: { 'Authorization': 'Bearer a15eec61-d7fe-4fff-9991-3a35600575b8' }
+            results.textContent = "Loading...";
+            console.log("[Copilot] CODA search query:", q);
+            fetch("https://coda.io/apis/v1/docs/dQJWsDF3UZ6/search?q=" + encodeURIComponent(q), {
+                headers: { "Authorization": "Bearer a15eec61-d7fe-4fff-9991-3a35600575b8" }
             })
-                .then(r => r.json())
+                .then(r => {
+                    console.log("[Copilot] CODA search status:", r.status);
+                    return r.json();
+                })
                 .then(data => {
+                    console.log("[Copilot] CODA search response:", data);
                     if (!data || !data.items || !data.items.length) {
-                        results.textContent = 'No results';
+                        results.textContent = "No results";
                         return;
                     }
                     results.innerHTML = data.items.map(item => {
-                        const t = item.name || item.title || '';
-                        const link = item.browserLink || item.url || '#';
+                        const t = item.name || item.title || "";
+                        const link = item.browserLink || item.url || "#";
                         return `<div class="coda-result-item"><a href="${link}" target="_blank">${escapeHtml(t)}</a></div>`;
-                    }).join('');
+                    }).join("");
                 })
                 .catch(err => {
-                    results.textContent = 'Error';
-                    console.error('[Copilot] Coda search error:', err);
+                    results.textContent = "Error";
+                    console.error("[Copilot] Coda search error:", err);
                 });
         };
         btn.addEventListener('click', runSearch);

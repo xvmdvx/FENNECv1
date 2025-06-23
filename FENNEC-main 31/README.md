@@ -33,6 +33,8 @@ information scraped from the current page.
 - Edit `environments/db/db_launcher.js` to provide your Coda API token. Generate
   a new token in Coda and replace the value after `Bearer` if searches return
   "No results".
+- CODA Search now logs the query and API status in the console. Look for
+  `[Copilot] CODA search` messages to confirm access.
 
 See [CHANGELOG.md](CHANGELOG.md) for a detailed list of bug fixes.
 ## Known limitations
