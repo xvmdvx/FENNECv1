@@ -334,12 +334,21 @@
 .dna-tx-table{
     width:100%;
     border-collapse:collapse;
-    margin-top:6px;
+    margin:6px auto 0;
+    text-align:center;
 }
 .dna-tx-table th,.dna-tx-table td{
     padding:2px 4px;
     font-size:12px;
-    text-align:left;
+    text-align:center;
+}
+.tx-label{
+    min-width:100px;
+    text-align:center;
+}
+.dna-issuer{
+    font-size:11px;
+    margin-top:2px;
 }
 
 .issue-status-label {
