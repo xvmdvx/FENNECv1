@@ -35,6 +35,9 @@ information scraped from the current page.
   "No results".
 - CODA Search now logs the query and API status in the console. Look for
   `[Copilot] CODA search` messages to confirm access.
+- When the API request fails the results panel shows the status code and
+  message so you know if the document ID is invalid or the token needs to be
+  updated.
 - Email and phone are shown separately in the Client section.
 - Billing address shows the full street line followed by city, state, zip and
   country. The address remains clickable and includes USPS verification.

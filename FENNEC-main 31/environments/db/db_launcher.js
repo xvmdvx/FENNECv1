@@ -1747,10 +1747,16 @@
             })
                 .then(r => {
                     console.log("[Copilot] CODA search status:", r.status);
-                    return r.json();
+                    const status = r.status;
+                    return r.json().catch(() => ({})).then(data => ({ status, data }));
                 })
-                .then(data => {
+                .then(({ status, data }) => {
                     console.log("[Copilot] CODA search response:", data);
+                    if (status !== 200) {
+                        const msg = data && data.message ? data.message : "API request failed";
+                        results.textContent = `Error ${status}: ${msg}`;
+                        return;
+                    }
                     if (!data || !data.items || !data.items.length) {
                         results.textContent = "No results";
                         return;
@@ -1762,7 +1768,7 @@
                     }).join("");
                 })
                 .catch(err => {
-                    results.textContent = "Error";
+                    results.textContent = "Network error";
                     console.error("[Copilot] Coda search error:", err);
                 });
         };
