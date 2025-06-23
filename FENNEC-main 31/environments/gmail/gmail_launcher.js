@@ -765,6 +765,25 @@
             }
         }
 
+        function buildTransactionTable(tx) {
+            if (!tx) return "";
+            const colors = {
+                "Total transactions": "white",
+                "Authorised / Settled": "green",
+                "Settled": "green",
+                "Refused": "red",
+                "Chargebacks": "black",
+                "Chargeback": "black"
+            };
+            const rows = Object.keys(tx).map(key => {
+                const t = tx[key];
+                const cls = "copilot-tag-" + (colors[key] || "white");
+                return `<tr><td>${escapeHtml(t.count || "")}</td><td><span class="copilot-tag ${cls}">${escapeHtml(key)}</span></td><td>${escapeHtml(t.amount || "")}</td></tr>`;
+            }).join("");
+            if (!rows) return "";
+            return `<table class="dna-tx-table"><thead><tr><th>#</th><th>Type</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`;
+        }
+
         function buildDnaHtml(info) {
             if (!info || !info.payment) return null;
             const p = info.payment;
@@ -817,19 +836,14 @@
                 parts.push('<hr style="border:none;border-top:1px solid #555;margin:6px 0"/>');
             }
 
-            const add = (label, val) => { if (val) parts.push(`<div><b>${escapeHtml(label)}:</b> ${escapeHtml(val)}</div>`); };
+            const txTable = buildTransactionTable(info.transactions || {});
+            if (txTable) parts.push(txTable);
 
-            const tx = info.transactions || {};
-            Object.keys(tx).forEach(k => {
-                const t = tx[k];
-                const val = (t.count || '') + (t.amount ? ` (${t.amount})` : '');
-                add(k, val.trim());
-            });
             const network = info.networkTransactions || {};
             Object.keys(network).forEach(k => {
                 const t = network[k];
                 const val = (t.count || '') + (t.amount ? ` (${t.amount})` : '');
-                add(k, val.trim());
+                parts.push(`<div><b>${escapeHtml(k)}:</b> ${escapeHtml(val.trim())}</div>`);
             });
             const matchTag = buildDnaMatchTag(info);
             if (matchTag) parts.push(matchTag);

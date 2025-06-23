@@ -28,6 +28,7 @@ information scraped from the current page.
 - The DNA summary is inserted below the Billing section once data is available.
 - Card holder name now appears in bold followed by concise card details for easier reading.
 - Network transactions from the DNA page appear in the summary.
+- Transactions now display in a table with colored tags for each type.
 - A tag below the DNA section shows if the billing card info matches.
 - A Refresh button updates information without reloading the page.
 - CODA Search menu item queries the knowledge base using the Coda API.

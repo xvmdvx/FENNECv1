@@ -326,6 +326,21 @@
     background-color: #8B0000;
     color: #fff;
 }
+.copilot-tag-black {
+    background-color: #000;
+    color: #fff;
+}
+
+.dna-tx-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:6px;
+}
+.dna-tx-table th,.dna-tx-table td{
+    padding:2px 4px;
+    font-size:12px;
+    text-align:left;
+}
 
 .issue-status-label {
     font-size: 11px;
