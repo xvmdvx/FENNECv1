@@ -1743,7 +1743,7 @@
             results.textContent = "Loading...";
             console.log("[Copilot] CODA search query:", q);
             fetch("https://coda.io/apis/v1/docs/dQJWsDF3UZ6/search?q=" + encodeURIComponent(q), {
-                headers: { "Authorization": "Bearer 371e7ce3-7764-4bcd-a3eb-9ec093a6ee2b" }
+                headers: { "Authorization": "Bearer 758d99dd-34d0-43a5-8896-595785019945" }
             })
                 .then(r => {
                     console.log("[Copilot] CODA search status:", r.status);
