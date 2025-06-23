@@ -1937,7 +1937,10 @@
                 let phone = '';
                 if (contactCell) {
                     const mailEl = contactCell.querySelector('a[href^="mailto:"]');
-                    if (mailEl) email = getText(mailEl);
+                    if (mailEl) {
+                        const href = mailEl.getAttribute("href");
+                        email = href ? decodeURIComponent(href.replace(/^mailto:/, "")) : getText(mailEl);
+                    }
                     const text = getText(contactCell);
                     if (!email) {
                         const em = text.match(/[\w.+-]+@[\w.-]+\.[\w.-]+(?=\s|$)/);
