@@ -775,15 +775,36 @@
                 "Chargebacks": "black",
                 "Chargeback": "black"
             };
-            const rows = Object.keys(tx).map(key => {
-                const t = tx[key];
-                const label = key === "Authorised / Settled" ? "Settled" :
-                              key === "Total transactions" ? "Total" : key;
-                const cls = "copilot-tag-" + (colors[label] || "white");
-                const amount = (t.amount || "").replace("EUR", "€");
-                return `<tr><td><span class="copilot-tag ${cls}">${escapeHtml(label)}: <b>${escapeHtml(t.count || "")}</b></span></td><td>${escapeHtml(amount)}</td></tr>`;
+
+            function parseAmount(str) {
+                if (!str) return 0;
+                const n = parseFloat(str.replace(/[^0-9.]/g, ""));
+                return isNaN(n) ? 0 : n;
+            }
+
+            const entries = Object.keys(tx).map(k => {
+                const t = tx[k];
+                const label = k === "Authorised / Settled" ? "Settled" :
+                              k === "Total transactions" ? "Total" : k;
+                return { label, count: t.count || "", amount: t.amount || "" };
+            });
+            if (!entries.length) return "";
+
+            const total = entries.find(e => e.label === "Total") || { amount: 0 };
+            const totalVal = parseAmount(total.amount);
+
+            entries.sort((a, b) => (a.label === "Total" ? -1 : b.label === "Total" ? 1 : 0));
+
+            const rows = entries.map(e => {
+                const cls = "copilot-tag-" + (colors[e.label] || "white");
+                const amountVal = parseAmount(e.amount);
+                const pct = totalVal ? Math.round(amountVal / totalVal * 100) : 0;
+                const amount = (e.amount || "").replace("EUR", "€");
+                const pctText = totalVal ? ` (${pct}% )` : "";
+                const text = `${e.label.toUpperCase()}: ${e.count}`;
+                return `<tr><td><span class="copilot-tag tx-label ${cls}">${escapeHtml(text)}</span></td><td>${escapeHtml(amount)}${escapeHtml(pctText)}</td></tr>`;
             }).join("");
-            if (!rows) return "";
+
             return `<table class="dna-tx-table"><thead><tr><th>Type</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`;
         }
 
@@ -819,25 +840,43 @@
                 if (matchTag) parts.push(matchTag);
             }
 
-            // Issuer name and country
-            const issuerLine = [];
-            if (card['Issuer name']) issuerLine.push(escapeHtml(card['Issuer name']));
-            if (card['Issuer country/region']) issuerLine.push(escapeHtml(card['Issuer country/region']));
-            if (issuerLine.length) parts.push(`<div>${issuerLine.join(', ')}</div>`);
-
-            // CVV and AVS on one line
-            const cvv = proc['CVC/CVV'];
-            const avs = proc['AVS'];
-            if (cvv || avs) {
-                const items = [];
-                if (cvv) items.push(`<b>CVV:</b> ${escapeHtml(cvv)}`);
-                if (avs) items.push(`<b>AVS:</b> ${escapeHtml(avs)}`);
-                parts.push(`<div>${items.join(' \u2022 ')}</div>`);
+            // Issuer name and country after the match tag
+            if (card['Issuer name'] || card['Issuer country/region']) {
+                let bank = (card['Issuer name'] || '').trim();
+                if (bank.length > 20) bank = bank.slice(0, 17) + '...';
+                const country = (card['Issuer country/region'] || '').trim();
+                let countryInit = '';
+                if (country) {
+                    countryInit = country.split(/\s+/).map(w => w.charAt(0)).join('').toUpperCase();
+                    countryInit = ` (<b>${escapeHtml(countryInit)}</b>)`;
+                }
+                parts.push(`<div class="dna-issuer">${escapeHtml(bank)}${countryInit}</div>`);
             }
 
-            // IP
+            // CVV and AVS each on their own labeled line
+            const cvv = proc['CVC/CVV'];
+            const avs = proc['AVS'];
+            function matchColor(text) {
+                if (!text) return 'copilot-tag-purple';
+                const t = text.toLowerCase();
+                if (t.includes('full match')) return 'copilot-tag-green';
+                if (t.includes('no') || t.includes('mismatch') || t.includes('fail')) return 'copilot-tag-red';
+                return 'copilot-tag-purple';
+            }
+            if (cvv) {
+                const cls = matchColor(cvv);
+                const text = `CVV: ${cvv}`;
+                parts.push(`<div><span class="copilot-tag ${cls}">${escapeHtml(text)}</span></div>`);
+            }
+            if (avs) {
+                const cls = matchColor(avs);
+                const text = `AVS: ${avs}`;
+                parts.push(`<div><span class="copilot-tag ${cls}">${escapeHtml(text)}</span></div>`);
+            }
+
+            // IP line hidden but keep spacing
             const ip = shopper['IP Address'] || shopper['IP'];
-            if (ip) parts.push(`<div><b>IP:</b> ${escapeHtml(ip)}</div>`);
+            if (ip) parts.push('<div>&nbsp;</div>');
 
             // Fraud scoring
             if (proc['Fraud scoring']) parts.push(`<div><b>Fraud scoring:</b> ${escapeHtml(proc['Fraud scoring'])}</div>`);
