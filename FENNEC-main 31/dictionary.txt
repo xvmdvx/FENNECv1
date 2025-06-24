@@ -50,6 +50,8 @@ Amendment orders → Changes to existing filings processed through the DB
 DNA Match Tag → Label indicating if Billing details agree with the DNA data
 Transaction table → Colored summary of Adyen transactions
 Light Gray Tag → Label color used for Adyen DNA entries in Review Mode (light gray background with black text)
+CVV → Card Verification Value result code
+AVS → Address Verification System result code
 Knowledge Base window → Separate browser window that shows the Coda Knowledge Base next to the DB page
 
 AR COMPLETED         → Default comment used when resolving a Family Tree order
