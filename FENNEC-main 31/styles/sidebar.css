@@ -323,7 +323,7 @@
 }
 .copilot-tag-lightgray {
     background-color: #ddd;
-    color: #000;
+    color: #000 !important;
     border: 1px solid #bbb;
 }
 .copilot-tag-purple {
