@@ -861,7 +861,18 @@
                 const digits = card['Card number'].replace(/\D+/g, '').slice(-4);
                 if (digits) cardLine.push(escapeHtml(digits));
             }
-            if (card['Expiry date']) cardLine.push(escapeHtml(card['Expiry date']));
+            function formatExpiry(date) {
+                if (!date) return '';
+                const digits = date.replace(/\D+/g, '');
+                if (digits.length >= 4) {
+                    const mm = digits.slice(0, 2);
+                    const yy = digits.slice(-2);
+                    return `${mm}/${yy}`;
+                }
+                return date;
+            }
+
+            if (card['Expiry date']) cardLine.push(escapeHtml(formatExpiry(card['Expiry date'])));
             if (card['Funding source']) cardLine.push(escapeHtml(card['Funding source']));
             if (cardLine.length) parts.push(`<div>${cardLine.join(' \u2022 ')}</div>`);
 
@@ -899,10 +910,10 @@
                 if (t.includes('not matched')) {
                     return { label: 'CVV: NO MATCH', result: 'purple' };
                 }
-                if (t.includes('not provided') || t.includes('not checked') || t.includes('error')) {
+                if (t.includes('not provided') || t.includes('not checked') || t.includes('error') || t.includes('not supplied') || t.includes('unknown')) {
                     return { label: 'CVV: UNKNOWN', result: 'black' };
                 }
-                return { label: `CVV: ${text}`, result: 'purple' };
+                return { label: 'CVV: UNKNOWN', result: 'black' };
             }
 
             function formatAvs(text) {
@@ -916,13 +927,13 @@
                 if (/^1\b/.test(t) || (t.includes('address matches') && t.includes("postal code doesn't"))) {
                     return { label: 'AVS: PARTIAL (ZIP✖️)', result: 'purple' };
                 }
-                if (/^2\b/.test(t) || t.includes('neither matches')) {
+                if (/^2\b/.test(t) || t.includes('neither matches') || /\bw\b/.test(t)) {
                     return { label: 'AVS: NO MATCH', result: 'purple' };
                 }
                 if (/^0\b/.test(t) || /^3\b/.test(t) || /^4\b/.test(t) || /^5\b/.test(t) || t.includes('unavailable') || t.includes('not supported') || t.includes('no avs') || t.includes('unknown')) {
                     return { label: 'AVS: UNKNOWN', result: 'black' };
                 }
-                return { label: `AVS: ${text}`, result: 'purple' };
+                return { label: 'AVS: UNKNOWN', result: 'black' };
             }
 
             if (cvv || avs) {
