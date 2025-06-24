@@ -2059,6 +2059,12 @@
 
 
     function diagnoseHoldOrders(orders, parentId, originId) {
+        // fall back to current order when originId missing
+        if (!originId) {
+            originId = typeof getBasicOrderInfo === 'function'
+                ? getBasicOrderInfo().orderId
+                : parentId;
+        }
         let overlay = document.getElementById('fennec-diagnose-overlay');
         if (overlay) overlay.remove();
         overlay = document.createElement('div');

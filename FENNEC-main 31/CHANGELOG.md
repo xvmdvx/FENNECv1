@@ -91,3 +91,4 @@
 - Light gray labels now display black text in Light Mode.
 - Fixed light gray tags in Review Mode inheriting sidebar text color.
  - EMAIL SEARCH button renamed to **SEARCH**. In Review Mode the **SEARCH**, **DNA** and **XRAY** buttons appear on the same line. The DB match tag in DNA now shows below the CVV/AVS labels and those labels use purple for unknown results, black for partial matches and green for full matches.
+- Fixed Diagnose overlay comment box showing **null** instead of the current order number when triggered from the Family Tree panel.
