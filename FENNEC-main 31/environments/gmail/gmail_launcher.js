@@ -753,16 +753,16 @@
         }
 
         function repositionDnaSummary() {
-            const summary = document.getElementById("dna-summary");
-            if (!summary) return;
-            const container = document.getElementById("db-summary-section");
-            if (!container) return;
-            const compLabel = Array.from(container.querySelectorAll(".section-label"))
-                .find(el => el.textContent.trim().startsWith("COMPANY"));
-            if (compLabel) {
-                compLabel.insertAdjacentElement("beforebegin", summary);
-            } else {
-                container.prepend(summary);
+            const dnaBox = document.querySelector('.copilot-dna');
+            const summary = document.getElementById('dna-summary');
+            if (!dnaBox || !summary) return;
+            if (summary.parentElement !== dnaBox) {
+                dnaBox.appendChild(summary);
+            }
+            const compLabel = Array.from(document.querySelectorAll('#copilot-sidebar .section-label'))
+                .find(el => el.textContent.trim().startsWith('COMPANY'));
+            if (compLabel && dnaBox.nextElementSibling !== compLabel) {
+                compLabel.parentElement.insertBefore(dnaBox, compLabel);
             }
         }
 
@@ -869,12 +869,12 @@
                 if (cvv) {
                     const cls = matchColor(cvv);
                     const text = `CVV: ${cvv}`;
-                    tags.push(`<span class="copilot-tag ${cls}"><b>${escapeHtml(text)}</b></span>`);
+                    tags.push(`<span class="copilot-tag copilot-tag-large ${cls}">${escapeHtml(text)}</span>`);
                 }
                 if (avs) {
                     const cls = matchColor(avs);
                     const text = `AVS: ${avs}`;
-                    tags.push(`<span class="copilot-tag ${cls}"><b>${escapeHtml(text)}</b></span>`);
+                    tags.push(`<span class="copilot-tag copilot-tag-large ${cls}">${escapeHtml(text)}</span>`);
                 }
                 parts.push(`<div>${tags.join(' ')}</div>`);
             }
@@ -1233,7 +1233,7 @@
                     console.log('[Copilot] Opening Adyen for order', orderId);
                     const url = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${orderId}`;
                     showDnaLoading();
-                    chrome.runtime.sendMessage({ action: "openTab", url });
+                    chrome.runtime.sendMessage({ action: "openTab", url, refocus: true });
                 } catch (error) {
                     console.error("Error al intentar buscar en Adyen:", error);
                     alert("Ocurrió un error al intentar buscar en Adyen.");
