@@ -161,6 +161,7 @@
                     const networkTx = extractNetworkTransactions();
                     saveData({ transactions: stats, networkTransactions: networkTx, updated: Date.now() });
                     console.log('[FENNEC Adyen] DNA stats stored');
+                    chrome.runtime.sendMessage({ action: 'refocusTab' });
                 });
             }
 

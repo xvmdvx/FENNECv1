@@ -25,11 +25,13 @@ information scraped from the current page.
   white text.
 - Family Tree panel shows related orders and can diagnose holds, including amendment orders in review.
 - Review Mode merges order details and fetches Adyen DNA data.
-- The DNA summary now appears above the Company section once data is available.
+- The DNA summary now appears between the DNA button and the Company section once data is available.
 - Card holder name now appears in bold followed by concise card details for easier reading.
 - Network transactions from the DNA page appear in the summary.
 - Transactions now display in a table with colored tags for each type.
 - Billing match tag now appears next to the cardholder name, with bank and country initials below the billing address. CVV and AVS results show on one line.
+- CVV and AVS tags use the normal font size and white labels now show dark gray text.
+- After the DNA page loads the extension returns focus to the original email tab.
 - A tag below the DNA section shows if the billing card info matches.
 - A Refresh button updates information without reloading the page.
 - CODA Search menu item queries the knowledge base using the Coda API.
