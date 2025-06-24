@@ -358,6 +358,9 @@
     text-align:center;
     color:#000 !important;
 }
+#copilot-sidebar .white-box .dna-label {
+    color: #000 !important;
+}
 .dna-count{
     font-weight:bold;
     font-size:11px;
