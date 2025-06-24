@@ -1857,29 +1857,21 @@
         input.addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
     }
 
-    // Opens the Coda knowledge base in a floating overlay covering 70% of the page
-    function openKbOverlay(state, type) {
-        const url = 'https://coda.io/d/Bizee-Filing-Department_dQJWsDF3UZ6/Knowledge-Base_suQao1ou';
-        let backdrop = document.getElementById('fennec-kb-backdrop');
-        if (backdrop) backdrop.remove();
-        backdrop = document.createElement('div');
-        backdrop.id = 'fennec-kb-backdrop';
-        const overlay = document.createElement('div');
-        overlay.id = 'fennec-kb-overlay';
-        const close = document.createElement('div');
-        close.className = 'kb-close';
-        close.textContent = '✕';
-        close.addEventListener('click', () => backdrop.remove());
-        const frame = document.createElement('iframe');
-        frame.src = url;
-        frame.id = 'fennec-kb-frame';
-        overlay.appendChild(close);
-        overlay.appendChild(frame);
-        backdrop.appendChild(overlay);
-        document.body.appendChild(backdrop);
-        frame.addEventListener('load', () => {
-            chrome.runtime.sendMessage({ action: 'navigateKbFrame', state, orderType: type });
-        }, { once: true });
+    // Opens the Coda knowledge base in a popup window covering 70% of the page
+    function openKbWindow(state, type) {
+        const width = Math.round(window.innerWidth * 0.7);
+        const height = Math.round(window.innerHeight * 0.7);
+        const left = window.screenX + Math.round((window.outerWidth - width) / 2);
+        const top = window.screenY + Math.round((window.outerHeight - height) / 2);
+        chrome.runtime.sendMessage({
+            action: 'openKnowledgeBaseWindow',
+            state,
+            orderType: type,
+            width,
+            height,
+            left,
+            top
+        });
     }
 
     function getLastIssueInfo() {
@@ -2232,7 +2224,7 @@ function getLastHoldUser() {
     // Expose helpers so core/utils.js can access them
     window.getParentOrderId = getParentOrderId;
     window.diagnoseHoldOrders = diagnoseHoldOrders;
-    window.openKbOverlay = openKbOverlay;
+    window.openKbWindow = openKbWindow;
 
 chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment }) => {
     if (fennecPendingComment) {
