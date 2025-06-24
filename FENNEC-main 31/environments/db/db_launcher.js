@@ -1506,15 +1506,8 @@
                 `<span class="${vaClass}">VA: ${hasVA ? 'Sí' : 'No'}</span></div>`
             );
             const compSection = reviewMode
-                ? `
-            <div class="white-box" style="margin-bottom:10px">
-                ${companyLines.join('')}
-            </div>`
-                : `
-            <div class="section-label">COMPANY:</div>
-            <div class="white-box" style="margin-bottom:10px">
-                ${companyLines.join('')}
-            </div>`;
+                ? `<div class="white-box" style="margin-bottom:10px">${companyLines.join('').trim()}</div>`
+                : `<div class="section-label">COMPANY:</div><div class="white-box" style="margin-bottom:10px">${companyLines.join('').trim()}</div>`;
             if (companyLines.length) {
                 html += compSection;
                 dbSections.push(compSection);
@@ -1634,6 +1627,7 @@
         if (!html) {
             html = `<div style="text-align:center; color:#aaa; margin-top:40px">No se encontró información relevante de la orden.</div>`;
         }
+        html += `<div class="copilot-footer"><button id="filing-xray" class="copilot-button">FILING XRAY</button></div>`;
 
         const orderInfo = getBasicOrderInfo();
         const sidebarOrderInfo = {

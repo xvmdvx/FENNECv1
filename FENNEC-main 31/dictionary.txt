@@ -22,6 +22,7 @@ DB SB MISC           → DATABASE SIDEBAR for NON-FORMATION orders
 DB SB MAIN REVIEW MODE → DATABASE SIDEBAR in REVIEW MODE for FORMATION orders
 DB SB ALL REVIEW MODE = DB SB REVIEW MODE → DATABASE SIDEBAR in REVIEW MODE for ALL order types
 DB SB OFFICERS       → Officers section within DB SIDEBAR
+DB SB FILING XRAY    → Button at the bottom of the DB SIDEBAR to run a filing summary
 
 GM SB                → GMAIL SIDEBAR (visible during email inspection)
 GM SB REVIEW MODE    → GMAIL SIDEBAR when displaying full REVIEW MODE data
