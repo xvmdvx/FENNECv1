@@ -837,6 +837,7 @@
                 "Authorised / Settled": "green",
                 "Settled": "green",
                 "Refused": "red",
+                "Refunded": "black",
                 "Chargebacks": "black",
                 "Chargeback": "black"
             };
@@ -849,8 +850,10 @@
 
             const entries = Object.keys(tx).map(k => {
                 const t = tx[k];
-                const label = k === "Authorised / Settled" ? "Settled" :
-                              k === "Total transactions" ? "Total" : k;
+                let label = k;
+                if (label === "Authorised / Settled") label = "Settled";
+                else if (label === "Total transactions") label = "Total";
+                else if (label === "Refunded / Cancelled") label = "Refunded";
                 return { label, count: t.count || "", amount: t.amount || "" };
             });
             if (!entries.length) return "";

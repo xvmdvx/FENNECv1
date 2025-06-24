@@ -326,6 +326,9 @@
     color: #000 !important;
     border: 1px solid #bbb;
 }
+.copilot-tag.tx-label {
+    color: #000 !important;
+}
 .copilot-tag-purple {
     background-color: #800080;
     color: #fff;
