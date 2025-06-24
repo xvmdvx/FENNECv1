@@ -26,7 +26,7 @@ DB SB OFFICERS       → Officers section within DB SIDEBAR
 GM SB                → GMAIL SIDEBAR (visible during email inspection)
 GM SB REVIEW MODE    → GMAIL SIDEBAR when displaying full REVIEW MODE data
 GM SB XRAY     → The XRAY function/button/box inside the GMAIL SIDEBAR
-GM SB OPEN ORDER BUTTON     → The OPEN ORDER button inside the GMAIL SIDEBAR in Classic Mode.
+GM SB OPEN ORDER BUTTON     → [Deprecated] Former button in the GMAIL SIDEBAR used to open orders from Classic Mode.
 
 ────────────────────────────
 NOTES

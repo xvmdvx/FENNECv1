@@ -1179,21 +1179,19 @@
                     <button id="copilot-close">✕</button>
                 </div>
                 <div class="copilot-body">
-                    <div class="copilot-actions">
+                    <div class="copilot-actions" style="justify-content:center">
                         <button id="btn-email-search" class="copilot-button">📧 SEARCH</button>
-                        <button id="btn-open-order" class="copilot-button">📂 OPEN ORDER</button>
                     </div>
                     <div class="copilot-dna">
                         <div id="dna-summary" style="margin-top:16px"></div>
                     </div>
-                    <div class="section-label" style="margin:6px 0">COMPANY:</div>
-                    <div class="order-summary-header">ORDER SUMMARY</div>
                     <div class="order-summary-box">
                         <div id="order-summary-content" style="color:#ccc; font-size:13px;">
                             No order data yet.
                         </div>
                     </div>
                     <div id="db-summary-section"></div>
+                    <hr style="border:none;border-top:1px solid #555;margin:6px 0"/>
                     <div class="issue-summary-box" id="issue-summary-box" style="margin-top:10px;">
                         <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
                         <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
@@ -1225,7 +1223,7 @@
             console.log("[Copilot] Sidebar INYECTADO en Gmail.");
 
             // Start with empty boxes. Details load after the user interacts
-            // with SEARCH or OPEN ORDER.
+            // with SEARCH.
 
             // Botón de cierre
             document.getElementById('copilot-close').onclick = () => {
@@ -1240,7 +1238,6 @@
             // Botón SEARCH (listener UNIFICADO)
             document.getElementById("btn-email-search").onclick = handleEmailSearchClick;
             document.getElementById("copilot-refresh").onclick = refreshSidebar;
-            setupOpenOrderButton();
             applyReviewMode();
             loadDnaSummary();
         }
@@ -1298,38 +1295,6 @@
             });
         }
 
-        function setupOpenOrderButton() {
-            const button = document.getElementById("btn-open-order");
-            if (!button) return;
-            button.addEventListener("click", function () {
-                try {
-                    showLoadingState();
-                    const bodyNode = document.querySelector(".a3s");
-                    if (!bodyNode) {
-                        alert("No se encontró el cuerpo del correo.");
-                        return;
-                    }
-
-                    const subjectText = document.querySelector('h2.hP')?.innerText || "";
-                    const text = subjectText + "\n" + (bodyNode.innerText || "");
-                    const orderId = extractOrderNumber(text);
-                    if (!orderId) {
-                        alert("No se encontró ningún número de orden válido en el correo.");
-                        return;
-                    }
-                    const context = extractOrderContextFromEmail();
-                    fillOrderSummaryBox(context);
-                    loadDbSummary(context && context.orderNumber);
-                    const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
-                    chrome.runtime.sendMessage({ action: "replaceTabs", urls: [url] });
-                    checkLastIssue(orderId);
-                } catch (error) {
-                    console.error("Error al intentar abrir la orden:", error);
-                    alert("Ocurrió un error al intentar abrir la orden.");
-                }
-            });
-        }
-
         function setupDnaButton() {
             const button = document.getElementById("btn-dna");
             if (!button || button.dataset.listenerAttached) return;
@@ -1372,12 +1337,6 @@
                 }, 500);
             });
         }
-
-        waitForElement("#btn-open-order").then(() => {
-            setupOpenOrderButton();
-        }).catch((err) => {
-            console.warn("[OPEN ORDER] No se pudo inyectar el listener:", err);
-        });
 
         waitForElement("#btn-dna").then(() => {
             setupDnaButton();
