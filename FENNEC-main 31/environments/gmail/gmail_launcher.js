@@ -35,7 +35,10 @@
             reviewMode = reviewMode === null ? fennecReviewMode : reviewMode === 'true';
             let currentContext = null;
             let storedOrderInfo = null;
-            chrome.storage.local.set({ adyenDnaInfo: null });
+            if (!sessionStorage.getItem('fennecDnaCleared')) {
+                chrome.storage.local.set({ adyenDnaInfo: null });
+                sessionStorage.setItem('fennecDnaCleared', '1');
+            }
 
             // Map of US states to their SOS business search pages
             const SOS_URLS = {

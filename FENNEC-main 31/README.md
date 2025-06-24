@@ -27,6 +27,8 @@ information scraped from the current page.
 - Review Mode merges order details and fetches Adyen DNA data.
 - The DNA summary now appears two lines below the XRAY button.
 - The DNA summary resets when opening a new Gmail tab.
+- Fixed the DNA summary disappearing after a few seconds in Gmail by only
+  clearing the stored data once per tab.
 - Card holder name now appears in bold followed by concise card details for easier reading.
 - Network transactions from the DNA page appear in the summary.
 - Transactions now display in a table with colored tags for each type.
