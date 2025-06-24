@@ -34,7 +34,8 @@ information scraped from the current page.
 - Network transactions from the DNA page appear in the summary.
 - Transactions now display in a table with colored tags for each type.
 - Billing match tag now appears next to the cardholder name, with bank and country initials below the billing address. CVV and AVS results show on one line.
-- CVV and AVS tags use the normal font size and white labels now show dark gray text.
+- CVV and AVS tags use the normal font size with green labels for matches,
+  purple for partial or no matches and black for unknown results.
 - CVV results show **MATCH**, **NO MATCH** or **UNKNOWN**. AVS displays **MATCH**, **PARTIAL (ZIP✖️)**, **PARTIAL (STREET✖️)**, **NO MATCH** or **UNKNOWN** based on the Adyen codes.
 - Expiry date shows as **MM/YY** and the bank line text is 1px smaller.
 - Light gray labels in Light Mode now keep black text for readability.
