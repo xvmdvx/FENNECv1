@@ -35,6 +35,7 @@
             reviewMode = reviewMode === null ? fennecReviewMode : reviewMode === 'true';
             let currentContext = null;
             let storedOrderInfo = null;
+            chrome.storage.local.set({ adyenDnaInfo: null });
 
             // Map of US states to their SOS business search pages
             const SOS_URLS = {
@@ -773,8 +774,13 @@
             const summary = document.getElementById('dna-summary');
             if (!dnaBox || !summary) return;
             const dnaBtn = dnaBox.querySelector('#btn-dna');
-            if (summary.parentElement !== dnaBox || (dnaBtn && summary.nextElementSibling !== dnaBtn)) {
-                if (dnaBtn) dnaBox.insertBefore(summary, dnaBtn); else dnaBox.appendChild(summary);
+            const xrayBtn = dnaBox.querySelector('#btn-xray');
+            const afterBtn = xrayBtn || dnaBtn;
+            if (afterBtn) {
+                const next = afterBtn.nextSibling;
+                if (next !== summary) dnaBox.insertBefore(summary, next);
+            } else if (summary.parentElement !== dnaBox) {
+                dnaBox.appendChild(summary);
             }
             const compLabel = Array.from(document.querySelectorAll('#copilot-sidebar .section-label'))
                 .find(el => el.textContent.trim().startsWith('COMPANY'));
@@ -983,10 +989,12 @@
             if (!summary) {
                 summary = document.createElement('div');
                 summary.id = 'dna-summary';
-                summary.style.marginTop = '6px';
+                summary.style.marginTop = '16px';
             }
+            const xrayBtn = dnaBox.querySelector('#btn-xray');
             const dnaBtn = dnaBox.querySelector('#btn-dna');
-            if (dnaBtn) dnaBox.insertBefore(summary, dnaBtn); else dnaBox.appendChild(summary);
+            const afterBtn = xrayBtn || dnaBtn;
+            if (afterBtn) dnaBox.insertBefore(summary, afterBtn.nextSibling); else dnaBox.appendChild(summary);
             summary.innerHTML = `<img src="${chrome.runtime.getURL('fennec_icon.png')}" class="loading-fennec"/>`;
             chrome.storage.local.set({ adyenDnaInfo: null });
             repositionDnaSummary();
@@ -1089,7 +1097,7 @@
                         <button id="btn-open-order" class="copilot-button">📂 OPEN ORDER</button>
                     </div>
                     <div class="copilot-dna">
-                        <div id="dna-summary" style="margin-top:6px"></div>
+                        <div id="dna-summary" style="margin-top:16px"></div>
                     </div>
                     <div class="section-label" style="margin:6px 0">COMPANY:</div>
                     <div class="order-summary-header">ORDER SUMMARY</div>
@@ -1208,6 +1216,7 @@
             if (!button) return;
             button.addEventListener("click", function () {
                 try {
+                    showLoadingState();
                     const bodyNode = document.querySelector(".a3s");
                     if (!bodyNode) {
                         alert("No se encontró el cuerpo del correo.");
