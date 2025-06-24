@@ -62,6 +62,9 @@
 #copilot-sidebar .white-box .dna-label {
     color: #000 !important;
 }
+#copilot-sidebar .white-box .dna-label.copilot-tag-black {
+    color: #fff !important;
+}
 
 .fennec-light-mode #fennec-kb-overlay {
     background: #fff;
