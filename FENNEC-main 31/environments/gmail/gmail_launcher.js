@@ -978,11 +978,15 @@
             currentContext = null;
             storedOrderInfo = null;
             const orderBox = document.getElementById('order-summary-content');
+            const orderContainer = document.querySelector('.order-summary-box');
             const dbBox = document.getElementById('db-summary-section');
             const issueContent = document.getElementById('issue-summary-content');
             const issueLabel = document.getElementById('issue-status-label');
             const icon = `<img src="${chrome.runtime.getURL('fennec_icon.png')}" class="loading-fennec"/>`;
             const dnaBox = document.querySelector('.copilot-dna');
+            if (orderContainer) {
+                orderContainer.querySelectorAll('[data-review-merged="1"]').forEach(el => el.remove());
+            }
             if (orderBox) orderBox.innerHTML = icon;
             if (dbBox) dbBox.innerHTML = icon;
             if (issueContent) issueContent.innerHTML = icon;

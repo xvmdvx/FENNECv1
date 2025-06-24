@@ -76,3 +76,4 @@
 - Diagnose overlay now lists amendment orders in review and the cancel tag was renamed to "RESOLVE AND COMMENT".
 - Fixed billing address in Gmail Review Mode to include the street line.
     - CODA Search token updated for API access.
+- Fixed order summary duplicating when pressing **EMAIL SEARCH** more than once.
