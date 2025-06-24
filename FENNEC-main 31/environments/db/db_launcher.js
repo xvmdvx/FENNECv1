@@ -1829,17 +1829,29 @@
         input.addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
     }
 
-    // Opens the Coda knowledge base in a new window sized like a third column
+    // Opens the Coda knowledge base in a floating overlay covering 70% of the page
     function openKbOverlay(state, type) {
         const url = 'https://coda.io/d/Bizee-Filing-Department_dQJWsDF3UZ6/Knowledge-Base_suQao1ou';
-        const w = Math.round(window.screen.availWidth / 3);
-        const h = window.screen.availHeight;
-        const left = window.screen.availWidth - w;
-        const specs = `width=${w},height=${h},left=${left},top=0`;
-        const win = window.open(url, 'fennec_kb', specs);
-        if (!win) {
-            window.open(url, '_blank');
-        }
+        let backdrop = document.getElementById('fennec-kb-backdrop');
+        if (backdrop) backdrop.remove();
+        backdrop = document.createElement('div');
+        backdrop.id = 'fennec-kb-backdrop';
+        const overlay = document.createElement('div');
+        overlay.id = 'fennec-kb-overlay';
+        const close = document.createElement('div');
+        close.className = 'kb-close';
+        close.textContent = '✕';
+        close.addEventListener('click', () => backdrop.remove());
+        const frame = document.createElement('iframe');
+        frame.src = url;
+        frame.id = 'fennec-kb-frame';
+        overlay.appendChild(close);
+        overlay.appendChild(frame);
+        backdrop.appendChild(overlay);
+        document.body.appendChild(backdrop);
+        frame.addEventListener('load', () => {
+            chrome.runtime.sendMessage({ action: 'navigateKbFrame', state, orderType: type });
+        }, { once: true });
     }
 
     function getLastIssueInfo() {

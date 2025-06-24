@@ -459,6 +459,51 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
     }
 
+    if (message.action === "navigateKbFrame" && message.state && sender.tab) {
+        const state = message.state;
+        const type = message.orderType || "";
+        chrome.scripting.executeScript({
+            target: { tabId: sender.tab.id, allFrames: true },
+            func: (state, type) => {
+                if (!location.hostname.includes('coda.io')) return;
+                function clickExact(txt) {
+                    const nodes = Array.from(document.querySelectorAll('a,button,span,div'));
+                    const target = nodes.find(n => n.textContent && n.textContent.trim().toLowerCase() === txt.toLowerCase());
+                    if (target) { target.click(); return true; }
+                    return false;
+                }
+
+                function clickStateAnchor(stateName) {
+                    const slug = stateName.replace(/\s+/g, '-');
+                    const sel = `a[href*='/${slug}_']`;
+                    const el = document.querySelector(sel);
+                    if (el) { el.click(); return true; }
+                    return clickExact(stateName);
+                }
+
+                let tries = 40;
+                const run = () => {
+                    if (clickStateAnchor(state)) {
+                        if (type) {
+                            let typeTries = 40;
+                            const tryType = () => {
+                                if (!clickExact(type) && typeTries-- > 0) {
+                                    setTimeout(tryType, 500);
+                                }
+                            };
+                            setTimeout(tryType, 500);
+                        }
+                    } else if (tries-- > 0) {
+                        setTimeout(run, 500);
+                    }
+                };
+                run();
+            },
+            args: [state, type]
+        });
+        return;
+    }
+
     if (message.action === "refocusTab") {
         chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
             if (fennecReturnTab) {
