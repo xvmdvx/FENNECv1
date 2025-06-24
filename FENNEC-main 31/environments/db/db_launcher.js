@@ -1776,33 +1776,17 @@
         input.addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
     }
 
-    // Opens the Coda knowledge base in a floating iframe overlay
+    // Opens the Coda knowledge base in a new window sized like a third column
     function openKbOverlay(state, type) {
-        let back = document.getElementById('fennec-kb-backdrop');
-        let overlay = document.getElementById('fennec-kb-overlay');
-        if (overlay) overlay.remove();
-        if (back) back.remove();
-        back = document.createElement('div');
-        back.id = 'fennec-kb-backdrop';
-        back.addEventListener('click', () => {
-            overlay.remove();
-            back.remove();
-        });
-        overlay = document.createElement('div');
-        overlay.id = 'fennec-kb-overlay';
-        const close = document.createElement('div');
-        close.className = 'kb-close';
-        close.textContent = '✕';
-        close.addEventListener('click', () => {
-            overlay.remove();
-            back.remove();
-        });
-        overlay.appendChild(close);
-        const frame = document.createElement('iframe');
-        frame.src = 'https://coda.io/d/Bizee-Filing-Department_dQJWsDF3UZ6/Knowledge-Base_suQao1ou';
-        overlay.appendChild(frame);
-        document.body.appendChild(back);
-        document.body.appendChild(overlay);
+        const url = 'https://coda.io/d/Bizee-Filing-Department_dQJWsDF3UZ6/Knowledge-Base_suQao1ou';
+        const w = Math.round(window.screen.availWidth / 3);
+        const h = window.screen.availHeight;
+        const left = window.screen.availWidth - w;
+        const specs = `width=${w},height=${h},left=${left},top=0`;
+        const win = window.open(url, 'fennec_kb', specs);
+        if (!win) {
+            window.open(url, '_blank');
+        }
     }
 
     function getLastIssueInfo() {
