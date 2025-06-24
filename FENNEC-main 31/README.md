@@ -42,6 +42,7 @@ information scraped from the current page.
 - Adyen DNA labels use a light gray tag with black text in Review Mode.
 - The "Total" label in DNA transaction tables now uses the light gray tag.
 - Refund and cancel totals show a black tag labeled **REFUNDED**.
+- REFUSED totals now use a purple tag instead of red.
  - DNA pages open in front and focus returns to the original email tab after transactions load.
  - A CARD label under CVV and AVS compares DB card details with the Adyen card information and displays **DB: MATCH**, **DB: PARTIAL** or **DB: NO MATCH**.
 - A Refresh button updates information without reloading the page.
