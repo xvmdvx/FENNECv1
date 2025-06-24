@@ -33,7 +33,7 @@ information scraped from the current page.
 - Card holder name now appears in bold followed by concise card details for easier reading.
 - Network transactions from the DNA page appear in the summary.
 - Transactions now display in a table with colored tags for each type.
-- Billing match tag now appears next to the cardholder name, with bank and country initials below the billing address. CVV and AVS results show on one line.
+- CVV, AVS and card match tags now appear on one line beneath the billing address.
 - CVV and AVS tags use the normal font size with green labels for matches,
   purple for partial or no matches and black for unknown results.
 - CVV results show **MATCH**, **NO MATCH** or **UNKNOWN**. AVS displays **MATCH**, **PARTIAL (ZIP✖️)**, **PARTIAL (STREET✖️)**, **NO MATCH** or **UNKNOWN** based on the Adyen codes.
