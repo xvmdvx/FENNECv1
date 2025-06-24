@@ -795,7 +795,7 @@
         function buildTransactionTable(tx) {
             if (!tx) return "";
             const colors = {
-                "Total": "white",
+                "Total": "lightgray",
                 "Authorised / Settled": "green",
                 "Settled": "green",
                 "Refused": "red",
