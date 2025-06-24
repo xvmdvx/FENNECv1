@@ -361,6 +361,9 @@
 #copilot-sidebar .white-box .dna-label {
     color: #000 !important;
 }
+#copilot-sidebar .dna-label.copilot-tag-black {
+    color: #fff !important;
+}
 .dna-count{
     font-weight:bold;
     font-size:11px;
