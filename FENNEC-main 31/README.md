@@ -46,7 +46,6 @@ information scraped from the current page.
  - DNA pages open in front and focus returns to the original email tab after transactions load.
  - A CARD label under CVV and AVS compares DB card details with the Adyen card information and displays **DB: MATCH**, **DB: PARTIAL** or **DB: NO MATCH**.
 - A Refresh button updates information without reloading the page.
-- Summary sections now have a –/+ **Summary Collapse Toggle** to quickly hide or show details.
  - When Review Mode is enabled a **🩻 XRAY** button runs **SEARCH** and then **DNA** automatically. The **OPEN ORDER** button is hidden. The **SEARCH**, **DNA** and **XRAY** buttons now share one row.
 - CODA Search menu item queries the knowledge base using the Coda API.
 - Clicking the state in the DB sidebar now opens the Coda Knowledge Base in a floating overlay covering most of the page.
