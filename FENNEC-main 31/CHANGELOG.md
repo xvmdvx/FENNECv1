@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.3
+## v0.3 - 2025-06-24
 
 - Fixed Bento Mode positioning so the sidebar displays correctly on Gmail and DB.
 - Fixed Bento Mode layering so headers and boxes appear above the video background.
