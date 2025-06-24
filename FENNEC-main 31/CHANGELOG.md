@@ -92,5 +92,6 @@
 - Light gray labels now display black text in Light Mode.
 - Fixed light gray tags in Review Mode inheriting sidebar text color.
 - Refunded and cancelled totals now use a black **REFUNDED** tag and remain legible.
+- REFUNDED tag text is now white for better contrast.
  - EMAIL SEARCH button renamed to **SEARCH**. In Review Mode the **SEARCH**, **DNA** and **XRAY** buttons appear on the same line. The DB match tag in DNA now shows below the CVV/AVS labels and those labels use green for matches, purple for partial or no matches and black for unknown results.
 - Fixed Diagnose overlay comment box showing **null** instead of the current order number when triggered from the Family Tree panel.
