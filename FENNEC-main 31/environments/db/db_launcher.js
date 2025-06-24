@@ -1776,6 +1776,35 @@
         input.addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
     }
 
+    // Opens the Coda knowledge base in a floating iframe overlay
+    function openKbOverlay(state, type) {
+        let back = document.getElementById('fennec-kb-backdrop');
+        let overlay = document.getElementById('fennec-kb-overlay');
+        if (overlay) overlay.remove();
+        if (back) back.remove();
+        back = document.createElement('div');
+        back.id = 'fennec-kb-backdrop';
+        back.addEventListener('click', () => {
+            overlay.remove();
+            back.remove();
+        });
+        overlay = document.createElement('div');
+        overlay.id = 'fennec-kb-overlay';
+        const close = document.createElement('div');
+        close.className = 'kb-close';
+        close.textContent = '✕';
+        close.addEventListener('click', () => {
+            overlay.remove();
+            back.remove();
+        });
+        overlay.appendChild(close);
+        const frame = document.createElement('iframe');
+        frame.src = 'https://coda.io/d/Bizee-Filing-Department_dQJWsDF3UZ6/Knowledge-Base_suQao1ou';
+        overlay.appendChild(frame);
+        document.body.appendChild(back);
+        document.body.appendChild(overlay);
+    }
+
     function getLastIssueInfo() {
         function parseRow(row) {
             const cells = row.querySelectorAll('td');
@@ -2109,6 +2138,7 @@ function getLastHoldUser() {
     // Expose helpers so core/utils.js can access them
     window.getParentOrderId = getParentOrderId;
     window.diagnoseHoldOrders = diagnoseHoldOrders;
+    window.openKbOverlay = openKbOverlay;
 
 chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.fennecReviewMode) {

@@ -59,6 +59,15 @@
     display: none;
 }
 
+.fennec-light-mode #fennec-kb-overlay {
+    background: #fff;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #fennec-kb-overlay .kb-close {
+    color: #000;
+}
+
 /* Ensure status labels remain visible */
 .fennec-light-mode #copilot-sidebar .issue-status-label,
 .fennec-light-mode #copilot-sidebar .review-mode-label {
