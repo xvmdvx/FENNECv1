@@ -6,6 +6,7 @@
     });
     let currentOrderType = null;
     let currentOrderTypeText = null;
+    let initQuickSummary = null;
     // Tracks whether Review Mode is active across DB pages
     let reviewMode = false;
 
@@ -42,8 +43,8 @@
         chrome.storage.local.get({ sidebarDb: [], sidebarOrderId: null }, ({ sidebarDb, sidebarOrderId }) => {
             if (Array.isArray(sidebarDb) && sidebarDb.length && sidebarOrderId && sidebarOrderId === currentId) {
                 body.innerHTML = sidebarDb.join('');
+                if (typeof initQuickSummary === 'function') initQuickSummary();
                 attachCommonListeners(body);
-                setupSectionToggles(body);
                 updateReviewDisplay();
             } else {
                 body.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:40px">No DB data.</div>';
@@ -419,7 +420,7 @@
                             </div>
                             <button id="copilot-close">✕</button>
                         </div>
-                        <div class="order-summary-header"><span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span> ORDER SUMMARY</div>
+                        <div class="order-summary-header"><span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span> ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
                         <div class="copilot-body" id="copilot-body-content">
                             <div style="text-align:center; color:#888; margin-top:20px;">Cargando resumen...</div>
                             <div class="copilot-footer">
@@ -429,7 +430,6 @@
                         </div>
                     `;
                     document.body.appendChild(sidebar);
-                    setupSectionToggles(sidebar);
                     if (document.body.classList.contains('fennec-bento-mode')) {
                         const vid = document.createElement('video');
                         vid.id = 'bento-video';
@@ -478,6 +478,28 @@
                         } else {
                             extractAndShowFormationData();
                         }
+                    }
+                    const qsToggle = sidebar.querySelector('#qs-toggle');
+                    initQuickSummary = () => {
+                        const box = sidebar.querySelector('#quick-summary');
+                        if (box) {
+                            box.style.maxHeight = '0';
+                            box.classList.add('quick-summary-collapsed');
+                        }
+                    };
+                    initQuickSummary();
+                    if (qsToggle) {
+                        qsToggle.addEventListener('click', () => {
+                            const box = sidebar.querySelector('#quick-summary');
+                            if (!box) return;
+                            if (box.style.maxHeight && box.style.maxHeight !== '0px') {
+                                box.style.maxHeight = '0';
+                                box.classList.add('quick-summary-collapsed');
+                            } else {
+                                box.classList.remove('quick-summary-collapsed');
+                                box.style.maxHeight = box.scrollHeight + 'px';
+                            }
+                        });
                     }
 
                     const qaToggle = sidebar.querySelector('#qa-toggle');
@@ -1632,8 +1654,8 @@
         const body = document.getElementById('copilot-body-content');
         if (body) {
             body.innerHTML = html;
+            if (typeof initQuickSummary === 'function') initQuickSummary();
             attachCommonListeners(body);
-            setupSectionToggles(body);
             updateReviewDisplay();
         }
     }

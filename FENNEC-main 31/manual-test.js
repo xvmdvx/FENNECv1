@@ -9,4 +9,3 @@ console.log("6. Open the browser console and confirm there are no errors.");
 console.log("7. Click the company name or State ID in the DB sidebar and ensure it opens the state's SOS search page in a new tab.");
 console.log("8. Click the copy icon next to the company name and State ID and verify the text is copied to the clipboard without opening a link.");
 console.log("9. Click the state name and confirm a floating window displays the filing department knowledge base over the DB page.");
-console.log("10. Use the –/+ icon to collapse and expand a summary section.");
