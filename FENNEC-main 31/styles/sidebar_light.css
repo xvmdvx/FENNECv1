@@ -59,6 +59,10 @@
     display: none;
 }
 
+#copilot-sidebar .white-box .dna-label {
+    color: #000 !important;
+}
+
 .fennec-light-mode #fennec-kb-overlay {
     background: #fff;
     color: #000 !important;
