@@ -87,3 +87,4 @@
 - DNA pages now open in front before returning focus to the original tab.
 - Gmail Review Mode now hides **OPEN ORDER** and adds a **🩻 XRAY** button that runs **EMAIL SEARCH** followed by **DNA**.
 - Clicking the state in DB SB now opens the Coda Knowledge Base in a separate window sized like a third column.
+- Light gray labels now display black text in Light Mode.

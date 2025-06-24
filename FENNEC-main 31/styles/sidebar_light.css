@@ -74,12 +74,12 @@
     color: #fff !important;
 }
 
-.fennec-light-mode .copilot-tag-white {
+.fennec-light-mode #copilot-sidebar .copilot-tag-white {
     background-color: #fff;
     color: #000 !important;
     border: 1px solid #777;
 }
-.fennec-light-mode .copilot-tag-lightgray {
+.fennec-light-mode #copilot-sidebar .copilot-tag-lightgray {
     background-color: #ddd;
     color: #000 !important;
     border: 1px solid #777;
