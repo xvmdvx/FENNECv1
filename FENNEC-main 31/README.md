@@ -46,6 +46,7 @@ information scraped from the current page.
  - DNA pages open in front and focus returns to the original email tab after transactions load.
  - A CARD label under CVV and AVS compares DB card details with the Adyen card information and displays **DB: MATCH**, **DB: PARTIAL** or **DB: NO MATCH**.
 - A Refresh button updates information without reloading the page.
+- A Clear Tabs icon closes all other tabs in the current window.
 - DB sidebar formation orders now show a **FILING XRAY** button below the last section.
 - Classic Mode now displays only the **SEARCH** button in the Gmail sidebar.
 - When Review Mode is enabled a **🩻 XRAY** button runs **SEARCH** and then **DNA** automatically. The **OPEN ORDER** button is hidden. The **SEARCH**, **DNA** and **XRAY** buttons now share one row.

@@ -1172,10 +1172,12 @@
             sidebar.id = 'copilot-sidebar';
             sidebar.innerHTML = `
                 <div class="copilot-header">
+                    <span id="qa-toggle" class="quick-actions-toggle">☰</span>
                     <div class="copilot-title">
                         <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (v0.3)" />
                         <span>FENNEC (v0.3)</span>
                     </div>
+                    <button id="copilot-clear-tabs">🗑</button>
                     <button id="copilot-close">✕</button>
                 </div>
                 <div class="copilot-body">
@@ -1234,6 +1236,13 @@
                 showFloatingIcon();
                 console.log("[Copilot] Sidebar cerrado manualmente en Gmail.");
             };
+
+            const clearBtn = document.getElementById('copilot-clear-tabs');
+            if (clearBtn) {
+                clearBtn.onclick = () => {
+                    chrome.runtime.sendMessage({ action: "closeOtherTabs" });
+                };
+            }
 
             // Botón SEARCH (listener UNIFICADO)
             document.getElementById("btn-email-search").onclick = handleEmailSearchClick;

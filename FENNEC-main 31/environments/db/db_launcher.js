@@ -418,6 +418,7 @@
                                 <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (v0.3)" />
                                 <span>FENNEC (v0.3)</span>
                             </div>
+                            <button id="copilot-clear-tabs">🗑</button>
                             <button id="copilot-close">✕</button>
                         </div>
                         <div class="order-summary-header"><span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span> ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
@@ -459,6 +460,13 @@
                             sessionStorage.setItem("fennecSidebarClosed", "true");
                             console.log("[Copilot] Sidebar cerrado manualmente en DB.");
                             showFloatingIcon();
+                        };
+                    }
+
+                    const clearBtn = sidebar.querySelector('#copilot-clear-tabs');
+                    if (clearBtn) {
+                        clearBtn.onclick = () => {
+                            chrome.runtime.sendMessage({ action: "closeOtherTabs" });
                         };
                     }
                     const isStorage = /\/storage\/incfile\//.test(location.pathname);
