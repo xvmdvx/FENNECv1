@@ -83,12 +83,13 @@
 - DNA summary now shows two lines below the XRAY button and resets on new Gmail tabs.
 - Fixed the DNA summary disappearing after a few seconds in Gmail by clearing
   data only once per tab.
-- CVV and AVS tags use the normal font size with dark gray text for white labels.
+- CVV and AVS tags use the normal font size with green labels for matches,
+  purple for partial or no matches and black for unknown results.
 - Focus returns to the email tab automatically after the DNA page loads.
 - DNA pages now open in front before returning focus to the original tab.
 - Gmail Review Mode now hides **OPEN ORDER** and adds a **🩻 XRAY** button that runs **EMAIL SEARCH** followed by **DNA**.
 - Clicking the state in DB SB now opens the Coda Knowledge Base in a floating overlay covering most of the page.
 - Light gray labels now display black text in Light Mode.
 - Fixed light gray tags in Review Mode inheriting sidebar text color.
- - EMAIL SEARCH button renamed to **SEARCH**. In Review Mode the **SEARCH**, **DNA** and **XRAY** buttons appear on the same line. The DB match tag in DNA now shows below the CVV/AVS labels and those labels use purple for unknown results, black for partial matches and green for full matches.
+ - EMAIL SEARCH button renamed to **SEARCH**. In Review Mode the **SEARCH**, **DNA** and **XRAY** buttons appear on the same line. The DB match tag in DNA now shows below the CVV/AVS labels and those labels use green for matches, purple for partial or no matches and black for unknown results.
 - Fixed Diagnose overlay comment box showing **null** instead of the current order number when triggered from the Family Tree panel.

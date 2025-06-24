@@ -1402,6 +1402,33 @@
             dbSections.push(clientSection);
         }
 
+        function colorFor(result) {
+            if (result === 'green') return 'copilot-tag-green';
+            if (result === 'purple') return 'copilot-tag-purple';
+            return 'copilot-tag-black';
+        }
+
+        function formatAvs(text) {
+            const t = (text || '').toLowerCase();
+            if (/^7\b/.test(t) || t.includes('both match')) {
+                return { label: 'AVS: MATCH', result: 'green' };
+            }
+            if (/^6\b/.test(t) || (t.includes('postal code matches') && t.includes("address doesn't"))) {
+                return { label: 'AVS: PARTIAL (STREET✖️)', result: 'purple' };
+            }
+            if (/^1\b/.test(t) || (t.includes('address matches') && t.includes("postal code doesn't"))) {
+                return { label: 'AVS: PARTIAL (ZIP✖️)', result: 'purple' };
+            }
+            if (/^2\b/.test(t) || t.includes('neither matches') || /\bw\b/.test(t)) {
+                return { label: 'AVS: NO MATCH', result: 'purple' };
+            }
+            if (/^0\b/.test(t) || /^3\b/.test(t) || /^4\b/.test(t) || /^5\b/.test(t) ||
+                t.includes('unavailable') || t.includes('not supported') || t.includes('no avs') || t.includes('unknown')) {
+                return { label: 'AVS: UNKNOWN', result: 'black' };
+            }
+            return { label: 'AVS: UNKNOWN', result: 'black' };
+        }
+
         if (billing) {
             const linesB = [];
             if (billing.cardholder) {
@@ -1413,8 +1440,9 @@
             if (billing.expiry) cardParts.push(renderCopy(formatExpiry(billing.expiry)));
             if (cardParts.length) linesB.push(`<div>${cardParts.join(' \u2022 ')}</div>`);
             if (billing.avs) {
-                const avsTag = `<span class="copilot-tag">${escapeHtml(billing.avs)}</span>`;
-                linesB.push(`<div>AVS: ${avsTag}</div>`);
+                const { label, result } = formatAvs(billing.avs);
+                const avsTag = `<span class="copilot-tag ${colorFor(result)}">${escapeHtml(label)}</span>`;
+                linesB.push(`<div>${avsTag}</div>`);
             }
             const addr = renderBillingAddress(billing);
             if (addr) linesB.push(`<div>${addr}</div>`);
