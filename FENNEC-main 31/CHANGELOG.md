@@ -84,3 +84,4 @@
 - Focus returns to the email tab automatically after the DNA page loads.
 - DNA pages now open in front before returning focus to the original tab.
 - Gmail Review Mode now hides **OPEN ORDER** and adds a **🩻 XRAY** button that runs **EMAIL SEARCH** followed by **DNA**.
+- Clicking the state in DB SB now opens the Coda Knowledge Base in a floating overlay covering 66% of the page.

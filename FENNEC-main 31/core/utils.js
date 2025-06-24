@@ -53,7 +53,11 @@ function attachCommonListeners(rootEl) {
             const state = el.dataset.state;
             const otype = el.dataset.otype || '';
             if (!state) return;
-            chrome.runtime.sendMessage({ action: 'openKnowledgeBase', state, orderType: otype });
+            if (typeof window.openKbOverlay === 'function') {
+                window.openKbOverlay(state, otype);
+            } else {
+                chrome.runtime.sendMessage({ action: 'openKnowledgeBase', state, orderType: otype });
+            }
         });
     });
     rootEl.querySelectorAll('.company-purpose .copilot-copy').forEach(el => {
