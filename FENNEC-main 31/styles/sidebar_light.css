@@ -70,6 +70,11 @@
     color: #000 !important;
     border: 1px solid #777;
 }
+.fennec-light-mode .copilot-tag-lightgray {
+    background-color: #ddd;
+    color: #000 !important;
+    border: 1px solid #777;
+}
 
 .fennec-light-mode #fennec-diagnose-overlay .diag-order {
     color: #000;
