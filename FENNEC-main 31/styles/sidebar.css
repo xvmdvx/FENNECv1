@@ -350,11 +350,12 @@
     font-size:12px;
     text-align:center;
 }
-.tx-label{
+.dna-label{
     min-width:100px;
     text-align:center;
+    color:#000 !important;
 }
-.tx-count{
+.dna-count{
     font-weight:bold;
     font-size:11px;
 }

@@ -830,8 +830,8 @@
                 const amount = (e.amount || "").replace("EUR", "€");
                 const pctText = totalVal ? ` (${pct}%)` : "";
                 const label = escapeHtml(e.label.toUpperCase() + ": ");
-                const count = `<span class="tx-count">${escapeHtml(e.count)}</span>`;
-                return `<tr><td><span class="copilot-tag tx-label ${cls}">${label}${count}</span></td><td>${escapeHtml(amount)}${escapeHtml(pctText)}</td></tr>`;
+                const count = `<span class="dna-count">${escapeHtml(e.count)}</span>`;
+                return `<tr><td><span class="copilot-tag dna-label ${cls}">${label}${count}</span></td><td>${escapeHtml(amount)}${escapeHtml(pctText)}</td></tr>`;
             }).join("");
 
             return `<table class="dna-tx-table"><thead><tr><th>Type</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`;
