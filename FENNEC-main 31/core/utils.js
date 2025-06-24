@@ -180,7 +180,7 @@ function attachCommonListeners(rootEl) {
                             alert('No applicable orders found');
                             return;
                         }
-                        diagnoseHoldOrders(relevant);
+                        diagnoseHoldOrders(relevant, parent.orderId);
                     });
                 }
             });
