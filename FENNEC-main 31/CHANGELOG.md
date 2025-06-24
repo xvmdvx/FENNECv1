@@ -83,3 +83,4 @@
 - CVV and AVS tags use the normal font size with dark gray text for white labels.
 - Focus returns to the email tab automatically after the DNA page loads.
 - DNA pages now open in front before returning focus to the original tab.
+- Gmail Review Mode now hides **OPEN ORDER** and adds a **🩻 XRAY** button that runs **EMAIL SEARCH** followed by **DNA**.

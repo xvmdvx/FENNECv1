@@ -34,6 +34,7 @@ information scraped from the current page.
 - DNA pages open in front and focus returns to the original email tab after transactions load.
 - A tag below the DNA section shows if the billing card info matches.
 - A Refresh button updates information without reloading the page.
+- When Review Mode is enabled a **🩻 XRAY** button runs **EMAIL SEARCH** and then **DNA** automatically. The **OPEN ORDER** button is hidden.
 - CODA Search menu item queries the knowledge base using the Coda API.
 - Edit `environments/db/db_launcher.js` to provide your Coda API token and the
   Coda doc ID. Generate a new token in Coda and replace the value after

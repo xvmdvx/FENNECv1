@@ -229,7 +229,10 @@
             if (orderBoxEl) orderBoxEl.style.marginTop = reviewMode ? "4px" : "12px";
             const dnaRow = document.querySelector("#copilot-sidebar .copilot-dna");
             const dnaBtn = document.getElementById("btn-dna");
+            const xrayBtn = document.getElementById("btn-xray");
+            const openOrder = document.getElementById("btn-open-order");
             if (reviewMode) {
+                if (openOrder) openOrder.style.display = "none";
                 if (dnaRow && !dnaBtn) {
                     const btn = document.createElement("button");
                     btn.id = "btn-dna";
@@ -239,9 +242,21 @@
                     setupDnaButton();
                     loadDnaSummary();
                 }
-            } else if (dnaBtn) {
-                dnaBtn.remove();
-                refreshSidebar();
+                if (dnaRow && !xrayBtn) {
+                    const xbtn = document.createElement("button");
+                    xbtn.id = "btn-xray";
+                    xbtn.className = "copilot-button";
+                    xbtn.textContent = "🩻 XRAY";
+                    dnaRow.appendChild(xbtn);
+                    setupXrayButton();
+                }
+            } else {
+                if (openOrder) openOrder.style.display = "";
+                if (dnaBtn) {
+                    dnaBtn.remove();
+                    refreshSidebar();
+                }
+                if (xrayBtn) xrayBtn.remove();
             }
             chrome.storage.sync.set({ fennecReviewMode: reviewMode });
             updateDetailVisibility();
@@ -1246,6 +1261,19 @@
                     console.error("Error al intentar buscar en Adyen:", error);
                     alert("Ocurrió un error al intentar buscar en Adyen.");
                 }
+            });
+        }
+
+        function setupXrayButton() {
+            const button = document.getElementById("btn-xray");
+            if (!button || button.dataset.listenerAttached) return;
+            button.dataset.listenerAttached = "true";
+            button.addEventListener("click", function () {
+                handleEmailSearchClick();
+                setTimeout(() => {
+                    const dnaBtn = document.getElementById("btn-dna");
+                    if (dnaBtn) dnaBtn.click();
+                }, 500);
             });
         }
 
