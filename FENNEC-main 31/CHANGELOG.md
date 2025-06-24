@@ -80,6 +80,8 @@
 - Fixed **QUICK SUMMARY** duplicating when pressing **EMAIL SEARCH** repeatedly.
 - CODA Search token updated for API access.
 - DNA summary now shows two lines below the XRAY button and resets on new Gmail tabs.
+- Fixed the DNA summary disappearing after a few seconds in Gmail by clearing
+  data only once per tab.
 - CVV and AVS tags use the normal font size with dark gray text for white labels.
 - Focus returns to the email tab automatically after the DNA page loads.
 - DNA pages now open in front before returning focus to the original tab.
