@@ -552,6 +552,14 @@
     display: inline-block;
 }
 
+#fennec-diagnose-overlay .diag-comment {
+    width: 160px;
+    margin-top: 4px;
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid #888;
+}
+
 #fennec-diagnose-overlay .diag-issue {
     background: #2e2e2e;
     border-radius: 6px;
