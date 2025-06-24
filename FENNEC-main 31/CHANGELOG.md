@@ -88,4 +88,5 @@
 - Gmail Review Mode now hides **OPEN ORDER** and adds a **🩻 XRAY** button that runs **EMAIL SEARCH** followed by **DNA**.
 - Clicking the state in DB SB now opens the Coda Knowledge Base in a separate window sized like a third column.
 - Light gray labels now display black text in Light Mode.
+- Fixed light gray tags in Review Mode inheriting sidebar text color.
  - EMAIL SEARCH button renamed to **SEARCH**. In Review Mode the **SEARCH**, **DNA** and **XRAY** buttons appear on the same line. The DB match tag in DNA now shows below the CVV/AVS labels and those labels use purple for unknown results, black for partial matches and green for full matches.
