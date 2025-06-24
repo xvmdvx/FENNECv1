@@ -836,7 +836,7 @@
                 "Total": "lightgray",
                 "Authorised / Settled": "green",
                 "Settled": "green",
-                "Refused": "red",
+                "Refused": "purple",
                 "Refunded": "black",
                 "Chargebacks": "black",
                 "Chargeback": "black"
