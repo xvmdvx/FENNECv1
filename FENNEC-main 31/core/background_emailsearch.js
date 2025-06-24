@@ -2,7 +2,7 @@
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "openTab" && message.url) {
         console.log("[Copilot] Forzando apertura de una pestaña:", message.url);
-        const opts = { url: message.url, active: false };
+        const opts = { url: message.url, active: Boolean(message.active) };
         if (message.windowId) {
             opts.windowId = message.windowId;
         } else if (sender && sender.tab) {
