@@ -861,7 +861,18 @@
                 const digits = card['Card number'].replace(/\D+/g, '').slice(-4);
                 if (digits) cardLine.push(escapeHtml(digits));
             }
-            if (card['Expiry date']) cardLine.push(escapeHtml(card['Expiry date']));
+            function formatExpiry(date) {
+                if (!date) return '';
+                const digits = date.replace(/\D+/g, '');
+                if (digits.length >= 4) {
+                    const mm = digits.slice(0, 2);
+                    const yy = digits.slice(-2);
+                    return `${mm}/${yy}`;
+                }
+                return date;
+            }
+
+            if (card['Expiry date']) cardLine.push(escapeHtml(formatExpiry(card['Expiry date'])));
             if (card['Funding source']) cardLine.push(escapeHtml(card['Funding source']));
             if (cardLine.length) parts.push(`<div>${cardLine.join(' \u2022 ')}</div>`);
 
@@ -884,28 +895,56 @@
             // CVV and AVS on the same line
             const cvv = proc['CVC/CVV'];
             const avs = proc['AVS'];
-            function matchColor(text) {
-                if (!text) return 'copilot-tag-purple';
-                const t = text.toLowerCase();
-                if (t.includes('match') && !t.includes('partial') && !t.includes('unmatch') && !t.includes('mismatch') && !t.includes('no') && !t.includes('fail')) {
-                    return 'copilot-tag-green';
-                }
-                if (t.includes('partial') || t.includes('unmatch') || t.includes('mismatch') || t.includes('no') || t.includes('fail')) {
-                    return 'copilot-tag-black';
-                }
-                return 'copilot-tag-purple';
+
+            function colorFor(result) {
+                if (result === 'green') return 'copilot-tag-green';
+                if (result === 'purple') return 'copilot-tag-purple';
+                return 'copilot-tag-black';
             }
+
+            function formatCvv(text) {
+                const t = (text || '').toLowerCase();
+                if (t.includes('matched')) {
+                    return { label: 'CVV: MATCH', result: 'green' };
+                }
+                if (t.includes('not matched')) {
+                    return { label: 'CVV: NO MATCH', result: 'purple' };
+                }
+                if (t.includes('not provided') || t.includes('not checked') || t.includes('error') || t.includes('not supplied') || t.includes('unknown')) {
+                    return { label: 'CVV: UNKNOWN', result: 'black' };
+                }
+                return { label: 'CVV: UNKNOWN', result: 'black' };
+            }
+
+            function formatAvs(text) {
+                const t = (text || '').toLowerCase();
+                if (/^7\b/.test(t) || t.includes('both match')) {
+                    return { label: 'AVS: MATCH', result: 'green' };
+                }
+                if (/^6\b/.test(t) || (t.includes('postal code matches') && t.includes("address doesn't"))) {
+                    return { label: 'AVS: PARTIAL (STREET✖️)', result: 'purple' };
+                }
+                if (/^1\b/.test(t) || (t.includes('address matches') && t.includes("postal code doesn't"))) {
+                    return { label: 'AVS: PARTIAL (ZIP✖️)', result: 'purple' };
+                }
+                if (/^2\b/.test(t) || t.includes('neither matches') || /\bw\b/.test(t)) {
+                    return { label: 'AVS: NO MATCH', result: 'purple' };
+                }
+                if (/^0\b/.test(t) || /^3\b/.test(t) || /^4\b/.test(t) || /^5\b/.test(t) || t.includes('unavailable') || t.includes('not supported') || t.includes('no avs') || t.includes('unknown')) {
+                    return { label: 'AVS: UNKNOWN', result: 'black' };
+                }
+                return { label: 'AVS: UNKNOWN', result: 'black' };
+            }
+
             if (cvv || avs) {
                 const tags = [];
                 if (cvv) {
-                    const cls = matchColor(cvv);
-                    const text = `CVV: ${cvv}`;
-                    tags.push(`<span class="copilot-tag ${cls}">${escapeHtml(text)}</span>`);
+                    const { label, result } = formatCvv(cvv);
+                    tags.push(`<span class="copilot-tag ${colorFor(result)}">${escapeHtml(label)}</span>`);
                 }
                 if (avs) {
-                    const cls = matchColor(avs);
-                    const text = `AVS: ${avs}`;
-                    tags.push(`<span class="copilot-tag ${cls}">${escapeHtml(text)}</span>`);
+                    const { label, result } = formatAvs(avs);
+                    tags.push(`<span class="copilot-tag ${colorFor(result)}">${escapeHtml(label)}</span>`);
                 }
                 parts.push(`<div>${tags.join(' ')}</div>`);
             }
