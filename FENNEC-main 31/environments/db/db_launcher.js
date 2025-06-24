@@ -1734,11 +1734,37 @@
                 ta.value = comment;
                 save.click();
                 sessionStorage.removeItem('fennecAutoComment');
+                sessionStorage.setItem('fennecAddComment', comment);
             } else {
                 setTimeout(fillComment, 500);
             }
         };
         clickResolve();
+    }
+
+    function addOrderComment(comment) {
+        const openModal = () => {
+            const btn = Array.from(document.querySelectorAll('a,button'))
+                .find(el => /modalAddNote/.test(el.getAttribute('onclick') || ''));
+            if (btn) {
+                btn.click();
+                fill();
+            } else {
+                setTimeout(openModal, 500);
+            }
+        };
+        const fill = () => {
+            const modal = document.getElementById('modalAddNote');
+            const ta = modal ? modal.querySelector('#commentText') : null;
+            const add = modal ? modal.querySelector('#btnTextSaveComment') : null;
+            if (ta && add) {
+                ta.value = comment;
+                add.click();
+            } else {
+                setTimeout(fill, 500);
+            }
+        };
+        openModal();
     }
 
     function openCodaSearch() {
@@ -2032,7 +2058,7 @@
     }
 
 
-    function diagnoseHoldOrders(orders) {
+    function diagnoseHoldOrders(orders, parentId) {
         let overlay = document.getElementById('fennec-diagnose-overlay');
         if (overlay) overlay.remove();
         overlay = document.createElement('div');
@@ -2083,7 +2109,7 @@
             const commentBox = document.createElement('input');
             commentBox.type = 'text';
             commentBox.className = 'diag-comment';
-            commentBox.value = `AR COMPLETED: ${r.order.orderId}`;
+            commentBox.value = `AR COMPLETED: ${parentId}`;
             card.appendChild(commentBox);
 
             const resolve = document.createElement('span');
@@ -2171,6 +2197,12 @@ chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment
         }
     }
 });
+
+const pendingNote = sessionStorage.getItem('fennecAddComment');
+if (pendingNote) {
+    sessionStorage.removeItem('fennecAddComment');
+    setTimeout(() => addOrderComment(pendingNote), 1500);
+}
 
 chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.fennecReviewMode) {

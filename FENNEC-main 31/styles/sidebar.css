@@ -558,6 +558,7 @@
     padding: 4px;
     border-radius: 4px;
     border: 1px solid #888;
+    color: #000;
 }
 
 #fennec-diagnose-overlay .diag-issue {
