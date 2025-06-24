@@ -1,5 +1,5 @@
 // Common utilities for FENNEC content scripts.
-// Provides escapeHtml and attachCommonListeners helpers.
+// Provides escapeHtml, attachCommonListeners and setupSectionToggles helpers.
 
 function escapeHtml(text) {
     return String(text)
@@ -189,5 +189,31 @@ function attachCommonListeners(rootEl) {
             });
         });
     }
+}
+
+function setupSectionToggles(rootEl) {
+    if (!rootEl) return;
+    rootEl.querySelectorAll('.order-summary-header, .section-label').forEach(h => {
+        if (h.classList.contains('toggle-ready')) return;
+        const target = h.nextElementSibling;
+        if (!target) return;
+        h.classList.add('toggle-ready');
+        const icon = document.createElement('span');
+        icon.className = 'collapse-toggle';
+        icon.textContent = '–';
+        h.appendChild(icon);
+        target.classList.add('collapsible');
+        target.style.maxHeight = target.scrollHeight + 'px';
+        icon.addEventListener('click', e => {
+            e.stopPropagation();
+            const collapsed = target.classList.toggle('collapsed');
+            icon.textContent = collapsed ? '+' : '–';
+            if (!collapsed) {
+                target.style.maxHeight = target.scrollHeight + 'px';
+            } else {
+                target.style.maxHeight = '0';
+            }
+        });
+    });
 }
 
