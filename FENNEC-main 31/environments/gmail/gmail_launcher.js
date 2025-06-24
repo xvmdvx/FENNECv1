@@ -916,7 +916,7 @@
 
             // Billing address with issuer info below
             if (shopper['Billing address']) {
-                parts.push(`<div>${renderBillingAddress(shopper['Billing address'])}</div>`);
+                parts.push(`<div class="dna-address">${renderBillingAddress(shopper['Billing address'])}</div>`);
                 if (card['Issuer name'] || card['Issuer country/region']) {
                     let bank = (card['Issuer name'] || '').trim();
                     if (bank.length > 25) bank = bank.slice(0, 22) + '...';
@@ -924,7 +924,7 @@
                     let countryInit = '';
                     if (country) {
                         countryInit = country.split(/\s+/).map(w => w.charAt(0)).join('').toUpperCase();
-                        countryInit = ` (<b>${escapeHtml(countryInit)}</b>)`;
+                        countryInit = ` (<span class="dna-country"><b>${escapeHtml(countryInit)}</b></span>)`;
                     }
                     parts.push(`<div class="dna-issuer">${escapeHtml(bank)}${countryInit}</div>`);
                 }
