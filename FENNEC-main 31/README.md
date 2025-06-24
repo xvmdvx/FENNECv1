@@ -24,7 +24,7 @@ information scraped from the current page.
   The FENNEC header and all summary boxes appear above the video in black containers with 95% opacity and
   white text.
 - Family Tree panel shows related orders and can diagnose holds, including amendment orders in review.
-- Diagnose overlay now shows a black text Comment Box prefilled with **AR COMPLETED** and the parent order number. Pressing **RESOLVE AND COMMENT** opens the child order, marks the issue resolved and adds that comment to the order.
+- Diagnose overlay now shows a black text Comment Box prefilled with **AR COMPLETED** and the current order number. Cards are 1.5× wider and pressing **RESOLVE AND COMMENT** opens the child order, marks the issue resolved and adds that comment to the order.
 - Review Mode merges order details and fetches Adyen DNA data.
 - The DNA summary now appears two lines below the XRAY button.
 - The DNA summary resets when opening a new Gmail tab.

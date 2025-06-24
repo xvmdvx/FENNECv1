@@ -74,6 +74,7 @@
 - Fixed the CLIENT summary combining email and phone when DB separates them with a <br> tag.
 - Fixed mailto links including the phone number when contact info is wrapped in a single anchor.
 - Diagnose overlay now lists amendment orders in review and the cancel tag was renamed to "RESOLVE AND COMMENT".
+- Diagnose overlay comment box now defaults to the current order number and cards are 1.5× wider.
 - Fixed billing address in Gmail Review Mode to include the street line.
 - CODA Search token updated for API access.
 - Fixed order summary duplicating when pressing **EMAIL SEARCH** more than once.
