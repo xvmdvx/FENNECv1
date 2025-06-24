@@ -82,3 +82,4 @@
 - DNA summary now shows between the DNA button and Company section.
 - CVV and AVS tags use the normal font size with dark gray text for white labels.
 - Focus returns to the email tab automatically after the DNA page loads.
+- DNA pages now open in front before returning focus to the original tab.
