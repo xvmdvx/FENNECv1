@@ -76,6 +76,8 @@
 - Diagnose overlay now lists amendment orders in review and the cancel tag was renamed to "RESOLVE AND COMMENT".
 - Fixed billing address in Gmail Review Mode to include the street line.
 - CODA Search token updated for API access.
+- Fixed order summary duplicating when pressing **EMAIL SEARCH** more than once.
+- CODA Search token updated for API access.
 - DNA summary now shows between the DNA button and Company section.
 - CVV and AVS tags use the normal font size with dark gray text for white labels.
 - Focus returns to the email tab automatically after the DNA page loads.
