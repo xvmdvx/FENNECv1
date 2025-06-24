@@ -1714,6 +1714,33 @@
         }
     }
 
+    function autoResolveIssue(comment) {
+        const clickResolve = () => {
+            const btn = Array.from(document.querySelectorAll('a'))
+                .find(a => /mark resolved/i.test(a.textContent));
+            if (btn) {
+                sessionStorage.setItem('fennecAutoComment', comment);
+                btn.click();
+                fillComment();
+            } else {
+                setTimeout(clickResolve, 500);
+            }
+        };
+        const fillComment = () => {
+            const modal = document.getElementById('modalUpdateIssue');
+            const ta = modal ? modal.querySelector('#comment') : null;
+            const save = modal ? modal.querySelector("a[onclick*='update-issue']") : null;
+            if (ta && save) {
+                ta.value = comment;
+                save.click();
+                sessionStorage.removeItem('fennecAutoComment');
+            } else {
+                setTimeout(fillComment, 500);
+            }
+        };
+        clickResolve();
+    }
+
     function openCodaSearch() {
         let overlay = document.getElementById('fennec-coda-overlay');
         if (overlay) overlay.remove();
@@ -2053,10 +2080,21 @@
             issueDiv.textContent = r.issue;
             card.appendChild(issueDiv);
 
+            const commentBox = document.createElement('input');
+            commentBox.type = 'text';
+            commentBox.className = 'diag-comment';
+            commentBox.value = `AR COMPLETED: ${r.order.orderId}`;
+            card.appendChild(commentBox);
+
             const resolve = document.createElement('span');
             resolve.className = 'copilot-tag copilot-tag-green diag-resolve';
             resolve.textContent = 'RESOLVE AND COMMENT';
-            resolve.addEventListener('click', startCancelProcedure);
+            resolve.addEventListener('click', () => {
+                const comment = commentBox.value.trim();
+                chrome.storage.local.set({ fennecPendingComment: { orderId: r.order.orderId, comment } }, () => {
+                    chrome.runtime.sendMessage({ action: 'openActiveTab', url: `${location.origin}/incfile/order/detail/${r.order.orderId}` });
+                });
+            });
             card.appendChild(resolve);
 
             overlay.appendChild(card);
@@ -2123,6 +2161,16 @@ function getLastHoldUser() {
     window.getParentOrderId = getParentOrderId;
     window.diagnoseHoldOrders = diagnoseHoldOrders;
     window.openKbOverlay = openKbOverlay;
+
+chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment }) => {
+    if (fennecPendingComment) {
+        const info = getBasicOrderInfo();
+        if (info.orderId && String(fennecPendingComment.orderId) === String(info.orderId)) {
+            chrome.storage.local.remove('fennecPendingComment');
+            autoResolveIssue(fennecPendingComment.comment);
+        }
+    }
+});
 
 chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.fennecReviewMode) {
