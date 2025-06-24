@@ -32,6 +32,7 @@ information scraped from the current page.
 - Transactions now display in a table with colored tags for each type.
 - Billing match tag now appears next to the cardholder name, with bank and country initials below the billing address. CVV and AVS results show on one line.
 - CVV and AVS tags use the normal font size and white labels now show dark gray text.
+- Adyen DNA labels use a light gray tag with black text in Review Mode.
 - DNA pages open in front and focus returns to the original email tab after transactions load.
 - A tag below the DNA section shows if the billing card info matches.
 - A Refresh button updates information without reloading the page.
