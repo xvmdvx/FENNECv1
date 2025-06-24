@@ -1204,6 +1204,7 @@
                 </div>
             `;
             document.body.appendChild(sidebar);
+            setupSectionToggles(sidebar);
             if (document.body.classList.contains('fennec-bento-mode')) {
                 const vid = document.createElement('video');
                 vid.id = 'bento-video';

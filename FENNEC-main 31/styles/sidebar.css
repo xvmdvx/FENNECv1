@@ -267,6 +267,12 @@
     margin-left: 6px;
     vertical-align: middle;
 }
+#copilot-sidebar .collapse-toggle {
+    cursor: pointer;
+    margin-left: 6px;
+    vertical-align: middle;
+    float: right;
+}
 #copilot-sidebar .family-tree-icon {
     cursor: pointer;
     margin-right: 6px;
@@ -288,6 +294,15 @@
 #copilot-sidebar #quick-summary.quick-summary-collapsed {
     margin-bottom: 0 !important;
     padding: 0 !important;
+}
+
+#copilot-sidebar .collapsible {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+#copilot-sidebar .collapsible.collapsed {
+    max-height: 0 !important;
 }
 
 /* Slightly larger names in each section */
