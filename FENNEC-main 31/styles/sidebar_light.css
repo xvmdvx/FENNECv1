@@ -114,6 +114,9 @@
 .fennec-light-mode #copilot-close {
     color: #fff;
 }
+.fennec-light-mode #copilot-clear-tabs {
+    color: #fff;
+}
 
 /* Darken summary text that uses inline styles */
 .fennec-light-mode #order-summary-content,

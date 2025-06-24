@@ -81,6 +81,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
     }
 
+    if (message.action === "closeOtherTabs" && sender.tab) {
+        chrome.tabs.query({ windowId: sender.tab.windowId }, (tabs) => {
+            const toClose = tabs.filter(t => t.id !== sender.tab.id).map(t => t.id);
+            if (toClose.length) {
+                chrome.tabs.remove(toClose, () => {
+                    if (chrome.runtime.lastError) {
+                        console.error("[Copilot] Error cerrando pestañas:", chrome.runtime.lastError.message);
+                    }
+                });
+            }
+        });
+    }
+
     if (message.action === "checkLastIssue" && message.orderId) {
         const orderId = message.orderId;
         let base = "https://db.incfile.com";
