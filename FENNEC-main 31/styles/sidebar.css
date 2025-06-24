@@ -526,7 +526,7 @@
 #fennec-diagnose-overlay .diag-card {
     display: inline-block;
     vertical-align: top;
-    width: 180px;
+    width: 270px;
     margin: 8px;
     padding: 8px;
     border-radius: 8px;
@@ -553,7 +553,7 @@
 }
 
 #fennec-diagnose-overlay .diag-comment {
-    width: 160px;
+    width: 240px;
     margin-top: 4px;
     padding: 4px;
     border-radius: 4px;

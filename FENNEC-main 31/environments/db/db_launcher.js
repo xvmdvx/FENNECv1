@@ -2058,7 +2058,7 @@
     }
 
 
-    function diagnoseHoldOrders(orders, parentId) {
+    function diagnoseHoldOrders(orders, parentId, originId) {
         let overlay = document.getElementById('fennec-diagnose-overlay');
         if (overlay) overlay.remove();
         overlay = document.createElement('div');
@@ -2109,7 +2109,7 @@
             const commentBox = document.createElement('input');
             commentBox.type = 'text';
             commentBox.className = 'diag-comment';
-            commentBox.value = `AR COMPLETED: ${parentId}`;
+            commentBox.value = `AR COMPLETED: ${originId}`;
             card.appendChild(commentBox);
 
             const resolve = document.createElement('span');
