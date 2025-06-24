@@ -734,6 +734,7 @@
         function loadDbSummary(expectedId) {
             const container = document.getElementById('db-summary-section');
             if (!container) return;
+            document.querySelectorAll('#copilot-sidebar #quick-summary').forEach(el => el.remove());
             chrome.storage.local.get({ sidebarDb: [], sidebarOrderId: null, sidebarOrderInfo: null }, ({ sidebarDb, sidebarOrderId, sidebarOrderInfo }) => {
                 if (Array.isArray(sidebarDb) && sidebarDb.length && (!expectedId || sidebarOrderId === expectedId)) {
                     container.innerHTML = sidebarDb.join("");
