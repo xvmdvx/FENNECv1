@@ -753,15 +753,16 @@
         }
 
         function repositionDnaSummary() {
-            const summary = document.getElementById('dna-summary');
+            const summary = document.getElementById("dna-summary");
             if (!summary) return;
-            const container = document.getElementById('db-summary-section');
+            const container = document.getElementById("db-summary-section");
             if (!container) return;
-            const billing = container.querySelector('#billing-section-box');
-            if (billing && billing.parentElement) {
-                billing.parentElement.insertAdjacentElement('afterend', summary);
+            const compLabel = Array.from(container.querySelectorAll(".section-label"))
+                .find(el => el.textContent.trim().startsWith("COMPANY"));
+            if (compLabel) {
+                compLabel.insertAdjacentElement("beforebegin", summary);
             } else {
-                container.appendChild(summary);
+                container.prepend(summary);
             }
         }
 
