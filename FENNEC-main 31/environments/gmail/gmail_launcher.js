@@ -519,29 +519,6 @@
             return info;
         }
 
-        function buildDnaMatchTag(info) {
-            const billing = getBillingInfo();
-            if (!billing) return '';
-            const card = info.payment.card || {};
-            const shopper = info.payment.shopper || {};
-            const dnaDigits = (card['Card number'] || '').replace(/\D+/g, '').slice(-4);
-            const billDigits = (billing.last4 || '').replace(/\D+/g, '').slice(-4);
-            const dnaAddr = shopper['Billing address'] || '';
-            const addrMatch = dnaAddr && billing.address && normalizeAddr(dnaAddr) === normalizeAddr(billing.address);
-            const digitsMatch = dnaDigits && billDigits && dnaDigits === billDigits;
-            let text = '';
-            let cls = 'copilot-tag copilot-tag-green';
-            if (digitsMatch && addrMatch) {
-                text = 'ALL MATCH';
-            } else {
-                const parts = [];
-                if (!digitsMatch) parts.push('LAST FOUR');
-                if (!addrMatch) parts.push('ADDRESS');
-                text = parts.join(' AND ') + ' DONT MATCH';
-                cls = 'copilot-tag copilot-tag-red';
-            }
-            return `<span class="${cls}">${text}</span>`;
-        }
 
         function buildCardMatchTag(info) {
             const billing = getBillingInfo();
@@ -907,10 +884,8 @@
             const parts = [];
 
             // First line: bold card holder name only
-            let matchTag = null;
             if (card['Card holder']) {
                 const holder = `<b>${escapeHtml(card['Card holder'])}</b>`;
-                matchTag = buildDnaMatchTag(info);
                 parts.push(`<div>${holder}</div>`);
             }
 
@@ -978,7 +953,7 @@
 
             function formatAvs(text) {
                 const t = (text || '').toLowerCase();
-                if (/^7\b/.test(t) || t.includes('both match')) {
+                if (/both\s+postal\s+code\s+and\s+address\s+match/.test(t) || /^7\b/.test(t) || t.includes('both match')) {
                     return { label: 'AVS: MATCH', result: 'green' };
                 }
                 if (/^6\b/.test(t) || (t.includes('postal code matches') && t.includes("address doesn't"))) {
@@ -1006,13 +981,9 @@
                     const { label, result } = formatAvs(avs);
                     tags.push(`<span class="copilot-tag ${colorFor(result)}">${escapeHtml(label)}</span>`);
                 }
-                parts.push(`<div>${tags.join(' ')}</div>`);
                 const cardTag = buildCardMatchTag(info);
-                if (cardTag) parts.push(`<div>${cardTag}</div>`);
-            }
-
-            if (matchTag) {
-                parts.push(`<div>${matchTag}</div>`);
+                if (cardTag) tags.push(cardTag);
+                if (tags.length) parts.push(`<div>${tags.join(' ')}</div>`);
             }
 
             // IP line hidden but keep spacing
