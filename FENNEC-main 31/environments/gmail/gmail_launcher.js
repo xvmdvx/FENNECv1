@@ -231,27 +231,28 @@
             if (header) header.style.display = reviewMode ? "none" : "";
             const orderBoxEl = document.querySelector("#copilot-sidebar .order-summary-box");
             if (orderBoxEl) orderBoxEl.style.marginTop = reviewMode ? "4px" : "12px";
+            const actionsRow = document.querySelector("#copilot-sidebar .copilot-actions");
             const dnaRow = document.querySelector("#copilot-sidebar .copilot-dna");
             const dnaBtn = document.getElementById("btn-dna");
             const xrayBtn = document.getElementById("btn-xray");
             const openOrder = document.getElementById("btn-open-order");
             if (reviewMode) {
                 if (openOrder) openOrder.style.display = "none";
-                if (dnaRow && !dnaBtn) {
+                if (actionsRow && !dnaBtn) {
                     const btn = document.createElement("button");
                     btn.id = "btn-dna";
                     btn.className = "copilot-button";
                     btn.textContent = "🧬 DNA";
-                    dnaRow.appendChild(btn);
+                    actionsRow.appendChild(btn);
                     setupDnaButton();
                     loadDnaSummary();
                 }
-                if (dnaRow && !xrayBtn) {
+                if (actionsRow && !xrayBtn) {
                     const xbtn = document.createElement("button");
                     xbtn.id = "btn-xray";
                     xbtn.className = "copilot-button";
                     xbtn.textContent = "🩻 XRAY";
-                    dnaRow.appendChild(xbtn);
+                    actionsRow.appendChild(xbtn);
                     setupXrayButton();
                 }
             } else {
@@ -845,12 +846,12 @@
 
             const parts = [];
 
-            // First line: bold card holder name with match tag
+            // First line: bold card holder name only
+            let matchTag = null;
             if (card['Card holder']) {
                 const holder = `<b>${escapeHtml(card['Card holder'])}</b>`;
-                const matchTag = buildDnaMatchTag(info);
-                const line = matchTag ? `<div>${holder} ${matchTag}</div>` : `<div>${holder}</div>`;
-                parts.push(line);
+                matchTag = buildDnaMatchTag(info);
+                parts.push(`<div>${holder}</div>`);
             }
 
             // Second line: card type, last 4 digits, expiry and funding source
@@ -886,8 +887,12 @@
             function matchColor(text) {
                 if (!text) return 'copilot-tag-purple';
                 const t = text.toLowerCase();
-                if (t.includes('full') || t.includes('match') || t.includes('supplied')) return 'copilot-tag-green';
-                if (t.includes('no') || t.includes('mismatch') || t.includes('fail')) return 'copilot-tag-red';
+                if (t.includes('match') && !t.includes('partial') && !t.includes('unmatch') && !t.includes('mismatch') && !t.includes('no') && !t.includes('fail')) {
+                    return 'copilot-tag-green';
+                }
+                if (t.includes('partial') || t.includes('unmatch') || t.includes('mismatch') || t.includes('no') || t.includes('fail')) {
+                    return 'copilot-tag-black';
+                }
                 return 'copilot-tag-purple';
             }
             if (cvv || avs) {
@@ -903,6 +908,10 @@
                     tags.push(`<span class="copilot-tag ${cls}">${escapeHtml(text)}</span>`);
                 }
                 parts.push(`<div>${tags.join(' ')}</div>`);
+            }
+
+            if (matchTag) {
+                parts.push(`<div>${matchTag}</div>`);
             }
 
             // IP line hidden but keep spacing
@@ -1096,7 +1105,7 @@
                 </div>
                 <div class="copilot-body">
                     <div class="copilot-actions">
-                        <button id="btn-email-search" class="copilot-button">📧 EMAIL SEARCH</button>
+                        <button id="btn-email-search" class="copilot-button">📧 SEARCH</button>
                         <button id="btn-open-order" class="copilot-button">📂 OPEN ORDER</button>
                     </div>
                     <div class="copilot-dna">
@@ -1141,7 +1150,7 @@
             console.log("[Copilot] Sidebar INYECTADO en Gmail.");
 
             // Start with empty boxes. Details load after the user interacts
-            // with EMAIL SEARCH or OPEN ORDER.
+            // with SEARCH or OPEN ORDER.
 
             // Botón de cierre
             document.getElementById('copilot-close').onclick = () => {
@@ -1153,7 +1162,7 @@
                 console.log("[Copilot] Sidebar cerrado manualmente en Gmail.");
             };
 
-            // Botón EMAIL SEARCH (listener UNIFICADO)
+            // Botón SEARCH (listener UNIFICADO)
             document.getElementById("btn-email-search").onclick = handleEmailSearchClick;
             document.getElementById("copilot-refresh").onclick = refreshSidebar;
             setupOpenOrderButton();
