@@ -53,10 +53,10 @@ function attachCommonListeners(rootEl) {
             const state = el.dataset.state;
             const otype = el.dataset.otype || '';
             if (!state) return;
-            if (typeof window.openKbOverlay === 'function') {
-                window.openKbOverlay(state, otype);
+            if (typeof window.openKbWindow === 'function') {
+                window.openKbWindow(state, otype);
             } else {
-                chrome.runtime.sendMessage({ action: 'openKnowledgeBase', state, orderType: otype });
+                chrome.runtime.sendMessage({ action: 'openKnowledgeBaseWindow', state, orderType: otype });
             }
         });
     });

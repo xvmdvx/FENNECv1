@@ -459,6 +459,75 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
     }
 
+    if (message.action === "openKnowledgeBaseWindow" && message.state) {
+        const state = message.state;
+        const type = message.orderType || "";
+        const url = "https://coda.io/d/Bizee-Filing-Department_dQJWsDF3UZ6/Knowledge-Base_suQao1ou";
+        const width = message.width || 800;
+        const height = message.height || 600;
+        const left = message.left;
+        const top = message.top;
+        const opts = { url, type: "popup", width, height };
+        if (typeof left === "number") opts.left = left;
+        if (typeof top === "number") opts.top = top;
+        chrome.windows.create(opts, (win) => {
+            if (chrome.runtime.lastError) {
+                console.error("[Copilot] Error opening KB window:", chrome.runtime.lastError.message);
+                return;
+            }
+            const tab = win.tabs && win.tabs[0];
+            if (!tab || !tab.id) return;
+            const inject = (tabId) => {
+                chrome.scripting.executeScript({
+                    target: { tabId },
+                    func: (state, type) => {
+                        function clickExact(txt) {
+                            const nodes = Array.from(document.querySelectorAll("a,button,span,div"));
+                            const target = nodes.find(n => n.textContent && n.textContent.trim().toLowerCase() === txt.toLowerCase());
+                            if (target) { target.click(); return true; }
+                            return false;
+                        }
+
+                        function clickStateAnchor(stateName) {
+                            const slug = stateName.replace(/\s+/g, "-");
+                            const sel = `a[href*='/${slug}_']`;
+                            const el = document.querySelector(sel);
+                            if (el) { el.click(); return true; }
+                            return clickExact(stateName);
+                        }
+
+                        let tries = 40;
+                        const run = () => {
+                            if (clickStateAnchor(state)) {
+                                if (type) {
+                                    let typeTries = 40;
+                                    const tryType = () => {
+                                        if (!clickExact(type) && typeTries-- > 0) {
+                                            setTimeout(tryType, 500);
+                                        }
+                                    };
+                                    setTimeout(tryType, 500);
+                                }
+                            } else if (tries-- > 0) {
+                                setTimeout(run, 500);
+                            }
+                        };
+                        run();
+                    },
+                    args: [state, type]
+                });
+            };
+            const listener = (tabId, info) => {
+                if (tabId === tab.id && info.status === "complete") {
+                    chrome.tabs.onUpdated.removeListener(listener);
+                    inject(tabId);
+                }
+            };
+            chrome.tabs.onUpdated.addListener(listener);
+        });
+        return;
+    }
+
     if (message.action === "navigateKbFrame" && message.state && sender.tab) {
         const state = message.state;
         const type = message.orderType || "";
