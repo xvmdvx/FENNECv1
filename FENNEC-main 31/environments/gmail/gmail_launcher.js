@@ -757,8 +757,9 @@
             const dnaBox = document.querySelector('.copilot-dna');
             const summary = document.getElementById('dna-summary');
             if (!dnaBox || !summary) return;
-            if (summary.parentElement !== dnaBox) {
-                dnaBox.appendChild(summary);
+            const dnaBtn = dnaBox.querySelector('#btn-dna');
+            if (summary.parentElement !== dnaBox || (dnaBtn && summary.nextElementSibling !== dnaBtn)) {
+                if (dnaBtn) dnaBox.insertBefore(summary, dnaBtn); else dnaBox.appendChild(summary);
             }
             const compLabel = Array.from(document.querySelectorAll('#copilot-sidebar .section-label'))
                 .find(el => el.textContent.trim().startsWith('COMPANY'));
@@ -870,12 +871,12 @@
                 if (cvv) {
                     const cls = matchColor(cvv);
                     const text = `CVV: ${cvv}`;
-                    tags.push(`<span class="copilot-tag copilot-tag-large ${cls}">${escapeHtml(text)}</span>`);
+                    tags.push(`<span class="copilot-tag ${cls}">${escapeHtml(text)}</span>`);
                 }
                 if (avs) {
                     const cls = matchColor(avs);
                     const text = `AVS: ${avs}`;
-                    tags.push(`<span class="copilot-tag copilot-tag-large ${cls}">${escapeHtml(text)}</span>`);
+                    tags.push(`<span class="copilot-tag ${cls}">${escapeHtml(text)}</span>`);
                 }
                 parts.push(`<div>${tags.join(' ')}</div>`);
             }
@@ -968,8 +969,9 @@
                 summary = document.createElement('div');
                 summary.id = 'dna-summary';
                 summary.style.marginTop = '6px';
-                dnaBox.appendChild(summary);
             }
+            const dnaBtn = dnaBox.querySelector('#btn-dna');
+            if (dnaBtn) dnaBox.insertBefore(summary, dnaBtn); else dnaBox.appendChild(summary);
             summary.innerHTML = `<img src="${chrome.runtime.getURL('fennec_icon.png')}" class="loading-fennec"/>`;
             chrome.storage.local.set({ adyenDnaInfo: null });
             repositionDnaSummary();
@@ -991,7 +993,12 @@
             if (orderBox) orderBox.innerHTML = icon;
             if (dbBox) dbBox.innerHTML = icon;
             if (issueContent) issueContent.innerHTML = icon;
-            if (dnaBox) showDnaLoading();
+            if (dnaBox) {
+                const summary = dnaBox.querySelector('#dna-summary');
+                if (summary) summary.innerHTML = '';
+                chrome.storage.local.set({ adyenDnaInfo: null });
+                repositionDnaSummary();
+            }
             if (issueLabel) {
                 issueLabel.textContent = '';
                 issueLabel.className = 'issue-status-label';
