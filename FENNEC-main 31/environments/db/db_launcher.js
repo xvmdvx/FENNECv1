@@ -1505,7 +1505,6 @@
                 `<div><span class="${raClass}">RA: ${hasRA ? 'Sí' : 'No'}</span> ` +
                 `<span class="${vaClass}">VA: ${hasVA ? 'Sí' : 'No'}</span></div>`
             );
-            companyLines.push('<hr style="border:none; border-top:1px solid #eee; margin:6px 0"/>');
             const compSection = reviewMode
                 ? `
             <div class="white-box" style="margin-bottom:10px">
