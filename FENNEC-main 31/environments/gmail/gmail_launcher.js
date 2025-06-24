@@ -506,12 +506,13 @@
         function getBillingInfo() {
             const box = document.querySelector('#billing-section-box');
             if (!box) return null;
-            const info = { cardholder: '', last4: '', address: '' };
+            const info = { cardholder: '', last4: '', expiry: '', address: '' };
             const divs = box.querySelectorAll(':scope > div');
             if (divs[0]) info.cardholder = divs[0].textContent.trim();
             if (divs[1]) {
                 const parts = divs[1].textContent.split('•').map(s => s.trim());
                 if (parts[1]) info.last4 = parts[1];
+                if (parts[2]) info.expiry = parts[2];
             }
             const addrLink = box.querySelector('.address-wrapper a');
             if (addrLink) info.address = addrLink.getAttribute('data-address') || addrLink.textContent.trim();
@@ -540,6 +541,65 @@
                 cls = 'copilot-tag copilot-tag-red';
             }
             return `<span class="${cls}">${text}</span>`;
+        }
+
+        function buildCardMatchTag(info) {
+            const billing = getBillingInfo();
+            if (!billing) return '';
+            const card = info.payment.card || {};
+            const normalizeName = n => (n || '').toUpperCase().replace(/\s+/g, ' ').trim();
+            const dbName = normalizeName(billing.cardholder);
+            const dnaName = normalizeName(card['Card holder']);
+            const dbDigits = (billing.last4 || '').replace(/\D+/g, '').slice(-4);
+            const dnaDigits = (card['Card number'] || '').replace(/\D+/g, '').slice(-4);
+            const parseExp = d => {
+                if (!d) return '';
+                const digits = d.replace(/\D+/g, '');
+                return digits.length >= 4 ? digits.slice(0, 2) + digits.slice(-2) : digits;
+            };
+            const dbExp = parseExp(billing.expiry);
+            const dnaExp = parseExp(card['Expiry date']);
+
+            let compared = 0;
+            let matches = 0;
+            const mism = [];
+            if (dbName && dnaName) {
+                compared++;
+                if (dbName === dnaName) {
+                    matches++;
+                } else {
+                    mism.push('NAME ✖️');
+                }
+            }
+            if (dbDigits && dnaDigits) {
+                compared++;
+                if (dbDigits === dnaDigits) {
+                    matches++;
+                } else {
+                    mism.push('LAST 4 ✖️');
+                }
+            }
+            if (dbExp && dnaExp) {
+                compared++;
+                if (dbExp === dnaExp) {
+                    matches++;
+                } else {
+                    mism.push('EXP DATE ✖️');
+                }
+            }
+            if (!compared) return '';
+            let text = '';
+            let cls = 'copilot-tag copilot-tag-green';
+            if (matches === compared) {
+                text = 'DB: MATCH';
+            } else if (matches === 0) {
+                text = 'DB: NO MATCH';
+                cls = 'copilot-tag copilot-tag-purple';
+            } else {
+                text = 'DB: PARTIAL (' + mism.join(' ') + ')';
+                cls = 'copilot-tag copilot-tag-purple';
+            }
+            return `<span class="${cls}">${escapeHtml(text)}</span>`;
         }
 
         function renderCopy(text) {
@@ -947,6 +1007,8 @@
                     tags.push(`<span class="copilot-tag ${colorFor(result)}">${escapeHtml(label)}</span>`);
                 }
                 parts.push(`<div>${tags.join(' ')}</div>`);
+                const cardTag = buildCardMatchTag(info);
+                if (cardTag) parts.push(`<div>${cardTag}</div>`);
             }
 
             if (matchTag) {

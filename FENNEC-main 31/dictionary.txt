@@ -48,6 +48,7 @@ Coda API token → Authentication key required for CODA Search
 Coda doc ID → Identifier of the Coda document searched by CODA Search
 Amendment orders → Changes to existing filings processed through the DB
 DNA Match Tag → Label indicating if Billing details agree with the DNA data
+Card Match Tag → Label showing if DB card details match the Adyen card info
 Transaction table → Colored summary of Adyen transactions
 Light Gray Tag → Label color used for Adyen DNA entries in Review Mode (light gray background with black text)
 Knowledge Base overlay → Floating window that shows the Coda Knowledge Base over the DB page
