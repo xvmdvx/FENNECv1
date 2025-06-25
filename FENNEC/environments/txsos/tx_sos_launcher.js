@@ -127,12 +127,18 @@
 
             if (query('select[name="payment_type_id"]')) {
                 log('Selecting payment type');
+                log('Looking for selector select[name="payment_type_id"]');
                 const sel = query('select[name="payment_type_id"]');
+                log('Selector found: ' + Boolean(sel));
                 const opt = Array.from(sel.options).find(o => /client account/i.test(o.textContent));
+                log('Attempting to set Client Account');
                 setValue('select[name="payment_type_id"]', opt ? opt.value : '5');
+                log('Selected option value: ' + sel.value);
                 if (sel.value !== '5') {
+                    log('Client Account not set, will retry');
                     return false;
                 }
+                log('Client Account selected, clicking Continue');
                 click('input[type="submit"][value="Continue"]');
                 return true;
             }
