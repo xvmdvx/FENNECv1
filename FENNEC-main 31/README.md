@@ -53,7 +53,7 @@ information scraped from the current page.
 - Texas SOS pages opened through File Along display the FENNEC sidebar with your current order summaries while the script steps through all fourteen filing screens automatically.
 - Console logs now show each File Along step for easier troubleshooting.
 - File Along retries each step for a few seconds to handle slow page loads.
-- The first time you use File Along Chrome may request permission to access `direct.sos.state.tx.us`. Accept it so the steps can run.
+- File Along no longer prompts for permission to access `direct.sos.state.tx.us`.
 - Classic Mode now displays only the **SEARCH** button in the Gmail sidebar.
 - When Review Mode is enabled a **🩻 XRAY** button runs **SEARCH** and then **DNA** automatically. The **OPEN ORDER** button is hidden. The **SEARCH**, **DNA** and **XRAY** buttons now share one row.
 - CODA Search menu item queries the knowledge base using the Coda API.
