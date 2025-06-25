@@ -74,9 +74,9 @@
         }
 
         function query(sel) {
-            let el = query(sel);
+            let el = document.querySelector(sel);
             if (!el) {
-                const frames = Array.from(document.querySelectorAll('iframe'));
+                const frames = Array.from(document.querySelectorAll("iframe"));
                 for (const frame of frames) {
                     try {
                         const doc = frame.contentDocument || frame.contentWindow.document;
