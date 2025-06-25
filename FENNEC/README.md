@@ -55,6 +55,7 @@ information scraped from the current page.
 - File Along retries each step for up to fifty seconds to handle slow page loads.
 - The script chooses **Client Account** on the payment screen before continuing.
 - The payment step logs the dropdown selector and chosen value before clicking **Continue**.
+- Dropdown selections now simulate mouse events so the page accepts the chosen option.
 - File Along now detects form fields inside iframes so the payment step works
   reliably after login.
 - Field lookups now search nested iframes so the payment dropdown is always
