@@ -369,7 +369,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                     if (btn) {
                                         btn.click();
                                     } else if (form) {
-                                        form.submit();
+                                        form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
                                     } else {
                                         field.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
                                         field.dispatchEvent(new KeyboardEvent("keyup", { key: "Enter", bubbles: true }));
