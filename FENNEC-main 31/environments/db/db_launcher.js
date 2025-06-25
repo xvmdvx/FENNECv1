@@ -598,6 +598,8 @@
                                 }
                             };
                         }
+                        const fileBtn = sidebar.querySelector('#filing-xray');
+                        if (fileBtn) fileBtn.onclick = startFileAlong;
                         if (sessionStorage.getItem('fennecCancelPending') === '1') {
                             openCancelPopup();
                         }
@@ -1640,7 +1642,7 @@
         if (!html) {
             html = `<div style="text-align:center; color:#aaa; margin-top:40px">No se encontró información relevante de la orden.</div>`;
         }
-        html += `<div class="copilot-footer"><button id="filing-xray" class="copilot-button">FILING XRAY</button></div>`;
+        html += `<div class="copilot-footer"><button id="filing-xray" class="copilot-button">🤖 FILE</button></div>`;
 
         const orderInfo = getBasicOrderInfo();
         const sidebarOrderInfo = {
@@ -1879,6 +1881,10 @@
             left,
             top
         });
+    }
+
+    function startFileAlong() {
+        chrome.runtime.sendMessage({ action: 'openFilingWindow', dbUrl: location.href });
     }
 
     function getLastIssueInfo() {
@@ -2232,6 +2238,7 @@ function getLastHoldUser() {
     window.getParentOrderId = getParentOrderId;
     window.diagnoseHoldOrders = diagnoseHoldOrders;
     window.openKbWindow = openKbWindow;
+    window.startFileAlong = startFileAlong;
 
 chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment }) => {
     if (fennecPendingComment) {
