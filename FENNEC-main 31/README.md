@@ -51,6 +51,7 @@ information scraped from the current page.
 - The FILE button now autofills the Texas SOS pages. It logs in using the credentials saved in the Options page, selects entity type, enters the company name and mailing address, completes registered agent and member sections and signs with the organizer.
 - Login fields on the SOSDirect page are cleared before credentials are inserted to avoid leftover text from previous sessions.
 - Texas SOS pages opened through File Along display the FENNEC sidebar with your current order summaries while the script steps through all fourteen filing screens automatically.
+- Console logs now show each File Along step for easier troubleshooting.
 - Classic Mode now displays only the **SEARCH** button in the Gmail sidebar.
 - When Review Mode is enabled a **🩻 XRAY** button runs **SEARCH** and then **DNA** automatically. The **OPEN ORDER** button is hidden. The **SEARCH**, **DNA** and **XRAY** buttons now share one row.
 - CODA Search menu item queries the knowledge base using the Coda API.

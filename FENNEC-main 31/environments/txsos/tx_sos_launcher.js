@@ -7,8 +7,13 @@
         if (bentoMode) document.body.classList.add('fennec-bento-mode');
         chrome.storage.sync.get({ txsosUser: "", txsosPass: "", sidebarWidth: 340 }, creds => {
 
+        function log(step) {
+            console.log("[File Along] " + step);
+        }
+
         function injectSidebar() {
             if (document.getElementById('copilot-sidebar')) return;
+            log('Injecting sidebar');
             const sidebar = document.createElement('div');
             sidebar.id = 'copilot-sidebar';
             sidebar.innerHTML = `
@@ -58,17 +63,23 @@
         }
 
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', injectSidebar);
+            document.addEventListener('DOMContentLoaded', () => {
+                log('DOM ready');
+                injectSidebar();
+            });
         } else {
+            log('DOM ready');
             injectSidebar();
         }
 
         function click(sel) {
+            log('Clicking ' + sel);
             const el = document.querySelector(sel);
             if (el) el.click();
         }
 
         function setValue(sel, value) {
+            log('Setting ' + sel + ' to ' + value);
             const el = document.querySelector(sel);
             if (el) {
                 el.focus();
@@ -83,15 +94,19 @@
         const path = location.pathname;
 
         if (path.includes('/acct/acct-login.asp')) {
+            log('Login page');
             if (creds.txsosUser && creds.txsosPass) {
+                log('Filling credentials');
                 setValue('input[name="client_id"]', creds.txsosUser);
                 setValue('input[name="web_password"], input[name="password"]', creds.txsosPass);
+                log('Submitting login');
                 click('input[type="submit"]');
             }
             return;
         }
 
         if (document.querySelector('select[name="payment_type_id"]')) {
+            log('Selecting payment type');
             setValue('select[name="payment_type_id"]', '5');
             click('input[type="submit"][value="Continue"]');
             return;
@@ -99,29 +114,34 @@
 
         const bizLink = document.querySelector('#navlist a[href*="home-corp.asp"]');
         if (bizLink) {
+            log('Opening business filing page');
             bizLink.click();
             return;
         }
 
         if (document.querySelector('select[name=":Ncorp_type_id"]')) {
+            log('Selecting entity type');
             setValue('select[name=":Ncorp_type_id"]', '6');
             click('input[type="submit"][value="File Document"]');
             return;
         }
 
         if (document.querySelector('select[name=":Nfiling_type_id"]')) {
+            log('Choosing filing type');
             setValue('select[name=":Nfiling_type_id"]', '10601');
             click('input[type="submit"][value="Continue"]');
             return;
         }
 
         if (document.querySelector('input[name=":Scorp_name"]')) {
+            log('Entering company name');
             setValue('input[name=":Scorp_name"]', info.companyName || '');
             click('input[type="submit"][value="Continue"]');
             return;
         }
 
         if (document.querySelector('input[name=":Sinitial_address1IA"]')) {
+            log('Entering initial address');
             setValue('input[name=":Sinitial_address1IA"]', '17350 State Highway 249 Ste 220');
             setValue('input[name=":Sinitial_cityIA"]', 'Houston');
             setValue('input[name=":Sinitial_stateIA"]', 'TX');
@@ -131,6 +151,7 @@
         }
 
         if (document.querySelector('input[name=":Saddress1"]') && document.querySelector('input[name=":Szip_code"]')) {
+            log('Entering registered agent');
             const ra = info.registeredAgent || {};
             if (ra.name) {
                 const parts = ra.name.trim().split(/\s+/);
@@ -152,6 +173,7 @@
         }
 
         if (document.querySelector('input[name=":Nmanagement_type"]')) {
+            log('Setting management type');
             const radio = document.querySelector('input[name=":Nmanagement_type"][value="1"]');
             if (radio) radio.checked = true;
             const addBtn = document.querySelector('input[type="submit"][value="Add Manager/Member"]');
@@ -159,6 +181,7 @@
         }
 
         if (document.querySelector('input[name=":Scity"]') && document.querySelector('input[name=":NidxMO"]')) {
+            log('Adding member info');
             const idx = parseInt(document.querySelector('input[name=":NidxMO"]').value, 10) || 1;
             const member = Array.isArray(info.members) ? info.members[idx - 1] : null;
             if (member) {
@@ -179,6 +202,7 @@
         }
 
         if (document.querySelector('input[type="submit"][value="Add Manager/Member"]')) {
+            log('Handling additional member');
             const nextIdx = document.querySelectorAll('input[name=":NidxMO"]').length + 1;
             if (info.members && info.members.length >= nextIdx) {
                 document.querySelector('input[type="submit"][value="Add Manager/Member"]').click();
@@ -189,11 +213,13 @@
         }
 
         if (document.querySelector('input[name="page_caption"][value="Supplemental Provisions/Information"]')) {
+            log('Skipping provisions');
             const cont = document.querySelector('input[type="submit"][value="Continue"]');
             if (cont) { cont.click(); return; }
         }
 
         if (document.querySelector('input[name="OA_desc"]')) {
+            log('Entering organizer info');
             setValue('input[name=":Slast_name"]', 'DOBSON');
             setValue('input[name=":Sfirst_name"]', 'LOVETTE');
             setValue('input[name=":Saddress1"]', '17350 State Hwy 249 Ste 220');
@@ -205,6 +231,7 @@
         }
 
         if (document.querySelector('input[name=":Sexecution1"]')) {
+            log('Signing execution');
             setValue('input[name=":Sexecution1"]', 'LOVETTE DOBSON');
             const cont = document.querySelector('input[type="submit"][value="Continue"]');
             if (cont) { cont.click(); return; }
