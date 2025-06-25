@@ -1087,6 +1087,7 @@
         const companyRaw = extractSingle('#vcomp .form-body', [
             {name: 'name', label: 'company name'},
             {name: 'stateId', label: 'state id'},
+            {name: 'formationDate', label: 'date of formation'},
             {name: 'state', label: 'state of formation'},
             {name: 'status', label: 'state status'},
             {name: 'purpose', label: 'purpose'},
@@ -1132,6 +1133,7 @@
         const company = companyRaw ? {
             name: companyRaw.name,
             stateId: companyRaw.stateId,
+            formationDate: companyRaw.formationDate,
             state: companyRaw.state,
             status: companyRaw.status || headerStatus,
             purpose: companyRaw.purpose,
@@ -1504,7 +1506,10 @@
                 } else {
                     idHtml += ' ' + renderCopyIcon(company.stateId);
                 }
-                companyLines.push(`<div>${idHtml}</div>`);
+                const dof = currentOrderType !== 'formation' && company.formationDate
+                    ? ` (${escapeHtml(company.formationDate)})`
+                    : '';
+                companyLines.push(`<div>${idHtml}${dof}</div>`);
             }
             companyLines.push(`<div>${renderKb(company.state)}</div>`);
             companyLines.push(addrHtml);
@@ -1644,7 +1649,8 @@
             expedited: isExpeditedOrder(),
             companyName: company ? company.name : null,
             companyId: company ? company.stateId : null,
-            companyState: company ? company.state : null
+            companyState: company ? company.state : null,
+            formationDate: company ? company.formationDate : null
         };
         chrome.storage.local.set({
             sidebarDb: dbSections,
