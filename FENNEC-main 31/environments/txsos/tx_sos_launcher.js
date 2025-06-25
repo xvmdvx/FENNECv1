@@ -1,6 +1,6 @@
 // Automates Texas SOS filing and shows the current DB sidebar.
+// Runs on each TX SOS page to advance through the filing steps.
 (function() {
-    if (window !== window.top) return;
     chrome.storage.local.get({ sidebarOrderInfo: null, sidebarDb: [], lightMode: false, bentoMode: false },
         ({ sidebarOrderInfo, sidebarDb, lightMode, bentoMode }) => {
         const info = sidebarOrderInfo || {};
@@ -246,7 +246,7 @@
 
         let attempts = 0;
         function runSteps() {
-            if (!performSteps() && attempts < 20) {
+            if (!performSteps() && attempts < 50) {
                 attempts++;
                 setTimeout(runSteps, 1000);
             }

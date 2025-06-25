@@ -52,7 +52,7 @@ information scraped from the current page.
 - Login fields on the SOSDirect page are cleared before credentials are inserted to avoid leftover text from previous sessions.
 - Texas SOS pages opened through File Along display the FENNEC sidebar with your current order summaries while the script steps through all fourteen filing screens automatically.
 - Console logs now show each File Along step for easier troubleshooting.
-- File Along retries each step for a few seconds to handle slow page loads.
+- File Along retries each step for up to fifty seconds to handle slow page loads.
 - Step 2 sets the payment method to **Client Account** before continuing.
 - File Along no longer prompts for permission to access `direct.sos.state.tx.us`.
 - Classic Mode now displays only the **SEARCH** button in the Gmail sidebar.
