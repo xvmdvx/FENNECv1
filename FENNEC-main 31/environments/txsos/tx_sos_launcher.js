@@ -109,7 +109,9 @@
 
             if (document.querySelector('select[name="payment_type_id"]')) {
                 log('Selecting payment type');
-                setValue('select[name="payment_type_id"]', '5');
+                const sel = document.querySelector('select[name="payment_type_id"]');
+                const opt = Array.from(sel.options).find(o => /client account/i.test(o.textContent));
+                setValue('select[name="payment_type_id"]', opt ? opt.value : '5');
                 click('input[type="submit"][value="Continue"]');
                 return true;
             }
