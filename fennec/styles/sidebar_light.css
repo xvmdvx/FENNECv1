@@ -1,0 +1,132 @@
+/* Overrides for minimal black and white light mode */
+.fennec-light-mode #copilot-sidebar {
+    background: #fff;
+    color: #000;
+}
+.fennec-light-mode #copilot-sidebar * {
+    color: #000;
+}
+.fennec-light-mode .copilot-header {
+    background: #000;
+    color: #fff !important;
+    border-bottom: 1px solid #777;
+}
+/* Ensure all header text stays white on the black bar */
+.fennec-light-mode .copilot-header,
+.fennec-light-mode .copilot-header * {
+    color: #fff !important;
+}
+.fennec-light-mode .copilot-button {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #777;
+}
+.fennec-light-mode .order-summary-box,
+.fennec-light-mode .intel-summary-box,
+.fennec-light-mode .issue-summary-box,
+.fennec-light-mode #copilot-sidebar .white-box,
+.fennec-light-mode #fennec-diagnose-overlay,
+.fennec-light-mode #fennec-diagnose-overlay .diag-card,
+.fennec-light-mode #fennec-diagnose-overlay .diag-issue {
+    background: #fff;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #fennec-coda-overlay {
+    background: #fff;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #fennec-coda-overlay input {
+    background: #fff;
+    color: #000;
+    border: 1px solid #777;
+}
+.fennec-light-mode #fennec-coda-overlay .coda-result-item a {
+    color: #0000ee;
+}
+.fennec-light-mode .copilot-tag {
+    background-color: #000;
+    color: #fff !important;
+}
+
+/* Keep tags readable inside white boxes */
+.fennec-light-mode #copilot-sidebar .copilot-tag {
+    color: #fff !important;
+}
+
+#dna-summary:empty {
+    display: none;
+}
+
+#copilot-sidebar .white-box .dna-label {
+    color: #000 !important;
+}
+#copilot-sidebar .white-box .dna-label.copilot-tag-black {
+    color: #fff !important;
+}
+
+.fennec-light-mode #fennec-kb-overlay {
+    background: #fff;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #fennec-kb-overlay .kb-close {
+    color: #000;
+}
+
+/* Ensure status labels remain visible */
+.fennec-light-mode #copilot-sidebar .issue-status-label,
+.fennec-light-mode #copilot-sidebar .review-mode-label {
+    color: #fff !important;
+}
+
+.fennec-light-mode #copilot-sidebar .copilot-tag-white {
+    background-color: #fff;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #copilot-sidebar .copilot-tag-lightgray {
+    background-color: #ddd;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #copilot-sidebar .copilot-tag.tx-label {
+    color: #000 !important;
+}
+
+.fennec-light-mode #fennec-diagnose-overlay .diag-order {
+    color: #000;
+}
+.fennec-light-mode .issue-status-active {
+    background-color: #000;
+    color: #fff !important;
+}
+.fennec-light-mode .issue-status-resolved {
+    background-color: #444;
+    color: #fff !important;
+}
+.fennec-light-mode .copilot-copy-icon {
+    color: #000;
+}
+
+/* Ensure header icon stays visible */
+.fennec-light-mode #copilot-close {
+    color: #fff;
+}
+.fennec-light-mode #copilot-clear-tabs {
+    color: #fff;
+}
+
+/* Darken summary text that uses inline styles */
+.fennec-light-mode #order-summary-content,
+.fennec-light-mode #issue-summary-content {
+    color: #000 !important;
+}
+
+/* Use inverted Fennec icon in light mode */
+.fennec-light-mode .copilot-icon,
+.fennec-light-mode #fennec-floating-icon,
+.fennec-light-mode .loading-fennec {
+    filter: brightness(0) invert(1);
+}
