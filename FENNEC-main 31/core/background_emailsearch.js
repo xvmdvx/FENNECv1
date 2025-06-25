@@ -542,10 +542,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === "openFilingWindow") {
+        const origin = "https://direct.sos.state.tx.us/*";
         const txUrl = "https://direct.sos.state.tx.us/acct/acct-login.asp";
-        chrome.windows.create({ url: txUrl, type: "popup" }, (win) => {
-            if (chrome.runtime.lastError) {
-                console.error("[Copilot] Error opening filing window:", chrome.runtime.lastError.message);
+        const openWindow = () => {
+            chrome.windows.create({ url: txUrl, type: "popup" }, (win) => {
+                if (chrome.runtime.lastError) {
+                    console.error("[Copilot] Error opening filing window:", chrome.runtime.lastError.message);
+                }
+            });
+        };
+        chrome.permissions.contains({ origins: [origin] }, (has) => {
+            if (has) {
+                openWindow();
+            } else {
+                chrome.permissions.request({ origins: [origin] }, (granted) => {
+                    if (granted) {
+                        openWindow();
+                    } else if (sender.tab && sender.tab.id) {
+                        chrome.tabs.sendMessage(sender.tab.id, { action: "sosPermissionError" });
+                    }
+                });
             }
         });
         return;
