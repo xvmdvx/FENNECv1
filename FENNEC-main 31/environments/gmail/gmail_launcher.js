@@ -1210,7 +1210,7 @@
             if (document.body.classList.contains('fennec-bento-mode')) {
                 const vid = document.createElement('video');
                 vid.id = 'bento-video';
-                vid.src = chrome.runtime.getURL('BG_HOLO.mp4');
+                vid.src = chrome.runtime.getURL('bg_holo.mp4');
                 vid.muted = true;
                 vid.autoplay = true;
                 vid.playsInline = true;
