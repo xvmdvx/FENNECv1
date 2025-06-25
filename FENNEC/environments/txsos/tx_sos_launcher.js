@@ -100,14 +100,30 @@
         function setValue(sel, value) {
             log('Setting ' + sel + ' to ' + value);
             const el = query(sel);
-            if (el) {
-                el.focus();
-                el.value = "";
+            if (!el) return;
+            el.focus();
+            if (el.tagName === 'SELECT') {
+                const opt = Array.from(el.options).find(o =>
+                    o.value === String(value) || /client account/i.test(o.textContent)
+                );
+                if (opt) {
+                    opt.selected = true;
+                } else {
+                    el.value = value;
+                }
+                el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+                el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+                el.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                el.value = '';
                 el.dispatchEvent(new Event('input', { bubbles: true }));
                 el.value = value;
                 el.dispatchEvent(new Event('input', { bubbles: true }));
                 el.dispatchEvent(new Event('change', { bubbles: true }));
             }
+            el.blur();
         }
 
         function performSteps() {

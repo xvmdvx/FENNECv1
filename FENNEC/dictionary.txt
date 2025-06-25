@@ -64,3 +64,4 @@ Clear Tabs icon → Button that closes all other tabs in the window
 
 File Along → Opens a new window with TX SOS and guides formation filing automatically.
 Organizer → Person or entity that signs and submits the formation documents.
+Client Account → Prepaid balance used for TX SOS filings.
