@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The payment step logs the dropdown selector and value before clicking **Continue** so you can confirm **Client Account** is selected.
+
 ## v0.3 - 2025-06-24
 
 - Fixed Bento Mode positioning so the sidebar displays correctly on Gmail and DB.

@@ -53,7 +53,8 @@ information scraped from the current page.
 - Texas SOS pages opened through File Along display the FENNEC sidebar with your current order summaries while the script steps through all fourteen filing screens automatically.
 - Console logs now show each File Along step for easier troubleshooting.
 - File Along retries each step for up to fifty seconds to handle slow page loads.
- - The script chooses **Client Account** on the payment screen before continuing.
+- The script chooses **Client Account** on the payment screen before continuing.
+- The payment step logs the dropdown selector and chosen value before clicking **Continue**.
 - File Along now detects form fields inside iframes so the payment step works
   reliably after login.
 - Field lookups now search nested iframes so the payment dropdown is always
