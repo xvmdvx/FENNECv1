@@ -72,8 +72,11 @@
             const el = document.querySelector(sel);
             if (el) {
                 el.focus();
+                el.value = "";
+                el.dispatchEvent(new Event('input', { bubbles: true }));
                 el.value = value;
                 el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
             }
         }
 
