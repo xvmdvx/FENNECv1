@@ -54,6 +54,8 @@ information scraped from the current page.
 - Console logs now show each File Along step for easier troubleshooting.
 - File Along retries each step for up to fifty seconds to handle slow page loads.
 - Step 2 sets the payment method to **Client Account** before continuing.
+- File Along now detects form fields inside iframes so the payment step works
+  reliably after login.
 - File Along no longer prompts for permission to access `direct.sos.state.tx.us`.
 - Classic Mode now displays only the **SEARCH** button in the Gmail sidebar.
 - When Review Mode is enabled a **🩻 XRAY** button runs **SEARCH** and then **DNA** automatically. The **OPEN ORDER** button is hidden. The **SEARCH**, **DNA** and **XRAY** buttons now share one row.
