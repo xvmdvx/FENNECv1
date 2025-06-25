@@ -1652,7 +1652,9 @@
             companyName: company ? company.name : null,
             companyId: company ? company.stateId : null,
             companyState: company ? company.state : null,
-            formationDate: company ? company.formationDate : null
+            formationDate: company ? company.formationDate : null,
+            registeredAgent: hasAgentInfo ? { name: agent.name, address: agent.address } : null,
+            members: directors
         };
         chrome.storage.local.set({
             sidebarDb: dbSections,
