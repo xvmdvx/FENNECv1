@@ -56,6 +56,8 @@ information scraped from the current page.
 - Step 2 sets the payment method to **Client Account** before continuing.
 - File Along now detects form fields inside iframes so the payment step works
   reliably after login.
+- Field lookups now search nested iframes so the payment dropdown is always
+  found.
 - Fixed a field lookup bug that caused an endless loop, allowing the login and
   payment steps to complete successfully.
 - File Along no longer prompts for permission to access `direct.sos.state.tx.us`.

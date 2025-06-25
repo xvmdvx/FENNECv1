@@ -73,20 +73,22 @@
             injectSidebar();
         }
 
-        function query(sel) {
-            let el = document.querySelector(sel);
-            if (!el) {
-                const frames = Array.from(document.querySelectorAll("iframe"));
-                for (const frame of frames) {
-                    try {
-                        const doc = frame.contentDocument || frame.contentWindow.document;
-                        if (!doc) continue;
-                        el = doc.querySelector(sel);
-                        if (el) break;
-                    } catch (e) { /* ignore cross-origin frames */ }
-                }
+        // Recursively searches the page and any same-origin iframes for the
+        // first element matching the selector. Handles nested frames so the
+        // payment dropdown is found after login.
+        function query(sel, root = document) {
+            let el = root.querySelector(sel);
+            if (el) return el;
+            const frames = Array.from(root.querySelectorAll("iframe, frame"));
+            for (const frame of frames) {
+                try {
+                    const doc = frame.contentDocument || frame.contentWindow.document;
+                    if (!doc) continue;
+                    el = query(sel, doc);
+                    if (el) return el;
+                } catch (e) { /* ignore cross-origin frames */ }
             }
-            return el;
+            return null;
         }
 
         function click(sel) {
