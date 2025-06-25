@@ -1,8 +1,67 @@
-// Automates early steps of the Texas SOS filing process.
+// Automates Texas SOS filing and shows the current DB sidebar.
 (function() {
-    chrome.storage.local.get({ sidebarOrderInfo: null }, ({ sidebarOrderInfo }) => {
+    chrome.storage.local.get({ sidebarOrderInfo: null, sidebarDb: [], lightMode: false, bentoMode: false },
+        ({ sidebarOrderInfo, sidebarDb, lightMode, bentoMode }) => {
         const info = sidebarOrderInfo || {};
-        chrome.storage.sync.get({ txsosUser: "", txsosPass: "" }, creds => {
+        if (lightMode) document.body.classList.add('fennec-light-mode');
+        if (bentoMode) document.body.classList.add('fennec-bento-mode');
+        chrome.storage.sync.get({ txsosUser: "", txsosPass: "", sidebarWidth: 340 }, creds => {
+
+        function injectSidebar() {
+            if (document.getElementById('copilot-sidebar')) return;
+            const sidebar = document.createElement('div');
+            sidebar.id = 'copilot-sidebar';
+            sidebar.innerHTML = `
+                <div class="copilot-header">
+                    <div class="copilot-title">
+                        <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (v0.3)" />
+                        <span>FENNEC (v0.3)</span>
+                    </div>
+                    <button id="copilot-close">✕</button>
+                </div>
+                <div class="copilot-body" id="copilot-body-content"></div>
+            `;
+            document.body.appendChild(sidebar);
+            if (document.body.classList.contains('fennec-bento-mode')) {
+                const vid = document.createElement('video');
+                vid.id = 'bento-video';
+                vid.src = chrome.runtime.getURL('BG_HOLO.mp4');
+                vid.muted = true;
+                vid.autoplay = true;
+                vid.playsInline = true;
+                vid.loop = false;
+                vid.playbackRate = 0.2;
+                sidebar.prepend(vid);
+                let reverse = false;
+                vid.addEventListener('ended', () => {
+                    reverse = !reverse;
+                    vid.playbackRate = reverse ? -0.2 : 0.2;
+                    vid.currentTime = reverse ? vid.duration - 0.01 : 0.01;
+                    vid.play();
+                });
+            }
+            document.body.style.marginRight = (parseInt(creds.sidebarWidth, 10) || 340) + 'px';
+            const body = document.getElementById('copilot-body-content');
+            if (Array.isArray(sidebarDb) && sidebarDb.length) {
+                body.innerHTML = sidebarDb.join('');
+                attachCommonListeners(body);
+            } else {
+                body.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px;">No DB data.</div>';
+            }
+            const closeBtn = sidebar.querySelector('#copilot-close');
+            if (closeBtn) {
+                closeBtn.onclick = () => {
+                    sidebar.remove();
+                    document.body.style.marginRight = '';
+                };
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', injectSidebar);
+        } else {
+            injectSidebar();
+        }
 
         function click(sel) {
             const el = document.querySelector(sel);

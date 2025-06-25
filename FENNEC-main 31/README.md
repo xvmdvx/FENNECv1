@@ -49,6 +49,7 @@ information scraped from the current page.
 - A Clear Tabs icon closes all other tabs in the current window.
 - DB sidebar formation orders now show a **🤖 FILE** button that opens a new window with the order and the Texas SOS page.
 - The FILE button now autofills the Texas SOS pages. It logs in using the credentials saved in the Options page, selects entity type, enters the company name and mailing address, completes registered agent and member sections and signs with the organizer.
+- Texas SOS pages opened through File Along display the FENNEC sidebar with your current order summaries while the script steps through all fourteen filing screens automatically.
 - Classic Mode now displays only the **SEARCH** button in the Gmail sidebar.
 - When Review Mode is enabled a **🩻 XRAY** button runs **SEARCH** and then **DNA** automatically. The **OPEN ORDER** button is hidden. The **SEARCH**, **DNA** and **XRAY** buttons now share one row.
 - CODA Search menu item queries the knowledge base using the Coda API.
