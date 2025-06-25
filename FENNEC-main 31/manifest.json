@@ -67,6 +67,14 @@
       "js": [
         "environments/adyen/adyen_launcher.js"
       ]
+    },
+    {
+      "matches": [
+        "https://direct.sos.state.tx.us/*"
+      ],
+      "js": [
+        "environments/txsos/tx_sos_launcher.js"
+      ]
     }
   ],
   "web_accessible_resources": [
