@@ -95,7 +95,7 @@
         function performSteps() {
             const path = location.pathname;
 
-            if (path.includes('/acct/acct-login.asp')) {
+            if (path.includes('/acct/acct-login.asp') && document.querySelector('input[name="client_id"]')) {
                 log('Login page');
                 if (creds.txsosUser && creds.txsosPass) {
                     log('Filling credentials');
