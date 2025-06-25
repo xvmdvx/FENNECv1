@@ -74,7 +74,7 @@
         }
 
         function query(sel) {
-            let el = document.querySelector(sel);
+            let el = query(sel);
             if (!el) {
                 const frames = Array.from(document.querySelectorAll('iframe'));
                 for (const frame of frames) {
@@ -111,7 +111,7 @@
         function performSteps() {
             const path = location.pathname;
 
-            if (path.includes('/acct/acct-login.asp') && document.querySelector('input[name="client_id"]')) {
+            if (path.includes('/acct/acct-login.asp') && query('input[name="client_id"]')) {
                 log('Login page');
                 if (creds.txsosUser && creds.txsosPass) {
                     log('Filling credentials');
@@ -123,44 +123,44 @@
                 return true;
             }
 
-            if (document.querySelector('select[name="payment_type_id"]')) {
+            if (query('select[name="payment_type_id"]')) {
                 log('Selecting payment type');
-                const sel = document.querySelector('select[name="payment_type_id"]');
+                const sel = query('select[name="payment_type_id"]');
                 const opt = Array.from(sel.options).find(o => /client account/i.test(o.textContent));
                 setValue('select[name="payment_type_id"]', opt ? opt.value : '5');
                 click('input[type="submit"][value="Continue"]');
                 return true;
             }
 
-        const bizLink = document.querySelector('#navlist a[href*="home-corp.asp"]');
+        const bizLink = query('#navlist a[href*="home-corp.asp"]');
             if (bizLink) {
                 log('Opening business filing page');
                 bizLink.click();
                 return true;
             }
 
-            if (document.querySelector('select[name=":Ncorp_type_id"]')) {
+            if (query('select[name=":Ncorp_type_id"]')) {
                 log('Selecting entity type');
                 setValue('select[name=":Ncorp_type_id"]', '6');
                 click('input[type="submit"][value="File Document"]');
                 return true;
             }
 
-            if (document.querySelector('select[name=":Nfiling_type_id"]')) {
+            if (query('select[name=":Nfiling_type_id"]')) {
                 log('Choosing filing type');
                 setValue('select[name=":Nfiling_type_id"]', '10601');
                 click('input[type="submit"][value="Continue"]');
                 return true;
             }
 
-            if (document.querySelector('input[name=":Scorp_name"]')) {
+            if (query('input[name=":Scorp_name"]')) {
                 log('Entering company name');
                 setValue('input[name=":Scorp_name"]', info.companyName || '');
                 click('input[type="submit"][value="Continue"]');
                 return true;
             }
 
-            if (document.querySelector('input[name=":Sinitial_address1IA"]')) {
+            if (query('input[name=":Sinitial_address1IA"]')) {
                 log('Entering initial address');
                 setValue('input[name=":Sinitial_address1IA"]', '17350 State Highway 249 Ste 220');
                 setValue('input[name=":Sinitial_cityIA"]', 'Houston');
@@ -170,7 +170,7 @@
                 return true;
             }
 
-            if (document.querySelector('input[name=":Saddress1"]') && document.querySelector('input[name=":Szip_code"]')) {
+            if (query('input[name=":Saddress1"]') && query('input[name=":Szip_code"]')) {
                 log('Entering registered agent');
                 const ra = info.registeredAgent || {};
                 if (ra.name) {
@@ -192,17 +192,17 @@
                 return true;
             }
 
-            if (document.querySelector('input[name=":Nmanagement_type"]')) {
+            if (query('input[name=":Nmanagement_type"]')) {
                 log('Setting management type');
-                const radio = document.querySelector('input[name=":Nmanagement_type"][value="1"]');
+                const radio = query('input[name=":Nmanagement_type"][value="1"]');
                 if (radio) radio.checked = true;
-                const addBtn = document.querySelector('input[type="submit"][value="Add Manager/Member"]');
+                const addBtn = query('input[type="submit"][value="Add Manager/Member"]');
                 if (addBtn) { addBtn.click(); return true; }
             }
 
-            if (document.querySelector('input[name=":Scity"]') && document.querySelector('input[name=":NidxMO"]')) {
+            if (query('input[name=":Scity"]') && query('input[name=":NidxMO"]')) {
                 log('Adding member info');
-                const idx = parseInt(document.querySelector('input[name=":NidxMO"]').value, 10) || 1;
+                const idx = parseInt(query('input[name=":NidxMO"]').value, 10) || 1;
                 const member = Array.isArray(info.members) ? info.members[idx - 1] : null;
                 if (member) {
                 const nameParts = (member.name || '').split(/\s+/);
@@ -217,28 +217,28 @@
                     if (cs[2]) setValue('input[name=":Szip_code"]', cs[2]);
                 }
             }
-                const updBtn = document.querySelector('input[type="submit"][value="Update"]');
+                const updBtn = query('input[type="submit"][value="Update"]');
                 if (updBtn) { updBtn.click(); return true; }
             }
 
-            if (document.querySelector('input[type="submit"][value="Add Manager/Member"]')) {
+            if (query('input[type="submit"][value="Add Manager/Member"]')) {
                 log('Handling additional member');
                 const nextIdx = document.querySelectorAll('input[name=":NidxMO"]').length + 1;
                 if (info.members && info.members.length >= nextIdx) {
-                    document.querySelector('input[type="submit"][value="Add Manager/Member"]').click();
+                    query('input[type="submit"][value="Add Manager/Member"]').click();
                     return true;
                 }
-                const cont = document.querySelector('input[type="submit"][value="Continue"]');
+                const cont = query('input[type="submit"][value="Continue"]');
                 if (cont) { cont.click(); return true; }
             }
 
-            if (document.querySelector('input[name="page_caption"][value="Supplemental Provisions/Information"]')) {
+            if (query('input[name="page_caption"][value="Supplemental Provisions/Information"]')) {
                 log('Skipping provisions');
-                const cont = document.querySelector('input[type="submit"][value="Continue"]');
+                const cont = query('input[type="submit"][value="Continue"]');
                 if (cont) { cont.click(); return true; }
             }
 
-            if (document.querySelector('input[name="OA_desc"]')) {
+            if (query('input[name="OA_desc"]')) {
                 log('Entering organizer info');
                 setValue('input[name=":Slast_name"]', 'DOBSON');
                 setValue('input[name=":Sfirst_name"]', 'LOVETTE');
@@ -250,10 +250,10 @@
                 return true;
             }
 
-            if (document.querySelector('input[name=":Sexecution1"]')) {
+            if (query('input[name=":Sexecution1"]')) {
                 log('Signing execution');
                 setValue('input[name=":Sexecution1"]', 'LOVETTE DOBSON');
-                const cont = document.querySelector('input[type="submit"][value="Continue"]');
+                const cont = query('input[type="submit"][value="Continue"]');
                 if (cont) { cont.click(); return true; }
             }
 
