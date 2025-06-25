@@ -9,14 +9,15 @@
     "scripting",
     "tabs"
   ],
-  "host_permissions": [
-    "https://mail.google.com/*",
-    "https://*.incfile.com/incfile/order/detail/*",
-    "https://*.incfile.com/storage/incfile/*",
-    "https://tools.usps.com/*",
-    "https://coda.io/*",
-    "https://ca-live.adyen.com/*"
-  ],
+    "host_permissions": [
+        "https://mail.google.com/*",
+        "https://*.incfile.com/incfile/order/detail/*",
+        "https://*.incfile.com/storage/incfile/*",
+        "https://tools.usps.com/*",
+        "https://coda.io/*",
+        "https://ca-live.adyen.com/*",
+        "https://direct.sos.state.tx.us/*"
+    ],
   "optional_host_permissions": [
     "https://*/*"
   ],
