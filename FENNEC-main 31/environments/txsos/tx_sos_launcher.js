@@ -130,6 +130,7 @@
                 const sel = query('select[name="payment_type_id"]');
                 const opt = Array.from(sel.options).find(o => /client account/i.test(o.textContent));
                 setValue('select[name="payment_type_id"]', opt ? opt.value : '5');
+                // verify Client Account is selected before continuing
                 if (sel.value !== '5') {
                     return false;
                 }
