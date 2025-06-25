@@ -89,7 +89,7 @@
     {
       "resources": [
         "fennec_icon.png",
-        "BG_HOLO.mp4"
+        "bg_holo.mp4"
       ],
       "matches": [
         "<all_urls>"
@@ -111,7 +111,7 @@
   },
   "options_page": "options.html",
   "background": {
-    "service_worker": "core/background_emailsearch.js",
+    "service_worker": "core/background_email_search.js",
     "type": "module"
   }
 }
