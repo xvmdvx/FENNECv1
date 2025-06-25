@@ -541,15 +541,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
     }
 
-    if (message.action === "openFilingWindow" && message.dbUrl) {
-        const dbUrl = message.dbUrl;
-        chrome.windows.create({ url: dbUrl, type: "popup" }, (win) => {
-            if (chrome.runtime.lastError || !win || !win.id) {
-                console.error("[Copilot] Error opening filing window:", chrome.runtime.lastError && chrome.runtime.lastError.message);
-                return;
+    if (message.action === "openFilingWindow") {
+        const txUrl = "https://direct.sos.state.tx.us/acct/acct-login.asp";
+        chrome.windows.create({ url: txUrl, type: "popup" }, (win) => {
+            if (chrome.runtime.lastError) {
+                console.error("[Copilot] Error opening filing window:", chrome.runtime.lastError.message);
             }
-            const txUrl = "https://direct.sos.state.tx.us/acct/acct-login.asp";
-            chrome.tabs.create({ windowId: win.id, url: txUrl, active: true });
         });
         return;
     }
