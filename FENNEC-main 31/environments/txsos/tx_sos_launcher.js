@@ -73,15 +73,31 @@
             injectSidebar();
         }
 
+        function query(sel) {
+            let el = document.querySelector(sel);
+            if (!el) {
+                const frames = Array.from(document.querySelectorAll('iframe'));
+                for (const frame of frames) {
+                    try {
+                        const doc = frame.contentDocument || frame.contentWindow.document;
+                        if (!doc) continue;
+                        el = doc.querySelector(sel);
+                        if (el) break;
+                    } catch (e) { /* ignore cross-origin frames */ }
+                }
+            }
+            return el;
+        }
+
         function click(sel) {
             log('Clicking ' + sel);
-            const el = document.querySelector(sel);
+            const el = query(sel);
             if (el) el.click();
         }
 
         function setValue(sel, value) {
             log('Setting ' + sel + ' to ' + value);
-            const el = document.querySelector(sel);
+            const el = query(sel);
             if (el) {
                 el.focus();
                 el.value = "";
