@@ -688,7 +688,10 @@
                     const idBase = buildSosUrl(storedOrderInfo.companyState, null, 'id');
                     const compId = escapeHtml(storedOrderInfo.companyId);
                     const idLink = idBase ? `<a href="#" class="copilot-sos copilot-link" data-url="${idBase}" data-query="${compId}" data-type="id">${compId}</a>` : compId;
-                    html += `<div>${idLink} ${renderCopyIcon(storedOrderInfo.companyId)}</div>`;
+                    const dof = storedOrderInfo.type && storedOrderInfo.type.toLowerCase() !== 'formation' && storedOrderInfo.formationDate
+                        ? ` (${escapeHtml(storedOrderInfo.formationDate)})`
+                        : '';
+                    html += `<div>${idLink}${dof} ${renderCopyIcon(storedOrderInfo.companyId)}</div>`;
                 }
             }
             if (orderId) html += `<div><b><a href="#" id="order-link" class="order-link">${renderCopy(orderId)}</a> ${renderCopyIcon(orderId)}</b></div>`;
