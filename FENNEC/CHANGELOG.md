@@ -4,6 +4,7 @@
 
 - The payment step logs the dropdown selector and value before clicking **Continue** so you can confirm **Client Account** is selected.
 - Replaced `form.submit()` fallback with a submit event to mimic real clicks.
+- Added a brief delay after selecting the payment type so the page registers **Client Account** reliably.
 
 ## v0.3 - 2025-06-24
 
