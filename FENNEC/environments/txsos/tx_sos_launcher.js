@@ -60,7 +60,7 @@
                 Promise.all([
                     waitFor("input[name='client_id']"),
                     waitFor("input[name='web_password']"),
-                    waitFor("input[type='submit'][name='submit'], input[type='submit'][value='Submit']")
+                    waitFor("input[name='submit'], input[type='submit'], button[type='submit']")
                 ]).then(([userInput, passInput, button]) => {
                     try {
                         if (userInput) {
@@ -74,8 +74,16 @@
                             passInput.dispatchEvent(new Event("input", { bubbles: true }));
                         }
                         if (button && userInput && passInput) {
-                            console.log("[FENNEC TXSOS] Submitting login");
+                            console.log("[FENNEC TXSOS] Submitting login via button");
                             setTimeout(() => button.click(), 300);
+                        } else if (userInput && passInput) {
+                            const form = userInput.closest("form");
+                            if (form) {
+                                console.warn("[FENNEC TXSOS] Button missing; submitting form directly");
+                                setTimeout(() => form.submit(), 300);
+                            } else {
+                                console.error("[FENNEC TXSOS] No login form found");
+                            }
                         }
                     } catch (err) {
                         console.error("[FENNEC TXSOS] Login error", err);
