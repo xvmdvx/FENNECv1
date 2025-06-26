@@ -64,6 +64,8 @@ information scraped from the current page.
 - Fixed a field lookup bug that caused an endless loop, allowing the login and
   payment steps to complete successfully.
 - File Along no longer prompts for permission to access `direct.sos.state.tx.us`.
+- `tx_sos_launcher.js` now uses Puppeteer to test Client Account selection with
+  the sample page `TX_BF_LLC_1.html`.
 - Classic Mode now displays only the **SEARCH** button in the Gmail sidebar.
 - When Review Mode is enabled a **🩻 XRAY** button runs **SEARCH** and then **DNA** automatically. The **OPEN ORDER** button is hidden. The **SEARCH**, **DNA** and **XRAY** buttons now share one row.
 - CODA Search menu item queries the knowledge base using the Coda API.
