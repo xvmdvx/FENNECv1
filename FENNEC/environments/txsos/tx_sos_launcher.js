@@ -1,118 +1,124 @@
-// Autofills the Texas SOS login and payment pages when launched from the DB SB FILE button.
-(function() {
-    chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
-        if (!extensionEnabled) {
-            console.log("[FENNEC] Extension disabled, skipping TX SOS launcher.");
-            return;
-        }
-
-        chrome.storage.sync.get({ txsosUser: "", txsosPass: "" }, ({ txsosUser, txsosPass }) => {
-            const path = location.pathname.toLowerCase();
-            console.log("[FENNEC TXSOS] Path:", path);
-
-            function findElement(selector, root = document, depth = 3) {
-                try {
-                    const el = root.querySelector(selector);
-                    if (el) return el;
-                    if (depth > 0) {
-                        const iframes = root.querySelectorAll("iframe");
-                        for (const frame of iframes) {
-                            try {
-                                const doc = frame.contentDocument;
-                                if (doc) {
-                                    const found = findElement(selector, doc, depth - 1);
-                                    if (found) return found;
-                                }
-                            } catch (e) {
-                                // Ignore cross-origin frames
-                            }
-                        }
-                    }
-                } catch (e) {}
-                return null;
-            }
-
-            function waitFor(selector, timeout = 50000) {
-                return new Promise(resolve => {
-                    const start = Date.now();
-                    (function check() {
-                        const el = findElement(selector);
-                        if (el) {
-                            resolve(el);
-                        } else if (Date.now() - start >= timeout) {
-                            resolve(null);
-                        } else {
-                            setTimeout(check, 500);
-                        }
-                    })();
-                });
-            }
-
-            function fillLogin() {
-                if (!txsosUser || !txsosPass) {
-                    console.warn("[FENNEC TXSOS] Missing credentials");
-                    return;
-                }
-                console.log("[FENNEC TXSOS] Filling login form");
-                Promise.all([
-                    waitFor("input[name='client_id']"),
-                    waitFor("input[name='web_password']"),
-                    waitFor("input[type='submit'][name='submit'], input[type='submit'][value='Submit']")
-                ]).then(([userInput, passInput, button]) => {
-                    try {
-                        if (userInput) {
-                            userInput.focus();
-                            userInput.value = txsosUser;
-                            userInput.dispatchEvent(new Event("input", { bubbles: true }));
-                        }
-                        if (passInput) {
-                            passInput.focus();
-                            passInput.value = txsosPass;
-                            passInput.dispatchEvent(new Event("input", { bubbles: true }));
-                        }
-                        if (button && userInput && passInput) {
-                            console.log("[FENNEC TXSOS] Submitting login");
-                            setTimeout(() => button.click(), 300);
-                        }
-                    } catch (err) {
-                        console.error("[FENNEC TXSOS] Login error", err);
-                    }
-                });
-            }
-
-            function selectPayment() {
-                waitFor("select[name='payment_type_id']").then(dropdown => {
-                    if (!dropdown) return;
-                    try {
-                        console.log("[FENNEC TXSOS] Selecting Client Account");
-                        dropdown.value = "5";
-                        dropdown.dispatchEvent(new Event("change", { bubbles: true }));
-                        waitFor("input[type='submit'][name='Submit'], input[type='submit'][value='Continue']")
-                            .then(btn => {
-                                if (btn) {
-                                    console.log("[FENNEC TXSOS] Continuing to next step");
-                                    setTimeout(() => btn.click(), 300);
-                                }
-                            });
-                    } catch (err) {
-                        console.error("[FENNEC TXSOS] Payment step error", err);
-                    }
-                });
-            }
-
-            if (path.includes("acct-login.asp")) {
-                if (document.readyState === "loading") {
-                    document.addEventListener("DOMContentLoaded", fillLogin);
-                } else {
-                    fillLogin();
-                }
-            } else {
-                if (document.readyState === "loading") {
-                    document.addEventListener("DOMContentLoaded", selectPayment);
-                } else {
-                    selectPayment();
-                }
-            }
-        });
-    });
-})();
+diff --git a/FENNEC/environments/txsos/tx_sos_launcher.js b/FENNEC/environments/txsos/tx_sos_launcher.js
+index 74c358ea31e5d5e807a10c3acc171e57868544c8..53ff9cd2dad606c371115e7a9eef9b0c6a3c4819 100644
+--- a/FENNEC/environments/txsos/tx_sos_launcher.js
++++ b/FENNEC/environments/txsos/tx_sos_launcher.js
+@@ -1 +1,118 @@
+-rewrite.
++// Autofills the Texas SOS login and payment pages when launched from the DB SB FILE button.
++(function() {
++    chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
++        if (!extensionEnabled) {
++            console.log("[FENNEC] Extension disabled, skipping TX SOS launcher.");
++            return;
++        }
++
++        chrome.storage.sync.get({ txsosUser: "", txsosPass: "" }, ({ txsosUser, txsosPass }) => {
++            const path = location.pathname.toLowerCase();
++            console.log("[FENNEC TXSOS] Path:", path);
++
++            function findElement(selector, root = document, depth = 3) {
++                try {
++                    const el = root.querySelector(selector);
++                    if (el) return el;
++                    if (depth > 0) {
++                        const iframes = root.querySelectorAll("iframe");
++                        for (const frame of iframes) {
++                            try {
++                                const doc = frame.contentDocument;
++                                if (doc) {
++                                    const found = findElement(selector, doc, depth - 1);
++                                    if (found) return found;
++                                }
++                            } catch (e) {
++                                // Ignore cross-origin frames
++                            }
++                        }
++                    }
++                } catch (e) {}
++                return null;
++            }
++
++            function waitFor(selector, timeout = 50000) {
++                return new Promise(resolve => {
++                    const start = Date.now();
++                    (function check() {
++                        const el = findElement(selector);
++                        if (el) {
++                            resolve(el);
++                        } else if (Date.now() - start >= timeout) {
++                            resolve(null);
++                        } else {
++                            setTimeout(check, 500);
++                        }
++                    })();
++                });
++            }
++
++            function fillLogin() {
++                if (!txsosUser || !txsosPass) {
++                    console.warn("[FENNEC TXSOS] Missing credentials");
++                    return;
++                }
++                console.log("[FENNEC TXSOS] Filling login form");
++                Promise.all([
++                    waitFor("input[name='client_id']"),
++                    waitFor("input[name='web_password']"),
++                    waitFor("input[type='submit'][name='submit'], input[type='submit'][value='Submit']")
++                ]).then(([userInput, passInput, button]) => {
++                    try {
++                        if (userInput) {
++                            userInput.focus();
++                            userInput.value = txsosUser;
++                            userInput.dispatchEvent(new Event("input", { bubbles: true }));
++                        }
++                        if (passInput) {
++                            passInput.focus();
++                            passInput.value = txsosPass;
++                            passInput.dispatchEvent(new Event("input", { bubbles: true }));
++                        }
++                        if (button && userInput && passInput) {
++                            console.log("[FENNEC TXSOS] Submitting login");
++                            setTimeout(() => button.click(), 300);
++                        }
++                    } catch (err) {
++                        console.error("[FENNEC TXSOS] Login error", err);
++                    }
++                });
++            }
++
++            function selectPayment() {
++                waitFor("select[name='payment_type_id']").then(dropdown => {
++                    if (!dropdown) return;
++                    try {
++                        console.log("[FENNEC TXSOS] Selecting Client Account");
++                        dropdown.value = "5";
++                        dropdown.dispatchEvent(new Event("change", { bubbles: true }));
++                        waitFor("input[type='submit'][name='Submit'], input[type='submit'][value='Continue']")
++                            .then(btn => {
++                                if (btn) {
++                                    console.log("[FENNEC TXSOS] Continuing to next step");
++                                    setTimeout(() => btn.click(), 300);
++                                }
++                            });
++                    } catch (err) {
++                        console.error("[FENNEC TXSOS] Payment step error", err);
++                    }
++                });
++            }
++
++            if (path.includes("acct-login.asp")) {
++                if (document.readyState === "loading") {
++                    document.addEventListener("DOMContentLoaded", fillLogin);
++                } else {
++                    fillLogin();
++                }
++            } else {
++                if (document.readyState === "loading") {
++                    document.addEventListener("DOMContentLoaded", selectPayment);
++                } else {
++                    selectPayment();
++                }
++            }
++        });
++    });
++})();
