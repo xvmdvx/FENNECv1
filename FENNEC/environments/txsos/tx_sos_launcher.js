@@ -33,13 +33,16 @@
             }
 
             function waitFor(selector, timeout = 50000) {
+                console.log("[FENNEC TXSOS] Waiting for", selector);
                 return new Promise(resolve => {
                     const start = Date.now();
                     (function check() {
                         const el = findElement(selector);
                         if (el) {
+                            console.log("[FENNEC TXSOS] Found", selector);
                             resolve(el);
                         } else if (Date.now() - start >= timeout) {
+                            console.warn("[FENNEC TXSOS] Timeout waiting for", selector);
                             resolve(null);
                         } else {
                             setTimeout(check, 500);

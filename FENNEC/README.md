@@ -64,6 +64,8 @@ information scraped from the current page.
   found.
 - Fixed a field lookup bug that caused an endless loop, allowing the login and
   payment steps to complete successfully.
+ - Timeouts waiting for form fields now log a warning so you can see exactly
+   where File Along stops.
 - File Along no longer prompts for permission to access `direct.sos.state.tx.us`.
 - `tx_sos_launcher.js` now uses Puppeteer to test Client Account selection with the sample page `TX_BF_LLC_1.html`.
 - `tx_sos_puppeteer.js` automates the full Texas SOS filing process with Puppeteer.
