@@ -66,3 +66,4 @@ File Along → Opens a new window with TX SOS and guides formation filing automa
 Organizer → Person or entity that signs and submits the formation documents.
 Client Account → Prepaid balance used for TX SOS filings.
 Puppeteer → Node.js library for automated browser control
+TX SOS Puppeteer script → Node script that automates the full Texas formation filing.
