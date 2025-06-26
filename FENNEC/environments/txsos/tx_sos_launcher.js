@@ -80,20 +80,39 @@
                 });
             }
 
+            function setDropdownValue(el, value) {
+                if (!el) return;
+                const opt = Array.from(el.options).find(o =>
+                    o.value === String(value) || /client account/i.test(o.textContent)
+                );
+                if (opt) {
+                    opt.selected = true;
+                } else {
+                    el.value = value;
+                }
+                ["mousedown", "mouseup", "click"].forEach(evt =>
+                    el.dispatchEvent(new MouseEvent(evt, { bubbles: true }))
+                );
+                el.dispatchEvent(new Event("input", { bubbles: true }));
+                el.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+
             function selectPayment() {
                 waitFor("select[name='payment_type_id']").then(dropdown => {
                     if (!dropdown) return;
                     try {
                         console.log("[FENNEC TXSOS] Selecting Client Account");
-                        dropdown.value = "5";
-                        dropdown.dispatchEvent(new Event("change", { bubbles: true }));
-                        waitFor("input[type='submit'][name='Submit'], input[type='submit'][value='Continue']")
-                            .then(btn => {
-                                if (btn) {
-                                    console.log("[FENNEC TXSOS] Continuing to next step");
-                                    setTimeout(() => btn.click(), 300);
-                                }
-                            });
+                        setDropdownValue(dropdown, "5");
+                        setTimeout(() => {
+                            console.log("[FENNEC TXSOS] Option after set:", dropdown.value);
+                            waitFor("input[type='submit'][name='Submit'], input[type='submit'][value='Continue']")
+                                .then(btn => {
+                                    if (btn) {
+                                        console.log("[FENNEC TXSOS] Continuing to next step");
+                                        setTimeout(() => btn.click(), 300);
+                                    }
+                                });
+                        }, 300);
                     } catch (err) {
                         console.error("[FENNEC TXSOS] Payment step error", err);
                     }
