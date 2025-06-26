@@ -69,8 +69,8 @@ information scraped from the current page.
 - If the login submit button can't be located, File Along now submits the form
   directly.
 - File Along no longer prompts for permission to access `direct.sos.state.tx.us`.
-- `tx_sos_launcher.js` now uses Puppeteer to test Client Account selection with the sample page `TX_BF_LLC_1.html`.
-- `tx_sos_puppeteer.js` automates the full Texas SOS filing process with Puppeteer.
+- Use `tx_sos_launcher.js` with Puppeteer and the sample page `TX_BF_LLC_1.html` to confirm the **Client Account** dropdown works.
+- Run `tx_sos_puppeteer.js` for the full Texas SOS filing automation.
 - Classic Mode now displays only the **SEARCH** button in the Gmail sidebar.
 - When Review Mode is enabled a **🩻 XRAY** button runs **SEARCH** and then **DNA** automatically. The **OPEN ORDER** button is hidden. The **SEARCH**, **DNA** and **XRAY** buttons now share one row.
 - CODA Search menu item queries the knowledge base using the Coda API.
