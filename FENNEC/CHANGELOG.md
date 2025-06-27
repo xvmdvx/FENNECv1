@@ -12,6 +12,8 @@
   communicating with the local server.
 - Friendly error message now appears if the Mistral service is unavailable and
   includes a **Retry** button.
+- The background script strips the `Origin` header so the local server accepts
+  Mistral requests without returning **403**.
 
 ## v0.3 - 2025-06-24
 

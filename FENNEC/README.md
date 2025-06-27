@@ -133,6 +133,8 @@ The Mistral Box sends prompts to a local [Ollama](https://ollama.ai) server.
 Start Ollama so the API is reachable at `http://127.0.0.1:11434/api/generate`.
 Responses from that endpoint appear below the REFRESH button.
 The requests are sent through the background script so CORS errors do not occur.
+The extension removes the `Origin` header from these requests so Ollama accepts
+them without additional configuration.
 If the chat displays **Mistral service unavailable. Ensure Ollama is running.**
 start or restart Ollama and click **Retry** in the chat box.
 

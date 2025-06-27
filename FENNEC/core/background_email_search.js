@@ -1,4 +1,15 @@
 // Background worker handling tab management and other extension messages
+// Strip the Origin header when contacting the local Mistral API to avoid
+// 403 responses from Ollama's CORS checks.
+chrome.webRequest.onBeforeSendHeaders.addListener(
+    details => {
+        const headers = details.requestHeaders.filter(h => h.name.toLowerCase() !== "origin");
+        return { requestHeaders: headers };
+    },
+    { urls: ["http://127.0.0.1:11434/*"] },
+    ["blocking", "requestHeaders"]
+);
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "openTab" && message.url) {
         console.log("[Copilot] Forzando apertura de una pestaña:", message.url);
