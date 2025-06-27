@@ -10,6 +10,8 @@
   `http://localhost:11434/api/generate`.
 - Requests route through the background script to avoid CORS errors when
   communicating with the local server.
+- Friendly error message now appears if the Mistral service is unavailable and
+  includes a **Retry** button.
 
 ## v0.3 - 2025-06-24
 
