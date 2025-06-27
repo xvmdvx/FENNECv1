@@ -596,6 +596,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
     }
 
+    if (message.action === "mistralGenerate" && message.prompt) {
+        const body = {
+            model: "mistral",
+            prompt: message.prompt,
+            stream: false
+        };
+        fetch("http://localhost:11434/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        })
+            .then(r => r.json())
+            .then(j => sendResponse({ text: j.response || "" }))
+            .catch(err => {
+                console.warn("[Copilot] Mistral fetch error:", err);
+                sendResponse({ text: "Error" });
+            });
+        return true;
+    }
+
     if (message.action === "refocusTab") {
         chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
             if (fennecReturnTab) {
