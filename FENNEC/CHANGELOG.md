@@ -6,6 +6,8 @@
 - Replaced `form.submit()` fallback with a submit event to mimic real clicks.
 - Added a brief delay after selecting the payment type so the page registers **Client Account** reliably.
 - Fixed the Mistral chat box disappearing after loading the order summary.
+- The Mistral Box now sends prompts to a local Ollama server at
+  `http://localhost:11434/api/generate`.
 
 ## v0.3 - 2025-06-24
 

@@ -69,3 +69,4 @@ Puppeteer → Node.js library for automated browser control
 TX SOS Puppeteer script → Node script that automates the full Texas formation filing.
 Mistral → Local AI model used for chat guidance
 Mistral Box → Chat area below REFRESH button
+Ollama → Local server running the Mistral API
