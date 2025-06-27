@@ -132,6 +132,7 @@ GENERAL FEATURES:
 The Mistral Box sends prompts to a local [Ollama](https://ollama.ai) server.
 Start Ollama so the API is reachable at `http://localhost:11434/api/generate`.
 Responses from that endpoint appear below the REFRESH button.
+The requests are sent through the background script so CORS errors do not occur.
 
 ## Development
 

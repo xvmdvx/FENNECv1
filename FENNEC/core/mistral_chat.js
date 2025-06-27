@@ -2,18 +2,15 @@
 // Provides a simple chat interface using a local Mistral model if available.
 
 function sendToMistral(prompt) {
-    const body = {
-        model: "mistral",
-        prompt,
-        stream: false
-    };
-    return fetch("http://localhost:11434/api/generate", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(body)
-    })
-        .then(r => r.json())
-        .then(j => j.response || "");
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ action: "mistralGenerate", prompt }, resp => {
+            if (chrome.runtime.lastError || !resp) {
+                reject(chrome.runtime.lastError || new Error("No response"));
+            } else {
+                resolve(resp.text || "");
+            }
+        });
+    });
 }
 
 function initMistralChat() {
