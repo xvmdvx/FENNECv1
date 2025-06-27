@@ -602,7 +602,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             prompt: message.prompt,
             stream: false
         };
-        fetch("http://localhost:11434/api/generate", {
+        fetch("http://127.0.0.1:11434/api/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body)
