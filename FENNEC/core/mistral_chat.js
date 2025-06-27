@@ -30,7 +30,11 @@ function initMistralChat() {
         log.scrollTop = log.scrollHeight;
     }
 
-    async function handleSend() {
+    async function handleSend(event) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
         const text = input.value.trim();
         if (!text) return;
         appendMessage(text, "user");
@@ -46,6 +50,6 @@ function initMistralChat() {
 
     sendBtn.addEventListener("click", handleSend);
     input.addEventListener("keypress", e => {
-        if (e.key === "Enter") handleSend();
+        if (e.key === "Enter") handleSend(e);
     });
 }
