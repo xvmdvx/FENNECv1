@@ -1651,6 +1651,16 @@
             html = `<div style="text-align:center; color:#aaa; margin-top:40px">No se encontró información relevante de la orden.</div>`;
         }
         html += `<div class="copilot-footer"><button id="filing-xray" class="copilot-button">🤖 FILE</button></div>`;
+        html += `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>`;
+        html += `
+        <div id="mistral-chat" class="mistral-box">
+            <div id="mistral-log" class="mistral-log"></div>
+            <div class="mistral-input-row">
+                <input id="mistral-input" type="text" placeholder="Ask Mistral..." />
+                <button id="mistral-send" class="copilot-button">Send</button>
+            </div>
+        </div>
+        <div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>`;
 
         const orderInfo = getBasicOrderInfo();
         const sidebarOrderInfo = {
@@ -1675,6 +1685,7 @@
             body.innerHTML = html;
             if (typeof initQuickSummary === 'function') initQuickSummary();
             attachCommonListeners(body);
+            initMistralChat();
             updateReviewDisplay();
         }
     }
