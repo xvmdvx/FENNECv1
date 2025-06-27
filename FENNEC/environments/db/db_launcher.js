@@ -427,6 +427,13 @@
                             <div class="copilot-footer">
                                 <button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button>
                             </div>
+                            <div id="mistral-chat" class="mistral-box">
+                                <div id="mistral-log" class="mistral-log"></div>
+                                <div class="mistral-input-row">
+                                    <input id="mistral-input" type="text" placeholder="Ask Mistral..." />
+                                    <button id="mistral-send" class="copilot-button">Send</button>
+                                </div>
+                            </div>
                             <div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
                         </div>
                     `;
@@ -600,6 +607,7 @@
                         }
                         const fileBtn = sidebar.querySelector('#filing-xray');
                         if (fileBtn) fileBtn.onclick = startFileAlong;
+                        initMistralChat();
                         if (sessionStorage.getItem('fennecCancelPending') === '1') {
                             openCancelPopup();
                         }
