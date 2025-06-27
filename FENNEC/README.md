@@ -128,6 +128,11 @@ GENERAL FEATURES:
 5. Open the extension **Options** from the menu or the Extensions page to set a default sidebar width and Review Mode.
 
 
+## Local Mistral integration
+The Mistral Box sends prompts to a local [Ollama](https://ollama.ai) server.
+Start Ollama so the API is reachable at `http://localhost:11434/api/generate`.
+Responses from that endpoint appear below the REFRESH button.
+
 ## Development
 
 This repository now includes a minimal `package.json` to simplify future testing and build automation. The `npm test` command prints manual testing steps.

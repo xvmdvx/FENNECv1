@@ -1,9 +1,19 @@
-// Chat UI and Mistral placeholder integration for FENNEC.
-// Provides a simple chat interface using the local Mistral model if available.
+// Chat UI and Mistral integration for FENNEC.
+// Provides a simple chat interface using a local Mistral model if available.
 
 function sendToMistral(prompt) {
-    // Placeholder for local model inference. Replace with actual model call.
-    return Promise.resolve("Mistral model not available.");
+    const body = {
+        model: "mistral",
+        prompt,
+        stream: false
+    };
+    return fetch("http://localhost:11434/api/generate", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(body)
+    })
+        .then(r => r.json())
+        .then(j => j.response || "");
 }
 
 function initMistralChat() {
