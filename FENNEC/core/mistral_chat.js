@@ -4,8 +4,8 @@
 function sendToMistral(prompt) {
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({ action: "mistralGenerate", prompt }, resp => {
-            if (chrome.runtime.lastError || !resp) {
-                reject(chrome.runtime.lastError || new Error("No response"));
+            if (chrome.runtime.lastError || !resp || resp.text === "Error") {
+                reject(chrome.runtime.lastError || new Error("Fetch failed"));
             } else {
                 resolve(resp.text || "");
             }
@@ -20,22 +20,34 @@ function initMistralChat() {
     const sendBtn = document.getElementById("mistral-send");
     const log = document.getElementById("mistral-log");
 
-    function appendMessage(text, who) {
+    function appendMessage(text, who, options) {
         const div = document.createElement("div");
         div.className = "mistral-msg " + who;
         div.textContent = text;
+        if (options && options.retry) {
+            const btn = document.createElement("button");
+            btn.textContent = "Retry";
+            btn.className = "copilot-button";
+            btn.style.marginLeft = "6px";
+            btn.addEventListener("click", () => {
+                div.remove();
+                handleSend(null, options.prompt);
+            });
+            div.appendChild(document.createTextNode(" "));
+            div.appendChild(btn);
+        }
         log.appendChild(div);
         div.style.opacity = "0";
         requestAnimationFrame(() => { div.style.opacity = "1"; });
         log.scrollTop = log.scrollHeight;
     }
 
-    async function handleSend(event) {
+    async function handleSend(event, preset) {
         if (event) {
             event.preventDefault();
             event.stopPropagation();
         }
-        const text = input.value.trim();
+        const text = (preset !== undefined ? preset : input.value).trim();
         if (!text) return;
         appendMessage(text, "user");
         input.value = "";
@@ -44,7 +56,7 @@ function initMistralChat() {
             appendMessage(resp, "ai");
         } catch (e) {
             console.error("[Mistral]", e);
-            appendMessage("Error", "ai");
+            appendMessage("Mistral service unavailable. Ensure Ollama is running.", "ai", { retry: true, prompt: text });
         }
     }
 

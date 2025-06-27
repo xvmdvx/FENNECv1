@@ -70,3 +70,4 @@ TX SOS Puppeteer script → Node script that automates the full Texas formation 
 Mistral → Local AI model used for chat guidance
 Mistral Box → Chat area below REFRESH button
 Ollama → Local server running the Mistral API
+Retry button → Resends a prompt when the Mistral service is unavailable
