@@ -8,8 +8,7 @@
     "activeTab",
     "scripting",
     "tabs",
-    "webRequest",
-    "webRequestBlocking"
+    "declarativeNetRequest"
   ],
     "host_permissions": [
         "https://mail.google.com/*",

@@ -1,14 +1,25 @@
 // Background worker handling tab management and other extension messages
-// Strip the Origin header when contacting the local Mistral API to avoid
-// 403 responses from Ollama's CORS checks.
-chrome.webRequest.onBeforeSendHeaders.addListener(
-    details => {
-        const headers = details.requestHeaders.filter(h => h.name.toLowerCase() !== "origin");
-        return { requestHeaders: headers };
-    },
-    { urls: ["http://127.0.0.1:11434/*"] },
-    ["blocking", "requestHeaders"]
-);
+// Use a declarative rule to strip the Origin header from local Mistral API
+// requests so Ollama accepts them without CORS errors.
+function registerMistralRule() {
+    chrome.declarativeNetRequest.updateDynamicRules({
+        removeRuleIds: [1],
+        addRules: [{
+            id: 1,
+            priority: 1,
+            action: {
+                type: "modifyHeaders",
+                requestHeaders: [{ header: "origin", operation: "remove" }]
+            },
+            condition: {
+                urlFilter: "http://127.0.0.1:11434/",
+                resourceTypes: ["xmlhttprequest"]
+            }
+        }]
+    });
+}
+
+registerMistralRule();
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "openTab" && message.url) {
