@@ -1,17 +1,17 @@
 # FENNEC (v0.3)
 
-FENNEC's principal function is injecting a SIDEBAR (SB), as a navigation companion, that exctracts information from relevant enviroemts and displays it in a reordered manner and to improve agents productivity and reduce mental stress. Each enviroment has its unique layout depending on the necessities of the type.
+FENNEC's principal function is injecting a SIDEBAR (SB) as a navigation companion that extracts information from relevant environments and displays it in a reordered manner to improve agents' productivity and reduce mental stress. Each environment has its unique layout depending on the type's necessities.
 
 ## Features
 
 SIDEBAR HEADER:
-It remains constant throuhgout all layouts, unless IMPORTANT restriction is added.
-   Left: Hamburguer Icon/Menu. This floater contains QUICK ACTIONS.
+It remains constant throughout all layouts, unless an IMPORTANT restriction is added.
+   Left: Hamburger Icon/Menu. This floater contains QUICK ACTIONS.
    Center: Icon, App name and version in parentheses.
-   Right: Icon, clean window action. Close SB button.
+   Right: Icon for clean window action. Close SB button.
 
 CLASSIC MODE:
-This is the default and most basic layout for the sidebar. It shows in Gmail (GM) and DB.
+This is the default and most basic layout for the sidebar. It appears in Gmail (GM) and DB.
 
 MAIN (BUSINESS FORMATION ORDERS: SILVER, GOLD, PLATINUM)
    DB:
@@ -51,7 +51,7 @@ MISC (ALL NON-BUSINESS FORMATION ORDERS)
       End: [🔄 REFRESH] button centered.
 
 REVIEW MODE:
-This is a detailed mode for the Revenue Assurance team to assist on the order review step.
+This is a detailed mode for the Revenue Assurance team to assist with the order review step.
 
 MAIN:
    DB:
@@ -64,7 +64,7 @@ MAIN:
    GM:
       Title: [📧 SEARCH], [🧬 DNA] & [🩻 XRAY] buttons centered.
       1st box: ADYEN's DNA summary
-      2nd box: COMPANY summary (with re-estructured QUICK SUMMARY contained in same box)
+      2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
       3rd box: CLIENT summary
       4th box: BILLING summary
       5th box: Issue summary
@@ -83,8 +83,8 @@ MISC:
       End: [🤖 FILE] Button: Centered.
    GM:
       Title: [📧 SEARCH], [🧬 DNA] & [🩻 XRAY] buttons centered.
-      1st box: ADYEN's DNA summary (Only if DNA or XRAY have been triggered)
-      2nd box: COMPANY summary (with re-estructured QUICK SUMMARY contained in same box)
+      1st box: ADYEN's DNA summary (only if DNA or XRAY have been triggered)
+      2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
       3rd box: CLIENT summary
       4th box: BILLING summary
       5th box: Issue summary
@@ -96,14 +96,14 @@ ICONS/BUTTONS/FUNCTIONS:
    1. Gmail Search with Order Number, Customer Email, Customer Name. 
    2. Order in DB
 🗑 CLEAR TABS: Closes all tabs, except the one active, in current window.
-🔄 Refresh: Updates sidebar information instantly with active tab extracted information.
-🧬 DNA: Opens order payment information in Adyen and exctracts relevant information from 2 tabs:
+🔄 Refresh: Updates sidebar information instantly with information extracted from the active tab.
+🧬 DNA: Opens order payment information in Adyen and extracts relevant information from two tabs:
    1. Payment Details
    2. DNA
 
-   Focus is regained to original email once information is retrieved.
-🩻 XRAY: Runs SEARCH and DNA operations, one after the other. 
-   It regains focus on original email at the end.
+   Focus returns to the original email once information is retrieved.
+🩻 XRAY: Runs SEARCH and DNA operations one after the other.
+   Focus also returns to the original email at the end.
 🤖 FILE: Automator that opens and fills the SOS filing process.
 
 GENERAL FEATURES:
@@ -132,7 +132,7 @@ GENERAL FEATURES:
 This repository now includes a minimal `package.json` to simplify future testing and build automation. The `npm test` command prints manual testing steps.
 
 ### Manual testing
-Rest assured all Manual testing has been completed when reporting bugs or malfunctions.
+Rest assured that all manual testing has been completed when reporting bugs or malfunctions.
 The `manual-test.js` script prints a checklist for manually verifying the extension. For a complete checklist see [manual-test.js](manual-test.js). 
 
 ## Development notes
