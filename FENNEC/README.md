@@ -21,7 +21,8 @@ MAIN (BUSINESS FORMATION ORDERS: SILVER, GOLD, PLATINUM)
       3rd box: MEMBERS (LLC) or DIRECTORS (CORP, NPROFIT)
       4th box: SHAREHOLDERS (CORP, NPROFIT)
       5th box: Officers (CORP, NPROFIT)
-      End: [🤖 FILE] button centered.
+      End: [🤖 FILE] button centered followed by [🔄 REFRESH].
+      Mistral Box: Chat interface under REFRESH.
    GM:
       Title: [📧 SEARCH] button centered.
       1st box: COMPANY summary

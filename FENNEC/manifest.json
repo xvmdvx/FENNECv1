@@ -45,6 +45,7 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/mistral_chat.js",
         "environments/db/db_launcher.js"
       ],
       "css": [
@@ -89,7 +90,8 @@
     {
       "resources": [
         "fennec_icon.png",
-        "bg_holo.mp4"
+        "bg_holo.mp4",
+        "mistral-7b-instruct-v0.1.Q4_K_M.gguf"
       ],
       "matches": [
         "<all_urls>"
