@@ -117,6 +117,7 @@ ICONS/BUTTONS/FUNCTIONS:
 GENERAL FEATURES:
 - Clicking COMPANY NAME opens the SOS search.
 - Clicking the STATE ID in the sidebar opens the Coda Knowledge Base in a popup window covering about 70% of the page.
+- 🩺 DIAGNOSE overlay lists hold orders from the Family Tree and now displays all child orders.
 
 ## Known limitations
 - The scripts rely on the browser DOM provided by Chrome.
