@@ -1318,7 +1318,9 @@
             .map(li => getText(li).toLowerCase());
 
         // Registered Agent subscription status from #vagent section
-        const hasRA = /^yes/i.test(agent.status || '');
+        const hasRA = /^yes/i.test(agent.status || "");
+        const raExpDate = agent.expiration ? parseDate(agent.expiration) : null;
+        const raExpired = hasRA && raExpDate && raExpDate < new Date();
 
         // Virtual Address status from #vvirtual-address section or fallback button
         let hasVA = false;
@@ -1339,9 +1341,11 @@
             }
         }
 
-        const raClass = hasRA
-            ? 'copilot-tag copilot-tag-green'
-            : 'copilot-tag copilot-tag-purple';
+        const raClass = raExpired
+            ? "copilot-tag copilot-tag-yellow"
+            : (hasRA
+                ? "copilot-tag copilot-tag-green"
+                : "copilot-tag copilot-tag-purple");
         const vaClass = hasVA
             ? 'copilot-tag copilot-tag-green'
             : 'copilot-tag copilot-tag-purple';
@@ -1528,8 +1532,8 @@
             companyLines.push(addrHtml);
             companyLines.push(`<div class="company-purpose">${renderCopy(company.purpose)}</div>`);
             companyLines.push(
-                `<div><span class="${raClass}">RA: ${hasRA ? 'Sí' : 'No'}</span> ` +
-                `<span class="${vaClass}">VA: ${hasVA ? 'Sí' : 'No'}</span></div>`
+                `<div><span class="${raClass}">RA: ${raExpired ? "EXPIRED" : (hasRA ? "Sí" : "No")}</span> ` +
+                `<span class="${vaClass}">VA: ${hasVA ? "Sí" : "No"}</span></div>`
             );
             const compSection = reviewMode
                 ? `<div class="white-box" style="margin-bottom:10px">${companyLines.join('').trim()}</div>`

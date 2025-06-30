@@ -117,6 +117,7 @@ ICONS/BUTTONS/FUNCTIONS:
 GENERAL FEATURES:
 - Clicking COMPANY NAME opens the SOS search.
 - Clicking the STATE ID in the sidebar opens the Coda Knowledge Base in a popup window covering about 70% of the page.
+- RA and VA tags display in the COMPANY box. If the Registered Agent Service shows an expiration date in the past, the RA tag turns yellow and reads **EXPIRED**.
 - 🩺 DIAGNOSE overlay lists hold orders from the Family Tree and now displays all child orders.
 
 ## Known limitations
