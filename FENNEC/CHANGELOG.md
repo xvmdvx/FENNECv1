@@ -53,6 +53,7 @@
 - Fixed popup Review Mode toggle to use sync storage so the DNA button appears after enabling the mode.
 - Fixed DNA button not appearing in Gmail Review Mode by storing the setting locally.
 - Fixed the DNA summary replacing the button in Gmail Review Mode so the button remains visible when no data is available.
+- DB sidebar now extracts information when first locked by DNA so Gmail Review Mode shows the full summary.
 - Escaped quotes in the background script so the service worker loads correctly.
   Buttons like **EMAIL SEARCH** and **OPEN ORDER** now open tabs again.
 - Common helpers moved to `core/utils.js` and shared by Gmail and DB scripts.
