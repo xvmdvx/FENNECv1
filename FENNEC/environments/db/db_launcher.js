@@ -1968,7 +1968,7 @@
             const db = Date.parse(b.date);
             return (isNaN(db) ? 0 : db) - (isNaN(da) ? 0 : da);
         });
-        return info.slice(0, 3);
+        return info;
     }
 
     function getBasicOrderInfo() {
