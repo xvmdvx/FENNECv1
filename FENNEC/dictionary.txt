@@ -72,3 +72,5 @@ Mistral → Local AI model used for chat guidance
 Mistral Box → Chat area below REFRESH button
 Ollama → Local server running the Mistral API
 Retry button → Resends a prompt when the Mistral service is unavailable
+BOIR → Beneficial Ownership Information Report
+BETA → Early test version of Fennec
