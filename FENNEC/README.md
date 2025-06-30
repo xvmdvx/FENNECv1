@@ -90,6 +90,8 @@ MISC:
       4th box: BILLING summary
       5th box: Issue summary
       (Dev Mode) End: [🔄 REFRESH] button centered.
+   ADYEN:
+      Sidebar shows the DB summary and DNA results after XRAY.
 
 DEV MODE:
 New experimental mode where upcoming features are tested before release.
