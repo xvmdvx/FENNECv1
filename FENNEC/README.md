@@ -11,7 +11,7 @@ It remains constant throughout all layouts, unless an IMPORTANT restriction is a
    Right: Icon for clean window action. Close SB button.
 
 CLASSIC MODE:
-This is the default and most basic layout for the sidebar. It appears in Gmail (GM) and DB.
+This is the default and most basic layout for the sidebar. It appears in Gmail (GM) and DB. Experimental features are hidden unless Dev Mode is enabled.
 
 MAIN (BUSINESS FORMATION ORDERS: SILVER, GOLD, PLATINUM)
    DB:
@@ -21,8 +21,8 @@ MAIN (BUSINESS FORMATION ORDERS: SILVER, GOLD, PLATINUM)
       3rd box: MEMBERS (LLC) or DIRECTORS (CORP, NPROFIT)
       4th box: SHAREHOLDERS (CORP, NPROFIT)
       5th box: Officers (CORP, NPROFIT)
-      End: [🤖 FILE] button centered followed by [🔄 REFRESH].
-      Mistral Box: Chat interface under REFRESH.
+      (Dev Mode) [🤖 FILE] button centered followed by [🔄 REFRESH].
+      (Dev Mode) Mistral Box: Chat interface under REFRESH.
    GM:
       Title: [📧 SEARCH] button centered.
       1st box: COMPANY summary
@@ -31,7 +31,7 @@ MAIN (BUSINESS FORMATION ORDERS: SILVER, GOLD, PLATINUM)
       4th box: SHAREHOLDERS (CORP, NPROFIT)
       5th box: Officers (CORP, NPROFIT)
       6th box: Issue summary
-      End: [🔄 REFRESH] button centered.
+      (Dev Mode) End: [🔄 REFRESH] button centered.
 
 MISC (ALL NON-BUSINESS FORMATION ORDERS)
    DB:
@@ -49,7 +49,7 @@ MISC (ALL NON-BUSINESS FORMATION ORDERS)
       4th box: SHAREHOLDERS (CORP, NPROFIT)
       5th box: Officers (CORP, NPROFIT)
       6th box: Issue summary
-      End: [🔄 REFRESH] button centered.
+      (Dev Mode) End: [🔄 REFRESH] button centered.
 
 REVIEW MODE:
 This is a detailed mode for the Revenue Assurance team to assist with the order review step.
@@ -69,7 +69,7 @@ MAIN:
       3rd box: CLIENT summary
       4th box: BILLING summary
       5th box: Issue summary
-      End: [🔄 REFRESH] button centered.
+      (Dev Mode) End: [🔄 REFRESH] button centered.
 
 MISC:
    DB:
@@ -89,7 +89,14 @@ MISC:
       3rd box: CLIENT summary
       4th box: BILLING summary
       5th box: Issue summary
-      End: [🔄 REFRESH] button centered.
+      (Dev Mode) End: [🔄 REFRESH] button centered.
+
+DEV MODE:
+New experimental mode where upcoming features are tested before release.
+   DB:
+      [🤖 FILE] and [🔄 REFRESH] buttons plus the Mistral Box appear at the bottom.
+   GM:
+      [🔄 REFRESH] button appears at the bottom.
 
 ICONS/BUTTONS/FUNCTIONS:
 

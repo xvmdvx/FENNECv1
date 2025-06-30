@@ -13,8 +13,9 @@
             alert('Permiso denegado para abrir la búsqueda SOS.');
         }
     });
-    chrome.storage.sync.get({ fennecReviewMode: false, sidebarWidth: 340 }, ({ fennecReviewMode, sidebarWidth }) => {
-        chrome.storage.local.get({ extensionEnabled: true, lightMode: false, bentoMode: false }, ({ extensionEnabled, lightMode, bentoMode }) => {
+    chrome.storage.sync.get({ fennecReviewMode: false, fennecDevMode: false, sidebarWidth: 340 }, ({ fennecReviewMode, fennecDevMode, sidebarWidth }) => {
+        chrome.storage.local.get({ extensionEnabled: true, lightMode: false, bentoMode: false, fennecDevMode: false }, ({ extensionEnabled, lightMode, bentoMode, fennecDevMode: localDev }) => {
+        const devMode = localDev || fennecDevMode;
         if (!extensionEnabled) {
             console.log('[FENNEC] Extension disabled, skipping Gmail launcher.');
             return;
@@ -1201,9 +1202,7 @@
                         <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
                         <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
                     </div>
-                    <div class="copilot-footer">
-                        <button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button>
-                    </div>
+                    ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
                 </div>
             `;
             document.body.appendChild(sidebar);
@@ -1249,7 +1248,8 @@
 
             // Botón SEARCH (listener UNIFICADO)
             document.getElementById("btn-email-search").onclick = handleEmailSearchClick;
-            document.getElementById("copilot-refresh").onclick = refreshSidebar;
+            const rBtn = document.getElementById("copilot-refresh");
+            if (devMode && rBtn) rBtn.onclick = refreshSidebar;
             applyReviewMode();
             loadDnaSummary();
         }
@@ -1284,6 +1284,9 @@
                 reviewMode = changes.fennecReviewMode.newValue;
                 sessionStorage.setItem("fennecReviewMode", reviewMode ? "true" : "false");
                 applyReviewMode();
+            }
+            if ((area === 'sync' && changes.fennecDevMode) || (area === 'local' && changes.fennecDevMode)) {
+                window.location.reload();
             }
         });
 
