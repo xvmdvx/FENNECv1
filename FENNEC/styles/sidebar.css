@@ -347,6 +347,10 @@
     background-color: #8B0000;
     color: #fff;
 }
+.copilot-tag-yellow {
+    background-color: #f7bc00;
+    color: #000;
+}
 .copilot-tag-black {
     background-color: #000;
     color: #fff;
