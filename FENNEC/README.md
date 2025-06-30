@@ -110,6 +110,7 @@ ICONS/BUTTONS/FUNCTIONS:
    2. DNA
 
    Focus returns to the original email once information is retrieved.
+   In Review Mode the sidebar stays locked to the email view across all tabs until DNA runs on a different order.
 🩻 XRAY: Runs SEARCH and DNA operations one after the other.
    Focus also returns to the original email at the end.
 🤖 FILE: Automator that opens and fills the SOS filing process.
