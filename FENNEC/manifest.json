@@ -68,8 +68,15 @@
       "matches": [
         "https://ca-live.adyen.com/*"
       ],
+      "all_frames": true,
       "js": [
+        "core/utils.js",
         "environments/adyen/adyen_launcher.js"
+      ],
+      "css": [
+        "styles/sidebar.css",
+        "styles/sidebar_light.css",
+        "styles/sidebar_bento.css"
       ]
     },
     {

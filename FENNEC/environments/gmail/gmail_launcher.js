@@ -1329,12 +1329,21 @@
                         alert("No se encontró ningún número de orden válido en el correo.");
                         return;
                     }
-                    console.log('[Copilot] Opening Adyen for order', orderId);
-                    const url = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${orderId}`;
-                    showDnaLoading();
-                    chrome.storage.local.set({ sidebarFreezeId: orderId }, () => {
-                        chrome.runtime.sendMessage({ action: "openTab", url, refocus: true, active: true });
-                    });
+                    function openAdyen() {
+                        console.log('[Copilot] Opening Adyen for order', orderId);
+                        const url = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${orderId}`;
+                        showDnaLoading();
+                        chrome.storage.local.set({ sidebarFreezeId: orderId }, () => {
+                            chrome.runtime.sendMessage({ action: "openTab", url, refocus: true, active: true });
+                        });
+                    }
+
+                    if (!storedOrderInfo || storedOrderInfo.orderId !== orderId) {
+                        handleEmailSearchClick();
+                        setTimeout(openAdyen, 500);
+                    } else {
+                        openAdyen();
+                    }
                 } catch (error) {
                     console.error("Error al intentar buscar en Adyen:", error);
                     alert("Ocurrió un error al intentar buscar en Adyen.");
