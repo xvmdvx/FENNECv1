@@ -37,7 +37,11 @@
             let currentContext = null;
             let storedOrderInfo = null;
             if (!sessionStorage.getItem('fennecDnaCleared')) {
-                chrome.storage.local.set({ adyenDnaInfo: null });
+                chrome.storage.local.get({ sidebarFreezeId: null }, ({ sidebarFreezeId }) => {
+                    if (!sidebarFreezeId) {
+                        chrome.storage.local.set({ adyenDnaInfo: null });
+                    }
+                });
                 sessionStorage.setItem('fennecDnaCleared', '1');
             }
 
