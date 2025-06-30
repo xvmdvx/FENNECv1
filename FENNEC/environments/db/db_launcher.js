@@ -478,10 +478,11 @@
                         };
                     }
                     const isStorage = /\/storage\/incfile\//.test(location.pathname);
-                    chrome.storage.local.get({ sidebarFreezeId: null }, ({ sidebarFreezeId }) => {
+                    chrome.storage.local.get({ sidebarFreezeId: null, sidebarDb: [], sidebarOrderId: null }, ({ sidebarFreezeId, sidebarDb, sidebarOrderId }) => {
                         const currentId = getBasicOrderInfo().orderId;
                         const frozen = sidebarFreezeId && sidebarFreezeId === currentId;
-                        if (isStorage || frozen) {
+                        const hasStored = Array.isArray(sidebarDb) && sidebarDb.length && sidebarOrderId === currentId;
+                        if (isStorage || (frozen && hasStored)) {
                             loadStoredSummary();
                         } else {
                             const orderType = getOrderType();
