@@ -42,6 +42,7 @@ ADDITIONAL FEATURES
 
 Bento Mode → Colorful grid layout with looping video background for the sidebar
 Light Mode → Minimalist black-on-white style with an inverted Fennec icon
+Dev Mode → Temporary mode showing experimental features like the Mistral Box and FILE button
 DNA        → Shortcut button that opens Adyen payment details and shopper DNA
 Network Transactions → Counts and amounts from the DNA page Network section
 CODA Search → Menu option to query the KB via the Coda API

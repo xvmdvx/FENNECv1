@@ -9,6 +9,7 @@
     let initQuickSummary = null;
     // Tracks whether Review Mode is active across DB pages
     let reviewMode = false;
+    let devMode = false;
 
     function showFloatingIcon() {
         if (document.getElementById("fennec-floating-icon")) return;
@@ -369,7 +370,7 @@
         }
     }
 
-    chrome.storage.local.get({ extensionEnabled: true, lightMode: false, bentoMode: false, fennecReviewMode: false }, ({ extensionEnabled, lightMode, bentoMode, fennecReviewMode }) => {
+    chrome.storage.local.get({ extensionEnabled: true, lightMode: false, bentoMode: false, fennecReviewMode: false, fennecDevMode: false }, ({ extensionEnabled, lightMode, bentoMode, fennecReviewMode, fennecDevMode }) => {
         if (!extensionEnabled) {
             console.log('[FENNEC] Extension disabled, skipping DB launcher.');
             return;
@@ -386,6 +387,7 @@
         }
 
         reviewMode = fennecReviewMode;
+        devMode = fennecDevMode;
         try {
         function initSidebar() {
             if (sessionStorage.getItem("fennecSidebarClosed") === "true") { showFloatingIcon(); return; }
@@ -424,16 +426,15 @@
                         <div class="order-summary-header"><span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span> ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
                         <div class="copilot-body" id="copilot-body-content">
                             <div style="text-align:center; color:#888; margin-top:20px;">Cargando resumen...</div>
-                            <div class="copilot-footer">
-                                <button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button>
-                            </div>
+                            ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
+                            ${devMode ? `
                             <div id="mistral-chat" class="mistral-box">
                                 <div id="mistral-log" class="mistral-log"></div>
                                 <div class="mistral-input-row">
                                     <input id="mistral-input" type="text" placeholder="Ask Mistral..." />
                                     <button id="mistral-send" class="copilot-button">Send</button>
                                 </div>
-                            </div>
+                            </div>` : ``}
                             <div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
                         </div>
                     `;
@@ -595,19 +596,21 @@
                             });
                         }
                     }
-                        const refreshBtn = sidebar.querySelector('#copilot-refresh');
-                        if (refreshBtn) {
-                            refreshBtn.onclick = () => {
-                                if (currentOrderType === "amendment") {
-                                    extractAndShowAmendmentData();
-                                } else {
-                                    extractAndShowFormationData();
-                                }
-                            };
+                        if (devMode) {
+                            const refreshBtn = sidebar.querySelector('#copilot-refresh');
+                            if (refreshBtn) {
+                                refreshBtn.onclick = () => {
+                                    if (currentOrderType === "amendment") {
+                                        extractAndShowAmendmentData();
+                                    } else {
+                                        extractAndShowFormationData();
+                                    }
+                                };
+                            }
+                            const fileBtn = sidebar.querySelector('#filing-xray');
+                            if (fileBtn) fileBtn.onclick = startFileAlong;
+                            initMistralChat();
                         }
-                        const fileBtn = sidebar.querySelector('#filing-xray');
-                        if (fileBtn) fileBtn.onclick = startFileAlong;
-                        initMistralChat();
                         if (sessionStorage.getItem('fennecCancelPending') === '1') {
                             openCancelPopup();
                         }
@@ -1650,17 +1653,19 @@
         if (!html) {
             html = `<div style="text-align:center; color:#aaa; margin-top:40px">No se encontró información relevante de la orden.</div>`;
         }
-        html += `<div class="copilot-footer"><button id="filing-xray" class="copilot-button">🤖 FILE</button></div>`;
-        html += `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>`;
-        html += `
-        <div id="mistral-chat" class="mistral-box">
-            <div id="mistral-log" class="mistral-log"></div>
-            <div class="mistral-input-row">
-                <input id="mistral-input" type="text" placeholder="Ask Mistral..." />
-                <button id="mistral-send" class="copilot-button">Send</button>
-            </div>
-        </div>
-        <div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>`;
+        if (devMode) {
+            html += `<div class="copilot-footer"><button id="filing-xray" class="copilot-button">🤖 FILE</button></div>`;
+            html += `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>`;
+            html += `
+            <div id="mistral-chat" class="mistral-box">
+                <div id="mistral-log" class="mistral-log"></div>
+                <div class="mistral-input-row">
+                    <input id="mistral-input" type="text" placeholder="Ask Mistral..." />
+                    <button id="mistral-send" class="copilot-button">Send</button>
+                </div>
+            </div>`;
+        }
+        html += `<div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>`;
 
         const orderInfo = getBasicOrderInfo();
         const sidebarOrderInfo = {
@@ -2281,6 +2286,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.fennecReviewMode) {
         reviewMode = changes.fennecReviewMode.newValue;
         updateReviewDisplay();
+    }
+    if (area === 'local' && changes.fennecDevMode) {
+        devMode = changes.fennecDevMode.newValue;
+        window.location.reload();
     }
 });
 })();

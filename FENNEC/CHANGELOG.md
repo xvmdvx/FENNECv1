@@ -14,6 +14,7 @@
   includes a **Retry** button.
 - The background script strips the `Origin` header so the local server accepts
   Mistral requests without returning **403**.
+- Added Dev Mode. The Mistral chat box, FILE and REFRESH buttons now appear only when Dev Mode is enabled.
 
 ## v0.3 - 2025-06-24
 
