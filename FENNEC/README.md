@@ -1,4 +1,4 @@
-# FENNEC (v0.3)
+# FENNEC (BETA)
 
 FENNEC's principal function is injecting a SIDEBAR (SB) as a navigation companion that extracts information from relevant environments and displays it in a reordered manner to improve agents' productivity and reduce mental stress. Each environment has its unique layout depending on the type's necessities.
 
