@@ -1332,7 +1332,9 @@
                     console.log('[Copilot] Opening Adyen for order', orderId);
                     const url = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${orderId}`;
                     showDnaLoading();
-                    chrome.runtime.sendMessage({ action: "openTab", url, refocus: true, active: true });
+                    chrome.storage.local.set({ sidebarFreezeId: orderId }, () => {
+                        chrome.runtime.sendMessage({ action: "openTab", url, refocus: true, active: true });
+                    });
                 } catch (error) {
                     console.error("Error al intentar buscar en Adyen:", error);
                     alert("Ocurrió un error al intentar buscar en Adyen.");

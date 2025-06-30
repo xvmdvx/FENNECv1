@@ -478,23 +478,27 @@
                         };
                     }
                     const isStorage = /\/storage\/incfile\//.test(location.pathname);
-                    if (isStorage) {
-                        loadStoredSummary();
-                    } else {
-                        const orderType = getOrderType();
-                        currentOrderType = orderType;
-                        const rawType = getText(document.getElementById('ordType')) || '';
-                        currentOrderTypeText = normalizeOrderType(rawType);
-                        const ftIcon = sidebar.querySelector('#family-tree-icon');
-                        if (ftIcon) {
-                            ftIcon.style.display = orderType !== 'formation' ? 'inline' : 'none';
-                        }
-                        if (orderType === "amendment") {
-                            extractAndShowAmendmentData();
+                    chrome.storage.local.get({ sidebarFreezeId: null }, ({ sidebarFreezeId }) => {
+                        const currentId = getBasicOrderInfo().orderId;
+                        const frozen = sidebarFreezeId && sidebarFreezeId === currentId;
+                        if (isStorage || frozen) {
+                            loadStoredSummary();
                         } else {
-                            extractAndShowFormationData();
+                            const orderType = getOrderType();
+                            currentOrderType = orderType;
+                            const rawType = getText(document.getElementById('ordType')) || '';
+                            currentOrderTypeText = normalizeOrderType(rawType);
+                            const ftIcon = sidebar.querySelector('#family-tree-icon');
+                            if (ftIcon) {
+                                ftIcon.style.display = orderType !== 'formation' ? 'inline' : 'none';
+                            }
+                            if (orderType === "amendment") {
+                                extractAndShowAmendmentData();
+                            } else {
+                                extractAndShowFormationData();
+                            }
                         }
-                    }
+                    });
                     const qsToggle = sidebar.querySelector('#qs-toggle');
                     initQuickSummary = () => {
                         const box = sidebar.querySelector('#quick-summary');
