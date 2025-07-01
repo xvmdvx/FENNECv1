@@ -425,6 +425,9 @@
                         </div>
                         <div class="order-summary-header"><span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span> ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
                         <div class="copilot-body" id="copilot-body-content">
+                            <div class="copilot-dna">
+                                <div id="dna-summary" style="margin-top:16px"></div>
+                            </div>
                             <div style="text-align:center; color:#888; margin-top:20px;">Cargando resumen...</div>
                             ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
                             ${devMode ? `
@@ -499,6 +502,7 @@
                                 extractAndShowFormationData();
                             }
                         }
+                        loadDnaSummary();
                     });
                     const qsToggle = sidebar.querySelector('#qs-toggle');
                     initQuickSummary = () => {
@@ -1686,7 +1690,8 @@
             companyState: company ? company.state : null,
             formationDate: company ? company.formationDate : null,
             registeredAgent: hasAgentInfo ? { name: agent.name, address: agent.address } : null,
-            members: directors
+            members: directors,
+            billing
         };
         chrome.storage.local.set({
             sidebarDb: dbSections,
@@ -1706,6 +1711,176 @@
 
     function extractAndShowAmendmentData() {
         extractAndShowFormationData(true);
+    }
+
+    function buildTransactionTable(tx) {
+        if (!tx) return "";
+        const colors = {
+            "Total": "lightgray",
+            "Authorised / Settled": "green",
+            "Settled": "green",
+            "Refused": "purple",
+            "Refunded": "black",
+            "Chargebacks": "black",
+            "Chargeback": "black"
+        };
+        function parseAmount(str) {
+            if (!str) return 0;
+            const n = parseFloat(str.replace(/[^0-9.]/g, ""));
+            return isNaN(n) ? 0 : n;
+        }
+        const entries = Object.keys(tx).map(k => {
+            const t = tx[k];
+            let label = k;
+            if (label === "Authorised / Settled") label = "Settled";
+            else if (label === "Total transactions") label = "Total";
+            else if (label === "Refunded / Cancelled") label = "Refunded";
+            return { label, count: t.count || "", amount: t.amount || "" };
+        });
+        if (!entries.length) return "";
+        const total = entries.find(e => e.label === "Total") || { amount: 0 };
+        const totalVal = parseAmount(total.amount);
+        entries.sort((a, b) => (a.label === "Total" ? -1 : b.label === "Total" ? 1 : 0));
+        const rows = entries.map(e => {
+            const cls = "copilot-tag-" + (colors[e.label] || "white");
+            const amountVal = parseAmount(e.amount);
+            const pct = totalVal ? Math.round(amountVal / totalVal * 100) : 0;
+            const amount = (e.amount || "").replace("EUR", "€");
+            const pctText = totalVal ? ` (${pct}%)` : "";
+            const label = escapeHtml(e.label.toUpperCase() + ": ");
+            const count = `<span class="dna-count">${escapeHtml(e.count)}</span>`;
+            return `<tr><td><span class="dna-label ${cls}">${label}${count}</span></td><td>${escapeHtml(amount)}${escapeHtml(pctText)}</td></tr>`;
+        }).join("");
+        return `<table class="dna-tx-table"><thead><tr><th>Type</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    function buildCardMatchTag(info) {
+        const db = info.dbBilling || {};
+        const dna = info.payment ? info.payment.card || {} : {};
+        const dbName = (db.cardholder || "").toLowerCase();
+        const dnaName = (dna["Card holder"] || "").toLowerCase();
+        const dbDigits = (db.last4 || "").replace(/\D+/g, "");
+        const dnaDigits = (dna["Card number"] || "").replace(/\D+/g, "");
+        const dbExp = (db.expiry || "").replace(/\D+/g, "");
+        const dnaExp = (dna["Expiry date"] || "").replace(/\D+/g, "");
+        let match = dbName && dnaName && dbName === dnaName;
+        match = match && dbDigits && dnaDigits && dbDigits === dnaDigits;
+        match = match && dbExp && dnaExp && dbExp === dnaExp;
+        if (!dbName && !dbDigits && !dbExp) return "";
+        const cls = match ? "copilot-tag-green" : "copilot-tag-purple";
+        const text = match ? "DB MATCH" : "DB MISMATCH";
+        return `<span class="copilot-tag ${cls}">${text}</span>`;
+    }
+
+    function buildDnaHtml(info) {
+        if (!info || !info.payment) return null;
+        const p = info.payment;
+        const card = p.card || {};
+        const shopper = p.shopper || {};
+        const proc = p.processing || {};
+        const parts = [];
+        if (card["Card holder"]) {
+            const holder = `<b>${escapeHtml(card["Card holder"])}</b>`;
+            parts.push(`<div>${holder}</div>`);
+        }
+        const cardLine = [];
+        if (card["Payment method"]) cardLine.push(escapeHtml(card["Payment method"]));
+        if (card["Card number"]) {
+            const digits = card["Card number"].replace(/\D+/g, "").slice(-4);
+            if (digits) cardLine.push(escapeHtml(digits));
+        }
+        function formatExpiry(date) {
+            if (!date) return "";
+            const digits = date.replace(/\D+/g, "");
+            if (digits.length >= 4) {
+                const mm = digits.slice(0, 2);
+                const yy = digits.slice(-2);
+                return `${mm}/${yy}`;
+            }
+            return date;
+        }
+        if (card["Expiry date"]) cardLine.push(escapeHtml(formatExpiry(card["Expiry date"])));
+        if (card["Funding source"]) cardLine.push(escapeHtml(card["Funding source"]));
+        if (cardLine.length) parts.push(`<div>${cardLine.join(' \u2022 ')}</div>`);
+        if (shopper["Billing address"]) {
+            parts.push(`<div class="dna-address">${renderBillingAddress(shopper["Billing address"])}</div>`);
+            if (card["Issuer name"] || card["Issuer country/region"]) {
+                let bank = (card["Issuer name"] || '').trim();
+                if (bank.length > 25) bank = bank.slice(0, 22) + '...';
+                const country = (card["Issuer country/region"] || '').trim();
+                let countryInit = '';
+                if (country) {
+                    countryInit = country.split(/\s+/).map(w => w.charAt(0)).join('').toUpperCase();
+                    countryInit = ` (<span class="dna-country"><b>${escapeHtml(countryInit)}</b></span>)`;
+                }
+                parts.push(`<div class="dna-issuer">${escapeHtml(bank)}${countryInit}</div>`);
+            }
+        }
+        const cvv = proc['CVC/CVV'];
+        const avs = proc['AVS'];
+        function colorFor(result) {
+            if (result === 'green') return 'copilot-tag-green';
+            if (result === 'purple') return 'copilot-tag-purple';
+            return 'copilot-tag-black';
+        }
+        function formatCvv(text) {
+            const t = (text || '').toLowerCase();
+            if (t.includes('matched')) { return { label: 'CVV: MATCH', result: 'green' }; }
+            if (t.includes('not matched')) { return { label: 'CVV: NO MATCH', result: 'purple' }; }
+            if (t.includes('not provided') || t.includes('not checked') || t.includes('error') || t.includes('not supplied') || t.includes('unknown')) { return { label: 'CVV: UNKNOWN', result: 'black' }; }
+            return { label: 'CVV: UNKNOWN', result: 'black' };
+        }
+        function formatAvs(text) {
+            const t = (text || '').toLowerCase();
+            if (/both\s+postal\s+code\s+and\s+address\s+match/.test(t) || /^7\b/.test(t) || t.includes('both match')) {
+                return { label: 'AVS: MATCH', result: 'green' };
+            }
+            if (/^6\b/.test(t) || (t.includes('postal code matches') && t.includes("address doesn't"))) {
+                return { label: 'AVS: PARTIAL (STREET✖️)', result: 'purple' };
+            }
+            if (/^1\b/.test(t) || (t.includes('address matches') && t.includes("postal code doesn't"))) {
+                return { label: 'AVS: PARTIAL (ZIP✖️)', result: 'purple' };
+            }
+            if (/^2\b/.test(t) || t.includes('neither matches') || /\bw\b/.test(t)) {
+                return { label: 'AVS: NO MATCH', result: 'purple' };
+            }
+            if (/^0\b/.test(t) || /^3\b/.test(t) || /^4\b/.test(t) || /^5\b/.test(t) || t.includes('unavailable') || t.includes('not supported') || t.includes('no avs') || t.includes('unknown')) {
+                return { label: 'AVS: UNKNOWN', result: 'black' };
+            }
+            return { label: 'AVS: UNKNOWN', result: 'black' };
+        }
+        if (cvv || avs) {
+            const tags = [];
+            if (cvv) {
+                const { label, result } = formatCvv(cvv);
+                tags.push(`<span class="copilot-tag ${colorFor(result)}">${escapeHtml(label)}</span>`);
+            }
+            if (avs) {
+                const { label, result } = formatAvs(avs);
+                tags.push(`<span class="copilot-tag ${colorFor(result)}">${escapeHtml(label)}</span>`);
+            }
+            const cardTag = buildCardMatchTag(info);
+            if (cardTag) tags.push(cardTag);
+            if (tags.length) parts.push(`<div>${tags.join(' ')}</div>`);
+        }
+        if (proc['Fraud scoring']) parts.push(`<div><b>Fraud scoring:</b> ${escapeHtml(proc['Fraud scoring'])}</div>`);
+        if (parts.length) {
+            parts.push('<hr style="border:none;border-top:1px solid #555;margin:6px 0"/>');
+        }
+        const txTable = buildTransactionTable(info.transactions || {});
+        if (txTable) parts.push(txTable);
+        if (!parts.length) return null;
+        return `<div class="section-label">ADYEN'S DNA</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
+    }
+
+    function loadDnaSummary() {
+        const container = document.getElementById('dna-summary');
+        if (!container) return;
+        chrome.storage.local.get({ adyenDnaInfo: null }, ({ adyenDnaInfo }) => {
+            const html = buildDnaHtml(adyenDnaInfo);
+            container.innerHTML = html || '';
+            attachCommonListeners(container);
+        });
     }
 
     function getBillingInfo() {
@@ -2313,6 +2488,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
                 updateReviewDisplay();
             }
         });
+    }
+    if (area === 'local' && changes.adyenDnaInfo && document.getElementById('dna-summary')) {
+        loadDnaSummary();
     }
 });
 })();

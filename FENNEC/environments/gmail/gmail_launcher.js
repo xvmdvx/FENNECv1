@@ -1126,6 +1126,11 @@
         function refreshSidebar() {
             const ctx = extractOrderContextFromEmail();
             currentContext = ctx;
+            chrome.storage.local.get({ sidebarFreezeId: null }, ({ sidebarFreezeId }) => {
+                if (sidebarFreezeId && (!ctx || ctx.orderNumber !== sidebarFreezeId)) {
+                    chrome.storage.local.set({ sidebarFreezeId: null, adyenDnaInfo: null });
+                }
+            });
             fillOrderSummaryBox(ctx);
             loadDbSummary(ctx && ctx.orderNumber);
             if (ctx && ctx.orderNumber) checkLastIssue(ctx.orderNumber);
@@ -1264,6 +1269,7 @@
                 console.log("[Copilot] Sidebar no encontrado, inyectando en Gmail...");
                 const mainPanels = applyPaddingToMainPanels();
                 injectSidebar(mainPanels);
+                refreshSidebar();
             }
         }
 
@@ -1319,6 +1325,8 @@
             if (!button || button.dataset.listenerAttached) return;
             button.dataset.listenerAttached = "true";
             button.addEventListener("click", function () {
+                const skipSearch = button.dataset.skipSearch === "1";
+                delete button.dataset.skipSearch;
                 try {
                     const bodyNode = document.querySelector(".a3s");
                     if (!bodyNode) {
@@ -1343,7 +1351,7 @@
                     }
 
                     if (!storedOrderInfo || storedOrderInfo.orderId !== orderId) {
-                        handleEmailSearchClick();
+                        if (!skipSearch) handleEmailSearchClick();
                         setTimeout(openAdyen, 500);
                     } else {
                         openAdyen();
@@ -1363,7 +1371,10 @@
                 handleEmailSearchClick();
                 setTimeout(() => {
                     const dnaBtn = document.getElementById("btn-dna");
-                    if (dnaBtn) dnaBtn.click();
+                    if (dnaBtn) {
+                        dnaBtn.dataset.skipSearch = "1";
+                        dnaBtn.click();
+                    }
                 }, 500);
             });
         }
