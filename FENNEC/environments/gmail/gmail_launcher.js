@@ -151,7 +151,7 @@
                 sessionStorage.removeItem("fennecSidebarClosed");
                 const panels = applyPaddingToMainPanels();
                 injectSidebar(panels);
-                refreshSidebar();
+                showInitialStatus();
             });
             document.body.appendChild(icon);
         }
@@ -678,6 +678,8 @@
         function fillOrderSummaryBox(context) {
             const summaryBox = document.getElementById('order-summary-content');
             if (!summaryBox) return;
+            const container = document.querySelector('.order-summary-box');
+            if (container) container.style.display = 'block';
             const orderId = context?.orderNumber || (storedOrderInfo && storedOrderInfo.orderId) || '';
             const url = orderId ? `https://db.incfile.com/incfile/order/detail/${orderId}` : '#';
 
@@ -803,11 +805,13 @@
             chrome.storage.local.get({ sidebarDb: [], sidebarOrderId: null, sidebarOrderInfo: null }, ({ sidebarDb, sidebarOrderId, sidebarOrderInfo }) => {
                 if (Array.isArray(sidebarDb) && sidebarDb.length && (!expectedId || sidebarOrderId === expectedId)) {
                     container.innerHTML = sidebarDb.join("");
+                    container.style.display = 'block';
                     attachCommonListeners(container);
                     storedOrderInfo = sidebarOrderInfo;
                     fillOrderSummaryBox(currentContext);
                 } else {
-                    container.innerHTML = '<div style="text-align:center; color:#aaa; font-size:13px;">No DB data.</div>';
+                    container.innerHTML = '';
+                    container.style.display = 'none';
                     storedOrderInfo = null;
                 }
 
@@ -1123,6 +1127,27 @@
             }
         }
 
+        function showInitialStatus() {
+            const orderBox = document.getElementById('order-summary-content');
+            const orderContainer = document.querySelector('.order-summary-box');
+            const dbBox = document.getElementById('db-summary-section');
+            const issueBox = document.getElementById('issue-summary-box');
+            const dnaSummary = document.getElementById('dna-summary');
+            if (orderContainer) orderContainer.style.display = 'none';
+            if (dbBox) dbBox.style.display = 'none';
+            if (issueBox) issueBox.style.display = 'none';
+            if (orderBox) orderBox.innerHTML = '';
+            if (dbBox) dbBox.innerHTML = '';
+            if (issueBox) {
+                const content = issueBox.querySelector('#issue-summary-content');
+                if (content) content.innerHTML = '';
+                const label = issueBox.querySelector('#issue-status-label');
+                if (label) label.textContent = '';
+            }
+            if (dnaSummary) dnaSummary.innerHTML = '';
+            repositionDnaSummary();
+        }
+
         function refreshSidebar() {
             const ctx = extractOrderContextFromEmail();
             currentContext = ctx;
@@ -1147,20 +1172,10 @@
                 adyenDnaInfo: null,
                 sidebarFreezeId: null
             });
-            const orderBox = document.getElementById('order-summary-content');
-            if (orderBox) orderBox.innerHTML = 'No order data yet.';
-            const dbBox = document.getElementById('db-summary-section');
-            if (dbBox) dbBox.innerHTML = '<div style="text-align:center; color:#aaa; font-size:13px;">No DB data.</div>';
-            const issueContent = document.getElementById('issue-summary-content');
-            if (issueContent) issueContent.innerHTML = 'No issue data yet.';
-            const issueLabel = document.getElementById('issue-status-label');
-            if (issueLabel) {
-                issueLabel.textContent = '';
-                issueLabel.className = 'issue-status-label';
-            }
+            showInitialStatus();
+            applyReviewMode();
             loadDnaSummary();
             repositionDnaSummary();
-            applyReviewMode();
         }
 
         function handleEmailSearchClick() {
@@ -1262,8 +1277,10 @@
             }
             console.log("[Copilot] Sidebar INYECTADO en Gmail.");
 
-            // Start with empty boxes. Details load after the user interacts
-            // with SEARCH.
+            // Start with empty layout showing only action buttons.
+            showInitialStatus();
+            // Details load after the user interacts with SEARCH or when
+            // opened automatically with context.
 
             // Botón de cierre
             document.getElementById('copilot-close').onclick = () => {
@@ -1298,7 +1315,7 @@
                 console.log("[Copilot] Sidebar no encontrado, inyectando en Gmail...");
                 const mainPanels = applyPaddingToMainPanels();
                 injectSidebar(mainPanels);
-                refreshSidebar();
+                showInitialStatus();
             }
         }
 
