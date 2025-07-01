@@ -7,6 +7,7 @@
     let currentOrderType = null;
     let currentOrderTypeText = null;
     let initQuickSummary = null;
+    let annualReportMode = false;
     // Tracks whether Review Mode is active across DB pages
     let reviewMode = false;
     let devMode = false;
@@ -48,6 +49,10 @@
                 attachCommonListeners(body);
                 updateReviewDisplay();
                 checkLastIssue(currentId);
+                if (annualReportMode) {
+                    const ftIcon = document.getElementById('family-tree-icon');
+                    if (ftIcon && ftIcon.style.display !== 'none') ftIcon.click();
+                }
             } else {
                 body.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:40px">No DB data.</div>';
             }
@@ -491,6 +496,9 @@
                     const isStorage = /\/storage\/incfile\//.test(location.pathname);
                     chrome.storage.local.get({ sidebarFreezeId: null, sidebarDb: [], sidebarOrderId: null }, ({ sidebarFreezeId, sidebarDb, sidebarOrderId }) => {
                         const currentId = getBasicOrderInfo().orderId;
+                        const rawType = getText(document.getElementById('ordType')) || '';
+                        currentOrderTypeText = normalizeOrderType(rawType);
+                        annualReportMode = /annual report/i.test(currentOrderTypeText);
                         const frozen = sidebarFreezeId && sidebarFreezeId === currentId;
                         const hasStored = Array.isArray(sidebarDb) && sidebarDb.length && sidebarOrderId === currentId;
                         if (isStorage || (frozen && hasStored)) {
@@ -498,8 +506,6 @@
                         } else {
                             const orderType = getOrderType();
                             currentOrderType = orderType;
-                            const rawType = getText(document.getElementById('ordType')) || '';
-                            currentOrderTypeText = normalizeOrderType(rawType);
                             const ftIcon = sidebar.querySelector('#family-tree-icon');
                             if (ftIcon) {
                                 ftIcon.style.display = orderType !== 'formation' ? 'inline' : 'none';
@@ -515,7 +521,11 @@
                     const qsToggle = sidebar.querySelector('#qs-toggle');
                     initQuickSummary = () => {
                         const box = sidebar.querySelector('#quick-summary');
-                        if (box) {
+                        if (!box) return;
+                        if (annualReportMode) {
+                            box.classList.remove('quick-summary-collapsed');
+                            box.style.maxHeight = box.scrollHeight + 'px';
+                        } else {
                             box.style.maxHeight = '0';
                             box.classList.add('quick-summary-collapsed');
                         }
@@ -1715,6 +1725,10 @@
             initMistralChat();
             updateReviewDisplay();
             checkLastIssue(orderInfo.orderId);
+            if (annualReportMode) {
+                const ftIcon = document.getElementById('family-tree-icon');
+                if (ftIcon && ftIcon.style.display !== 'none') ftIcon.click();
+            }
         }
     }
 
