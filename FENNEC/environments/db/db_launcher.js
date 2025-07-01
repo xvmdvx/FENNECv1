@@ -1547,10 +1547,7 @@
             }
             highlight.push(`<div><b>${nameText} ${renderCopyIcon(company.name)}</b></div>`);
             if (orderIdHighlight) highlight.push(`<div><b>${renderCopy(orderIdHighlight)}</b></div>`);
-            if (company.formationDate) highlight.push(`<div><b>${escapeHtml(company.formationDate)}</b></div>`);
-            companyLines.push(`<div class="company-summary-highlight">${highlight.join('')}</div>`);
-
-            if (company.stateId) {
+            if (company.stateId && company.stateId.toLowerCase() !== 'n/a') {
                 let idHtml = escapeHtml(company.stateId);
                 const idBase = buildSosUrl(company.state, null, 'id');
                 if (idBase) {
@@ -1559,8 +1556,10 @@
                 } else {
                     idHtml += ' ' + renderCopyIcon(company.stateId);
                 }
-                companyLines.push(`<div>${idHtml}</div>`);
+                highlight.push(`<div><b>${idHtml}</b></div>`);
             }
+            if (company.formationDate) highlight.push(`<div><b>${escapeHtml(company.formationDate)}</b></div>`);
+            companyLines.push(`<div class="company-summary-highlight">${highlight.join('')}</div>`);
             companyLines.push(`<div>${renderKb(company.state)}</div>`);
             companyLines.push(addrHtml);
             companyLines.push(`<div class="company-purpose">${renderCopy(company.purpose)}</div>`);
