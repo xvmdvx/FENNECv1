@@ -96,3 +96,12 @@
 .fennec-bento-mode #copilot-sidebar .white-box:hover {
     transform: translateY(-2px);
 }
+
+.fennec-bento-mode #issue-resolve-comment {
+    background: #fff;
+    color: #000;
+    border-radius: 4px;
+    border: 1px solid #777;
+    padding: 4px;
+    margin-top: 6px;
+}
