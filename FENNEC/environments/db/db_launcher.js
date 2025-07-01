@@ -305,6 +305,24 @@
             });
             return true;
         }
+        if (msg.action === 'getQuickXrayData') {
+            try {
+                const basic = getBasicOrderInfo();
+                const client = getClientInfo();
+                const mem = extractMembers('#vmembers .form-body', [{ name: 'name', label: 'name' }]);
+                const memberName = mem && mem.length ? mem[0].name : '';
+                sendResponse({
+                    orderId: basic.orderId,
+                    clientName: client.name || '',
+                    memberName: memberName || '',
+                    email: client.email || ''
+                });
+            } catch (err) {
+                console.warn('[FENNEC] Quick XRAY data error:', err);
+                sendResponse(null);
+            }
+            return true;
+        }
     });
     function getOrderType() {
         const el = document.getElementById("ordType");
