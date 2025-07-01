@@ -18,6 +18,8 @@
 - Diagnose overlay now displays all child orders instead of only the first three.
 - Added Dev Mode. The Mistral chat box, FILE and REFRESH buttons now appear only when Dev Mode is enabled.
 - Added quick resolve field below the Issue summary in Gmail.
+- Quick resolve button now shows **COMMENT** when the issue is already resolved
+  and automatically returns focus to Gmail with a success message.
 
 - Quick Summary no longer auto-expands on Annual Report orders and the
   Family Tree panel loads automatically.
