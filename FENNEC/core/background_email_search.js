@@ -360,7 +360,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === "sosSearch" && message.url && message.query) {
-        const origin = new URL(message.url).origin + "/*";
         const openSearchTab = () => {
             chrome.tabs.create({ url: message.url, active: true }, (tab) => {
                 if (chrome.runtime.lastError) {
@@ -372,8 +371,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         target: { tabId },
                         func: (q, type) => {
                             const patterns = type === "id"
-                                ? ["id", "number", "document", "control"]
-                                : ["name", "business", "entity"];
+                                ? ["id", "number", "document", "control", "filing", "account"]
+                                : ["name", "business", "entity", "organization", "company", "keyword", "search"];
                             let attempts = 10;
                             const run = () => {
                                 const inputs = Array.from(document.querySelectorAll("input,textarea"));
@@ -415,22 +414,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             });
         };
 
-        chrome.permissions.contains({ origins: [origin] }, (has) => {
-            const requestAndOpen = () => {
-                chrome.permissions.request({ origins: [origin] }, (granted) => {
-                    if (granted) {
-                        openSearchTab();
-                    } else if (sender.tab && sender.tab.id) {
-                        chrome.tabs.sendMessage(sender.tab.id, { action: "sosPermissionError" });
-                    }
-                });
-            };
-            if (has) {
-                openSearchTab();
-            } else {
-                requestAndOpen();
-            }
-        });
+        openSearchTab();
         return;
     }
 

@@ -44,6 +44,7 @@ function attachCommonListeners(rootEl) {
             const query = el.dataset.query;
             const type = el.dataset.type || 'name';
             if (!url || !query) return;
+            navigator.clipboard.writeText(query).catch(err => console.warn('[Copilot] Clipboard', err));
             chrome.runtime.sendMessage({ action: 'sosSearch', url, query, searchType: type });
         });
     });

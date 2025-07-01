@@ -18,7 +18,8 @@
         "https://coda.io/*",
         "https://ca-live.adyen.com/*",
         "https://direct.sos.state.tx.us/*",
-        "http://127.0.0.1:11434/*"
+        "http://127.0.0.1:11434/*",
+        "https://*/*"
     ],
   "optional_host_permissions": [
     "https://*/*"
