@@ -433,8 +433,6 @@
                             <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
                                 <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
                                 <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
-                                <input id="issue-resolve-comment" type="text" class="issue-resolve-comment" placeholder="Comment" style="display:none; margin-top:6px; width:100%;" />
-                                <button id="issue-resolve-btn" class="copilot-button" style="display:none; margin-top:6px; width:100%;">COMMENT & RESOLVE</button>
                             </div>
                             ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
                             <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
@@ -513,14 +511,6 @@
                             }
                         }
                         loadDnaSummary();
-                        const quickResolve = sidebar.querySelector('#issue-resolve-btn');
-                        if (quickResolve) {
-                            quickResolve.addEventListener('click', () => {
-                                const input = sidebar.querySelector('#issue-resolve-comment');
-                                const comment = input ? input.value.trim() : '';
-                                autoResolveIssue(comment);
-                            });
-                        }
                     });
                     const qsToggle = sidebar.querySelector('#qs-toggle');
                     initQuickSummary = () => {
@@ -1914,25 +1904,15 @@
         const label = document.getElementById('issue-status-label');
         if (!box || !content || !label) return;
         box.style.display = 'block';
-        const commentBox = document.getElementById('issue-resolve-comment');
-        const resolveBtn = document.getElementById('issue-resolve-btn');
         if (info && info.text) {
             content.textContent = formatIssueText(info.text);
             label.textContent = info.active ? 'ACTIVE' : 'RESOLVED';
             label.className = 'issue-status-label ' + (info.active ? 'issue-status-active' : 'issue-status-resolved');
-            if (commentBox && resolveBtn) {
-                commentBox.style.display = info.active ? 'block' : 'none';
-                resolveBtn.style.display = info.active ? 'block' : 'none';
-            }
         } else {
             const link = orderId ? `<a href="https://db.incfile.com/incfile/order/detail/${orderId}" target="_blank">${orderId}</a>` : '';
             content.innerHTML = `NO ISSUE DETECTED FROM ORDER: ${link}`;
             label.textContent = '';
             label.className = 'issue-status-label';
-            if (commentBox && resolveBtn) {
-                commentBox.style.display = 'none';
-                resolveBtn.style.display = 'none';
-            }
         }
     }
 
@@ -1968,18 +1948,11 @@
         if (dnaContainer) dnaContainer.innerHTML = '';
         const issueContent = document.getElementById('issue-summary-content');
         const issueLabel = document.getElementById('issue-status-label');
-        const issueComment = document.getElementById('issue-resolve-comment');
-        const issueBtn = document.getElementById('issue-resolve-btn');
         if (issueContent) issueContent.innerHTML = 'No issue data yet.';
         if (issueLabel) {
             issueLabel.textContent = '';
             issueLabel.className = 'issue-status-label';
         }
-        if (issueComment) {
-            issueComment.value = '';
-            issueComment.style.display = 'none';
-        }
-        if (issueBtn) issueBtn.style.display = 'none';
         updateReviewDisplay();
     }
 
