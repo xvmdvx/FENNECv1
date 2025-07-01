@@ -299,6 +299,49 @@
                 });
             }
 
+            function formatIssueText(text) {
+                if (!text) return '';
+                let formatted = text.replace(/\s*(\d+\s*[).])/g, (m, g) => '\n' + g + ' ');
+                return formatted.replace(/^\n/, '').trim();
+            }
+
+            function fillIssueBox(info, orderId) {
+                const box = document.getElementById('issue-summary-box');
+                const content = document.getElementById('issue-summary-content');
+                const label = document.getElementById('issue-status-label');
+                if (!box || !content || !label) return;
+                box.style.display = 'block';
+                if (info && info.text) {
+                    content.textContent = formatIssueText(info.text);
+                    label.textContent = info.active ? 'ACTIVE' : 'RESOLVED';
+                    label.className = 'issue-status-label ' + (info.active ? 'issue-status-active' : 'issue-status-resolved');
+                } else {
+                    const link = orderId ? `<a href="https://db.incfile.com/incfile/order/detail/${orderId}" target="_blank">${orderId}</a>` : '';
+                    content.innerHTML = `NO ISSUE DETECTED FROM ORDER: ${link}`;
+                    label.textContent = '';
+                    label.className = 'issue-status-label';
+                }
+            }
+
+            function checkLastIssue(orderId) {
+                if (!orderId) return;
+                const content = document.getElementById('issue-summary-content');
+                const label = document.getElementById('issue-status-label');
+                if (content && label) {
+                    content.innerHTML = `<img src="${chrome.runtime.getURL('fennec_icon.png')}" class="loading-fennec"/>`;
+                    label.textContent = '';
+                    label.className = 'issue-status-label';
+                }
+                chrome.runtime.sendMessage({ action: 'checkLastIssue', orderId }, (resp) => {
+                    if (chrome.runtime.lastError) {
+                        console.warn('[Copilot] Issue check failed:', chrome.runtime.lastError.message);
+                        fillIssueBox(null, orderId);
+                        return;
+                    }
+                    fillIssueBox(resp && resp.issueInfo, orderId);
+                });
+            }
+
             function clearSidebar() {
                 chrome.storage.local.set({
                     sidebarDb: [],
@@ -311,6 +354,13 @@
                 if (db) db.innerHTML = '<div style="text-align:center; color:#aaa; font-size:13px;">No DB data.</div>';
                 const dna = document.getElementById('dna-summary');
                 if (dna) dna.innerHTML = '';
+                const issueContent = document.getElementById('issue-summary-content');
+                const issueLabel = document.getElementById('issue-status-label');
+                if (issueContent) issueContent.innerHTML = 'No issue data yet.';
+                if (issueLabel) {
+                    issueLabel.textContent = '';
+                    issueLabel.className = 'issue-status-label';
+                }
             }
 
             function injectSidebar() {
@@ -330,6 +380,10 @@
                             <div id="dna-summary" style="margin-top:16px"></div>
                         </div>
                         <div id="db-summary-section"></div>
+                        <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
+                            <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
+                            <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
+                        </div>
                         <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                     </div>`;
                 document.body.appendChild(sidebar);
@@ -345,6 +399,7 @@
                 if (clearSb) clearSb.onclick = clearSidebar;
                 loadDbSummary();
                 loadDnaSummary();
+                if (order) checkLastIssue(order);
             }
 
             function extractSection(title) {

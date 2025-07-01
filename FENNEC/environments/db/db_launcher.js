@@ -47,6 +47,7 @@
                 if (typeof initQuickSummary === 'function') initQuickSummary();
                 attachCommonListeners(body);
                 updateReviewDisplay();
+                checkLastIssue(currentId);
             } else {
                 body.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:40px">No DB data.</div>';
             }
@@ -429,6 +430,10 @@
                                 <div id="dna-summary" style="margin-top:16px"></div>
                             </div>
                             <div style="text-align:center; color:#888; margin-top:20px;">Cargando resumen...</div>
+                            <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
+                                <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
+                                <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
+                            </div>
                             ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
                             <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                             ${devMode ? `
@@ -1709,6 +1714,7 @@
             attachCommonListeners(body);
             initMistralChat();
             updateReviewDisplay();
+            checkLastIssue(orderInfo.orderId);
         }
     }
 
@@ -1886,6 +1892,48 @@
         });
     }
 
+    function formatIssueText(text) {
+        if (!text) return '';
+        let formatted = text.replace(/\s*(\d+\s*[).])/g, (m, g) => '\n' + g + ' ');
+        return formatted.replace(/^\n/, '').trim();
+    }
+
+    function fillIssueBox(info, orderId) {
+        const box = document.getElementById('issue-summary-box');
+        const content = document.getElementById('issue-summary-content');
+        const label = document.getElementById('issue-status-label');
+        if (!box || !content || !label) return;
+        box.style.display = 'block';
+        if (info && info.text) {
+            content.textContent = formatIssueText(info.text);
+            label.textContent = info.active ? 'ACTIVE' : 'RESOLVED';
+            label.className = 'issue-status-label ' + (info.active ? 'issue-status-active' : 'issue-status-resolved');
+        } else {
+            const link = orderId ? `<a href="https://db.incfile.com/incfile/order/detail/${orderId}" target="_blank">${orderId}</a>` : '';
+            content.innerHTML = `NO ISSUE DETECTED FROM ORDER: ${link}`;
+            label.textContent = '';
+            label.className = 'issue-status-label';
+        }
+    }
+
+    function checkLastIssue(orderId) {
+        if (!orderId) return;
+        const content = document.getElementById('issue-summary-content');
+        const label = document.getElementById('issue-status-label');
+        if (content && label) {
+            content.innerHTML = `<img src="${chrome.runtime.getURL('fennec_icon.png')}" class="loading-fennec"/>`;
+            label.textContent = '';
+            label.className = 'issue-status-label';
+        }
+        try {
+            const info = getLastIssueInfo();
+            fillIssueBox(info, orderId);
+        } catch (err) {
+            console.warn('[Copilot] Issue extraction failed:', err);
+            fillIssueBox(null, orderId);
+        }
+    }
+
     function clearSidebar() {
         chrome.storage.local.set({
             sidebarDb: [],
@@ -1898,6 +1946,13 @@
         if (body) body.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:40px">No DB data.</div>';
         const dnaContainer = document.getElementById('dna-summary');
         if (dnaContainer) dnaContainer.innerHTML = '';
+        const issueContent = document.getElementById('issue-summary-content');
+        const issueLabel = document.getElementById('issue-status-label');
+        if (issueContent) issueContent.innerHTML = 'No issue data yet.';
+        if (issueLabel) {
+            issueLabel.textContent = '';
+            issueLabel.className = 'issue-status-label';
+        }
         updateReviewDisplay();
     }
 
