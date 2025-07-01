@@ -8,6 +8,7 @@
     let currentOrderTypeText = null;
     let initQuickSummary = null;
     let annualReportMode = false;
+    let reinstatementMode = false;
     // Tracks whether Review Mode is active across DB pages
     let reviewMode = false;
     let devMode = false;
@@ -505,6 +506,7 @@
                         const rawType = getText(document.getElementById('ordType')) || '';
                         currentOrderTypeText = normalizeOrderType(rawType);
                         annualReportMode = /annual report/i.test(currentOrderTypeText);
+                        reinstatementMode = /reinstat/i.test(currentOrderTypeText);
                         const frozen = sidebarFreezeId && sidebarFreezeId === currentId;
                         const hasStored = Array.isArray(sidebarDb) && sidebarDb.length && sidebarOrderId === currentId;
                         if (isStorage || (frozen && hasStored)) {
@@ -2111,9 +2113,11 @@
         chrome.storage.local.remove('fennecPendingComment');
         const issue = getLastIssueInfo();
         if (issue && issue.active) {
+            if (data.cancel) sessionStorage.setItem('fennecCancelPending', '1');
             autoResolveIssue(data.comment);
         } else {
             addOrderComment(data.comment);
+            if (data.cancel) setTimeout(openCancelPopup, 1500);
         }
     }
 
@@ -2416,13 +2420,15 @@
     }
 
 
-    function diagnoseHoldOrders(orders, parentId, originId) {
+    function diagnoseHoldOrders(orders, parentId, originId, originType) {
         // fall back to current order when originId missing
         if (!originId) {
             originId = typeof getBasicOrderInfo === 'function'
                 ? getBasicOrderInfo().orderId
                 : parentId;
         }
+        originType = originType || (typeof currentOrderTypeText !== 'undefined' ? currentOrderTypeText : '');
+        const isReinstatement = /reinstat/i.test(originType);
         let overlay = document.getElementById('fennec-diagnose-overlay');
         if (overlay) overlay.remove();
         overlay = document.createElement('div');
@@ -2478,19 +2484,32 @@
             const commentBox = document.createElement('input');
             commentBox.type = 'text';
             commentBox.className = 'diag-comment';
-            commentBox.value = `AR COMPLETED: ${originId}`;
+            if (isReinstatement) {
+                commentBox.value = `The Annual Report is not required as we've filed the Reinstatement: ${originId}`;
+            } else {
+                commentBox.value = `The Annual Report has been filed: ${originId}`;
+            }
             card.appendChild(commentBox);
 
-            const resolve = document.createElement('span');
-            resolve.className = 'copilot-tag copilot-tag-green diag-resolve';
-            resolve.textContent = 'RESOLVE AND COMMENT';
-            resolve.addEventListener('click', () => {
+            const action = document.createElement('span');
+            action.className = 'copilot-tag copilot-tag-green diag-resolve';
+            const status = r.order.status || '';
+            let btnLabel = 'RESOLVE AND COMMENT';
+            if (/review/i.test(status)) {
+                btnLabel = isReinstatement ? 'COMMENT & CANCEL' : 'COMMENT';
+            } else if (isReinstatement) {
+                btnLabel = 'RESOLVE & CANCEL';
+            }
+            action.textContent = btnLabel;
+            action.addEventListener('click', () => {
                 const comment = commentBox.value.trim();
-                chrome.storage.local.set({ fennecPendingComment: { orderId: r.order.orderId, comment } }, () => {
+                const data = { orderId: r.order.orderId, comment };
+                if (/cancel/i.test(btnLabel)) data.cancel = true;
+                chrome.storage.local.set({ fennecPendingComment: data }, () => {
                     chrome.runtime.sendMessage({ action: 'openActiveTab', url: `${location.origin}/incfile/order/detail/${r.order.orderId}` });
                 });
             });
-            card.appendChild(resolve);
+            card.appendChild(action);
 
             overlay.appendChild(card);
         };
@@ -2557,6 +2576,7 @@ function getLastHoldUser() {
     window.diagnoseHoldOrders = diagnoseHoldOrders;
     window.openKbWindow = openKbWindow;
     window.startFileAlong = startFileAlong;
+    window.currentOrderTypeText = currentOrderTypeText;
 
 chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment }) => {
     processPendingComment(fennecPendingComment);
