@@ -2087,6 +2087,19 @@
         openModal();
     }
 
+    function processPendingComment(data) {
+        if (!data) return;
+        const info = getBasicOrderInfo();
+        if (!info.orderId || String(data.orderId) !== String(info.orderId)) return;
+        chrome.storage.local.remove('fennecPendingComment');
+        const issue = getLastIssueInfo();
+        if (issue && issue.active) {
+            autoResolveIssue(data.comment);
+        } else {
+            addOrderComment(data.comment);
+        }
+    }
+
     function openCodaSearch() {
         let overlay = document.getElementById('fennec-coda-overlay');
         if (overlay) overlay.remove();
@@ -2529,13 +2542,7 @@ function getLastHoldUser() {
     window.startFileAlong = startFileAlong;
 
 chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment }) => {
-    if (fennecPendingComment) {
-        const info = getBasicOrderInfo();
-        if (info.orderId && String(fennecPendingComment.orderId) === String(info.orderId)) {
-            chrome.storage.local.remove('fennecPendingComment');
-            autoResolveIssue(fennecPendingComment.comment);
-        }
-    }
+    processPendingComment(fennecPendingComment);
 });
 
 const pendingNote = sessionStorage.getItem('fennecAddComment');
@@ -2552,6 +2559,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.fennecDevMode) {
         devMode = changes.fennecDevMode.newValue;
         window.location.reload();
+    }
+    if (area === 'local' && changes.fennecPendingComment) {
+        processPendingComment(changes.fennecPendingComment.newValue);
     }
     if (area === 'local' && (changes.sidebarDb || changes.sidebarOrderId || changes.sidebarOrderInfo)) {
         const currentId = getBasicOrderInfo().orderId;

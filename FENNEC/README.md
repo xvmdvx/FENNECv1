@@ -32,6 +32,7 @@ MAIN (BUSINESS FORMATION ORDERS: SILVER, GOLD, PLATINUM)
       5th box: Officers (CORP, NPROFIT)
       6th box: Issue summary
       Quick resolve field under Issue summary
+      Reuses any open DB tab for comments and resolves the issue only if active
       (Dev Mode) End: [🔄 REFRESH] button centered.
 
 MISC (ALL NON-BUSINESS FORMATION ORDERS)

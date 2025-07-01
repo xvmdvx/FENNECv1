@@ -116,3 +116,4 @@
 - Fixed Diagnose overlay comment box showing **null** instead of the current order number when triggered from the Family Tree panel.
 - Payment fields inside nested iframes are now detected so File Along selects the Client Account option reliably.
 - The payment step now verifies **Client Account** is selected before continuing.
+- Comment & Resolve in Gmail now reuses an open DB tab and only resolves when the issue is active.

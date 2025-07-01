@@ -1325,7 +1325,15 @@
                     }
                     chrome.storage.local.set({ fennecPendingComment: { orderId, comment } }, () => {
                         const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
-                        chrome.runtime.sendMessage({ action: "openActiveTab", url });
+                        chrome.windows.getCurrent(win => {
+                            chrome.tabs.query({ url: `${url}*`, windowId: win.id }, tabs => {
+                                if (tabs && tabs.length) {
+                                    chrome.tabs.update(tabs[0].id, { active: true });
+                                } else {
+                                    chrome.runtime.sendMessage({ action: "openActiveTab", url });
+                                }
+                            });
+                        });
                     });
                 };
             }
