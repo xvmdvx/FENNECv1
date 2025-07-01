@@ -1048,17 +1048,20 @@
             const box = document.getElementById('issue-summary-box');
             const content = document.getElementById('issue-summary-content');
             const label = document.getElementById('issue-status-label');
+            const btn = document.getElementById('issue-resolve-btn');
             if (!box || !content || !label) return;
             box.style.display = 'block';
             if (info && info.text) {
                 content.textContent = formatIssueText(info.text);
                 label.textContent = info.active ? 'ACTIVE' : 'RESOLVED';
                 label.className = 'issue-status-label ' + (info.active ? 'issue-status-active' : 'issue-status-resolved');
+                if (btn) btn.textContent = info.active ? 'RESOLVE & COMMENT' : 'COMMENT';
             } else {
                 const link = orderId ? `<a href="https://db.incfile.com/incfile/order/detail/${orderId}" target="_blank">${orderId}</a>` : '';
                 content.innerHTML = `NO ISSUE DETECTED FROM ORDER: ${link}`;
                 label.textContent = '';
                 label.className = 'issue-status-label';
+                if (btn) btn.textContent = 'COMMENT';
             }
         }
 
@@ -1327,15 +1330,7 @@
                     }
                     chrome.storage.local.set({ fennecPendingComment: { orderId, comment } }, () => {
                         const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
-                        chrome.windows.getCurrent(win => {
-                            chrome.tabs.query({ url: `${url}*`, windowId: win.id }, tabs => {
-                                if (tabs && tabs.length) {
-                                    chrome.tabs.update(tabs[0].id, { active: true });
-                                } else {
-                                    chrome.runtime.sendMessage({ action: "openActiveTab", url });
-                                }
-                            });
-                        });
+                        chrome.runtime.sendMessage({ action: "openTab", url, refocus: true, active: true });
                     });
                 };
             }
@@ -1377,6 +1372,10 @@
             }
             if ((area === 'sync' && changes.fennecDevMode) || (area === 'local' && changes.fennecDevMode)) {
                 window.location.reload();
+            }
+            if (area === 'local' && changes.fennecQuickResolveDone) {
+                alert('Issue updated successfully.');
+                chrome.storage.local.remove('fennecQuickResolveDone');
             }
         });
 
