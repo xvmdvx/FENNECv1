@@ -1380,6 +1380,11 @@
             }
         });
 
+        // Ensure DNA summary refreshes when returning from Adyen
+        window.addEventListener('focus', () => {
+            loadDnaSummary();
+        });
+
         // --- OPEN ORDER listener reutilizable ---
         function waitForElement(selector, timeout = 10000) {
             return new Promise((resolve, reject) => {
