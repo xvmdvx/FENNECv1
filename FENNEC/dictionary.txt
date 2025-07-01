@@ -62,6 +62,7 @@ AR COMPLETED         → Default comment used when resolving a Family Tree order
 Diagnose overlay → Floating panel listing Family Tree hold orders
 Comment Box → Editable field in the diagnose overlay prefilled with AR COMPLETED and the current order number
 Clear Tabs icon → Button that closes all other tabs in the window
+Clear SB button → Removes sidebar content and resets it to its initial state
 
 File Along → Opens a new window with TX SOS and guides formation filing automatically.
 Organizer → Person or entity that signs and submits the formation documents.

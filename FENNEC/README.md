@@ -108,6 +108,7 @@ ICONS/BUTTONS/FUNCTIONS:
    1. Gmail Search with Order Number, Customer Email, Customer Name. 
    2. Order in DB
 🗑 CLEAR TABS: Closes all tabs, except the one active, in current window.
+🧹 CLEAR: Resets the sidebar to its initial empty state.
 🔄 Refresh: Updates sidebar information instantly with information extracted from the active tab.
 🧬 DNA: Opens order payment information in Adyen and extracts relevant information from two tabs:
    1. Payment Details
