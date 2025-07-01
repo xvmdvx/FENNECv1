@@ -53,15 +53,17 @@ MISC (ALL NON-BUSINESS FORMATION ORDERS)
 
 REVIEW MODE:
 This is a detailed mode for the Revenue Assurance team to assist with the order review step.
+In Review Mode the sidebar stays locked across all tabs until DNA runs on a different order.
 
 MAIN:
    DB:
-      Title: "ORDER SUMMARY" + QUICK SUMMARY display/collapse button (⚡)
-      1st box: COMPANY summary
-      2nd box: AGENT summary
-      3rd box: MEMBERS (LLC) or DIRECTORS (CORP, NPROFIT)
-      4th box: SHAREHOLDERS (CORP, NPROFIT)
-      5th box: Officers (CORP, NPROFIT)
+      Title: "ORDER SUMMARY"
+      1st box: ADYEN's DNA summary
+      2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
+      3rd box: CLIENT summary
+      4th box: BILLING summary
+      5th box: Issue summary
+      (Dev Mode) End: [🔄 REFRESH] button centered.
    GM:
       Title: [📧 SEARCH], [🧬 DNA] & [🩻 XRAY] buttons centered.
       1st box: ADYEN's DNA summary
@@ -73,15 +75,13 @@ MAIN:
 
 MISC:
    DB:
-      Title: FAMILY TREE display/collapse button (🌳), "ORDER SUMMARY", QUICK SUMMARY display/collapse button (⚡)
-      1st box: CLIENT summary
-      2nd box: BILLING summary
-      3rd box: COMPANY summary
-      4th box: AGENT summary
-      5th box: MEMBERS (LLC) or DIRECTORS (CORP, NPROFIT)
-      6th box: SHAREHOLDERS (CORP, NPROFIT)
-      7th box: Officers (CORP, NPROFIT)
-      End: [🤖 FILE] Button: Centered.
+      Title: FAMILY TREE display/collapse button (🌳), "ORDER SUMMARY"
+      1st box: ADYEN's DNA summary (only if DNA or XRAY have been triggered)
+      2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
+      3rd box: CLIENT summary
+      4th box: BILLING summary
+      5th box: Issue summary
+      (Dev Mode) End: [🔄 REFRESH] button centered.
    GM:
       Title: [📧 SEARCH], [🧬 DNA] & [🩻 XRAY] buttons centered.
       1st box: ADYEN's DNA summary (only if DNA or XRAY have been triggered)
@@ -91,12 +91,15 @@ MISC:
       5th box: Issue summary
       (Dev Mode) End: [🔄 REFRESH] button centered.
    ADYEN:
-      Sidebar shows the DB summary and DNA results after XRAY.
-      After XRAY completes the sidebars in Gmail, DB and Adyen all display the
-      same information.
+      1st box: ADYEN's DNA summary (only if DNA or XRAY have been triggered)
+      2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
+      3rd box: CLIENT summary
+      4th box: BILLING summary
+      5th box: Issue summary
+      (Dev Mode) End: [🔄 REFRESH] button centered.
 
 DEV MODE:
-New experimental mode where upcoming features are tested before release.
+Eexperimental mode where upcoming features are tested before release.
    DB:
       [🤖 FILE] and [🔄 REFRESH] buttons plus the Mistral Box appear at the bottom.
    GM:
@@ -108,20 +111,18 @@ ICONS/BUTTONS/FUNCTIONS:
    1. Gmail Search with Order Number, Customer Email, Customer Name. 
    2. Order in DB
 🗑 CLEAR TABS: Closes all tabs, except the one active, in current window.
-🧹 CLEAR: Resets the sidebar to its initial empty state.
+🧹 CLEAR: Resets the sidebar to its initial empty state in the current tab.
 🔄 Refresh: Updates sidebar information instantly with information extracted from the active tab.
 🧬 DNA: Opens order payment information in Adyen and extracts relevant information from two tabs:
    1. Payment Details
    2. DNA
-
    Focus returns to the original email once information is retrieved.
-   In Review Mode the sidebar stays locked to the email view across all tabs until DNA runs on a different order.
 🩻 XRAY: Runs SEARCH and DNA operations one after the other.
    Focus also returns to the original email at the end.
 🤖 FILE: Automator that opens and fills the SOS filing process.
 
 GENERAL FEATURES:
-- Clicking COMPANY NAME opens the SOS search.
+- Clicking COMPANY NAME opens the SOS search, injects the name and hits search.
 - Clicking the STATE ID in the sidebar opens the Coda Knowledge Base in a popup window covering about 70% of the page.
 - RA and VA tags display in the COMPANY box. If the Registered Agent Service shows an expiration date in the past, the RA tag turns yellow and reads **EXPIRED**.
 - 🩺 DIAGNOSE overlay lists hold orders from the Family Tree and now displays all child orders.
