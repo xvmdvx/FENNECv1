@@ -294,6 +294,11 @@
                         container.innerHTML = sidebarDb.join('');
                         container.style.display = 'block';
                         attachCommonListeners(container);
+                        const qbox = container.querySelector('#quick-summary');
+                        if (qbox) {
+                            qbox.classList.remove('quick-summary-collapsed');
+                            qbox.style.maxHeight = 'none';
+                        }
                     } else {
                         container.innerHTML = '';
                         container.style.display = 'none';

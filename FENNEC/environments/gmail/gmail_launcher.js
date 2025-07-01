@@ -36,14 +36,9 @@
             reviewMode = reviewMode === null ? fennecReviewMode : reviewMode === 'true';
             let currentContext = null;
             let storedOrderInfo = null;
-            if (!sessionStorage.getItem('fennecDnaCleared')) {
-                chrome.storage.local.get({ sidebarFreezeId: null }, ({ sidebarFreezeId }) => {
-                    if (!sidebarFreezeId) {
-                        chrome.storage.local.set({ adyenDnaInfo: null });
-                    }
-                });
-                sessionStorage.setItem('fennecDnaCleared', '1');
-            }
+            // Preserve the latest DNA details across Gmail pages.
+            // Older versions cleared the data on each load when no sidebar was
+            // frozen, which prevented displaying Adyen's DNA in Review Mode.
 
             // Map of US states to their SOS business search pages
             const SOS_URLS = {
@@ -807,6 +802,11 @@
                     container.innerHTML = sidebarDb.join("");
                     container.style.display = 'block';
                     attachCommonListeners(container);
+                    const qbox = container.querySelector('#quick-summary');
+                    if (qbox) {
+                        qbox.classList.remove('quick-summary-collapsed');
+                        qbox.style.maxHeight = 'none';
+                    }
                     storedOrderInfo = sidebarOrderInfo;
                     fillOrderSummaryBox(currentContext);
                 } else {
