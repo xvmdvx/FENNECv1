@@ -18,6 +18,9 @@
 - Added Dev Mode. The Mistral chat box, FILE and REFRESH buttons now appear only when Dev Mode is enabled.
 - Added quick resolve field below the Issue summary in Gmail.
 
+- Quick Summary no longer auto-expands on Annual Report orders and the
+  Family Tree panel loads automatically.
+
 ## v0.3 - 2025-06-24
 
 - Fixed Bento Mode positioning so the sidebar displays correctly on Gmail and DB.

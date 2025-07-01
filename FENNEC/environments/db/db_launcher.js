@@ -38,6 +38,13 @@
         return el ? (el.innerText || el.textContent || "").trim() : "";
     }
 
+    function autoOpenFamilyTree() {
+        const ftIcon = document.getElementById('family-tree-icon');
+        if (ftIcon && ftIcon.style.display !== 'none') {
+            ftIcon.click();
+        }
+    }
+
     function loadStoredSummary() {
         const body = document.getElementById('copilot-body-content');
         if (!body) return;
@@ -50,8 +57,7 @@
                 updateReviewDisplay();
                 checkLastIssue(currentId);
                 if (annualReportMode) {
-                    const ftIcon = document.getElementById('family-tree-icon');
-                    if (ftIcon && ftIcon.style.display !== 'none') ftIcon.click();
+                    setTimeout(autoOpenFamilyTree, 100);
                 }
             } else {
                 body.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:40px">No DB data.</div>';
@@ -522,13 +528,8 @@
                     initQuickSummary = () => {
                         const box = sidebar.querySelector('#quick-summary');
                         if (!box) return;
-                        if (annualReportMode) {
-                            box.classList.remove('quick-summary-collapsed');
-                            box.style.maxHeight = box.scrollHeight + 'px';
-                        } else {
-                            box.style.maxHeight = '0';
-                            box.classList.add('quick-summary-collapsed');
-                        }
+                        box.style.maxHeight = '0';
+                        box.classList.add('quick-summary-collapsed');
                     };
                     initQuickSummary();
                     if (qsToggle) {
@@ -1726,8 +1727,7 @@
             updateReviewDisplay();
             checkLastIssue(orderInfo.orderId);
             if (annualReportMode) {
-                const ftIcon = document.getElementById('family-tree-icon');
-                if (ftIcon && ftIcon.style.display !== 'none') ftIcon.click();
+                setTimeout(autoOpenFamilyTree, 100);
             }
         }
     }
