@@ -129,6 +129,12 @@
     color: #000 !important;
 }
 
+.fennec-light-mode #issue-resolve-comment {
+    background: #fff;
+    color: #000;
+    border: 1px solid #777;
+}
+
 /* Use inverted Fennec icon in light mode */
 .fennec-light-mode .copilot-icon,
 .fennec-light-mode #fennec-floating-icon,
