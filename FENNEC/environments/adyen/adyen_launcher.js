@@ -292,9 +292,11 @@
                 chrome.storage.local.get({ sidebarDb: [], sidebarOrderId: null }, ({ sidebarDb, sidebarOrderId }) => {
                     if (Array.isArray(sidebarDb) && sidebarDb.length) {
                         container.innerHTML = sidebarDb.join('');
+                        container.style.display = 'block';
                         attachCommonListeners(container);
                     } else {
-                        container.innerHTML = '<div style="text-align:center; color:#aaa; font-size:13px;">No DB data.</div>';
+                        container.innerHTML = '';
+                        container.style.display = 'none';
                     }
                 });
             }
@@ -342,6 +344,21 @@
                 });
             }
 
+            function showInitialStatus() {
+                const db = document.getElementById('db-summary-section');
+                const dna = document.getElementById('dna-summary');
+                const issueBox = document.getElementById('issue-summary-box');
+                if (db) { db.innerHTML = ''; db.style.display = 'none'; }
+                if (dna) dna.innerHTML = '';
+                if (issueBox) {
+                    issueBox.style.display = 'none';
+                    const content = issueBox.querySelector('#issue-summary-content');
+                    const label = issueBox.querySelector('#issue-status-label');
+                    if (content) content.innerHTML = '';
+                    if (label) label.textContent = '';
+                }
+            }
+
             function clearSidebar() {
                 chrome.storage.local.set({
                     sidebarDb: [],
@@ -350,17 +367,7 @@
                     adyenDnaInfo: null,
                     sidebarFreezeId: null
                 });
-                const db = document.getElementById('db-summary-section');
-                if (db) db.innerHTML = '<div style="text-align:center; color:#aaa; font-size:13px;">No DB data.</div>';
-                const dna = document.getElementById('dna-summary');
-                if (dna) dna.innerHTML = '';
-                const issueContent = document.getElementById('issue-summary-content');
-                const issueLabel = document.getElementById('issue-status-label');
-                if (issueContent) issueContent.innerHTML = 'No issue data yet.';
-                if (issueLabel) {
-                    issueLabel.textContent = '';
-                    issueLabel.className = 'issue-status-label';
-                }
+                showInitialStatus();
             }
 
             function injectSidebar() {
@@ -397,9 +404,13 @@
                 }
                 const clearSb = sidebar.querySelector('#copilot-clear');
                 if (clearSb) clearSb.onclick = clearSidebar;
-                loadDbSummary();
-                loadDnaSummary();
-                if (order) checkLastIssue(order);
+                if (order) {
+                    loadDbSummary();
+                    loadDnaSummary();
+                    checkLastIssue(order);
+                } else {
+                    showInitialStatus();
+                }
             }
 
             function extractSection(title) {
