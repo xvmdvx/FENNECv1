@@ -2572,7 +2572,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
             }
         });
     }
-    if (area === 'local' && changes.adyenDnaInfo && document.getElementById('dna-summary')) {
+    if (area === 'local' && changes.adyenDnaInfo) {
         loadDnaSummary();
     }
 });
