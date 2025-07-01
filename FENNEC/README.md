@@ -92,6 +92,8 @@ MISC:
       (Dev Mode) End: [🔄 REFRESH] button centered.
    ADYEN:
       Sidebar shows the DB summary and DNA results after XRAY.
+      After XRAY completes the sidebars in Gmail, DB and Adyen all display the
+      same information.
 
 DEV MODE:
 New experimental mode where upcoming features are tested before release.

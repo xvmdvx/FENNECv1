@@ -2305,5 +2305,14 @@ chrome.storage.onChanged.addListener((changes, area) => {
         devMode = changes.fennecDevMode.newValue;
         window.location.reload();
     }
+    if (area === 'local' && (changes.sidebarDb || changes.sidebarOrderId || changes.sidebarOrderInfo)) {
+        const currentId = getBasicOrderInfo().orderId;
+        chrome.storage.local.get({ sidebarOrderId: null }, ({ sidebarOrderId }) => {
+            if (sidebarOrderId === currentId) {
+                loadStoredSummary();
+                updateReviewDisplay();
+            }
+        });
+    }
 });
 })();
