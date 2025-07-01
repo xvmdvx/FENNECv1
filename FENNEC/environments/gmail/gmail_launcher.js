@@ -1281,6 +1281,8 @@
 
             // Start with empty layout showing only action buttons.
             showInitialStatus();
+            loadDnaSummary();
+            repositionDnaSummary();
             // Details load after the user interacts with SEARCH or when
             // opened automatically with context.
 
@@ -1365,7 +1367,7 @@
             if (area === 'local' && changes.sidebarDb && document.getElementById('db-summary-section')) {
                 loadDbSummary();
             }
-            if (area === 'local' && changes.adyenDnaInfo && document.querySelector('.copilot-dna')) {
+            if (area === 'local' && changes.adyenDnaInfo) {
                 loadDnaSummary();
             }
             if (area === 'sync' && changes.fennecReviewMode) {
