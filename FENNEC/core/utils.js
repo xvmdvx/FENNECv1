@@ -174,7 +174,7 @@ function attachCommonListeners(rootEl) {
                             const status = o.status || '';
                             const type = o.type || '';
                             return /hold/i.test(status) ||
-                                (/amendment/i.test(type) && /review/i.test(status));
+                                ((/amendment/i.test(type) || /reinstat/i.test(type)) && /review/i.test(status));
                         });
                         if (!relevant.length) {
                             alert('No applicable orders found');
@@ -183,7 +183,8 @@ function attachCommonListeners(rootEl) {
                         const current = typeof getBasicOrderInfo === 'function'
                             ? getBasicOrderInfo().orderId
                             : null;
-                        diagnoseHoldOrders(relevant, parent.orderId, current);
+                        const typeText = typeof currentOrderTypeText !== 'undefined' ? currentOrderTypeText : null;
+                        diagnoseHoldOrders(relevant, parent.orderId, current, typeText);
                     });
                 }
             });
