@@ -1251,6 +1251,8 @@
                     <div class="issue-summary-box" id="issue-summary-box" style="margin-top:10px;">
                         <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
                         <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
+                        <input id="issue-comment-input" class="quick-resolve-comment" type="text" placeholder="Comment..." />
+                        <button id="issue-resolve-btn" class="copilot-button" style="margin-top:4px;">COMMENT &amp; RESOLVE</button>
                     </div>
                     ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
                     <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
@@ -1305,6 +1307,28 @@
             if (devMode && rBtn) rBtn.onclick = refreshSidebar;
             const clearSb = document.getElementById("copilot-clear");
             if (clearSb) clearSb.onclick = clearSidebar;
+
+            const resolveBtn = document.getElementById("issue-resolve-btn");
+            const commentInput = document.getElementById("issue-comment-input");
+            if (resolveBtn && commentInput) {
+                resolveBtn.onclick = () => {
+                    const comment = commentInput.value.trim();
+                    const orderId = (storedOrderInfo && storedOrderInfo.orderId) ||
+                        (currentContext && currentContext.orderNumber);
+                    if (!orderId) {
+                        alert("No order ID detected.");
+                        return;
+                    }
+                    if (!comment) {
+                        commentInput.focus();
+                        return;
+                    }
+                    chrome.storage.local.set({ fennecPendingComment: { orderId, comment } }, () => {
+                        const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
+                        chrome.runtime.sendMessage({ action: "openActiveTab", url });
+                    });
+                };
+            }
             applyReviewMode();
             loadDnaSummary();
         }

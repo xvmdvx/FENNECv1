@@ -16,6 +16,7 @@
   Mistral requests without returning **403**.
 - Diagnose overlay now displays all child orders instead of only the first three.
 - Added Dev Mode. The Mistral chat box, FILE and REFRESH buttons now appear only when Dev Mode is enabled.
+- Added quick resolve field below the Issue summary in Gmail.
 
 ## v0.3 - 2025-06-24
 
