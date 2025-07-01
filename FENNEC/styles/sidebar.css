@@ -352,6 +352,10 @@
     padding: 4px;
     margin-bottom: 6px;
 }
+#copilot-sidebar .white-box .company-summary-highlight,
+#copilot-sidebar .white-box .company-summary-highlight * {
+    color: #000 !important;
+}
 .copilot-tag.tx-label {
     color: #000 !important;
 }
