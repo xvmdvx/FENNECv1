@@ -127,7 +127,6 @@ GENERAL FEATURES:
 - RA and VA tags display in the COMPANY box. If the Registered Agent Service shows an expiration date in the past, the RA tag turns yellow and reads **EXPIRED**.
 - 🩺 DIAGNOSE overlay lists hold orders from the Family Tree and now displays all child orders.
 - When the sidebar is opened manually in Gmail or Adyen, it starts empty and only shows the action buttons. Order details appear after using SEARCH, DNA or XRAY.
-- A **QUICK RESOLVE** box under the Issue summary lets you add a comment and mark the issue resolved in one click.
 
 ## Known limitations
 - The scripts rely on the browser DOM provided by Chrome.
