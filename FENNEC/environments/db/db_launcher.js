@@ -430,6 +430,7 @@
                             </div>
                             <div style="text-align:center; color:#888; margin-top:20px;">Cargando resumen...</div>
                             ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
+                            <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                             ${devMode ? `
                             <div id="mistral-chat" class="mistral-box">
                                 <div id="mistral-log" class="mistral-log"></div>
@@ -480,6 +481,8 @@
                             chrome.runtime.sendMessage({ action: "closeOtherTabs" });
                         };
                     }
+                    const clearSb = sidebar.querySelector('#copilot-clear');
+                    if (clearSb) clearSb.onclick = clearSidebar;
                     const isStorage = /\/storage\/incfile\//.test(location.pathname);
                     chrome.storage.local.get({ sidebarFreezeId: null, sidebarDb: [], sidebarOrderId: null }, ({ sidebarFreezeId, sidebarDb, sidebarOrderId }) => {
                         const currentId = getBasicOrderInfo().orderId;
@@ -1881,6 +1884,21 @@
             container.innerHTML = html || '';
             attachCommonListeners(container);
         });
+    }
+
+    function clearSidebar() {
+        chrome.storage.local.set({
+            sidebarDb: [],
+            sidebarOrderId: null,
+            sidebarOrderInfo: null,
+            adyenDnaInfo: null,
+            sidebarFreezeId: null
+        });
+        const body = document.getElementById('copilot-body-content');
+        if (body) body.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:40px">No DB data.</div>';
+        const dnaContainer = document.getElementById('dna-summary');
+        if (dnaContainer) dnaContainer.innerHTML = '';
+        updateReviewDisplay();
     }
 
     function getBillingInfo() {

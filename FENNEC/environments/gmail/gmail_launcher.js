@@ -1137,6 +1137,32 @@
             loadDnaSummary();
         }
 
+        function clearSidebar() {
+            storedOrderInfo = null;
+            currentContext = null;
+            chrome.storage.local.set({
+                sidebarDb: [],
+                sidebarOrderId: null,
+                sidebarOrderInfo: null,
+                adyenDnaInfo: null,
+                sidebarFreezeId: null
+            });
+            const orderBox = document.getElementById('order-summary-content');
+            if (orderBox) orderBox.innerHTML = 'No order data yet.';
+            const dbBox = document.getElementById('db-summary-section');
+            if (dbBox) dbBox.innerHTML = '<div style="text-align:center; color:#aaa; font-size:13px;">No DB data.</div>';
+            const issueContent = document.getElementById('issue-summary-content');
+            if (issueContent) issueContent.innerHTML = 'No issue data yet.';
+            const issueLabel = document.getElementById('issue-status-label');
+            if (issueLabel) {
+                issueLabel.textContent = '';
+                issueLabel.className = 'issue-status-label';
+            }
+            loadDnaSummary();
+            repositionDnaSummary();
+            applyReviewMode();
+        }
+
         function handleEmailSearchClick() {
             showLoadingState();
 
@@ -1212,6 +1238,7 @@
                         <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
                     </div>
                     ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
+                    <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                 </div>
             `;
             document.body.appendChild(sidebar);
@@ -1259,6 +1286,8 @@
             document.getElementById("btn-email-search").onclick = handleEmailSearchClick;
             const rBtn = document.getElementById("copilot-refresh");
             if (devMode && rBtn) rBtn.onclick = refreshSidebar;
+            const clearSb = document.getElementById("copilot-clear");
+            if (clearSb) clearSb.onclick = clearSidebar;
             applyReviewMode();
             loadDnaSummary();
         }

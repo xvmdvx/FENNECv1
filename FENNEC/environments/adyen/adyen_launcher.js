@@ -299,6 +299,20 @@
                 });
             }
 
+            function clearSidebar() {
+                chrome.storage.local.set({
+                    sidebarDb: [],
+                    sidebarOrderId: null,
+                    sidebarOrderInfo: null,
+                    adyenDnaInfo: null,
+                    sidebarFreezeId: null
+                });
+                const db = document.getElementById('db-summary-section');
+                if (db) db.innerHTML = '<div style="text-align:center; color:#aaa; font-size:13px;">No DB data.</div>';
+                const dna = document.getElementById('dna-summary');
+                if (dna) dna.innerHTML = '';
+            }
+
             function injectSidebar() {
                 if (document.getElementById('copilot-sidebar')) return;
                 const sidebar = document.createElement('div');
@@ -316,6 +330,7 @@
                             <div id="dna-summary" style="margin-top:16px"></div>
                         </div>
                         <div id="db-summary-section"></div>
+                        <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                     </div>`;
                 document.body.appendChild(sidebar);
                 document.body.style.marginRight = '340px';
@@ -326,6 +341,8 @@
                         document.body.style.marginRight = '';
                     };
                 }
+                const clearSb = sidebar.querySelector('#copilot-clear');
+                if (clearSb) clearSb.onclick = clearSidebar;
                 loadDbSummary();
                 loadDnaSummary();
             }
