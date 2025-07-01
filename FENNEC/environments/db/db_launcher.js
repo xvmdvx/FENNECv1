@@ -1518,6 +1518,7 @@
 
         // COMPANY
         if (company) {
+            const orderIdHighlight = getBasicOrderInfo().orderId;
             let addrHtml = '';
             const phys = company.physicalAddress;
             const mail = company.mailingAddress;
@@ -1536,12 +1537,17 @@
                 addrHtml = `<div>${renderAddress(company.address, isVAAddress(company.address))}</div>`;
             }
             const companyLines = [];
+            const highlight = [];
             let nameText = escapeHtml(company.name);
             const nameBase = buildSosUrl(company.state, null, 'name');
             if (nameBase) {
                 nameText = `<a href="#" class="copilot-sos" data-url="${nameBase}" data-query="${escapeHtml(company.name)}" data-type="name">${nameText}</a>`;
             }
-            companyLines.push(`<div><b>${nameText} ${renderCopyIcon(company.name)}</b></div>`);
+            highlight.push(`<div><b>${nameText} ${renderCopyIcon(company.name)}</b></div>`);
+            if (orderIdHighlight) highlight.push(`<div><b>${renderCopy(orderIdHighlight)}</b></div>`);
+            if (company.formationDate) highlight.push(`<div><b>${escapeHtml(company.formationDate)}</b></div>`);
+            companyLines.push(`<div class="company-summary-highlight">${highlight.join('')}</div>`);
+
             if (company.stateId) {
                 let idHtml = escapeHtml(company.stateId);
                 const idBase = buildSosUrl(company.state, null, 'id');
@@ -1551,10 +1557,7 @@
                 } else {
                     idHtml += ' ' + renderCopyIcon(company.stateId);
                 }
-                const dof = currentOrderType !== 'formation' && company.formationDate
-                    ? ` (${escapeHtml(company.formationDate)})`
-                    : '';
-                companyLines.push(`<div>${idHtml}${dof}</div>`);
+                companyLines.push(`<div>${idHtml}</div>`);
             }
             companyLines.push(`<div>${renderKb(company.state)}</div>`);
             companyLines.push(addrHtml);

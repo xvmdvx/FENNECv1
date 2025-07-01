@@ -345,6 +345,13 @@
     color: #000 !important;
     border: 1px solid #bbb;
 }
+.company-summary-highlight {
+    background-color: #ddd;
+    color: #000 !important;
+    border-radius: 4px;
+    padding: 4px;
+    margin-bottom: 6px;
+}
 .copilot-tag.tx-label {
     color: #000 !important;
 }
