@@ -2576,4 +2576,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
         loadDnaSummary();
     }
 });
+
+// Refresh DNA summary when returning from Adyen
+window.addEventListener('focus', () => {
+    loadDnaSummary();
+});
 })();

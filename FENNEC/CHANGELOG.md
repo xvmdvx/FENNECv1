@@ -117,3 +117,4 @@
 - Payment fields inside nested iframes are now detected so File Along selects the Client Account option reliably.
 - The payment step now verifies **Client Account** is selected before continuing.
 - Comment & Resolve in Gmail now reuses an open DB tab and only resolves when the issue is active.
+- DNA summary refreshes when returning focus to DB or Gmail so results from XRAY appear consistently.
