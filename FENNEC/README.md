@@ -118,8 +118,6 @@ ICONS/BUTTONS/FUNCTIONS:
    In Review Mode the sidebar stays locked to the email view across all tabs until DNA runs on a different order.
 🩻 XRAY: Runs SEARCH and DNA operations one after the other.
    Focus also returns to the original email at the end.
-QUICK XRAY: Right-click an order number and choose this option to open the order in DB,
-   search Gmail using the client and member details, and then run DNA automatically.
 🤖 FILE: Automator that opens and fills the SOS filing process.
 
 GENERAL FEATURES:

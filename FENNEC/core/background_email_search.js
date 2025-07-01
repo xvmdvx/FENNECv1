@@ -21,61 +21,6 @@ function registerMistralRule() {
 
 registerMistralRule();
 
-function registerContextMenu() {
-    chrome.contextMenus.removeAll(() => {
-        chrome.contextMenus.create({
-            id: "fennec-quick-xray",
-            title: "Quick XRAY",
-            contexts: ["selection"]
-        });
-    });
-}
-
-registerContextMenu();
-
-chrome.contextMenus.onClicked.addListener((info, tab) => {
-    if (info.menuItemId === "fennec-quick-xray" && info.selectionText) {
-        const digits = info.selectionText.replace(/\D/g, "");
-        if (!/^22\d{10}$/.test(digits)) return;
-        const orderId = digits;
-        const base = "https://db.incfile.com";
-        const dbUrl = `${base}/incfile/order/detail/${orderId}`;
-        chrome.tabs.create({ url: dbUrl, active: false, windowId: tab.windowId }, dbTab => {
-            if (chrome.runtime.lastError || !dbTab) return;
-            const query = { url: `${dbUrl}*` };
-            let attempts = 15;
-            const fetchInfo = () => {
-                chrome.tabs.query(query, tabs => {
-                    const t = tabs && tabs[0];
-                    if (!t || t.status !== "complete") {
-                        if (attempts-- > 0) return setTimeout(fetchInfo, 1000);
-                        return;
-                    }
-                    chrome.tabs.sendMessage(t.id, { action: "getQuickXrayData" }, resp => {
-                        if (chrome.runtime.lastError || !resp) return;
-                        const parts = [];
-                        if (resp.orderId) {
-                            parts.push(resp.orderId);
-                            parts.push(`subject:\"${resp.orderId}\"`);
-                        }
-                        if (resp.email) parts.push(`\"${resp.email}\"`);
-                        if (resp.clientName) parts.push(`\"${resp.clientName}\"`);
-                        if (resp.memberName) parts.push(`\"${resp.memberName}\"`);
-                        const queryStr = encodeURIComponent(parts.join(" OR "));
-                        const gmailUrl = `https://mail.google.com/mail/u/0/#search/${queryStr}`;
-                        chrome.tabs.create({ url: gmailUrl, active: false, windowId: tab.windowId });
-                        const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${orderId}`;
-                        chrome.storage.local.set({ fennecReturnTab: tab.id }, () => {
-                            chrome.tabs.create({ url: adyenUrl, active: true, windowId: tab.windowId });
-                        });
-                    });
-                });
-            };
-            fetchInfo();
-        });
-    }
-});
-
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "openTab" && message.url) {
         console.log("[Copilot] Forzando apertura de una pestaña:", message.url);
