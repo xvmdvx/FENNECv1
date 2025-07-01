@@ -76,4 +76,3 @@ Retry button → Resends a prompt when the Mistral service is unavailable
 BOIR → Beneficial Ownership Information Report
 BETA → Early test version of Fennec
 Sidebar freeze → Mechanism locking sidebar data to the last processed order until XRAY runs again
-Quick XRAY → Context menu option that opens DB, Gmail search and Adyen for a selected order
