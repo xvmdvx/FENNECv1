@@ -2,6 +2,8 @@
 
 Este repositorio contiene la extensión de Chrome **FENNEC**, ubicada en el directorio `FENNEC/`. A continuación se describe la estructura general y la función de los archivos principales para que nuevos colaboradores comprendan la organización del código.
 
+Cuando el usuario pida cambios o reporte BUGS siempre da por sentado que YA INSTALO LA ULTIMA VERSION y los TESTEOS MANUALES pertinentes se han llevado a cabo.
+
 ## Estructura general
 
 - **FENNEC/** – Código fuente de la extensión.
