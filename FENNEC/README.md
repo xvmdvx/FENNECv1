@@ -17,20 +17,40 @@ MAIN (BUSINESS FORMATION ORDERS: SILVER, GOLD, PLATINUM)
    DB:
       Title: "ORDER SUMMARY" + QUICK SUMMARY display/collapse button (⚡)
       1st box: COMPANY summary
+         - Company name with copy icon and SOS search link
+         - State ID (plus formation date for misc orders)
+         - State KB link
+         - Physical and/or mailing address
+         - Company purpose
+         - RA and VA status tags
       2nd box: AGENT summary
+         - Registered agent name
+         - Address
+         - Subscription status/resignation
       3rd box: MEMBERS (LLC) or DIRECTORS (CORP, NPROFIT)
+         - For each entry: name and address
       4th box: SHAREHOLDERS (CORP, NPROFIT)
+         - For each entry: name, address and shares
       5th box: Officers (CORP, NPROFIT)
+         - For each entry: name, optional address and positions
       (Dev Mode) [🤖 FILE] button centered followed by [🔄 REFRESH].
       (Dev Mode) Mistral Box: Chat interface under REFRESH.
    GM:
       Title: [📧 SEARCH] button centered.
       1st box: COMPANY summary
+         - Same lines as DB COMPANY box
       2nd box: AGENT summary
+         - Same lines as DB AGENT box
       3rd box: MEMBERS (LLC) or DIRECTORS (CORP, NPROFIT)
+         - Name and address per entry
       4th box: SHAREHOLDERS (CORP, NPROFIT)
+         - Name, address and shares per entry
       5th box: Officers (CORP, NPROFIT)
+         - Name, optional address and positions per entry
       6th box: Issue summary
+         - Issue status label
+         - Issue text
+         - Comment field and resolve button
       Quick resolve field under Issue summary
       Reuses any open DB tab for comments and resolves the issue only if active
       (Dev Mode) End: [🔄 REFRESH] button centered.
@@ -39,18 +59,31 @@ MISC (ALL NON-BUSINESS FORMATION ORDERS)
    DB:
       Title: FAMILY TREE display/collapse icon (🌳), "ORDER SUMMARY", QUICK SUMMARY display/collapse icon (⚡)
       1st box: COMPANY summary
+         - Same lines as COMPANY box described above
       2nd box: AGENT summary
+         - Same lines as AGENT box described above
       3rd box: MEMBERS (LLC) or DIRECTORS (CORP, NPROFIT)
+         - Name and address per entry
       4th box: SHAREHOLDERS (CORP, NPROFIT)
+         - Name, address and shares per entry
       5th box: Officers (CORP, NPROFIT)
+         - Name, optional address and positions per entry
    GM:
       Title: [📧 SEARCH] button centered.
       1st box: COMPANY summary
+         - Same lines as DB COMPANY box
       2nd box: AGENT summary
+         - Same lines as DB AGENT box
       3rd box: MEMBERS (LLC) or DIRECTORS (CORP, NPROFIT)
+         - Name and address per entry
       4th box: SHAREHOLDERS (CORP, NPROFIT)
+         - Name, address and shares per entry
       5th box: Officers (CORP, NPROFIT)
+         - Name, optional address and positions per entry
       6th box: Issue summary
+         - Issue status label
+         - Issue text
+         - Comment field and resolve button
       (Dev Mode) End: [🔄 REFRESH] button centered.
 
 REVIEW MODE:
@@ -61,43 +94,118 @@ MAIN:
    DB:
       Title: "ORDER SUMMARY"
       1st box: ADYEN's DNA summary
+         - Card holder name line
+         - Card type • last 4 • expiry • funding source
+         - Issuer bank and country initials
+         - CVV & AVS tags and DB match tag
+         - Fraud scoring line
+         - Transaction table
       2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
+         - Quick summary of roles and addresses at top
+         - Company name and state ID
+         - State KB link
+         - Address lines
+         - Purpose line
+         - RA and VA status tags
       3rd box: CLIENT summary
+         - Name and company ID link
+         - Role tags or NOT LISTED
+         - Email • phone
+         - Counts (Companies • LTV)
       4th box: BILLING summary
+         - Cardholder name
+         - Card type • last 4 • expiry
+         - AVS tag
+         - Billing address
       5th box: Issue summary
+         - Issue status label
+         - Issue text
+         - Comment field and resolve button
       (Dev Mode) End: [🔄 REFRESH] button centered.
    GM:
       Title: [📧 SEARCH], [🧬 DNA] & [🩻 XRAY] buttons centered.
       1st box: ADYEN's DNA summary
+         - Same lines as DB DNA box
       2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
+         - Same lines as DB COMPANY box with Quick Summary at top
       3rd box: CLIENT summary
+         - Name and company ID link
+         - Role tags or NOT LISTED
+         - Email • phone
+         - Counts (Companies • LTV)
       4th box: BILLING summary
+         - Cardholder name
+         - Card type • last 4 • expiry
+         - AVS tag
+         - Billing address
       5th box: Issue summary
+         - Issue status label
+         - Issue text
+         - Comment field and resolve button
       (Dev Mode) End: [🔄 REFRESH] button centered.
 
 MISC:
    DB:
       Title: FAMILY TREE display/collapse button (🌳), "ORDER SUMMARY"
       1st box: ADYEN's DNA summary (only if DNA or XRAY have been triggered)
+         - Same lines as DB DNA box
       2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
+         - Same lines as DB COMPANY box with Quick Summary at top
       3rd box: CLIENT summary
+         - Name and company ID link
+         - Role tags or NOT LISTED
+         - Email • phone
+         - Counts (Companies • LTV)
       4th box: BILLING summary
+         - Cardholder name
+         - Card type • last 4 • expiry
+         - AVS tag
+         - Billing address
       5th box: Issue summary
+         - Issue status label
+         - Issue text
+         - Comment field and resolve button
       (Dev Mode) End: [🔄 REFRESH] button centered.
    GM:
       Title: [📧 SEARCH], [🧬 DNA] & [🩻 XRAY] buttons centered.
       1st box: ADYEN's DNA summary (only if DNA or XRAY have been triggered)
+         - Same lines as DB DNA box
       2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
+         - Same lines as DB COMPANY box with Quick Summary at top
       3rd box: CLIENT summary
+         - Name and company ID link
+         - Role tags or NOT LISTED
+         - Email • phone
+         - Counts (Companies • LTV)
       4th box: BILLING summary
+         - Cardholder name
+         - Card type • last 4 • expiry
+         - AVS tag
+         - Billing address
       5th box: Issue summary
+         - Issue status label
+         - Issue text
+         - Comment field and resolve button
       (Dev Mode) End: [🔄 REFRESH] button centered.
    ADYEN:
       1st box: ADYEN's DNA summary (only if DNA or XRAY have been triggered)
+         - Same lines as DB DNA box
       2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
+         - Same lines as DB COMPANY box with Quick Summary at top
       3rd box: CLIENT summary
+         - Name and company ID link
+         - Role tags or NOT LISTED
+         - Email • phone
+         - Counts (Companies • LTV)
       4th box: BILLING summary
+         - Cardholder name
+         - Card type • last 4 • expiry
+         - AVS tag
+         - Billing address
       5th box: Issue summary
+         - Issue status label
+         - Issue text
+         - Comment field and resolve button
       (Dev Mode) End: [🔄 REFRESH] button centered.
 
 DEV MODE:
