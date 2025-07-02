@@ -42,6 +42,7 @@
                         <div id="dna-summary" style="margin-top:16px"></div>
                     </div>
                     <div id="db-summary-section"></div>
+                    <div id="fraud-summary-section"></div>
                     <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
                         <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
                         <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
@@ -129,9 +130,10 @@
                 if (link) {
                     const digits = (link.textContent || '').replace(/\D/g, '');
                     if (digits.length >= 7) {
-                        const year = 2000 + parseInt(digits.slice(1,3), 10);
-                        const month = digits.slice(3,5);
-                        const day = digits.slice(5,7);
+                        const first7 = digits.slice(0,7);
+                        const year = 2000 + parseInt(first7.slice(0,3), 10);
+                        const month = first7.slice(3,5);
+                        const day = first7.slice(5,7);
                         const dateKey = `${year}-${month}-${day}`;
                         dateCounts[dateKey] = (dateCounts[dateKey] || 0) + 1;
                     }
@@ -169,24 +171,21 @@
         }
 
         function insertFraudSummary() {
-            const target = document.querySelector('#potential_fraud_content .white-box');
-            if (!target || document.getElementById('fraud-summary-box')) return;
+            const container = document.getElementById('fraud-summary-section');
+            if (!container) return;
             const summary = computeFraudSummary();
-            const container = document.createElement('div');
-            container.id = 'fraud-summary-box';
-            container.style.background = '#fff9e6';
-            container.style.border = '1px solid #e0e0e0';
-            container.style.padding = '10px';
-            container.style.marginBottom = '10px';
-            const dateItems = Object.keys(summary.dateCounts).sort().map(d => `<li>${d}: <b>${summary.dateCounts[d]}</b></li>`).join('');
+            const dateItems = Object.keys(summary.dateCounts)
+                .sort()
+                .map(d => `<li>${d}: <b>${summary.dateCounts[d]}</b></li>`)
+                .join('');
             container.innerHTML = `
-                <h4 style="margin-top:0">Fraud Review Summary</h4>
-                <div><b>Orders per date:</b><ul>${dateItems}</ul></div>
-                <div><b>VIP Decline:</b> ${summary.vipDecline}</div>
-                <div><b>No mames:</b> ${summary.noMames}</div>
-                <canvas id="fraud-price-chart" width="260" height="100" style="margin-top:8px"></canvas>
-            `;
-            target.parentNode.insertBefore(container, target);
+                <div class="white-box" id="fraud-summary-box" style="text-align:left">
+                    <h4 style="margin-top:0; text-align:center">Fraud Review Summary</h4>
+                    <div><b>Orders per date:</b><ul>${dateItems}</ul></div>
+                    <div><b>VIP Decline:</b> ${summary.vipDecline}</div>
+                    <div><b>No mames:</b> ${summary.noMames}</div>
+                    <canvas id="fraud-price-chart" width="260" height="100" style="margin-top:8px"></canvas>
+                </div>`;
             drawPriceChart(summary.prices);
         }
 
