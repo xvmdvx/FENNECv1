@@ -192,9 +192,55 @@
             }
             if (proc['Fraud scoring']) parts.push(`<div><b>Fraud scoring:</b> ${escapeHtml(proc['Fraud scoring'])}</div>`);
             if (parts.length) parts.push('<hr style="border:none;border-top:1px solid #555;margin:6px 0"/>');
-            const tx = info.transactions || {};
-            const rows = Object.keys(tx).map(k => { const e = tx[k]; const cls = colorFor(e.color); const amountVal = parseFloat((e.amount||'').replace(/[^0-9.-]/g,'')); const totalVal = parseFloat((tx['Total']?.amount||'').replace(/[^0-9.-]/g,'')); const pct = totalVal? Math.round(amountVal/totalVal*100):0; const amount=(e.amount||'').replace('EUR','€'); const pctText= totalVal?` (${pct}%)`:''; const label=escapeHtml(e.label.toUpperCase()+': '); const count=`<span class="dna-count">${escapeHtml(e.count)}</span>`; return `<tr><td><span class="dna-label ${cls}">${label}${count}</span></td><td>${escapeHtml(amount)}${escapeHtml(pctText)}</td></tr>`; }).join('');
-            if (rows) parts.push(`<table class="dna-tx-table"><thead><tr><th>Type</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`);
+            function buildTransactionTable(tx) {
+                if (!tx) return "";
+                const colors = {
+                    "Total": "lightgray",
+                    "Authorised / Settled": "green",
+                    "Settled": "green",
+                    "Refused": "purple",
+                    "Refunded": "black",
+                    "Chargebacks": "black",
+                    "Chargeback": "black"
+                };
+
+                function parseAmount(str) {
+                    if (!str) return 0;
+                    const n = parseFloat(str.replace(/[^0-9.]/g, ""));
+                    return isNaN(n) ? 0 : n;
+                }
+
+                const entries = Object.keys(tx).map(k => {
+                    const t = tx[k];
+                    let label = k;
+                    if (label === "Authorised / Settled") label = "Settled";
+                    else if (label === "Total transactions") label = "Total";
+                    else if (label === "Refunded / Cancelled") label = "Refunded";
+                    return { label, count: t.count || "", amount: t.amount || "" };
+                });
+                if (!entries.length) return "";
+
+                const total = entries.find(e => e.label === "Total") || { amount: 0 };
+                const totalVal = parseAmount(total.amount);
+
+                entries.sort((a, b) => (a.label === "Total" ? -1 : b.label === "Total" ? 1 : 0));
+
+                const rows = entries.map(e => {
+                    const cls = "copilot-tag-" + (colors[e.label] || "white");
+                    const amountVal = parseAmount(e.amount);
+                    const pct = totalVal ? Math.round(amountVal / totalVal * 100) : 0;
+                    const amount = (e.amount || "").replace("EUR", "€");
+                    const pctText = totalVal ? ` (${pct}%)` : "";
+                    const label = escapeHtml(e.label.toUpperCase() + ": ");
+                    const count = `<span class="dna-count">${escapeHtml(e.count)}</span>`;
+                    return `<tr><td><span class="dna-label ${cls}">${label}${count}</span></td><td>${escapeHtml(amount)}${escapeHtml(pctText)}</td></tr>`;
+                }).join("");
+
+                return `<table class="dna-tx-table"><thead><tr><th>Type</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`;
+            }
+
+            const txTable = buildTransactionTable(info.transactions || {});
+            if (txTable) parts.push(txTable);
             if (!parts.length) return null;
             return `<div class="section-label">ADYEN'S DNA</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
         }
