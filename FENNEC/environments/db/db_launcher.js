@@ -9,6 +9,7 @@
     let initQuickSummary = null;
     let annualReportMode = false;
     let reinstatementMode = false;
+    let miscMode = false;
     // Tracks whether Review Mode is active across DB pages
     let reviewMode = false;
     let devMode = false;
@@ -58,7 +59,7 @@
                 attachCommonListeners(body);
                 updateReviewDisplay();
                 checkLastIssue(currentId);
-                if (annualReportMode) {
+                if (miscMode) {
                     setTimeout(autoOpenFamilyTree, 100);
                 }
             } else {
@@ -492,6 +493,7 @@
                         currentOrderTypeText = normalizeOrderType(rawType);
                         annualReportMode = /annual report/i.test(currentOrderTypeText);
                         reinstatementMode = /reinstat/i.test(currentOrderTypeText);
+                        miscMode = !/formation/i.test(currentOrderTypeText);
                         const frozen = sidebarFreezeId && sidebarFreezeId === currentId;
                         const hasStored = Array.isArray(sidebarDb) && sidebarDb.length && sidebarOrderId === currentId;
                         if (isStorage || (frozen && hasStored)) {
@@ -1726,7 +1728,7 @@
             initMistralChat();
             updateReviewDisplay();
             checkLastIssue(orderInfo.orderId);
-            if (annualReportMode) {
+            if (miscMode) {
                 setTimeout(autoOpenFamilyTree, 100);
             }
         }
@@ -2018,6 +2020,7 @@
             sessionStorage.removeItem('fennecCancelPending');
             cancelLink.click();
             selectCancelReason();
+            fillCancelDescription();
         }, 500);
     }
 
@@ -2025,11 +2028,17 @@
         const sel = document.querySelector('select');
         if (!sel) return setTimeout(selectCancelReason, 500);
         const opt = Array.from(sel.options)
-            .find(o => /client.*cancell?ation/i.test(o.textContent));
+            .find(o => /other/i.test(o.textContent));
         if (opt) {
             sel.value = opt.value;
             sel.dispatchEvent(new Event('change', { bubbles: true }));
         }
+    }
+
+    function fillCancelDescription() {
+        const ta = document.querySelector('textarea');
+        if (!ta) return setTimeout(fillCancelDescription, 500);
+        ta.value = 'DUPLICATE ORDER';
     }
 
     function formatDateLikeParent(text) {
