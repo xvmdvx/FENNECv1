@@ -449,7 +449,7 @@
             if (rest) lines.push(rest);
             const display = lines.map(escapeHtml).join('<br>');
             const escFull = escapeHtml(addr);
-            return `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${escFull}">${display}</a><span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span></span>`;
+            return `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${escFull}">${display}</a><span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span><span class="copilot-copy-icon" data-copy="${escFull}" title="Copy">⧉</span></span>`;
         }
 
         // Format billing address into two lines and add USPS verification
@@ -487,7 +487,7 @@
             if (line1) lines.push(escapeHtml(line1));
             if (line2) lines.push(escapeHtml(line2));
             const escFull = escapeHtml(addr);
-            return `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${escFull}">${lines.join('<br>')}</a><span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span></span>`;
+            return `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${escFull}">${lines.join('<br>')}</a><span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span><span class="copilot-copy-icon" data-copy="${escFull}" title="Copy">⧉</span></span>`;
         }
 
         function normalizeAddr(a) {
