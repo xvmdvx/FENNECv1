@@ -951,13 +951,13 @@
 
             function formatCvv(text) {
                 const t = (text || '').toLowerCase();
-                if (t.includes('matched')) {
+                if ((/\bmatch(es|ed)?\b/.test(t) || /\(m\)/.test(t)) && !/not\s+match/.test(t)) {
                     return { label: 'CVV: MATCH', result: 'green' };
                 }
-                if (t.includes('not matched')) {
+                if (/not\s+match/.test(t) || /\(n\)/.test(t)) {
                     return { label: 'CVV: NO MATCH', result: 'purple' };
                 }
-                if (t.includes('not provided') || t.includes('not checked') || t.includes('error') || t.includes('not supplied') || t.includes('unknown')) {
+                if (/not provided|not checked|error|not supplied|unknown/.test(t)) {
                     return { label: 'CVV: UNKNOWN', result: 'black' };
                 }
                 return { label: 'CVV: UNKNOWN', result: 'black' };

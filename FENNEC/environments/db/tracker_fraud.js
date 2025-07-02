@@ -82,6 +82,8 @@
             btn.title = 'XRAY';
             btn.addEventListener('click', e => {
                 e.preventDefault();
+                const box = document.getElementById('fraud-summary-box');
+                if (box) box.remove();
                 runXray(orderId);
             });
             el.insertAdjacentElement('afterend', btn);
@@ -237,9 +239,9 @@
             }
             function formatCvv(t) {
                 t = (t || '').toLowerCase();
-                if (t.includes('matched')) return { label: 'CVV: MATCH', result: 'green' };
-                if (t.includes('not matched')) return { label: 'CVV: NO MATCH', result: 'purple' };
-                if (t.includes('not provided') || t.includes('not checked') || t.includes('error') || t.includes('not supplied') || t.includes('unknown')) return { label: 'CVV: UNKNOWN', result: 'black' };
+                if ((/\bmatch(es|ed)?\b/.test(t) || /\(m\)/.test(t)) && !/not\s+match/.test(t)) return { label: 'CVV: MATCH', result: 'green' };
+                if (/not\s+match/.test(t) || /\(n\)/.test(t)) return { label: 'CVV: NO MATCH', result: 'purple' };
+                if (/not provided|not checked|error|not supplied|unknown/.test(t)) return { label: 'CVV: UNKNOWN', result: 'black' };
                 return { label: 'CVV: UNKNOWN', result: 'black' };
             }
             function formatAvs(t) {
@@ -392,10 +394,13 @@
             chrome.storage.local.set({ sidebarDb: [], sidebarOrderId: null, sidebarOrderInfo: null, adyenDnaInfo: null, sidebarFreezeId: null });
             const db = document.getElementById('db-summary-section');
             const dna = document.getElementById('dna-summary');
+            const fraud = document.getElementById('fraud-summary-section');
             const issue = document.getElementById('issue-summary-box');
             if (db) db.innerHTML = '';
             if (dna) dna.innerHTML = '';
+            if (fraud) fraud.innerHTML = '';
             if (issue) { const content = issue.querySelector('#issue-summary-content'); const label = issue.querySelector('#issue-status-label'); if (content) content.innerHTML = 'No issue data yet.'; if (label) { label.textContent = ''; label.className = 'issue-status-label'; } issue.style.display = 'none'; }
+            insertFraudSummary();
         }
 
         injectSidebar();
