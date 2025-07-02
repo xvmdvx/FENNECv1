@@ -22,6 +22,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const line3SizeInput = document.getElementById("line3-size");
     const line3Bold = document.getElementById("line3-bold");
     const line3ColorInput = document.getElementById("line3-color");
+    const boxTitleSizeInput = document.getElementById("box-title-size");
+    const boxTitleBold = document.getElementById("box-title-bold");
+    const boxTitleColorInput = document.getElementById("box-title-color");
     const buttonColorInput = document.getElementById("button-color");
     const buttonTextColorInput = document.getElementById("button-text-color");
     const buttonRadiusInput = document.getElementById("button-radius");
@@ -58,6 +61,9 @@ document.addEventListener("DOMContentLoaded", () => {
             p.style.setProperty("--line3-size", `${line3SizeInput.value}px`);
             p.style.setProperty("--line3-bold", line3Bold.checked ? '700' : '400');
             p.style.setProperty("--line3-color", line3ColorInput.value);
+            p.style.setProperty("--box-title-size", `${boxTitleSizeInput.value}px`);
+            p.style.setProperty("--box-title-bold", boxTitleBold.checked ? '700' : '400');
+            p.style.setProperty("--box-title-color", boxTitleColorInput.value);
             p.style.setProperty("--button-color", buttonColorInput.value);
             p.style.setProperty("--button-text-color", buttonTextColorInput.value);
             p.style.setProperty("--button-radius", `${buttonRadiusInput.value}px`);
@@ -86,6 +92,9 @@ document.addEventListener("DOMContentLoaded", () => {
         line3Size: 13,
         line3Bold: false,
         line3Color: "#ffffff",
+        boxTitleSize: 16,
+        boxTitleBold: true,
+        boxTitleColor: "#ffffff",
         buttonColor: "#333333",
         buttonTextColor: "#ffffff",
         buttonRadius: 6,
@@ -114,6 +123,9 @@ document.addEventListener("DOMContentLoaded", () => {
         line3SizeInput.value = parseInt(opts.line3Size,10) || 13;
         line3Bold.checked = Boolean(opts.line3Bold);
         line3ColorInput.value = opts.line3Color || '#ffffff';
+        boxTitleSizeInput.value = parseInt(opts.boxTitleSize,10) || 16;
+        boxTitleBold.checked = Boolean(opts.boxTitleBold);
+        boxTitleColorInput.value = opts.boxTitleColor || '#ffffff';
         buttonColorInput.value = opts.buttonColor || '#333333';
         buttonTextColorInput.value = opts.buttonTextColor || '#ffffff';
         buttonRadiusInput.value = parseInt(opts.buttonRadius,10) || 6;
@@ -144,6 +156,9 @@ document.addEventListener("DOMContentLoaded", () => {
             line3SizeInput.value = 13;
             line3Bold.checked = false;
             line3ColorInput.value = '#ffffff';
+            boxTitleSizeInput.value = 16;
+            boxTitleBold.checked = true;
+            boxTitleColorInput.value = '#ffffff';
             buttonColorInput.value = '#333333';
             buttonTextColorInput.value = '#ffffff';
             buttonRadiusInput.value = 6;
@@ -167,6 +182,9 @@ document.addEventListener("DOMContentLoaded", () => {
             line3SizeInput.value = 13;
             line3Bold.checked = false;
             line3ColorInput.value = '#000000';
+            boxTitleSizeInput.value = 16;
+            boxTitleBold.checked = true;
+            boxTitleColorInput.value = '#000000';
             buttonColorInput.value = '#005a9c';
             buttonTextColorInput.value = '#ffffff';
             buttonRadiusInput.value = 6;
@@ -201,6 +219,9 @@ document.addEventListener("DOMContentLoaded", () => {
             line3Size: parseInt(line3SizeInput.value,10) || 13,
             line3Bold: line3Bold.checked,
             line3Color: line3ColorInput.value,
+            boxTitleSize: parseInt(boxTitleSizeInput.value,10) || 16,
+            boxTitleBold: boxTitleBold.checked,
+            boxTitleColor: boxTitleColorInput.value,
             buttonColor: buttonColorInput.value,
             buttonTextColor: buttonTextColorInput.value,
             buttonRadius: parseInt(buttonRadiusInput.value,10) || 6,
@@ -216,9 +237,9 @@ document.addEventListener("DOMContentLoaded", () => {
     [widthInput, fontSizeSelect, fontSelect, bgColorInput, boxColorInput,
      headerFontSizeInput, headerBgColorInput, headerTextColorInput,
      line1SizeInput, line1ColorInput, line2SizeInput, line2ColorInput,
-     line3SizeInput, line3ColorInput, buttonColorInput, buttonTextColorInput,
-     buttonRadiusInput].forEach(el => el.addEventListener("input", updatePreview));
-    [headerBold, line1Bold, line2Bold, line3Bold].forEach(el => el.addEventListener('change', updatePreview));
+     line3SizeInput, line3ColorInput, boxTitleSizeInput, boxTitleColorInput,
+     buttonColorInput, buttonTextColorInput, buttonRadiusInput].forEach(el => el.addEventListener("input", updatePreview));
+    [headerBold, line1Bold, line2Bold, line3Bold, boxTitleBold].forEach(el => el.addEventListener('change', updatePreview));
     themeSelect.addEventListener('change', () => applyTheme(themeSelect.value));
     iconSetSelect.addEventListener('change', updatePreview);
     saveBtn.addEventListener("click", () => { save(); updatePreview(); });

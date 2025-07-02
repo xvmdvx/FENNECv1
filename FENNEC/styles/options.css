@@ -54,6 +54,9 @@ label {
     --line3-size:13px;
     --line3-bold:400;
     --line3-color:#ffffff;
+    --box-title-size:16px;
+    --box-title-bold:700;
+    --box-title-color:#ffffff;
     --button-color:#333333;
     --button-radius:6px;
     --button-text-color:#ffffff;
@@ -84,6 +87,16 @@ label {
     border-radius:4px;
     text-align:left;
     font-size:13px;
+    position:relative;
+}
+
+.sidebar-preview .box-title {
+    position:absolute;
+    top:4px;
+    right:6px;
+    font-size:var(--box-title-size);
+    font-weight:var(--box-title-bold);
+    color:var(--box-title-color);
 }
 
 .sidebar-preview .line1 { font-size:var(--line1-size); font-weight:var(--line1-bold); color:var(--line1-color); }

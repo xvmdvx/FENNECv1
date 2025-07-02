@@ -75,6 +75,13 @@
                 <label>Box background
                     <input type="color" id="sidebar-box-color">
                 </label>
+                <label>Box title size
+                    <input type="number" id="box-title-size" min="12" max="22" step="1">
+                </label>
+                <label><input type="checkbox" id="box-title-bold"> Bold box title</label>
+                <label>Box title color
+                    <input type="color" id="box-title-color">
+                </label>
                 <label>Button color
                     <input type="color" id="button-color">
                 </label>
@@ -105,18 +112,39 @@
             <div id="corp-preview" class="sidebar-preview">
                 <div class="header">CORP MAIN</div>
                 <div class="white-box">
-                    <div class="line1">Example Corporation</div>
-                    <div class="line2">Formation Order</div>
-                    <div class="line3">Expedited</div>
+                    <div class="box-title">🏢</div>
+                    <div class="line1">EXAMPLE LLC</div>
+                    <div class="line2">CA • ID 123456789</div>
+                    <div class="line3">Formed Jan 01, 2020</div>
+                </div>
+                <div class="white-box">
+                    <div class="box-title">🕵️</div>
+                    <div class="line1">Example RA Inc.</div>
+                    <div class="line2">123 Street</div>
+                    <div class="line3">City, ST 12345</div>
+                </div>
+                <div class="white-box">
+                    <div class="box-title">👥</div>
+                    <div class="line1">John Doe</div>
+                    <div class="line2">Jane Roe</div>
                 </div>
                 <button class="example-button">Button</button>
             </div>
             <div id="amend-preview" class="sidebar-preview">
                 <div class="header">LLC AMENDMENT</div>
                 <div class="white-box">
-                    <div class="line1">Sample LLC</div>
-                    <div class="line2">Amendment Order</div>
-                    <div class="line3">Standard</div>
+                    <div class="box-title">🏢</div>
+                    <div class="line1">EXAMPLE LLC</div>
+                    <div class="line2">CA • ID 123456789</div>
+                </div>
+                <div class="white-box">
+                    <div class="box-title">🕵️</div>
+                    <div class="line1">Example RA Inc.</div>
+                    <div class="line2">City, ST 12345</div>
+                </div>
+                <div class="white-box">
+                    <div class="box-title">📝</div>
+                    <div class="line1">Amendment: change name</div>
                 </div>
                 <button class="example-button">Button</button>
             </div>
