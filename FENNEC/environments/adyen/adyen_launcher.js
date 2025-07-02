@@ -124,16 +124,32 @@
 
             function renderBillingAddress(addr) {
                 if (!addr) return '<span style="color:#aaa">-</span>';
-                const line1 = addr.street1 ? addr.street1.trim() : "";
-                const line2Parts = [];
-                if (addr.city) line2Parts.push(addr.city.trim());
-                if (addr.state) line2Parts.push(addr.state.trim());
-                if (addr.zip) line2Parts.push(addr.zip.trim());
-                if (addr.country) line2Parts.push(addr.country.trim());
-                const line2 = line2Parts.join(', ');
-                const full = [line1, line2].filter(Boolean).join(', ');
-                const esc = escapeHtml(full);
-                return `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${esc}">${escapeHtml(line1)}<br>${escapeHtml(line2)}</a><span class="copilot-usps" data-address="${esc}" title="USPS Lookup"> ✉️</span></span>`;
+                let line1 = '';
+                let line2 = '';
+                if (typeof addr === 'object') {
+                    const p1 = [];
+                    if (addr.street1) p1.push(addr.street1.trim());
+                    if (addr.street2) p1.push(addr.street2.trim());
+                    line1 = p1.join(' ');
+
+                    const p2 = [];
+                    if (addr.city) p2.push(addr.city.trim());
+                    if (addr.state) p2.push(addr.state.trim());
+                    if (addr.zip) p2.push(addr.zip.trim());
+                    if (addr.country) p2.push(addr.country.trim());
+                    line2 = p2.join(', ');
+                    addr = [line1, line2].filter(Boolean).join(', ');
+                } else {
+                    const parts = String(addr).split(/,\s*/);
+                    line1 = parts.shift() || '';
+                    line2 = parts.join(', ');
+                }
+
+                const lines = [];
+                if (line1) lines.push(escapeHtml(line1));
+                if (line2) lines.push(escapeHtml(line2));
+                const esc = escapeHtml(addr);
+                return `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${esc}">${lines.join('<br>')}</a><span class="copilot-usps" data-address="${esc}" title="USPS Lookup"> ✉️</span></span>`;
             }
 
             function buildCardMatchTag(info) {
