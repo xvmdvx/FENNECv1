@@ -21,6 +21,7 @@
 - Review Mode can now be toggled directly from the extension popup.
 - Sidebar design can now be customized from the Options page, including font size,
   font family and colors.
+- CVV and AVS labels in ADYEN's DNA now show the full reason on hover and correctly mark "Supplied, Matches (M)" as a match.
 - The Options page shows a live sidebar preview and Bento Mode has been removed.
 - Quick resolve button now shows **COMMENT** when the issue is already resolved
   and automatically returns focus to Gmail with a success message.
