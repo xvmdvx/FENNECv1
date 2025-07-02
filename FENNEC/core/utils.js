@@ -28,6 +28,19 @@ function applySidebarDesign(sidebar, opts) {
 }
 window.applySidebarDesign = applySidebarDesign;
 
+function abbreviateOrderType(type) {
+    const t = (type || '').toLowerCase();
+    if (t.includes('annual report')) return 'AR';
+    if (t.includes('state filings bundle')) return 'SFB';
+    if (t.includes('foreign qualification')) return 'FQ';
+    if (t.includes('assumed business name')) return 'ABN';
+    if (t.includes('sales tax registration')) return 'SALES TAX';
+    if (t.includes('registered agent change')) return 'RA CHANGE';
+    if (t.includes('trade name search')) return 'TRADENAME';
+    return type;
+}
+window.abbreviateOrderType = abbreviateOrderType;
+
 function attachCommonListeners(rootEl) {
     if (!rootEl) return;
     rootEl.querySelectorAll('.copilot-address').forEach(el => {
@@ -147,7 +160,7 @@ function attachCommonListeners(rootEl) {
                 html += `<div class="section-label">PARENT</div>`;
                 html += `<div class="ft-grid">` +
                     `<div><b><a href="#" class="ft-link" data-id="${escapeHtml(parent.orderId)}">${escapeHtml(parent.orderId)}</a></b></div>` +
-                    `<div class="ft-type">${escapeHtml(parent.type).toUpperCase()}</div>` +
+                    `<div class="ft-type">${escapeHtml(abbreviateOrderType(parent.type)).toUpperCase()}</div>` +
                     `<div class="ft-date">${escapeHtml(parent.date)}</div>` +
                     `<div><span class="${pStatusClass}">${escapeHtml(parent.status)}</span></div>` +
                     `</div>`;
@@ -160,7 +173,7 @@ function attachCommonListeners(rootEl) {
                     return `
                             <div class="ft-grid">
                                 <div><b><a href="#" class="ft-link" data-id="${escapeHtml(o.orderId)}">${escapeHtml(o.orderId)}</a></b></div>
-                                <div class="ft-type">${escapeHtml(o.type).toUpperCase()}</div>
+                                <div class="ft-type">${escapeHtml(abbreviateOrderType(o.type)).toUpperCase()}</div>
                                 <div class="ft-date">${escapeHtml(o.date)}</div>
                                 <div><span class="${cls}">${escapeHtml(o.status)}</span></div>
                             </div>`;
