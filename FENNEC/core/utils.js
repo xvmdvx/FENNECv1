@@ -209,5 +209,51 @@ function attachCommonListeners(rootEl) {
             });
         });
     }
+
+    rootEl.querySelectorAll('.company-search-toggle').forEach(el => {
+        el.addEventListener('click', () => {
+            const box = el.closest('.white-box');
+            if (box && typeof toggleCompanySearch === 'function') {
+                toggleCompanySearch(box);
+            }
+        });
+    });
 }
+
+function toggleCompanySearch(box) {
+    if (!box) return;
+    const mode = box.dataset.mode || 'info';
+    const state = box.dataset.state || '';
+    if (mode === 'search') {
+        box.innerHTML = box.dataset.infoHtml || '';
+        box.dataset.mode = 'info';
+        attachCommonListeners(box);
+        return;
+    }
+    box.dataset.infoHtml = box.innerHTML;
+    box.dataset.mode = 'search';
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.placeholder = 'Search name';
+    const idInput = document.createElement('input');
+    idInput.type = 'text';
+    idInput.placeholder = 'Search ID';
+    const form = document.createElement('div');
+    form.className = 'company-search-form';
+    form.appendChild(nameInput);
+    form.appendChild(idInput);
+    box.innerHTML = '';
+    box.appendChild(form);
+    const doSearch = (type) => {
+        const q = type === 'name' ? nameInput.value.trim() : idInput.value.trim();
+        if (!q) return;
+        if (typeof buildSosUrl !== 'function') return;
+        const url = buildSosUrl(state, null, type);
+        if (!url) return;
+        chrome.runtime.sendMessage({ action: 'sosSearch', url, query: q, searchType: type });
+    };
+    nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch('name'); });
+    idInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch('id'); });
+}
+window.toggleCompanySearch = toggleCompanySearch;
 

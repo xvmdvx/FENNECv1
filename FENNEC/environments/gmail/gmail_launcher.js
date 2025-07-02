@@ -98,6 +98,7 @@
                 const sep = base.includes('?') ? '&' : '?';
                 return base + sep + 'q=' + encodeURIComponent(query);
             }
+            window.buildSosUrl = buildSosUrl;
 
         function applyPaddingToMainPanels() {
             const candidates = [

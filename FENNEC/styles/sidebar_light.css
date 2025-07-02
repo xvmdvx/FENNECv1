@@ -129,6 +129,16 @@
     color: #000;
 }
 
+.fennec-light-mode .company-search-toggle {
+    color: #000;
+}
+
+.fennec-light-mode .company-search-form input {
+    background: #fff;
+    color: #000;
+    border: 1px solid #777;
+}
+
 /* Ensure header icon stays visible */
 .fennec-light-mode #copilot-close {
     color: #fff;
