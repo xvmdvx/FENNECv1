@@ -18,6 +18,7 @@
 - Diagnose overlay now displays all child orders instead of only the first three.
 - Added Dev Mode. The Mistral chat box, FILE and REFRESH buttons now appear only when Dev Mode is enabled.
 - Added quick resolve field below the Issue summary in Gmail.
+- Review Mode can now be toggled directly from the extension popup.
 - Sidebar design can now be customized from the Options page, including font size,
   font family and colors.
 - The Options page shows a live sidebar preview and Bento Mode has been removed.
