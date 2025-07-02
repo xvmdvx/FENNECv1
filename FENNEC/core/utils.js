@@ -213,7 +213,11 @@ function attachCommonListeners(rootEl) {
                         e.preventDefault();
                         const id = a.dataset.id;
                         if (id) {
-                            chrome.runtime.sendMessage({ action: 'openTab', url: `${location.origin}/incfile/order/detail/${id}` });
+                            chrome.runtime.sendMessage({
+                                action: 'openOrReuseTab',
+                                url: `${location.origin}/incfile/order/detail/${id}`,
+                                active: false
+                            });
                         }
                     });
                 });
@@ -223,7 +227,11 @@ function attachCommonListeners(rootEl) {
                         if (!id) return;
                         if (!confirm('Cancel and refund order ' + id + '?')) return;
                         chrome.storage.local.set({ fennecDupCancel: id }, () => {
-                            chrome.runtime.sendMessage({ action: 'openActiveTab', url: `${location.origin}/incfile/order/detail/${id}` });
+                            chrome.runtime.sendMessage({
+                                action: 'openOrReuseTab',
+                                url: `${location.origin}/incfile/order/detail/${id}`,
+                                active: true
+                            });
                         });
                     });
                 });
