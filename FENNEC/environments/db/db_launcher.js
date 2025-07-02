@@ -2608,7 +2608,7 @@ function getLastHoldUser() {
         if (info.orderId) {
             const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
             setTimeout(() => {
-                chrome.runtime.sendMessage({ action: 'openTab', url: adyenUrl, refocus: true, active: true });
+                chrome.runtime.sendMessage({ action: 'openTab', url: adyenUrl, active: true });
             }, 1000);
         }
     }

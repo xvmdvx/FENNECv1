@@ -38,7 +38,7 @@
 
         function runXray(orderId) {
             const dbUrl = `https://db.incfile.com/incfile/order/detail/${orderId}?fraud_xray=1`;
-            chrome.runtime.sendMessage({ action: 'openTab', url: dbUrl, active: true });
+            chrome.runtime.sendMessage({ action: 'openTab', url: dbUrl, active: true, refocus: true });
         }
 
         function addXrayIcon(el, orderId) {
