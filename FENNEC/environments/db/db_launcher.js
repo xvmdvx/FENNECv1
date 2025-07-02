@@ -12,6 +12,7 @@
     // Tracks whether Review Mode is active across DB pages
     let reviewMode = false;
     let devMode = false;
+    const fraudXray = new URLSearchParams(location.search).get('fraud_xray') === '1';
 
     function showFloatingIcon() {
         if (document.getElementById("fennec-floating-icon")) return;
@@ -509,6 +510,7 @@
                             }
                         }
                         loadDnaSummary();
+                        setTimeout(runFraudXray, 500);
                     });
                     const qsToggle = sidebar.querySelector('#qs-toggle');
                     initQuickSummary = () => {
@@ -2571,6 +2573,30 @@ function getLastHoldUser() {
     window.openKbWindow = openKbWindow;
     window.startFileAlong = startFileAlong;
     window.currentOrderTypeText = currentOrderTypeText;
+
+    function runFraudXray() {
+        if (!fraudXray) return;
+        const info = getBasicOrderInfo();
+        const client = getClientInfo();
+        const parts = [];
+        if (info.orderId) {
+            parts.push(info.orderId);
+            parts.push(`subject:"${info.orderId}"`);
+        }
+        if (client.email) parts.push(`"${client.email}"`);
+        if (client.name) parts.push(`"${client.name}"`);
+        if (parts.length) {
+            const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
+            const gmailUrl = 'https://mail.google.com/mail/u/0/#search/' + query;
+            chrome.runtime.sendMessage({ action: 'openTab', url: gmailUrl, active: true });
+        }
+        if (info.orderId) {
+            const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
+            setTimeout(() => {
+                chrome.runtime.sendMessage({ action: 'openTab', url: adyenUrl, refocus: true, active: true });
+            }, 1000);
+        }
+    }
 
 chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment }) => {
     processPendingComment(fennecPendingComment);
