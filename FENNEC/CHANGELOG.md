@@ -137,3 +137,4 @@
 - Comment & Resolve in Gmail now reuses an open DB tab and only resolves when the issue is active.
 - DNA summary refreshes when returning focus to DB or Gmail so results from XRAY appear consistently.
 - XRAY now opens the Kount workflow page when a Kount link is present on the DB page.
+- CVV tags in DB SB Fraud Review correctly detect "Matches (M)" and the Fraud Review summary reappears after using CLEAR.
