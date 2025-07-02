@@ -1531,7 +1531,10 @@
             }
             highlight.push(`<div><b>${nameText} ${renderCopyIcon(company.name)}</b></div>`);
             if (orderIdHighlight) {
-                highlight.push(`<div><b>${renderCopy(orderIdHighlight)} ${renderCopyIcon(orderIdHighlight)}</b></div>`);
+                const typeLabel = currentOrderTypeText
+                    ? ` <span class="copilot-tag copilot-tag-white">${escapeHtml(currentOrderTypeText)}</span>`
+                    : '';
+                highlight.push(`<div><b>${renderCopy(orderIdHighlight)} ${renderCopyIcon(orderIdHighlight)}${typeLabel}</b></div>`);
             }
             if (company.stateId && company.stateId.toLowerCase() !== 'n/a') {
                 let idHtml = escapeHtml(company.stateId);
