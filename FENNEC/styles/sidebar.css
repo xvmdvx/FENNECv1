@@ -566,6 +566,12 @@
     text-decoration: underline;
 }
 
+#family-tree-orders .ft-cancel {
+    color: #f44336;
+    cursor: pointer;
+    margin-left: 4px;
+}
+
 @keyframes fennec-blink {
     0%, 50%, 100% { opacity: 1; }
     25%, 75% { opacity: 0; }
