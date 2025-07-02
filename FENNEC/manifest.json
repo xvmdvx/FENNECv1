@@ -36,8 +36,7 @@
       ],
       "css": [
         "styles/sidebar.css",
-        "styles/sidebar_light.css",
-        "styles/sidebar_bento.css"
+        "styles/sidebar_light.css"
       ]
     },
     {
@@ -53,8 +52,7 @@
       ],
       "css": [
         "styles/sidebar.css",
-        "styles/sidebar_light.css",
-        "styles/sidebar_bento.css"
+        "styles/sidebar_light.css"
       ]
     },
     {
@@ -76,8 +74,7 @@
       ],
       "css": [
         "styles/sidebar.css",
-        "styles/sidebar_light.css",
-        "styles/sidebar_bento.css"
+        "styles/sidebar_light.css"
       ]
     },
     {
@@ -91,8 +88,7 @@
       ],
       "css": [
         "styles/sidebar.css",
-        "styles/sidebar_light.css",
-        "styles/sidebar_bento.css"
+        "styles/sidebar_light.css"
       ]
     }
   ],

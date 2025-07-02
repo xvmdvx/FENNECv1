@@ -27,8 +27,8 @@ Los scripts se inyectan según la página detectada:
 - `environments/usps/usps_launcher.js` – Herramienta de USPS para verificar direcciones.
 
 ### Recursos y UI
-- `styles/` contiene `sidebar.css`, `sidebar_light.css` y `sidebar_bento.css`, usados por el sidebar según la preferencia del usuario.
-- `popup.html` y `popup.js` permiten activar/desactivar la extensión y elegir modos (light, bento, review, dev).
+- `styles/` contiene `sidebar.css` y `sidebar_light.css`.
+- `popup.html` y `popup.js` permiten activar/desactivar la extensión y acceder a la página de opciones.
 - `options.html` y `options.js` almacenan opciones persistentes como el ancho del sidebar.
 - Los íconos se ubican en `fennec_icon.png` y `icons/`.
 - El sidebar se genera dinámicamente en los scripts de contenido; no existe un HTML estático específico.
