@@ -2620,6 +2620,13 @@ function getLastHoldUser() {
                 chrome.runtime.sendMessage({ action: 'openTab', url: adyenUrl, active: true });
             }, 1000);
         }
+
+        setTimeout(() => {
+            const kountLink = document.querySelector('a[href*="kount.net"]');
+            if (kountLink && kountLink.href) {
+                kountLink.click();
+            }
+        }, 2000);
     }
 
 chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment }) => {
