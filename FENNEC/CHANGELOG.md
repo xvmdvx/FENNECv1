@@ -30,6 +30,9 @@
 
 - Quick resolve now reuses an existing DB tab when available and displays the
   completion message inside the Gmail sidebar instead of using a popup.
+- Quick resolve removes the input after posting your comment and shows it below
+  the Issue summary. If the issue was active, the status tag updates to
+  **RESOLVED**.
 
 - Quick Summary no longer auto-expands on Annual Report orders and the
   Family Tree panel loads automatically.

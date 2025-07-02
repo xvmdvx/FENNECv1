@@ -196,6 +196,19 @@
     box-sizing: border-box;
 }
 
+.quick-resolve-comment-text {
+    width: calc(100% - 8px);
+    margin: 6px 4px 0;
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid #888;
+    box-sizing: border-box;
+    text-align: left;
+    word-break: break-word;
+    background: #fff;
+    color: #000;
+}
+
 /* Ensure DB sidebar sections remain readable */
 #copilot-sidebar .white-box {
     background-color: var(--sb-box-bg);
