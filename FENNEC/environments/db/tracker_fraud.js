@@ -43,10 +43,6 @@
                     </div>
                     <div id="db-summary-section"></div>
                     <div id="fraud-summary-section"></div>
-                    <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
-                        <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
-                        <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
-                    </div>
                     <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                     <div id="review-mode-label" class="review-mode-label" style="margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
                 </div>`;
@@ -165,11 +161,70 @@
                 const h = Math.round(count / max * 80);
                 ctx.fillStyle = '#2cabe3';
                 ctx.fillRect(x, 90 - h, 60, h);
-                ctx.fillStyle = '#000';
+                ctx.fillStyle = '#fff';
                 ctx.font = '10px sans-serif';
                 ctx.textAlign = 'center';
                 ctx.fillText(labels[i], x + 30, 97);
             });
+        }
+
+        let activeFilter = null;
+
+        function applyFilter() {
+            const rows = Array.from(document.querySelectorAll('tr[data-order-id]'));
+            rows.forEach(row => {
+                let show = true;
+                if (activeFilter) {
+                    const html = row.innerHTML || '';
+                    if (activeFilter.date) {
+                        const link = row.querySelector('a[href*="/order/detail/"]');
+                        if (link) {
+                            const digits = (link.textContent || '').replace(/\D/g, '');
+                            if (digits.length >= 7) {
+                                const first7 = digits.slice(0,7);
+                                const dKey = `${2000 + parseInt(first7.slice(0,3),10)}-${first7.slice(3,5)}-${first7.slice(5,7)}`;
+                                if (dKey !== activeFilter.date) show = false;
+                            }
+                        }
+                    }
+                    if (activeFilter.vip && !/VIP\s*Decline/i.test(html)) show = false;
+                    if (activeFilter.nomames && !/No mames/i.test(html)) show = false;
+                }
+                row.style.display = show ? '' : 'none';
+            });
+        }
+
+        function toggleDateFilter(date) {
+            if (activeFilter && activeFilter.date === date) {
+                activeFilter = null;
+            } else {
+                activeFilter = { date };
+            }
+            applyFilter();
+        }
+
+        function toggleVipFilter() {
+            if (activeFilter && activeFilter.vip) {
+                activeFilter = null;
+            } else {
+                activeFilter = { vip: true };
+            }
+            applyFilter();
+        }
+
+        function toggleNmFilter() {
+            if (activeFilter && activeFilter.nomames) {
+                activeFilter = null;
+            } else {
+                activeFilter = { nomames: true };
+            }
+            applyFilter();
+        }
+
+        function formatSummaryDate(d) {
+            const parts = d.split('-');
+            const dt = new Date(parts[0], parseInt(parts[1],10)-1, parts[2]);
+            return dt.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
         }
 
         function insertFraudSummary() {
@@ -178,17 +233,24 @@
             const summary = computeFraudSummary();
             const dateItems = Object.keys(summary.dateCounts)
                 .sort()
-                .map(d => `<li>${d}: <b>${summary.dateCounts[d]}</b></li>`)
+                .map(d => `<li class="fraud-date-item" data-date="${d}" style="cursor:pointer">${formatSummaryDate(d)}: <b>${summary.dateCounts[d]}</b></li>`)
                 .join('');
             container.innerHTML = `
                 <div class="white-box" id="fraud-summary-box" style="text-align:left">
-                    <h4 style="margin-top:0; text-align:center">Fraud Review Summary</h4>
-                    <div><b>Orders per date:</b><ul>${dateItems}</ul></div>
-                    <div><b>VIP Decline:</b> ${summary.vipDecline}</div>
-                    <div><b>No mames:</b> ${summary.noMames}</div>
-                    <canvas id="fraud-price-chart" width="260" height="100" style="margin-top:8px"></canvas>
+                    <h4 style="margin-top:0; text-align:center"><b>SUMMARY</b></h4>
+                    <div><b>ORDERS:</b><ul>${dateItems}</ul></div>
+                    <div class="vip-declines" style="cursor:pointer"><b>VIP DECLINES:</b> ${summary.vipDecline}</div>
+                    <div class="nm-mames" style="cursor:pointer"><b>NO MAMES:</b> ${summary.noMames}</div>
+                    <canvas id="fraud-price-chart" width="260" height="100" style="margin-top:8px; width:50%"></canvas>
                 </div>`;
             drawPriceChart(summary.prices);
+            container.querySelectorAll('.fraud-date-item').forEach(li => {
+                li.addEventListener('click', () => toggleDateFilter(li.dataset.date));
+            });
+            const vip = container.querySelector('.vip-declines');
+            if (vip) vip.addEventListener('click', toggleVipFilter);
+            const nm = container.querySelector('.nm-mames');
+            if (nm) nm.addEventListener('click', toggleNmFilter);
         }
 
         function buildDnaHtml(info) {
@@ -384,7 +446,7 @@
                     if (qbox) { qbox.classList.remove('quick-summary-collapsed'); qbox.style.maxHeight = 'none'; }
                     checkLastIssue(sidebarOrderId);
                 } else {
-                    container.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:20px">No DB data.</div>';
+                    container.innerHTML = '';
                     fillIssueBox(null, null);
                 }
             });
