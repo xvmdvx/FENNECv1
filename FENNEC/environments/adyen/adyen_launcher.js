@@ -229,47 +229,47 @@
 
                 function formatCvv(text) {
                     const t = (text || '').toLowerCase();
-                    if (t.includes('matched')) {
-                        return { label: 'CVV: MATCH', result: 'green' };
+                    if ((/\bmatch(es|ed)?\b/.test(t) || /\(m\)/.test(t)) && !/not\s+match/.test(t)) {
+                        return { label: 'CVV: MATCH', result: 'green', reason: text };
                     }
-                    if (t.includes('not matched')) {
-                        return { label: 'CVV: NO MATCH', result: 'purple' };
+                    if (/not\s+match/.test(t) || /\(n\)/.test(t)) {
+                        return { label: 'CVV: NO MATCH', result: 'purple', reason: text };
                     }
-                    if (t.includes('not provided') || t.includes('not checked') || t.includes('error') || t.includes('not supplied') || t.includes('unknown')) {
-                        return { label: 'CVV: UNKNOWN', result: 'black' };
+                    if (/not provided|not checked|error|not supplied|unknown/.test(t)) {
+                        return { label: 'CVV: UNKNOWN', result: 'black', reason: text };
                     }
-                    return { label: 'CVV: UNKNOWN', result: 'black' };
+                    return { label: 'CVV: UNKNOWN', result: 'black', reason: text };
                 }
 
                 function formatAvs(text) {
                     const t = (text || '').toLowerCase();
                     if (/both\s+postal\s+code\s+and\s+address\s+match/.test(t) || /^7\b/.test(t) || t.includes('both match')) {
-                        return { label: 'AVS: MATCH', result: 'green' };
+                        return { label: 'AVS: MATCH', result: 'green', reason: text };
                     }
                     if (/^6\b/.test(t) || (t.includes('postal code matches') && t.includes("address doesn't"))) {
-                        return { label: 'AVS: PARTIAL (STREET✖️)', result: 'purple' };
+                        return { label: 'AVS: PARTIAL (STREET✖️)', result: 'purple', reason: text };
                     }
                     if (/^1\b/.test(t) || (t.includes('address matches') && t.includes("postal code doesn't"))) {
-                        return { label: 'AVS: PARTIAL (ZIP✖️)', result: 'purple' };
+                        return { label: 'AVS: PARTIAL (ZIP✖️)', result: 'purple', reason: text };
                     }
                     if (/^2\b/.test(t) || t.includes('neither matches') || /\bw\b/.test(t)) {
-                        return { label: 'AVS: NO MATCH', result: 'purple' };
+                        return { label: 'AVS: NO MATCH', result: 'purple', reason: text };
                     }
                     if (/^0\b/.test(t) || /^3\b/.test(t) || /^4\b/.test(t) || /^5\b/.test(t) || t.includes('unavailable') || t.includes('not supported') || t.includes('no avs') || t.includes('unknown')) {
-                        return { label: 'AVS: UNKNOWN', result: 'black' };
+                        return { label: 'AVS: UNKNOWN', result: 'black', reason: text };
                     }
-                    return { label: 'AVS: UNKNOWN', result: 'black' };
+                    return { label: 'AVS: UNKNOWN', result: 'black', reason: text };
                 }
 
                 if (cvv || avs) {
                     const tags = [];
                     if (cvv) {
-                        const { label, result } = formatCvv(cvv);
-                        tags.push(`<span class="copilot-tag ${colorFor(result)}">${escapeHtml(label)}</span>`);
+                        const { label, result, reason } = formatCvv(cvv);
+                        tags.push(`<span class="copilot-tag ${colorFor(result)}" title="${escapeHtml(reason)}">${escapeHtml(label)}</span>`);
                     }
                     if (avs) {
-                        const { label, result } = formatAvs(avs);
-                        tags.push(`<span class="copilot-tag ${colorFor(result)}">${escapeHtml(label)}</span>`);
+                        const { label, result, reason } = formatAvs(avs);
+                        tags.push(`<span class="copilot-tag ${colorFor(result)}" title="${escapeHtml(reason)}">${escapeHtml(label)}</span>`);
                     }
                     const cardTag = buildCardMatchTag(info);
                     if (cardTag) tags.push(cardTag);
