@@ -114,6 +114,80 @@
                 frag.appendChild(document.createTextNode(text.slice(last)));
                 node.parentNode.replaceChild(frag, node);
             });
+
+            insertFraudSummary();
+        }
+
+        function computeFraudSummary() {
+            const rows = Array.from(document.querySelectorAll('tr[data-order-id]'));
+            const dateCounts = {};
+            let vipDecline = 0;
+            let noMames = 0;
+            const prices = [];
+            rows.forEach(row => {
+                const link = row.querySelector('a[href*="/order/detail/"]');
+                if (link) {
+                    const digits = (link.textContent || '').replace(/\D/g, '');
+                    if (digits.length >= 7) {
+                        const year = 2000 + parseInt(digits.slice(1,3), 10);
+                        const month = digits.slice(3,5);
+                        const day = digits.slice(5,7);
+                        const dateKey = `${year}-${month}-${day}`;
+                        dateCounts[dateKey] = (dateCounts[dateKey] || 0) + 1;
+                    }
+                }
+                const html = row.innerHTML || '';
+                if (/VIP\s*Decline/i.test(html)) vipDecline++;
+                if (/No mames/i.test(html)) noMames++;
+                const amount = parseFloat(row.getAttribute('data-amount') || '');
+                if (!isNaN(amount)) prices.push(amount);
+            });
+            return { dateCounts, vipDecline, noMames, prices };
+        }
+
+        function drawPriceChart(prices) {
+            const canvas = document.getElementById('fraud-price-chart');
+            if (!canvas || !prices.length) return;
+            const ctx = canvas.getContext('2d');
+            const bins = [0,0,0,0];
+            prices.forEach(p => {
+                if (p < 200) bins[0]++; else if (p < 300) bins[1]++; else if (p < 400) bins[2]++; else bins[3]++;
+            });
+            const max = Math.max(...bins, 1);
+            const labels = ['$<200','200-299','300-399','$400+'];
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            bins.forEach((count,i) => {
+                const x = i*65 + 10;
+                const h = Math.round(count / max * 80);
+                ctx.fillStyle = '#2cabe3';
+                ctx.fillRect(x, 90 - h, 60, h);
+                ctx.fillStyle = '#000';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(labels[i], x + 30, 97);
+            });
+        }
+
+        function insertFraudSummary() {
+            const target = document.querySelector('#potential_fraud_content .white-box');
+            if (!target || document.getElementById('fraud-summary-box')) return;
+            const summary = computeFraudSummary();
+            const container = document.createElement('div');
+            container.id = 'fraud-summary-box';
+            container.style.background = '#fff9e6';
+            container.style.border = '1px solid #e0e0e0';
+            container.style.padding = '10px';
+            container.style.marginBottom = '10px';
+            const dateItems = Object.keys(summary.dateCounts).sort().map(d => `<li>${d}: <b>${summary.dateCounts[d]}</b></li>`).join('');
+            container.innerHTML = `
+                <h4 style="margin-top:0">Fraud Review Summary</h4>
+                <div><b>Orders per date:</b><ul>${dateItems}</ul></div>
+                <div><b>VIP Decline:</b> ${summary.vipDecline}</div>
+                <div><b>No mames:</b> ${summary.noMames}</div>
+                <canvas id="fraud-price-chart" width="260" height="100" style="margin-top:8px"></canvas>
+            `;
+            target.parentNode.insertBefore(container, target);
+            drawPriceChart(summary.prices);
         }
 
         function buildDnaHtml(info) {
