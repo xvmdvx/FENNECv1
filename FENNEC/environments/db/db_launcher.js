@@ -460,6 +460,12 @@
                         </div>
                     `;
                     document.body.appendChild(sidebar);
+                    chrome.storage.sync.get({
+                        sidebarFontSize: 13,
+                        sidebarFont: "'Inter', sans-serif",
+                        sidebarBgColor: '#212121',
+                        sidebarBoxColor: '#2e2e2e'
+                    }, opts => applySidebarDesign(sidebar, opts));
                     if (document.body.classList.contains('fennec-bento-mode')) {
                         const vid = document.createElement('video');
                         vid.id = 'bento-video';

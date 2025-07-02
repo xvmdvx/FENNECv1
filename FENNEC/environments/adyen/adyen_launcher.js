@@ -399,6 +399,12 @@
                         <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                     </div>`;
                 document.body.appendChild(sidebar);
+                chrome.storage.sync.get({
+                    sidebarFontSize: 13,
+                    sidebarFont: "'Inter', sans-serif",
+                    sidebarBgColor: '#212121',
+                    sidebarBoxColor: '#2e2e2e'
+                }, opts => applySidebarDesign(sidebar, opts));
                 document.body.style.marginRight = '340px';
                 const closeBtn = sidebar.querySelector('#copilot-close');
                 if (closeBtn) {
