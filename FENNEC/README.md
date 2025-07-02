@@ -197,6 +197,7 @@ GENERAL FEATURES:
 - RA and VA tags display in the COMPANY box. If the Registered Agent Service shows an expiration date in the past, the RA tag turns yellow and reads **EXPIRED**.
 - 🩺 DIAGNOSE overlay lists hold orders from the Family Tree and now displays all child orders.
 - When the sidebar is opened manually in Gmail or Adyen, it starts empty and only shows the action buttons. Order details appear after using SEARCH, DNA or XRAY.
+- Visiting the Fraud tracker in DB automatically opens the sidebar in Review Mode and adds 🩻 XRAY icons next to each order number.
 
 ## Known limitations
 - The scripts rely on the browser DOM provided by Chrome.
