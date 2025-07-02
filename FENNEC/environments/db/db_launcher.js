@@ -657,6 +657,7 @@
         const sep = base.includes('?') ? '&' : '?';
         return base + sep + 'q=' + encodeURIComponent(query);
     }
+    window.buildSosUrl = buildSosUrl;
 
 
     function isValidField(text) {
@@ -1560,9 +1561,11 @@
                 `<div><span class="${raClass}">RA: ${raExpired ? "EXPIRED" : (hasRA ? "Sí" : "No")}</span> ` +
                 `<span class="${vaClass}">VA: ${hasVA ? "Sí" : "No"}</span></div>`
             );
+            const searchIcon = '<span class="company-search-toggle">🔍</span>';
+            const stateAttr = company.state ? ` data-state="${escapeHtml(company.state)}"` : '';
             const compSection = reviewMode
-                ? `<div class="white-box" style="margin-bottom:10px">${companyLines.join('').trim()}</div>`
-                : `<div class="section-label">COMPANY:</div><div class="white-box" style="margin-bottom:10px">${companyLines.join('').trim()}</div>`;
+                ? `<div class="white-box company-box"${stateAttr} style="margin-bottom:10px">${companyLines.join('').trim()}${searchIcon}</div>`
+                : `<div class="section-label">COMPANY:</div><div class="white-box company-box"${stateAttr} style="margin-bottom:10px">${companyLines.join('').trim()}${searchIcon}</div>`;
             if (companyLines.length) {
                 html += compSection;
                 dbSections.push(compSection);

@@ -222,6 +222,25 @@
     position: relative;
 }
 
+.company-search-toggle {
+    position: absolute;
+    bottom: 4px;
+    right: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.company-search-form {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.company-search-form input {
+    padding: 4px;
+    font-size: 12px;
+}
+
 #copilot-sidebar .box-title {
     position: absolute;
     top: 6px;
