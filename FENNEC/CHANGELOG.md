@@ -18,6 +18,8 @@
 - Diagnose overlay now displays all child orders instead of only the first three.
 - Added Dev Mode. The Mistral chat box, FILE and REFRESH buttons now appear only when Dev Mode is enabled.
 - Added quick resolve field below the Issue summary in Gmail.
+- Sidebar now loads on the Fraud tracker page and auto-enables Review Mode.
+  Order numbers show an 🩻 icon that runs XRAY starting with that order.
 - Review Mode can now be toggled directly from the extension popup.
 - Sidebar design can now be customized from the Options page, including font size,
   font family and colors.
