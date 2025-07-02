@@ -6,11 +6,26 @@
         } else {
             document.body.classList.remove('fennec-light-mode');
         }
+        const SIDEBAR_WIDTH = 340;
         chrome.storage.local.set({ fennecReviewMode: true });
         chrome.storage.sync.set({ fennecReviewMode: true });
 
         function injectSidebar() {
             if (document.getElementById('copilot-sidebar')) return;
+
+            document.body.style.transition = 'margin-right 0.2s';
+            document.body.style.marginRight = SIDEBAR_WIDTH + 'px';
+
+            if (!document.getElementById('copilot-db-padding')) {
+                const style = document.createElement('style');
+                style.id = 'copilot-db-padding';
+                style.textContent = `
+                    #frm-search-order { margin-right: ${SIDEBAR_WIDTH}px !important; }
+                    .modal-fullscreen { width: calc(100% - ${SIDEBAR_WIDTH}px); }
+                `;
+                document.head.appendChild(style);
+            }
+
             const sidebar = document.createElement('div');
             sidebar.id = 'copilot-sidebar';
             sidebar.innerHTML = `
@@ -33,7 +48,12 @@
                 sidebarBoxColor: '#2e2e2e'
             }, o => applySidebarDesign(sidebar, o));
             const closeBtn = sidebar.querySelector('#copilot-close');
-            if (closeBtn) closeBtn.onclick = () => sidebar.remove();
+            if (closeBtn) closeBtn.onclick = () => {
+                sidebar.remove();
+                document.body.style.marginRight = '';
+                const style = document.getElementById('copilot-db-padding');
+                if (style) style.remove();
+            };
         }
 
         function runXray(orderId) {
@@ -56,6 +76,8 @@
             });
             el.insertAdjacentElement('afterend', btn);
         }
+
+        let scanTimeout = null;
 
         function scanOrders() {
             const anchors = Array.from(document.querySelectorAll('a[href*="/order/detail/"]'));
@@ -100,7 +122,13 @@
         scanOrders();
         loadSummary();
 
-        new MutationObserver(scanOrders).observe(document.body, { childList: true, subtree: true });
+        new MutationObserver(() => {
+            if (scanTimeout) return;
+            scanTimeout = setTimeout(() => {
+                scanTimeout = null;
+                scanOrders();
+            }, 500);
+        }).observe(document.body, { childList: true, subtree: true });
         chrome.storage.onChanged.addListener((changes, area) => {
             if (area === 'local' && (changes.sidebarDb || changes.sidebarOrderId)) {
                 loadSummary();
