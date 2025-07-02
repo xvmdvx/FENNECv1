@@ -153,16 +153,33 @@ function attachCommonListeners(rootEl) {
                 box.style.marginBottom = '10px';
                 let html = '';
                 const parent = resp.parentInfo;
+
+                // Determine duplicate orders by type when status is REVIEW/PROCESSING/HOLD
+                const allOrders = [parent].concat(resp.childOrders);
+                const dupMap = {};
+                allOrders.forEach(o => {
+                    if (/review|processing|hold/i.test(o.status || '')) {
+                        const key = (abbreviateOrderType(o.type) || '').toLowerCase();
+                        if (!dupMap[key]) dupMap[key] = [];
+                        dupMap[key].push(o);
+                    }
+                });
+                const dupIds = new Set();
+                Object.values(dupMap).forEach(list => {
+                    if (list.length > 1) list.forEach(o => dupIds.add(String(o.orderId)));
+                });
+
                 const pStatusClass =
                     /shipped|review|processing/i.test(parent.status) ? 'copilot-tag copilot-tag-green' :
                     /canceled/i.test(parent.status) ? 'copilot-tag copilot-tag-red' :
                     /hold/i.test(parent.status) ? 'copilot-tag copilot-tag-purple' : 'copilot-tag';
                 html += `<div class="section-label">PARENT</div>`;
                 html += `<div class="ft-grid">` +
-                    `<div><b><a href="#" class="ft-link" data-id="${escapeHtml(parent.orderId)}">${escapeHtml(parent.orderId)}</a></b></div>` +
+                    `<div><b><a href="#" class="ft-link" data-id="${escapeHtml(parent.orderId)}">${escapeHtml(parent.orderId)}</a></b>` +
+                    `${dupIds.has(String(parent.orderId)) ? ` <span class="ft-cancel" data-id="${escapeHtml(parent.orderId)}">❌</span>` : ''}</div>` +
                     `<div class="ft-type">${escapeHtml(abbreviateOrderType(parent.type)).toUpperCase()}</div>` +
                     `<div class="ft-date">${escapeHtml(parent.date)}</div>` +
-                    `<div><span class="${pStatusClass}">${escapeHtml(parent.status)}</span></div>` +
+                    `<div><span class="${pStatusClass} ft-status" data-id="${escapeHtml(parent.orderId)}">${escapeHtml(parent.status)}</span></div>` +
                     `</div>`;
                 html += `<div class="section-label">CHILD</div>`;
                 html += resp.childOrders.map(o => {
@@ -172,10 +189,11 @@ function attachCommonListeners(rootEl) {
                         /hold/i.test(o.status) ? 'copilot-tag copilot-tag-purple' : 'copilot-tag';
                     return `
                             <div class="ft-grid">
-                                <div><b><a href="#" class="ft-link" data-id="${escapeHtml(o.orderId)}">${escapeHtml(o.orderId)}</a></b></div>
+                                <div><b><a href="#" class="ft-link" data-id="${escapeHtml(o.orderId)}">${escapeHtml(o.orderId)}</a></b>` +
+                                `${dupIds.has(String(o.orderId)) ? ` <span class="ft-cancel" data-id="${escapeHtml(o.orderId)}">❌</span>` : ''}</div>
                                 <div class="ft-type">${escapeHtml(abbreviateOrderType(o.type)).toUpperCase()}</div>
                                 <div class="ft-date">${escapeHtml(o.date)}</div>
-                                <div><span class="${cls}">${escapeHtml(o.status)}</span></div>
+                                <div><span class="${cls} ft-status" data-id="${escapeHtml(o.orderId)}">${escapeHtml(o.status)}</span></div>
                             </div>`;
                 }).join('');
                 html += `<div style="text-align:center; margin-top:8px;">
@@ -199,6 +217,30 @@ function attachCommonListeners(rootEl) {
                         }
                     });
                 });
+                container.querySelectorAll('.ft-cancel').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const id = btn.dataset.id;
+                        if (!id) return;
+                        if (!confirm('Cancel and refund order ' + id + '?')) return;
+                        chrome.storage.local.set({ fennecDupCancel: id }, () => {
+                            chrome.runtime.sendMessage({ action: 'openActiveTab', url: `${location.origin}/incfile/order/detail/${id}` });
+                        });
+                    });
+                });
+
+                if (!window.ftDupListener) {
+                    chrome.storage.onChanged.addListener((changes, area) => {
+                        if (area === 'local' && changes.fennecDupCancelDone) {
+                            const data = changes.fennecDupCancelDone.newValue || {};
+                            const span = container.querySelector(`.ft-status[data-id="${data.orderId}"]`);
+                            if (span) {
+                                span.textContent = 'CANCELED';
+                                span.className = 'copilot-tag copilot-tag-red ft-status';
+                            }
+                        }
+                    });
+                    window.ftDupListener = true;
+                }
                 const diagBtn = container.querySelector('#ar-diagnose-btn');
                 if (diagBtn && typeof diagnoseHoldOrders === 'function') {
                     diagBtn.addEventListener('click', () => {

@@ -2132,6 +2132,15 @@
         }
     }
 
+    function processDuplicateCancel(id) {
+        if (!id) return;
+        const info = getBasicOrderInfo();
+        if (!info.orderId || String(info.orderId) !== String(id)) return;
+        chrome.storage.local.remove('fennecDupCancel');
+        startCancelProcedure();
+        chrome.storage.local.set({ fennecDupCancelDone: { orderId: id } });
+    }
+
     function openCodaSearch() {
         let overlay = document.getElementById('fennec-coda-overlay');
         if (overlay) overlay.remove();
@@ -2617,6 +2626,10 @@ chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment
     processPendingComment(fennecPendingComment);
 });
 
+chrome.storage.local.get({ fennecDupCancel: null }, ({ fennecDupCancel }) => {
+    processDuplicateCancel(fennecDupCancel);
+});
+
 const pendingNote = sessionStorage.getItem('fennecAddComment');
 if (pendingNote) {
     sessionStorage.removeItem('fennecAddComment');
@@ -2634,6 +2647,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
     if (area === 'local' && changes.fennecPendingComment) {
         processPendingComment(changes.fennecPendingComment.newValue);
+    }
+    if (area === 'local' && changes.fennecDupCancel) {
+        processDuplicateCancel(changes.fennecDupCancel.newValue);
     }
     if (area === 'local' && (changes.sidebarDb || changes.sidebarOrderId || changes.sidebarOrderInfo)) {
         const currentId = getBasicOrderInfo().orderId;
