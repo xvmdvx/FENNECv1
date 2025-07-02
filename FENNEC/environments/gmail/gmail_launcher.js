@@ -259,6 +259,7 @@
                 if (xrayBtn) xrayBtn.remove();
             }
             chrome.storage.sync.set({ fennecReviewMode: reviewMode });
+            chrome.storage.local.set({ fennecReviewMode: reviewMode });
             updateDetailVisibility();
         }
 
