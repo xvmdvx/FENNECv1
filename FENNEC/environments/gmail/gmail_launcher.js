@@ -1330,7 +1330,7 @@
                     }
                     chrome.storage.local.set({ fennecPendingComment: { orderId, comment } }, () => {
                         const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
-                        chrome.runtime.sendMessage({ action: "openTab", url, refocus: true, active: true });
+                        chrome.runtime.sendMessage({ action: "openOrReuseTab", url, refocus: true, active: true });
                     });
                 };
             }
@@ -1374,8 +1374,21 @@
                 window.location.reload();
             }
             if (area === 'local' && changes.fennecQuickResolveDone) {
-                alert('Issue updated successfully.');
                 chrome.storage.local.remove('fennecQuickResolveDone');
+                const box = document.getElementById('issue-summary-box');
+                if (box) {
+                    let msg = document.getElementById('quick-resolve-confirm');
+                    if (!msg) {
+                        msg = document.createElement('div');
+                        msg.id = 'quick-resolve-confirm';
+                        msg.style.marginTop = '4px';
+                        msg.style.color = '#0a0';
+                        box.appendChild(msg);
+                    }
+                    msg.textContent = 'Issue updated successfully.';
+                    msg.style.display = 'block';
+                    setTimeout(() => { if (msg) msg.style.display = 'none'; }, 3000);
+                }
             }
         });
 
