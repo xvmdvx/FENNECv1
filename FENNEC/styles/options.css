@@ -43,14 +43,20 @@ label {
     --preview-font-size:13px;
     --header-font-size:14px;
     --header-bold:700;
+    --header-bg-color:#c6c6c6;
+    --header-text-color:#000000;
     --line1-size:13px;
     --line1-bold:400;
+    --line1-color:#ffffff;
     --line2-size:13px;
     --line2-bold:400;
+    --line2-color:#ffffff;
     --line3-size:13px;
     --line3-bold:400;
+    --line3-color:#ffffff;
     --button-color:#333333;
     --button-radius:6px;
+    --button-text-color:#ffffff;
 
     width:var(--preview-width);
     background:var(--preview-bg);
@@ -63,8 +69,8 @@ label {
 }
 
 .sidebar-preview .header {
-    background:#c6c6c6;
-    color:#000;
+    background:var(--header-bg-color);
+    color:var(--header-text-color);
     padding:4px 6px;
     font-size:var(--header-font-size);
     font-weight:var(--header-bold);
@@ -80,13 +86,13 @@ label {
     font-size:13px;
 }
 
-.sidebar-preview .line1 { font-size:var(--line1-size); font-weight:var(--line1-bold); }
-.sidebar-preview .line2 { font-size:var(--line2-size); font-weight:var(--line2-bold); }
-.sidebar-preview .line3 { font-size:var(--line3-size); font-weight:var(--line3-bold); }
+.sidebar-preview .line1 { font-size:var(--line1-size); font-weight:var(--line1-bold); color:var(--line1-color); }
+.sidebar-preview .line2 { font-size:var(--line2-size); font-weight:var(--line2-bold); color:var(--line2-color); }
+.sidebar-preview .line3 { font-size:var(--line3-size); font-weight:var(--line3-bold); color:var(--line3-color); }
 
 .example-button {
     background:var(--button-color);
-    color:#fff;
+    color:var(--button-text-color);
     border:none;
     border-radius:var(--button-radius);
     padding:6px 12px;
@@ -108,4 +114,10 @@ label {
     display:flex;
     flex-direction:column;
     gap:6px;
+}
+
+.preview {
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
 }
