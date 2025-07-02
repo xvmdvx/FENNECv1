@@ -404,7 +404,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                 ? ["id", "number", "document", "control", "filing", "account"]
                                 : ["name", "business", "entity", "organization", "company", "keyword", "search"];
                             const skip = ["login", "email", "user", "password"];
-                            let attempts = 10;
+                            // Some SOS sites, like Wyoming, load their search
+                            // fields slowly or behind security checks.
+                            // Give them more time before giving up.
+                            let attempts = 20; // was 10
                             const run = () => {
                                 const inputs = Array.from(document.querySelectorAll("input[type='text'],input[type='search'],input:not([type]),textarea"));
                                 const field = inputs.find(i => {
