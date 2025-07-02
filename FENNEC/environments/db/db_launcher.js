@@ -1553,7 +1553,8 @@
             if (company.formationDate && company.formationDate.toLowerCase() !== 'n/a') {
                 highlight.push(`<div><b>${escapeHtml(company.formationDate)}</b></div>`);
             }
-            companyLines.push(`<div class="company-summary-highlight">${highlight.join('')}</div>`);
+            const searchIcon = '<span class="company-search-toggle">🔍</span>';
+            companyLines.push(`<div class="company-summary-highlight">${highlight.join('')}${searchIcon}</div>`);
             companyLines.push(`<div>${renderKb(company.state)}</div>`);
             companyLines.push(addrHtml);
             companyLines.push(`<div class="company-purpose">${renderCopy(company.purpose)}</div>`);
@@ -1561,11 +1562,10 @@
                 `<div><span class="${raClass}">RA: ${raExpired ? "EXPIRED" : (hasRA ? "Sí" : "No")}</span> ` +
                 `<span class="${vaClass}">VA: ${hasVA ? "Sí" : "No"}</span></div>`
             );
-            const searchIcon = '<span class="company-search-toggle">🔍</span>';
             const stateAttr = company.state ? ` data-state="${escapeHtml(company.state)}"` : '';
             const compSection = reviewMode
-                ? `<div class="white-box company-box"${stateAttr} style="margin-bottom:10px">${companyLines.join('').trim()}${searchIcon}</div>`
-                : `<div class="section-label">COMPANY:</div><div class="white-box company-box"${stateAttr} style="margin-bottom:10px">${companyLines.join('').trim()}${searchIcon}</div>`;
+                ? `<div class="white-box company-box"${stateAttr} style="margin-bottom:10px">${companyLines.join('').trim()}</div>`
+                : `<div class="section-label">COMPANY:</div><div class="white-box company-box"${stateAttr} style="margin-bottom:10px">${companyLines.join('').trim()}</div>`;
             if (companyLines.length) {
                 html += compSection;
                 dbSections.push(compSection);

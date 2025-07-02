@@ -244,6 +244,10 @@ function toggleCompanySearch(box) {
     form.appendChild(idInput);
     box.innerHTML = '';
     box.appendChild(form);
+    const searchIcon = document.createElement('span');
+    searchIcon.className = 'company-search-toggle';
+    searchIcon.textContent = '🔍';
+    box.appendChild(searchIcon);
     const doSearch = (type) => {
         const q = type === 'name' ? nameInput.value.trim() : idInput.value.trim();
         if (!q) return;
@@ -254,6 +258,7 @@ function toggleCompanySearch(box) {
     };
     nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch('name'); });
     idInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch('id'); });
+    attachCommonListeners(box);
 }
 window.toggleCompanySearch = toggleCompanySearch;
 
