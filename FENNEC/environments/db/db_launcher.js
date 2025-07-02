@@ -2620,6 +2620,13 @@ function getLastHoldUser() {
                 chrome.runtime.sendMessage({ action: 'openTab', url: adyenUrl, active: true });
             }, 1000);
         }
+        const kountLink = document.querySelector('a[href*="awc.kount.net/workflow/detail"]');
+        if (kountLink) {
+            const kountUrl = kountLink.href;
+            setTimeout(() => {
+                chrome.runtime.sendMessage({ action: 'openTab', url: kountUrl, active: true });
+            }, 2000);
+        }
     }
 
 chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment }) => {
