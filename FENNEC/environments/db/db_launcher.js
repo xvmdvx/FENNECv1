@@ -2066,7 +2066,13 @@
                 save.click();
                 sessionStorage.removeItem('fennecAutoComment');
                 sessionStorage.setItem('fennecAddComment', comment);
-                chrome.storage.local.set({ fennecQuickResolveDone: Date.now() });
+                chrome.storage.local.set({
+                    fennecQuickResolveDone: {
+                        time: Date.now(),
+                        resolved: true,
+                        comment
+                    }
+                });
                 chrome.runtime.sendMessage({ action: 'refocusTab' });
             } else {
                 setTimeout(fillComment, 500);
@@ -2093,7 +2099,13 @@
             if (ta && add) {
                 ta.value = comment;
                 add.click();
-                chrome.storage.local.set({ fennecQuickResolveDone: Date.now() });
+                chrome.storage.local.set({
+                    fennecQuickResolveDone: {
+                        time: Date.now(),
+                        resolved: false,
+                        comment
+                    }
+                });
                 chrome.runtime.sendMessage({ action: 'refocusTab' });
             } else {
                 setTimeout(fill, 500);

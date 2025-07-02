@@ -53,6 +53,8 @@ MAIN (BUSINESS FORMATION ORDERS: SILVER, GOLD, PLATINUM)
          - Comment input and **COMMENT & RESOLVE** button.
       Quick resolve field under Issue summary
       Reuses any open DB tab for comments and resolves the issue only if active
+      The comment box disappears after submission showing your comment and a
+      success message. Resolving automatically updates the tag to RESOLVED.
       (Dev Mode) End: [🔄 REFRESH] button centered.
 
 MISC (ALL NON-BUSINESS FORMATION ORDERS)
