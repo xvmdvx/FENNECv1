@@ -1,38 +1,87 @@
-body {
-    font-family: Arial, sans-serif;
-    padding: 10px;
-    color: #222;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+:root {
+    --bg-color: #f1f3f4;
+    --card-bg: rgba(255, 255, 255, 0.7);
+    --card-border: rgba(0, 0, 0, 0.1);
+    --card-radius: 12px;
+    --accent-color: #2563eb;
+    --text-color: #222;
 }
 
-.page-title {
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-color: #121212;
+        --card-bg: rgba(30, 30, 30, 0.7);
+        --card-border: rgba(255, 255, 255, 0.1);
+        --text-color: #e0e0e0;
+    }
+}
+
+body {
+    font-family: 'Inter', Arial, sans-serif;
+    margin: 0;
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.topbar {
     text-align: center;
-    margin-bottom: 10px;
+    padding: 16px 0;
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--accent-color);
 }
 
 .options-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 16px;
+    padding: 16px;
+}
+
+@media (max-width: 800px) {
+    .options-grid { grid-template-columns: 1fr; }
 }
 
 .controls {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 16px;
 }
 
 .bento {
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 10px;
-    background: #f9f9f9;
+    border: 1px solid var(--card-border);
+    border-radius: var(--card-radius);
+    padding: 12px;
+    background: var(--card-bg);
+    backdrop-filter: blur(6px);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 label {
-    font-size: 12px;
+    font-size: 0.85rem;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+    accent-color: var(--accent-color);
+}
+
+input,
+select {
+    border-radius: var(--card-radius);
+    padding: 4px 6px;
+    border: 1px solid var(--card-border);
+    background: transparent;
+    color: inherit;
+}
+
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--accent-color);
 }
 
 .sidebar-preview {
@@ -66,9 +115,10 @@ label {
     color:#fff;
     font-family:var(--preview-font);
     font-size:var(--preview-font-size);
-    border:1px solid #888;
-    border-radius:4px;
+    border:1px solid var(--card-border);
+    border-radius: var(--card-radius);
     padding:6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .sidebar-preview .header {
@@ -77,17 +127,18 @@ label {
     padding:4px 6px;
     font-size:var(--header-font-size);
     font-weight:var(--header-bold);
-    border-radius:4px;
+    border-radius: var(--card-radius);
 }
 
 .sidebar-preview .white-box {
     background:var(--preview-box-bg);
     margin:8px 0;
     padding:8px;
-    border-radius:4px;
+    border-radius: var(--card-radius);
     text-align:left;
     font-size:13px;
     position:relative;
+    border:1px solid var(--card-border);
 }
 
 .sidebar-preview .box-title {
@@ -111,26 +162,38 @@ label {
     padding:6px 12px;
     font-weight:bold;
     cursor:pointer;
+    transition:background .2s ease;
+}
+
+.example-button:hover {
+    background:#444;
 }
 
 .save-button {
-    padding:6px 12px;
-    font-weight:bold;
-    border-radius:6px;
-    border:none;
-    background:#005a9c;
-    color:#fff;
-    cursor:pointer;
+    padding: 8px 16px;
+    font-weight: bold;
+    border-radius: var(--card-radius);
+    border: none;
+    background: var(--accent-color);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: background .2s ease;
+}
+
+.save-button:hover {
+    background: #1e4db7;
 }
 
 .custom-only {
     display:flex;
     flex-direction:column;
-    gap:6px;
+    gap:8px;
 }
 
 .preview {
     display:flex;
-    gap:10px;
+    gap:16px;
     flex-wrap:wrap;
+    justify-content:center;
 }
