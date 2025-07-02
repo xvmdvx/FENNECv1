@@ -11,6 +11,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const userInput = document.getElementById("txsos-user");
     const passInput = document.getElementById("txsos-pass");
     const saveBtn = document.getElementById("save-btn");
+    const preview = document.getElementById("sidebar-preview");
+
+    function updatePreview() {
+        preview.style.setProperty("--preview-width", `${widthInput.value}px`);
+        preview.style.setProperty("--preview-font-size", `${fontSizeSelect.value}px`);
+        preview.style.setProperty("--preview-font", fontSelect.value);
+        preview.style.setProperty("--preview-bg", bgColorInput.value);
+        preview.style.setProperty("--preview-box-bg", boxColorInput.value);
+    }
 
     chrome.storage.sync.get({
         defaultReviewMode: false,
@@ -32,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
         boxColorInput.value = opts.sidebarBoxColor || "#2e2e2e";
         userInput.value = opts.txsosUser || "";
         passInput.value = opts.txsosPass || "";
+        updatePreview();
     });
 
     function save() {
@@ -53,5 +63,6 @@ document.addEventListener("DOMContentLoaded", () => {
         chrome.storage.local.set({ fennecReviewMode: reviewBox.checked, fennecDevMode: devBox.checked });
     }
 
-    saveBtn.addEventListener("click", save);
+    [widthInput, fontSizeSelect, fontSelect, bgColorInput, boxColorInput].forEach(el => el.addEventListener("input", updatePreview));
+    saveBtn.addEventListener("click", () => { save(); updatePreview(); });
 });

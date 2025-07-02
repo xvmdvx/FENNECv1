@@ -14,7 +14,7 @@
         }
     });
     chrome.storage.sync.get({ fennecReviewMode: false, fennecDevMode: false, sidebarWidth: 340 }, ({ fennecReviewMode, fennecDevMode, sidebarWidth }) => {
-        chrome.storage.local.get({ extensionEnabled: true, lightMode: false, bentoMode: false, fennecDevMode: false }, ({ extensionEnabled, lightMode, bentoMode, fennecDevMode: localDev }) => {
+        chrome.storage.local.get({ extensionEnabled: true, lightMode: false, fennecDevMode: false }, ({ extensionEnabled, lightMode, fennecDevMode: localDev }) => {
         const devMode = localDev || fennecDevMode;
         if (!extensionEnabled) {
             console.log('[FENNEC] Extension disabled, skipping Gmail launcher.');
@@ -24,11 +24,6 @@
             document.body.classList.add('fennec-light-mode');
         } else {
             document.body.classList.remove('fennec-light-mode');
-        }
-        if (bentoMode) {
-            document.body.classList.add('fennec-bento-mode');
-        } else {
-            document.body.classList.remove('fennec-bento-mode');
         }
         try {
             const SIDEBAR_WIDTH = parseInt(sidebarWidth, 10) || 340;
@@ -1268,24 +1263,7 @@
                 sidebarBgColor: '#212121',
                 sidebarBoxColor: '#2e2e2e'
             }, opts => applySidebarDesign(sidebar, opts));
-            if (document.body.classList.contains('fennec-bento-mode')) {
-                const vid = document.createElement('video');
-                vid.id = 'bento-video';
-                vid.src = chrome.runtime.getURL('bg_holo.mp4');
-                vid.muted = true;
-                vid.autoplay = true;
-                vid.playsInline = true;
-                vid.loop = false;
-                vid.playbackRate = 0.2;
-                sidebar.prepend(vid);
-                let reverse = false;
-                vid.addEventListener('ended', () => {
-                    reverse = !reverse;
-                    vid.playbackRate = reverse ? -0.2 : 0.2;
-                    vid.currentTime = reverse ? vid.duration - 0.01 : 0.01;
-                    vid.play();
-                });
-            }
+
             console.log("[Copilot] Sidebar INYECTADO en Gmail.");
 
             // Start with empty layout showing only action buttons.

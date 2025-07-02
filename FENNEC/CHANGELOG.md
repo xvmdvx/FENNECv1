@@ -20,6 +20,7 @@
 - Added quick resolve field below the Issue summary in Gmail.
 - Sidebar design can now be customized from the Options page, including font size,
   font family and colors.
+- The Options page shows a live sidebar preview and Bento Mode has been removed.
 - Quick resolve button now shows **COMMENT** when the issue is already resolved
   and automatically returns focus to Gmail with a success message.
 
@@ -31,8 +32,6 @@
 
 ## v0.3 - 2025-06-24
 
-- Fixed Bento Mode positioning so the sidebar displays correctly on Gmail and DB.
-- Fixed Bento Mode layering so headers and boxes appear above the video background.
 - Fixed a race condition where the "Family Tree" view failed to load if the
   background script queried the page before helper functions finished
   initializing.
