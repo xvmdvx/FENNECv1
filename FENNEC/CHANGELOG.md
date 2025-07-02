@@ -21,6 +21,9 @@
 - Quick resolve button now shows **COMMENT** when the issue is already resolved
   and automatically returns focus to Gmail with a success message.
 
+- Quick resolve now reuses an existing DB tab when available and displays the
+  completion message inside the Gmail sidebar instead of using a popup.
+
 - Quick Summary no longer auto-expands on Annual Report orders and the
   Family Tree panel loads automatically.
 
