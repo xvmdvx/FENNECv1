@@ -241,6 +241,10 @@
     font-size: 12px;
     color: #000 !important;
 }
+/* Ensure text stays black even with inherited white-box color */
+#copilot-sidebar .white-box .company-search-form input {
+    color: #000 !important;
+}
 
 #copilot-sidebar .box-title {
     position: absolute;
