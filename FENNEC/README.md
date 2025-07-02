@@ -189,7 +189,7 @@ ICONS/BUTTONS/FUNCTIONS:
    1. Payment Details
    2. DNA
    Focus returns to the original email once information is retrieved.
-🩻 XRAY: Runs SEARCH and DNA operations one after the other.
+🩻 XRAY: Runs SEARCH and DNA operations one after the other and opens the Kount workflow page when available.
    Focus also returns to the original email at the end.
 🤖 FILE: Automator that opens and fills the SOS filing process.
 
