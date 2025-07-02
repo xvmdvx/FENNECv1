@@ -99,6 +99,7 @@
     border-radius: 4px;
     padding: 4px;
     margin-bottom: 6px;
+    position: relative;
 }
 .fennec-light-mode #copilot-sidebar .white-box .company-summary-highlight,
 .fennec-light-mode #copilot-sidebar .white-box .company-summary-highlight * {
