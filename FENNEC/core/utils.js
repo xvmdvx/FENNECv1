@@ -10,6 +10,24 @@ function escapeHtml(text) {
         .replace(/'/g, "&#039;");
 }
 
+function applySidebarDesign(sidebar, opts) {
+    if (!sidebar || !opts) return;
+    if (opts.sidebarBgColor) {
+        sidebar.style.setProperty('--sb-bg', opts.sidebarBgColor);
+    }
+    if (opts.sidebarBoxColor) {
+        sidebar.style.setProperty('--sb-box-bg', opts.sidebarBoxColor);
+    }
+    const fs = parseInt(opts.sidebarFontSize, 10);
+    if (fs) {
+        sidebar.style.setProperty('--sb-font-size', fs + 'px');
+    }
+    if (opts.sidebarFont) {
+        sidebar.style.setProperty('--sb-font-family', opts.sidebarFont);
+    }
+}
+window.applySidebarDesign = applySidebarDesign;
+
 function attachCommonListeners(rootEl) {
     if (!rootEl) return;
     rootEl.querySelectorAll('.copilot-address').forEach(el => {
