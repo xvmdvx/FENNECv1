@@ -334,6 +334,13 @@
     margin-top: 2px;
     opacity: 0.95;
 }
+
+.copilot-xray {
+    display: inline-block;
+    margin-left: 4px;
+    cursor: pointer;
+    vertical-align: middle;
+}
 .copilot-tag-large {
     font-size: 13px;
 }
