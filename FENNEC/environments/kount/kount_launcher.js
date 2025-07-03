@@ -30,23 +30,37 @@
                     const vipBtn = Array.from(document.querySelectorAll('a,button'))
                         .find(el => /VIP Lists/i.test(el.textContent));
                     if (vipBtn) vipBtn.click();
-                    const declines = Array.from(document.querySelectorAll('#vip-lists tr'))
-                        .filter(row => row.querySelector('input[value="decline"]')?.checked)
-                        .map(row => {
-                            const label = row.querySelector('th')?.textContent.trim() || '';
-                            const valEl = row.querySelector('td.value, td.truncated.value');
-                            const val = valEl ? (valEl.getAttribute('title') || valEl.textContent).trim() : '';
-                            return label && val ? `${label}: ${val}` : '';
-                        })
-                        .filter(Boolean);
+                    setTimeout(() => {
+                        const declines = Array.from(document.querySelectorAll('#vip-lists tr'))
+                            .filter(row => row.querySelector('input[value="decline"]')?.checked)
+                            .map(row => {
+                                const label = row.querySelector('th')?.textContent.trim() || '';
+                                const valEl = row.querySelector('td.value, td.truncated.value');
+                                const val = valEl ? (valEl.getAttribute('title') || valEl.textContent).trim() : '';
+                                return label && val ? `${label}: ${val}` : '';
+                            })
+                            .filter(Boolean);
 
-                    saveData({ emailAge, deviceLocation, ip, declines });
+                        saveData({ emailAge, deviceLocation, ip, declines });
+
+                        const ekataLink = document.querySelector('a[href*="/workflow/ekata"]');
+                        if (ekataLink) {
+                            const url = ekataLink.href.startsWith('http') ? ekataLink.href : location.origin + ekataLink.getAttribute('href');
+                            chrome.runtime.sendMessage({ action: 'openTab', url, active: true });
+                        }
+                    }, 500);
                 };
                 if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', run);
                 } else run();
             } else if (path.includes('/workflow/ekata')) {
                 const run = () => {
+                    const link = Array.from(document.querySelectorAll('a.link'))
+                        .find(a => /Generate Ekata Report/i.test(a.textContent));
+                    if (link) {
+                        link.click();
+                        return;
+                    }
                     const btn = document.querySelector('input.simple-submit[value="Update Report"]');
                     if (btn) btn.click();
                     setTimeout(() => {
@@ -55,7 +69,14 @@
                         const addressToName = findVal('Address to Name');
                         const residentName = findVal('Resident Name');
                         saveData({ ekata: { ipValid, proxyRisk, addressToName, residentName } });
-                        chrome.runtime.sendMessage({ action: 'refocusTab' });
+                        chrome.storage.local.get({ fennecFraudAdyen: null }, ({ fennecFraudAdyen }) => {
+                            if (fennecFraudAdyen) {
+                                chrome.storage.local.remove('fennecFraudAdyen');
+                                chrome.runtime.sendMessage({ action: 'openTab', url: fennecFraudAdyen, active: true });
+                            } else {
+                                chrome.runtime.sendMessage({ action: 'refocusTab' });
+                            }
+                        });
                     }, 1500);
                 };
                 if (document.readyState === 'loading') {
