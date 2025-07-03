@@ -14,7 +14,12 @@
     let reviewMode = false;
     let devMode = false;
     let fraudXray = new URLSearchParams(location.search).get('fraud_xray') === '1';
-    const xrayDone = localStorage.getItem('fraudXrayCompleted') === '1';
+    const currentId = (location.pathname.match(/(?:detail|storage\/incfile)\/(\d+)/) || [])[1];
+    const xrayDoneId = localStorage.getItem('fraudXrayCompleted');
+    const xrayDone = xrayDoneId && currentId && xrayDoneId === currentId;
+    if (xrayDoneId && currentId && xrayDoneId !== currentId) {
+        localStorage.removeItem('fraudXrayCompleted');
+    }
     if (fraudXray && xrayDone) {
         const params = new URLSearchParams(location.search);
         params.delete('fraud_xray');
