@@ -251,6 +251,7 @@
                     actionsRow.appendChild(btn);
                     setupDnaButton();
                     loadDnaSummary();
+            loadKountSummary();
                 }
                 if (actionsRow && !xrayBtn) {
                     const xbtn = document.createElement("button");
@@ -895,7 +896,7 @@
             return `<table class="dna-tx-table"><thead><tr><th>Type</th><th>Total</th></tr></thead><tbody>${rows}</tbody></table>`;
         }
 
-        function buildDnaHtml(info) {
+       function buildDnaHtml(info) {
             if (!info || !info.payment) return null;
             const p = info.payment;
             const card = p.card || {};
@@ -1023,7 +1024,30 @@
             if (txTable) parts.push(txTable);
 
             if (!parts.length) return null;
-            return `<div class="section-label">ADYEN'S DNA</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
+           return `<div class="section-label">ADYEN'S DNA</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
+       }
+
+        function buildKountHtml(info) {
+            if (!info) return null;
+            const parts = [];
+            if (info.emailAge) parts.push(`<div><b>Email age:</b> ${escapeHtml(info.emailAge)}</div>`);
+            if (info.deviceLocation || info.ip) {
+                const loc = escapeHtml(info.deviceLocation || '');
+                const ip = escapeHtml(info.ip || '');
+                parts.push(`<div><b>Device:</b> ${loc} ${ip}</div>`);
+            }
+            if (Array.isArray(info.declines) && info.declines.length) {
+                parts.push(`<div><b>DECLINE LIST</b><br>${info.declines.map(escapeHtml).join('<br>')}</div>`);
+            }
+            if (info.ekata) {
+                const e = info.ekata;
+                const ipLine = e.ipValid || e.proxyRisk ? `<div><b>IP Valid:</b> ${escapeHtml(e.ipValid || '')} <b>Proxy:</b> ${escapeHtml(e.proxyRisk || '')}</div>` : '';
+                const addrLine = e.addressToName || e.residentName ? `<div><b>Address to Name:</b> ${escapeHtml(e.addressToName || '')}<br><b>Resident Name:</b> ${escapeHtml(e.residentName || '')}</div>` : '';
+                if (ipLine) parts.push(ipLine);
+                if (addrLine) parts.push(addrLine);
+            }
+            if (!parts.length) return null;
+            return `<div class="section-label">KOUNT</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
         }
 
        function loadDnaSummary() {
@@ -1041,6 +1065,16 @@
                 }
                 attachCommonListeners(container);
                 repositionDnaSummary();
+            });
+        }
+
+        function loadKountSummary() {
+            const container = document.getElementById('kount-summary');
+            if (!container) return;
+            chrome.storage.local.get({ kountInfo: null }, ({ kountInfo }) => {
+                const html = buildKountHtml(kountInfo);
+                container.innerHTML = html || '';
+                attachCommonListeners(container);
             });
         }
 
@@ -1169,6 +1203,7 @@
             loadDbSummary(ctx && ctx.orderNumber);
             if (ctx && ctx.orderNumber) checkLastIssue(ctx.orderNumber);
             loadDnaSummary();
+            loadKountSummary();
         }
 
         function clearSidebar() {
@@ -1184,6 +1219,7 @@
             showInitialStatus();
             applyReviewMode();
             loadDnaSummary();
+            loadKountSummary();
             repositionDnaSummary();
         }
 
@@ -1249,6 +1285,7 @@
                     </div>
                     <div class="copilot-dna">
                         <div id="dna-summary" style="margin-top:16px"></div>
+                        <div id="kount-summary" style="margin-top:10px"></div>
                     </div>
                     <div class="order-summary-box">
                         <div id="order-summary-content" style="color:#ccc; font-size:13px;">
@@ -1280,6 +1317,7 @@
             // Start with empty layout showing only action buttons.
             showInitialStatus();
             loadDnaSummary();
+            loadKountSummary();
             repositionDnaSummary();
             // Details load after the user interacts with SEARCH or when
             // opened automatically with context.
@@ -1331,6 +1369,7 @@
             }
             applyReviewMode();
             loadDnaSummary();
+            loadKountSummary();
         }
 
         function injectSidebarIfMissing() {
@@ -1359,6 +1398,7 @@
             }
             if (area === 'local' && changes.adyenDnaInfo) {
                 loadDnaSummary();
+            loadKountSummary();
             }
             if (area === 'sync' && changes.fennecReviewMode) {
                 reviewMode = changes.fennecReviewMode.newValue;
@@ -1412,6 +1452,7 @@
         // Ensure DNA summary refreshes when returning from Adyen
         window.addEventListener('focus', () => {
             loadDnaSummary();
+            loadKountSummary();
         });
 
         // --- OPEN ORDER listener reutilizable ---

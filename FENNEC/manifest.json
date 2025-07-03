@@ -104,6 +104,16 @@
         "styles/sidebar.css",
         "styles/sidebar_light.css"
       ]
+    },
+    {
+      "matches": [
+        "https://awc.kount.net/workflow/*"
+      ],
+      "all_frames": true,
+      "js": [
+        "core/utils.js",
+        "environments/kount/kount_launcher.js"
+      ]
     }
   ],
   "web_accessible_resources": [

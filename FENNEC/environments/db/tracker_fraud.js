@@ -40,6 +40,7 @@
                 <div class="copilot-body" id="copilot-body-content">
                     <div class="copilot-dna">
                         <div id="dna-summary" style="margin-top:16px"></div>
+                        <div id="kount-summary" style="margin-top:10px"></div>
                     </div>
                     <div id="db-summary-section"></div>
                     <div id="fraud-summary-section"></div>
@@ -382,12 +383,45 @@
             return `<div class="section-label">ADYEN'S DNA</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
         }
 
+        function buildKountHtml(info) {
+            if (!info) return null;
+            const parts = [];
+            if (info.emailAge) parts.push(`<div><b>Email age:</b> ${escapeHtml(info.emailAge)}</div>`);
+            if (info.deviceLocation || info.ip) {
+                const loc = escapeHtml(info.deviceLocation || '');
+                const ip = escapeHtml(info.ip || '');
+                parts.push(`<div><b>Device:</b> ${loc} ${ip}</div>`);
+            }
+            if (Array.isArray(info.declines) && info.declines.length) {
+                parts.push(`<div><b>DECLINE LIST</b><br>${info.declines.map(escapeHtml).join('<br>')}</div>`);
+            }
+            if (info.ekata) {
+                const e = info.ekata;
+                const ipLine = e.ipValid || e.proxyRisk ? `<div><b>IP Valid:</b> ${escapeHtml(e.ipValid || '')} <b>Proxy:</b> ${escapeHtml(e.proxyRisk || '')}</div>` : '';
+                const addrLine = e.addressToName || e.residentName ? `<div><b>Address to Name:</b> ${escapeHtml(e.addressToName || '')}<br><b>Resident Name:</b> ${escapeHtml(e.residentName || '')}</div>` : '';
+                if (ipLine) parts.push(ipLine);
+                if (addrLine) parts.push(addrLine);
+            }
+            if (!parts.length) return null;
+            return `<div class="section-label">KOUNT</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
+        }
+
         function loadDnaSummary() {
             const container = document.getElementById('dna-summary');
             if (!container) return;
             chrome.storage.local.get({ adyenDnaInfo: null, sidebarOrderInfo: null }, ({ adyenDnaInfo, sidebarOrderInfo }) => {
                 if (adyenDnaInfo) adyenDnaInfo.dbBilling = sidebarOrderInfo ? sidebarOrderInfo.billing : null;
                 const html = buildDnaHtml(adyenDnaInfo);
+                container.innerHTML = html || '';
+                attachCommonListeners(container);
+            });
+        }
+
+        function loadKountSummary() {
+            const container = document.getElementById('kount-summary');
+            if (!container) return;
+            chrome.storage.local.get({ kountInfo: null }, ({ kountInfo }) => {
+                const html = buildKountHtml(kountInfo);
                 container.innerHTML = html || '';
                 attachCommonListeners(container);
             });
@@ -467,8 +501,9 @@
 
         injectSidebar();
         scanOrders();
-        loadDbSummary();
+       loadDbSummary();
         loadDnaSummary();
+        loadKountSummary();
         const clearBtn = document.getElementById('copilot-clear');
         if (clearBtn) clearBtn.onclick = clearSidebar;
 
@@ -486,9 +521,13 @@
             if (area === 'local' && changes.adyenDnaInfo) {
                 loadDnaSummary();
             }
+            if (area === 'local' && changes.kountInfo) {
+                loadKountSummary();
+            }
         });
         window.addEventListener('focus', () => {
             loadDnaSummary();
+            loadKountSummary();
         });
     });
 })();
