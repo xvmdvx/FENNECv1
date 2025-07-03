@@ -398,14 +398,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } catch (err) {
             console.warn("[Copilot] Invalid sender URL", sender.tab.url);
         }
-        const url = `${base}/db-tools/scan-email-address?fennec_email=${encodeURIComponent(message.email)}`;
+        const url = `${base}/order-tracker/orders/order-search?fennec_email=${encodeURIComponent(message.email)}`;
         chrome.tabs.create({ url, active: false, windowId: sender.tab.windowId }, tab => {
             if (chrome.runtime.lastError || !tab) { sendResponse(null); return; }
             const resultListener = (msg, snd) => {
                 if (msg.action === 'dbEmailSearchResults' && snd.tab && snd.tab.id === tab.id) {
                     chrome.runtime.onMessage.removeListener(resultListener);
                     const orders = msg.orders || [];
-                    const formationIds = orders.filter(o => /formation/i.test(o.type)).map(o => o.orderId).filter(Boolean);
+                    const formationIds = orders
+                        .filter(o => /formation|silver|gold|platinum/i.test(o.type))
+                        .map(o => o.orderId)
+                        .filter(Boolean);
                     let idx = 0;
                     const activeSubs = [];
                     const checkNext = () => {
