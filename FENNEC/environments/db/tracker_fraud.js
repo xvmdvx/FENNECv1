@@ -502,8 +502,10 @@
 
             if (order && order.billing) {
                 dbLines.push(`<div class="trial-line">${escapeHtml(order.billing.cardholder || '')}</div>`);
+                if (order.billing.last4) dbLines.push(`<div class="trial-line">${escapeHtml(order.billing.last4)}</div>`);
+                if (order.billing.expiry) dbLines.push(`<div class="trial-line">${escapeHtml(order.billing.expiry)}</div>`);
                 const tag = dna && dna.payment ? buildCardMatchTag(order.billing, dna.payment.card || {}) : '';
-                if (tag) { dbLines.push(`<div class="trial-line">${tag}</div>`); pushFlag(tag); }
+                if (tag && /copilot-tag-green/.test(tag)) pushFlag(tag);
                 dbLines.push(`<div class="trial-line">LTV: N/A</div>`);
                 const btn = `<button id="sub-detection-btn">SUB DETECTION</button>`;
                 dbLines.push(`<div class="trial-line">${btn}</div>`);
@@ -513,6 +515,11 @@
                 const proc = dna.payment.processing || {};
                 const card = dna.payment.card || {};
                 if (card['Card holder']) adyenLines.push(`<div class="trial-line">${escapeHtml(card['Card holder'])}</div>`);
+                if (card['Card number']) {
+                    const digits = card['Card number'].replace(/\D+/g, '').slice(-4);
+                    if (digits) adyenLines.push(`<div class="trial-line">${escapeHtml(digits)}</div>`);
+                }
+                if (card['Expiry date']) adyenLines.push(`<div class="trial-line">${escapeHtml(card['Expiry date'])}</div>`);
                 if (proc['CVC/CVV']) {
                     const r = formatCvv(proc['CVC/CVV']);
                     const tag = `<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`;
@@ -531,13 +538,18 @@
                 if (total) {
                     const pct = Math.round(settled / total * 100);
                     adyenLines.push(`<div class="trial-line">Settled: ${pct}%</div>`);
+                    if (pct < 65) red.push('<span class="copilot-tag copilot-tag-purple">APPROVED %</span>');
                 }
                 const cb = parseInt((tx['Chargebacks'] || tx['Chargeback'] || {}).count || '0', 10);
                 adyenLines.push(`<div class="trial-line">CB: ${cb}</div>`);
+                if (cb >= 1) red.push('<span class="copilot-tag copilot-tag-purple">CB</span>');
             }
 
             if (kount) {
-                if (kount.ekata && kount.ekata.proxyRisk) kountLines.push(`<div class="trial-line">Proxy: ${escapeHtml(kount.ekata.proxyRisk)}</div>`);
+                if (kount.ekata && kount.ekata.proxyRisk) {
+                    kountLines.push(`<div class="trial-line">Proxy: ${escapeHtml(kount.ekata.proxyRisk)}</div>`);
+                    if (/^yes$/i.test(kount.ekata.proxyRisk)) red.push('<span class="copilot-tag copilot-tag-purple">PROXY YES</span>');
+                }
                 if (kount.emailAge) kountLines.push(`<div class="trial-line">Email age: ${escapeHtml(kount.emailAge)}</div>`);
                 if (Array.isArray(kount.declines)) kountLines.push(`<div class="trial-line">VIP DECLINES: ${kount.declines.length}</div>`);
                 if (kount.ekata && kount.ekata.addressToName) kountLines.push(`<div class="trial-line">Address Name: ${escapeHtml(kount.ekata.addressToName)}</div>`);
@@ -547,7 +559,7 @@
 
             const html = `
                 <div class="trial-close">✕</div>
-                <h4 style="margin-top:0">FRAUD REVIEW</h4>
+                <h4 style="margin-top:0;text-align:center;font-weight:bold">FRAUD REVIEW</h4>
                 <div class="trial-columns">
                     <div class="trial-col"><b>DB</b>${dbLines.join('')}</div>
                     <div class="trial-col"><b>ADYEN</b>${adyenLines.join('')}</div>
