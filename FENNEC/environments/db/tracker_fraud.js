@@ -522,15 +522,19 @@
                 if (card['Expiry date']) adyenLines.push(`<div class="trial-line">${escapeHtml(card['Expiry date'])}</div>`);
                 if (proc['CVC/CVV']) {
                     const r = formatCvv(proc['CVC/CVV']);
-                    const tag = `<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`;
-                    adyenLines.push(`<div class="trial-line">${tag}</div>`);
-                    pushFlag(tag);
+                    adyenLines.push(`<div class="trial-line">CVV: ${escapeHtml(proc['CVC/CVV'])}</div>`);
+                    if (r.result === 'green') {
+                        const tag = `<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`;
+                        pushFlag(tag);
+                    }
                 }
                 if (proc['AVS']) {
                     const r = formatAvs(proc['AVS']);
-                    const tag = `<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`;
-                    adyenLines.push(`<div class="trial-line">${tag}</div>`);
-                    pushFlag(tag);
+                    adyenLines.push(`<div class="trial-line">AVS: ${escapeHtml(proc['AVS'])}</div>`);
+                    if (r.result === 'green') {
+                        const tag = `<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`;
+                        pushFlag(tag);
+                    }
                 }
                 const tx = dna.transactions || {};
                 const settled = parseAmount((tx['Settled'] || tx['Authorised / Settled'] || {}).amount);
@@ -559,7 +563,7 @@
 
             const html = `
                 <div class="trial-close">✕</div>
-                <h4 style="margin-top:0;text-align:center;font-weight:bold">FRAUD REVIEW</h4>
+                <h4 class="trial-title">FRAUD REVIEW</h4>
                 <div class="trial-columns">
                     <div class="trial-col"><b>DB</b>${dbLines.join('')}</div>
                     <div class="trial-col"><b>ADYEN</b>${adyenLines.join('')}</div>
