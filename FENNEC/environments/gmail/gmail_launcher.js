@@ -90,8 +90,17 @@
                 "Wyoming": { name: "https://wyobiz.wyo.gov/business/filingsearch.aspx", id: "https://wyobiz.wyo.gov/business/filingsearch.aspx" }
             };
 
+            function canonicalizeState(state) {
+                if (!state) return '';
+                const clean = String(state).trim().toLowerCase();
+                for (const key of Object.keys(SOS_URLS)) {
+                    if (key.toLowerCase() === clean) return key;
+                }
+                return String(state).trim();
+            }
+
             function buildSosUrl(state, query, type = 'name') {
-                const rec = SOS_URLS[state];
+                const rec = SOS_URLS[canonicalizeState(state)];
                 if (!rec) return null;
                 const base = rec[type] || rec.name;
                 if (!query) return base;
