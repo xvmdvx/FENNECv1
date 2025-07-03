@@ -57,11 +57,11 @@
 .fennec-light-mode #fennec-trial-overlay .trial-close {
     color: #000;
 }
-.fennec-light-mode #fennec-trial-overlay .trial-title {
-    margin-top: 0;
+.fennec-light-mode #fennec-trial-title {
     text-align: center;
     font-weight: bold;
     color: #fff;
+    margin-bottom: 4px;
 }
 .fennec-light-mode #fennec-trial-overlay .trial-columns {
     display: flex;
