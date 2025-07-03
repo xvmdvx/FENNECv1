@@ -31,11 +31,13 @@
     }
 
     // Some DB pages do not show the correct LTV value until the order is
-    // refreshed. Refresh once the first time the order loads in a new tab.
+    // refreshed. This should only happen during FRAUD REVIEW or REVIEW XRAY
+    // flows so the sidebar retrieves accurate data.
     (function refreshForLtv() {
         const m = location.pathname.match(/(?:detail|storage\/incfile)\/(\d+)/);
         const orderId = m ? m[1] : null;
         if (!orderId) return;
+        if (!fraudXray && !subCheck) return;
         const key = 'fennecLtvRefreshed_' + orderId;
         if (sessionStorage.getItem(key)) return;
         sessionStorage.setItem(key, '1');

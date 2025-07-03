@@ -38,6 +38,8 @@
 
 - Quick Summary no longer auto-expands on Annual Report orders and the
   Family Tree panel loads automatically.
+- DB order pages now refresh automatically only during FRAUD REVIEW or
+  REVIEW XRAY flows to ensure the LTV value loads correctly.
 
 ## v0.3 - 2025-06-24
 
