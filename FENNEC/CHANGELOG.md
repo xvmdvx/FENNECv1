@@ -40,6 +40,7 @@
   Family Tree panel loads automatically.
 - DB order pages now refresh automatically only during FRAUD REVIEW or
   REVIEW XRAY flows to ensure the LTV value loads correctly.
+- Fixed duplicate parent order tabs in the Family Tree flow by creating only one background tab.
 
 ## v0.3 - 2025-06-24
 
