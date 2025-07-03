@@ -447,12 +447,21 @@
         }
 
         function buildTrialHtml(dna, kount, order) {
-            if (!dna && !kount) return null;
-            const lines = [];
+            if (!dna && !kount && !order) return null;
+            const dbLines = [];
+            const adyenLines = [];
+            const kountLines = [];
+            const green = [];
+            const red = [];
+
             function colorFor(res) {
                 if (res === 'green') return 'copilot-tag-green';
                 if (res === 'purple') return 'copilot-tag-purple';
                 return 'copilot-tag-black';
+            }
+            function pushFlag(html) {
+                if (/copilot-tag-green/.test(html)) green.push(html);
+                if (/copilot-tag-purple/.test(html)) red.push(html);
             }
             function formatCvv(t) {
                 t = (t || '').toLowerCase();
@@ -490,46 +499,64 @@
                 const text = match ? 'DB MATCH' : 'DB MISMATCH';
                 return `<span class="copilot-tag ${cls}">${text}</span>`;
             }
+
+            if (order && order.billing) {
+                dbLines.push(`<div class="trial-line">${escapeHtml(order.billing.cardholder || '')}</div>`);
+                const tag = dna && dna.payment ? buildCardMatchTag(order.billing, dna.payment.card || {}) : '';
+                if (tag) { dbLines.push(`<div class="trial-line">${tag}</div>`); pushFlag(tag); }
+                dbLines.push(`<div class="trial-line">LTV: N/A</div>`);
+                const btn = `<button id="sub-detection-btn">SUB DETECTION</button>`;
+                dbLines.push(`<div class="trial-line">${btn}</div>`);
+            }
+
             if (dna && dna.payment) {
                 const proc = dna.payment.processing || {};
                 const card = dna.payment.card || {};
-                const tags = [];
+                if (card['Card holder']) adyenLines.push(`<div class="trial-line">${escapeHtml(card['Card holder'])}</div>`);
                 if (proc['CVC/CVV']) {
                     const r = formatCvv(proc['CVC/CVV']);
-                    tags.push(`<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`);
+                    const tag = `<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`;
+                    adyenLines.push(`<div class="trial-line">${tag}</div>`);
+                    pushFlag(tag);
                 }
                 if (proc['AVS']) {
                     const r = formatAvs(proc['AVS']);
-                    tags.push(`<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`);
+                    const tag = `<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`;
+                    adyenLines.push(`<div class="trial-line">${tag}</div>`);
+                    pushFlag(tag);
                 }
-                if (order && order.billing) {
-                    const tag = buildCardMatchTag(order.billing, card);
-                    if (tag) tags.push(tag);
-                }
-                if (tags.length) lines.push(`<div class="trial-line">${tags.join(' ')}</div>`);
-
                 const tx = dna.transactions || {};
                 const settled = parseAmount((tx['Settled'] || tx['Authorised / Settled'] || {}).amount);
                 const total = parseAmount((tx['Total'] || tx['Total transactions'] || {}).amount);
                 if (total) {
                     const pct = Math.round(settled / total * 100);
-                    lines.push(`<div class="trial-line">SETTLED: ${pct}%</div>`);
+                    adyenLines.push(`<div class="trial-line">Settled: ${pct}%</div>`);
                 }
                 const cb = parseInt((tx['Chargebacks'] || tx['Chargeback'] || {}).count || '0', 10);
-                lines.push(`<div class="trial-line">CB: ${cb}</div>`);
+                adyenLines.push(`<div class="trial-line">CB: ${cb}</div>`);
             }
+
             if (kount) {
-                if (Array.isArray(kount.declines)) lines.push(`<div class="trial-line">VIP DECLINES: ${kount.declines.length}</div>`);
-                if (kount.ekata && kount.ekata.proxyRisk) lines.push(`<div class="trial-line">Proxy: ${escapeHtml(kount.ekata.proxyRisk)}</div>`);
-                if (kount.emailAge) lines.push(`<div class="trial-line">Email age: ${escapeHtml(kount.emailAge)}</div>`);
+                if (kount.ekata && kount.ekata.proxyRisk) kountLines.push(`<div class="trial-line">Proxy: ${escapeHtml(kount.ekata.proxyRisk)}</div>`);
+                if (kount.emailAge) kountLines.push(`<div class="trial-line">Email age: ${escapeHtml(kount.emailAge)}</div>`);
+                if (Array.isArray(kount.declines)) kountLines.push(`<div class="trial-line">VIP DECLINES: ${kount.declines.length}</div>`);
+                if (kount.ekata && kount.ekata.addressToName) kountLines.push(`<div class="trial-line">Address Name: ${escapeHtml(kount.ekata.addressToName)}</div>`);
             }
-            if (order && Array.isArray(order.members)) {
-                const names = order.members.map(m => m.name).filter(Boolean);
-                if (order.billing && order.billing.cardholder) names.push(order.billing.cardholder);
-                if (names.length) lines.push(`<div class="trial-line">Names: ${escapeHtml(names.join(', '))}</div>`);
-            }
-            if (!lines.length) return null;
-            return `<div class="trial-close">✕</div><h4 style="margin-top:0">TRIAL SUMMARY</h4>${lines.join('')}`;
+
+            const summary = `<div class="trial-summary"><div class="trial-summary-col"><b>GREEN FLAGS</b><br>${green.join(' ') || 'None'}</div><div class="trial-summary-col"><b>RED FLAGS</b><br>${red.join(' ') || 'None'}</div></div>`;
+
+            const html = `
+                <div class="trial-close">✕</div>
+                <h4 style="margin-top:0">FRAUD REVIEW</h4>
+                <div class="trial-columns">
+                    <div class="trial-col"><b>DB</b>${dbLines.join('')}</div>
+                    <div class="trial-col"><b>ADYEN</b>${adyenLines.join('')}</div>
+                    <div class="trial-col"><b>KOUNT</b>${kountLines.join('')}</div>
+                </div>
+                ${summary}
+            `;
+
+            return html;
         }
 
         function formatIssueText(text) {
