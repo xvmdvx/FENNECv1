@@ -41,6 +41,7 @@
         const key = 'fennecLtvRefreshed_' + orderId;
         if (sessionStorage.getItem(key)) return;
         sessionStorage.setItem(key, '1');
+        sessionStorage.setItem('fraudXrayPending', '1');
         window.addEventListener('load', () => {
             console.log('[Copilot] Auto-refreshing order page to load LTV');
             setTimeout(() => location.reload(), 300);
@@ -2741,6 +2742,13 @@ function getLastHoldUser() {
 
     function runFraudXray() {
         if (!fraudXray) return;
+        const orderId = getBasicOrderInfo().orderId;
+        const key = 'fennecLtvRefreshed_' + orderId;
+        if (sessionStorage.getItem('fraudXrayPending')) {
+            sessionStorage.removeItem('fraudXrayPending');
+        } else if (!sessionStorage.getItem(key)) {
+            return;
+        }
         fraudXray = false;
         const info = getBasicOrderInfo();
         const client = getClientInfo();
