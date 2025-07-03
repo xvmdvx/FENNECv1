@@ -14,6 +14,7 @@
     let reviewMode = false;
     let devMode = false;
     let fraudXray = new URLSearchParams(location.search).get('fraud_xray') === '1';
+    let subCheck = new URLSearchParams(location.search).get('fennec_sub_check') === '1';
     const currentId = (location.pathname.match(/(?:detail|storage\/incfile)\/(\d+)/) || [])[1];
     const xrayDoneId = localStorage.getItem('fraudXrayCompleted');
     const xrayDone = xrayDoneId && currentId && xrayDoneId === currentId;
@@ -347,6 +348,16 @@
             getLastHoldUser().then(user => {
                 sendResponse({ holdUser: user });
             });
+            return true;
+        }
+        if (msg.action === 'getActiveSubs') {
+            try {
+                const subs = getActiveSubscriptions();
+                sendResponse({ subs });
+            } catch (err) {
+                console.warn('[FENNEC] Error extracting subscriptions:', err);
+                sendResponse({ subs: [] });
+            }
             return true;
         }
     });
@@ -1777,7 +1788,8 @@
             registeredAgent: hasAgentInfo ? { name: agent.name, address: agent.address } : null,
             members: directors,
             billing,
-            clientLtv: client.ltv
+            clientLtv: client.ltv,
+            clientEmail: client.email
         };
         chrome.storage.local.set({
             sidebarDb: dbSections,
@@ -2393,6 +2405,20 @@
             return (isNaN(db) ? 0 : db) - (isNaN(da) ? 0 : da);
         });
         return info;
+    }
+
+    function getActiveSubscriptions() {
+        const tab = document.querySelector('#vsubscriptions');
+        if (!tab) return [];
+        const rows = Array.from(tab.querySelectorAll('table tbody tr'));
+        return rows.filter(r => /active/i.test(getText(r))).map(r => {
+            const link = r.querySelector('a[href*="/order/detail/"]');
+            if (link) {
+                const m = link.href.match(/detail\/(\d+)/);
+                if (m) return m[1];
+            }
+            return null;
+        }).filter(Boolean);
     }
 
     function getBasicOrderInfo() {
