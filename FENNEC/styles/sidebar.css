@@ -765,8 +765,16 @@
     gap: 12px;
     margin-bottom: 8px;
 }
-#fennec-trial-overlay .trial-col {
+#fennec-trial-overlay .trial-col-wrap {
     flex: 1;
+    text-align: center;
+}
+#fennec-trial-overlay .trial-col-title {
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 2px;
+}
+#fennec-trial-overlay .trial-col {
     text-align: center;
     background: #d3d3d3;
     color: #000;

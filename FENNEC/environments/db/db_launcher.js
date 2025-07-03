@@ -2713,6 +2713,7 @@ function getLastHoldUser() {
 
     function runFraudXray() {
         if (!fraudXray) return;
+        fraudXray = false;
         const info = getBasicOrderInfo();
         const client = getClientInfo();
         const parts = [];
