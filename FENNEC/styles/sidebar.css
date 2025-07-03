@@ -876,3 +876,13 @@
     background: #1e1e1e;
     color: #fff;
 }
+
+.sub-detect-btn {
+    border-radius: 20px;
+    padding: 4px 10px;
+    transition: transform 0.2s;
+}
+.sub-detect-btn:hover {
+    transform: scale(1.1);
+}
+

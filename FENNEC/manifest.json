@@ -71,6 +71,16 @@
     },
     {
       "matches": [
+        "https://db.incfile.com/db-tools/scan-email-address*"
+      ],
+      "all_frames": true,
+      "js": [
+        "core/utils.js",
+        "environments/db/db_email_search.js"
+      ]
+    },
+    {
+      "matches": [
         "https://tools.usps.com/zip-code-lookup.htm*"
       ],
       "js": [

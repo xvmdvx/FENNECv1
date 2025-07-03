@@ -474,6 +474,37 @@
                 });
                 document.body.appendChild(title);
                 document.body.appendChild(overlay);
+                const subBtn = overlay.querySelector('#sub-detection-btn');
+                if (subBtn) {
+                    subBtn.addEventListener('click', () => {
+                        subBtn.disabled = true;
+                        chrome.runtime.sendMessage({
+                            action: 'detectSubscriptions',
+                            email: (data.sidebarOrderInfo && data.sidebarOrderInfo.clientEmail) || '',
+                            ltv: (data.sidebarOrderInfo && data.sidebarOrderInfo.clientLtv) || ''
+                        }, resp => {
+                            subBtn.disabled = false;
+                            if (!resp) return;
+                            const dbCol = overlay.querySelector('.trial-col');
+                            if (!dbCol) return;
+                            const line1 = document.createElement('div');
+                            line1.className = 'trial-line';
+                            line1.textContent = `Orders: ${resp.orderCount}`;
+                            dbCol.appendChild(line1);
+                            if (resp.ltv) {
+                                const ratio = resp.orderCount && parseFloat(resp.ltv) ? (resp.orderCount / parseFloat(resp.ltv)).toFixed(2) : 'N/A';
+                                const line2 = document.createElement('div');
+                                line2.className = 'trial-line';
+                                line2.textContent = `Orders/LTV: ${ratio}`;
+                                dbCol.appendChild(line2);
+                            }
+                            const line3 = document.createElement('div');
+                            line3.className = 'trial-line';
+                            line3.textContent = 'Active Subs: ' + (resp.activeSubs.length ? resp.activeSubs.join(', ') : 'None');
+                            dbCol.appendChild(line3);
+                        });
+                    });
+                }
             });
         }
 
@@ -541,7 +572,7 @@
                 if (!ltv) ltv = getClientLtv();
                 if (ltv) dbLines.push(`<div class="trial-line">LTV: ${escapeHtml(ltv)}</div>`);
                 else dbLines.push(`<div class="trial-line">LTV: N/A</div>`);
-                const btn = `<button id="sub-detection-btn">SUB DETECTION</button>`;
+                const btn = `<button id="sub-detection-btn" class="sub-detect-btn">SUB DETECTION</button>`;
                 dbLines.push(`<div class="trial-line">${btn}</div>`);
             }
 
