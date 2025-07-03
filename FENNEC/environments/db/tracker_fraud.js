@@ -432,6 +432,7 @@
             const flag = sessionStorage.getItem('fennecShowTrialFloater');
             if (!flag) return;
             sessionStorage.removeItem('fennecShowTrialFloater');
+            localStorage.setItem('fraudXrayCompleted', '1');
             chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null }, data => {
                 const html = buildTrialHtml(data.adyenDnaInfo, data.kountInfo, data.sidebarOrderInfo);
                 if (!html) return;
