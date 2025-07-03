@@ -736,12 +736,13 @@
     color: #f1f1f1;
     border: 1px solid gray;
     border-radius: 8px;
-    padding: 12px 16px;
+    padding: 24px 32px;
     z-index: 1065;
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    font-size: 13px;
+    font-size: 26px;
     text-align: left;
-    max-width: 420px;
+    width: 840px;
+    max-width: 840px;
 }
 
 #fennec-trial-overlay .trial-close {
@@ -759,6 +760,7 @@
 }
 #fennec-trial-overlay .trial-col {
     flex: 1;
+    text-align: center;
 }
 #fennec-trial-overlay .trial-summary {
     display: flex;
