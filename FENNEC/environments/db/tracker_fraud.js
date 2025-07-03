@@ -580,6 +580,9 @@
             }
 
             if (kount) {
+                if (kount.ekata && kount.ekata.residentName) {
+                    kountLines.push(`<div class="trial-line">Resident Name: ${escapeHtml(kount.ekata.residentName)}</div>`);
+                }
                 if (kount.ekata && kount.ekata.proxyRisk) {
                     kountLines.push(`<div class="trial-line">Proxy: ${escapeHtml(kount.ekata.proxyRisk)}</div>`);
                     if (/^yes$/i.test(kount.ekata.proxyRisk)) red.push('<span class="copilot-tag copilot-tag-purple">PROXY YES</span>');
@@ -594,9 +597,9 @@
             const html = `
                 <div class="trial-close">✕</div>
                 <div class="trial-columns">
-                    <div class="trial-col"><b>DB</b>${dbLines.join('')}</div>
-                    <div class="trial-col"><b>ADYEN</b>${adyenLines.join('')}</div>
-                    <div class="trial-col"><b>KOUNT</b>${kountLines.join('')}</div>
+                    <div class="trial-col-wrap"><div class="trial-col-title">DB</div><div class="trial-col">${dbLines.join('')}</div></div>
+                    <div class="trial-col-wrap"><div class="trial-col-title">ADYEN</div><div class="trial-col">${adyenLines.join('')}</div></div>
+                    <div class="trial-col-wrap"><div class="trial-col-title">KOUNT</div><div class="trial-col">${kountLines.join('')}</div></div>
                 </div>
                 ${summary}
             `;
