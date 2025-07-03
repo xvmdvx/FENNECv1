@@ -62,13 +62,18 @@
                         return;
                     }
                     const btn = document.querySelector('input.simple-submit[value="Update Report"]');
-                    if (btn) btn.click();
+                    if (btn && !sessionStorage.getItem('fennecEkataUpdateClicked')) {
+                        sessionStorage.setItem('fennecEkataUpdateClicked', '1');
+                        btn.click();
+                        return;
+                    }
                     setTimeout(() => {
                         const ipValid = findVal('Is Valid');
                         const proxyRisk = findVal('Proxy Risk');
                         const addressToName = findVal('Address to Name');
                         const residentName = findVal('Resident Name');
                         saveData({ ekata: { ipValid, proxyRisk, addressToName, residentName } });
+                        sessionStorage.removeItem('fennecEkataUpdateClicked');
                         chrome.storage.local.get({ fennecFraudAdyen: null }, ({ fennecFraudAdyen }) => {
                             if (fennecFraudAdyen) {
                                 chrome.storage.local.remove('fennecFraudAdyen');
