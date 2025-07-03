@@ -13,7 +13,16 @@
     // Tracks whether Review Mode is active across DB pages
     let reviewMode = false;
     let devMode = false;
-    const fraudXray = new URLSearchParams(location.search).get('fraud_xray') === '1';
+    let fraudXray = new URLSearchParams(location.search).get('fraud_xray') === '1';
+    const xrayDone = localStorage.getItem('fraudXrayCompleted') === '1';
+    if (fraudXray && xrayDone) {
+        const params = new URLSearchParams(location.search);
+        params.delete('fraud_xray');
+        const newUrl = location.pathname + (params.toString() ? '?' + params.toString() : '');
+        history.replaceState(null, '', newUrl);
+        localStorage.removeItem('fraudXrayCompleted');
+        fraudXray = false;
+    }
 
     // Some DB pages do not show the correct LTV value until the order is
     // refreshed. Refresh once the first time the order loads in a new tab.
@@ -529,7 +538,7 @@
                         }
                         loadDnaSummary();
                         loadKountSummary();
-                        setTimeout(runFraudXray, 500);
+                        if (fraudXray) setTimeout(runFraudXray, 500);
                     });
                     const qsToggle = sidebar.querySelector('#qs-toggle');
                     initQuickSummary = () => {
