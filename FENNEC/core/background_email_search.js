@@ -283,11 +283,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 const ensureLoaded = () => {
                     if (!tab || tab.status !== "complete") {
                         if (attempts > 0) {
-                            if (!tab) {
-                            chrome.tabs.create({ url, active: false, windowId: sender.tab ? sender.tab.windowId : undefined }, t => {
-                                tab = t;
-                                createdTabId = t.id;
-                            });
+                            if (!tab && !createdTabId) {
+                                chrome.tabs.create({ url, active: false, windowId: sender.tab ? sender.tab.windowId : undefined }, t => {
+                                    tab = t;
+                                    createdTabId = t.id;
+                                });
                             }
                             setTimeout(() => {
                                 attempts--;
