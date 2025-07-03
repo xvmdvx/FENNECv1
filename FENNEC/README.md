@@ -101,32 +101,36 @@ MAIN:
          - Line 4: CVV, AVS and DB match tags.
          - Line 5: Fraud scoring.
          - Line 6: Transaction table with totals.
-      2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
+      2nd box: KOUNT summary
+         - Email age, device location, VIP declines and Ekata results.
+      3rd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
          - Same lines as the DB COMPANY box.
-      3rd box: CLIENT summary
+      4th box: CLIENT summary
          - Line 1: Client name and ID link.
          - Line 2: Role tags or NOT LISTED.
          - Line 3: Email and phone.
          - Line 4: Companies count and LTV.
-      4th box: BILLING summary
+      5th box: BILLING summary
          - Line 1: Cardholder name.
          - Line 2: Card type • last four digits • expiry.
          - Line 3: AVS result tag.
          - Line 4: Billing address.
-      5th box: Issue summary
+      6th box: Issue summary
          - Header with ACTIVE/RESOLVED tag and issue text.
    (Dev Mode) End: [🔄 REFRESH] button centered.
    GM:
       Title: [📧 SEARCH], [🧬 DNA] & [🩻 XRAY] buttons centered.
       1st box: ADYEN's DNA summary
-         - Same lines as DB ADYEN box.
-      2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
+      - Same lines as DB ADYEN box.
+      2nd box: KOUNT summary
+         - Email age, device location, VIP declines and Ekata results.
+      3rd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
          - Same lines as DB COMPANY box.
-      3rd box: CLIENT summary
+      4th box: CLIENT summary
          - Same lines as DB CLIENT box.
-      4th box: BILLING summary
+      5th box: BILLING summary
          - Same lines as DB BILLING box.
-      5th box: Issue summary
+      6th box: Issue summary
          - Header with ACTIVE/RESOLVED tag and issue text.
    (Dev Mode) End: [🔄 REFRESH] button centered.
 
@@ -135,38 +139,44 @@ MISC:
       Title: FAMILY TREE display/collapse button (🌳), "ORDER SUMMARY"
       1st box: ADYEN's DNA summary (only if DNA or XRAY have been triggered)
          - Same lines as DB ADYEN box.
-      2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
+      2nd box: KOUNT summary
+         - Email age, device location, VIP declines and Ekata results.
+      3rd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
          - Same lines as DB COMPANY box.
-      3rd box: CLIENT summary
+      4th box: CLIENT summary
          - Same lines as DB CLIENT box.
-      4th box: BILLING summary
+      5th box: BILLING summary
          - Same lines as DB BILLING box.
-      5th box: Issue summary
+      6th box: Issue summary
          - Header with ACTIVE/RESOLVED tag and issue text.
       (Dev Mode) End: [🔄 REFRESH] button centered.
    GM:
       Title: [📧 SEARCH], [🧬 DNA] & [🩻 XRAY] buttons centered.
       1st box: ADYEN's DNA summary (only if DNA or XRAY have been triggered)
          - Same lines as DB ADYEN box.
-      2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
+      2nd box: KOUNT summary
+         - Email age, device location, VIP declines and Ekata results.
+      3rd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
          - Same lines as DB COMPANY box.
-      3rd box: CLIENT summary
+      4th box: CLIENT summary
          - Same lines as DB CLIENT box.
-      4th box: BILLING summary
+      5th box: BILLING summary
          - Same lines as DB BILLING box.
-      5th box: Issue summary
+      6th box: Issue summary
          - Header with ACTIVE/RESOLVED tag and issue text.
       (Dev Mode) End: [🔄 REFRESH] button centered.
    ADYEN:
       1st box: ADYEN's DNA summary (only if DNA or XRAY have been triggered)
          - Same lines as DB ADYEN box.
-      2nd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
+      2nd box: KOUNT summary
+         - Email age, device location, VIP declines and Ekata results.
+      3rd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
          - Same lines as DB COMPANY box.
-      3rd box: CLIENT summary
+      4th box: CLIENT summary
          - Same lines as DB CLIENT box.
-      4th box: BILLING summary
+      5th box: BILLING summary
          - Same lines as DB BILLING box.
-      5th box: Issue summary
+      6th box: Issue summary
          - Header with ACTIVE/RESOLVED tag and issue text.
       (Dev Mode) End: [🔄 REFRESH] button centered.
 
@@ -191,6 +201,7 @@ ICONS/BUTTONS/FUNCTIONS:
    Focus returns to the original email once information is retrieved.
 🩻 XRAY: Runs SEARCH and DNA operations one after the other and opens the Kount workflow page when available.
    Focus also returns to the original email at the end.
+   A KOUNT summary box appears below DNA after the data is extracted.
 🤖 FILE: Automator that opens and fills the SOS filing process.
 
 GENERAL FEATURES:
