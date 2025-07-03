@@ -38,11 +38,11 @@
                 </div>
                 <div class="order-summary-header">ORDER SUMMARY</div>
                 <div class="copilot-body" id="copilot-body-content">
+                    <div id="db-summary-section"></div>
                     <div class="copilot-dna">
                         <div id="dna-summary" style="margin-top:16px"></div>
                         <div id="kount-summary" style="margin-top:10px"></div>
                     </div>
-                    <div id="db-summary-section"></div>
                     <div id="fraud-summary-section"></div>
                     <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                     <div id="review-mode-label" class="review-mode-label" style="margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
@@ -471,6 +471,7 @@
 
         function loadDbSummary() {
             const container = document.getElementById('db-summary-section');
+            const fraud = document.getElementById('fraud-summary-section');
             if (!container) return;
             chrome.storage.local.get({ sidebarDb: [], sidebarOrderId: null, sidebarOrderInfo: null }, ({ sidebarDb, sidebarOrderId, sidebarOrderInfo }) => {
                 if (Array.isArray(sidebarDb) && sidebarDb.length) {
@@ -479,9 +480,11 @@
                     const qbox = container.querySelector('#quick-summary');
                     if (qbox) { qbox.classList.remove('quick-summary-collapsed'); qbox.style.maxHeight = 'none'; }
                     checkLastIssue(sidebarOrderId);
+                    if (fraud) fraud.innerHTML = '';
                 } else {
                     container.innerHTML = '';
                     fillIssueBox(null, null);
+                    if (fraud) insertFraudSummary();
                 }
             });
         }

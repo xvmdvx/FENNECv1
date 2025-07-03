@@ -1116,7 +1116,7 @@
 
 
     function extractAndShowFormationData(isAmendment = false) {
-        const dbSections = [];
+        let dbSections = [];
         function addEmptySection(label, text = "NO INFO") {
             const section = `
             <div class="section-label">${label}</div>
@@ -1576,9 +1576,7 @@
                 `<span class="${vaClass}">VA: ${hasVA ? "Sí" : "No"}</span></div>`
             );
             const stateAttr = company.state ? ` data-state="${escapeHtml(company.state)}"` : '';
-            const compSection = reviewMode
-                ? `<div class="white-box company-box"${stateAttr} style="margin-bottom:10px">${companyLines.join('').trim()}</div>`
-                : `<div class="section-label">COMPANY:</div><div class="white-box company-box"${stateAttr} style="margin-bottom:10px">${companyLines.join('').trim()}</div>`;
+            const compSection = `<div class="section-label">COMPANY:</div><div class="white-box company-box"${stateAttr} style="margin-bottom:10px">${companyLines.join('').trim()}</div>`;
             if (companyLines.length) {
                 html += compSection;
                 dbSections.push(compSection);
@@ -1695,6 +1693,32 @@
             }
         }
 
+        if (reviewMode) {
+            const grab = label => {
+                const idx = dbSections.findIndex(s => s.includes(label));
+                return idx >= 0 ? dbSections.splice(idx, 1)[0] : '';
+            };
+            const ordered = [];
+            const company = grab('COMPANY:');
+            if (company) ordered.push(company);
+            const quick = grab('id="quick-summary"');
+            if (quick) ordered.push(quick);
+            const billing = grab('BILLING:');
+            if (billing) ordered.push(billing);
+            const client = grab('CLIENT:');
+            if (client) ordered.push(client);
+            const agent = grab('AGENT:');
+            if (agent) ordered.push(agent);
+            const members = grab('MEMBERS:') || grab('DIRECTORS:');
+            if (members) ordered.push(members);
+            const sh = grab('SHAREHOLDERS:');
+            if (sh) ordered.push(sh);
+            const off = grab('OFFICERS:');
+            if (off) ordered.push(off);
+            ordered.push(...dbSections);
+            dbSections = ordered;
+            html = dbSections.join('');
+        }
         if (!html) {
             html = `<div style="text-align:center; color:#aaa; margin-top:40px">No se encontró información relevante de la orden.</div>`;
         }
