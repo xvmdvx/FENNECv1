@@ -717,11 +717,36 @@
             insertFraudSummary();
         }
 
+        function showInitialStatus() {
+            const db = document.getElementById('db-summary-section');
+            const dna = document.getElementById('dna-summary');
+            const kount = document.getElementById('kount-summary');
+            const fraud = document.getElementById('fraud-summary-section');
+            const issue = document.getElementById('issue-summary-box');
+            if (db) db.innerHTML = '';
+            if (dna) dna.innerHTML = '';
+            if (kount) kount.innerHTML = '';
+            if (issue) {
+                const content = issue.querySelector('#issue-summary-content');
+                const label = issue.querySelector('#issue-status-label');
+                if (content) content.innerHTML = '';
+                if (label) label.textContent = '';
+                issue.style.display = 'none';
+            }
+            if (fraud) insertFraudSummary();
+        }
+
         injectSidebar();
         scanOrders();
-       loadDbSummary();
-        loadDnaSummary();
-        loadKountSummary();
+        const manualOpen = !sessionStorage.getItem('fennecShowTrialFloater');
+        if (manualOpen) {
+            chrome.storage.local.set({ sidebarDb: [], sidebarOrderId: null, sidebarOrderInfo: null, adyenDnaInfo: null, kountInfo: null, sidebarFreezeId: null });
+            showInitialStatus();
+        } else {
+           loadDbSummary();
+           loadDnaSummary();
+           loadKountSummary();
+        }
         const clearBtn = document.getElementById('copilot-clear');
         if (clearBtn) clearBtn.onclick = clearSidebar;
 
