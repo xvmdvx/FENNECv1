@@ -46,12 +46,29 @@
     color: #0000ee;
 }
 .fennec-light-mode #fennec-trial-overlay {
-    background: #fff;
+    background-color: #fff;
     color: #000 !important;
     border: 1px solid #777;
 }
 .fennec-light-mode #fennec-trial-overlay .trial-close {
     color: #000;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-columns {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-col {
+    flex: 1;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-summary {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 8px;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-summary-col {
+    flex: 1;
+    text-align: center;
 }
 .fennec-light-mode .copilot-tag {
     background-color: #000;
