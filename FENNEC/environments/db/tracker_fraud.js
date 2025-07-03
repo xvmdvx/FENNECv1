@@ -65,6 +65,7 @@
 
         function runXray(orderId) {
             const dbUrl = `https://db.incfile.com/incfile/order/detail/${orderId}?fraud_xray=1`;
+            sessionStorage.setItem('fennecShowTrialFloater', '1');
             chrome.runtime.sendMessage({ action: 'openTab', url: dbUrl, active: true, refocus: true });
         }
 
@@ -427,6 +428,110 @@
             });
         }
 
+        function showTrialFloater() {
+            const flag = sessionStorage.getItem('fennecShowTrialFloater');
+            if (!flag) return;
+            sessionStorage.removeItem('fennecShowTrialFloater');
+            chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null }, data => {
+                const html = buildTrialHtml(data.adyenDnaInfo, data.kountInfo, data.sidebarOrderInfo);
+                if (!html) return;
+                let overlay = document.getElementById('fennec-trial-overlay');
+                if (overlay) overlay.remove();
+                overlay = document.createElement('div');
+                overlay.id = 'fennec-trial-overlay';
+                overlay.innerHTML = html;
+                const close = overlay.querySelector('.trial-close');
+                if (close) close.addEventListener('click', () => overlay.remove());
+                document.body.appendChild(overlay);
+            });
+        }
+
+        function buildTrialHtml(dna, kount, order) {
+            if (!dna && !kount) return null;
+            const lines = [];
+            function colorFor(res) {
+                if (res === 'green') return 'copilot-tag-green';
+                if (res === 'purple') return 'copilot-tag-purple';
+                return 'copilot-tag-black';
+            }
+            function formatCvv(t) {
+                t = (t || '').toLowerCase();
+                if ((/\bmatch(es|ed)?\b/.test(t) || /\(m\)/.test(t)) && !/not\s+match/.test(t)) return { label: 'CVV: MATCH', result: 'green' };
+                if (/not\s+match/.test(t) || /\(n\)/.test(t)) return { label: 'CVV: NO MATCH', result: 'purple' };
+                if (/not provided|not checked|error|not supplied|unknown/.test(t)) return { label: 'CVV: UNKNOWN', result: 'black' };
+                return { label: 'CVV: UNKNOWN', result: 'black' };
+            }
+            function formatAvs(t) {
+                t = (t || '').toLowerCase();
+                if (/both\s+postal\s+code\s+and\s+address\s+match/.test(t) || /^7\b/.test(t) || t.includes('both match')) return { label: 'AVS: MATCH', result: 'green' };
+                if (/^6\b/.test(t) || (t.includes('postal code matches') && t.includes("address doesn't"))) return { label: 'AVS: PARTIAL (STREET✖️)', result: 'purple' };
+                if (/^1\b/.test(t) || (t.includes('address matches') && t.includes("postal code doesn't"))) return { label: 'AVS: PARTIAL (ZIP✖️)', result: 'purple' };
+                if (/^2\b/.test(t) || t.includes('neither matches') || /\bw\b/.test(t)) return { label: 'AVS: NO MATCH', result: 'purple' };
+                if (/^0\b/.test(t) || /^3\b/.test(t) || /^4\b/.test(t) || /^5\b/.test(t) || t.includes('unavailable') || t.includes('not supported') || t.includes('no avs') || t.includes('unknown')) return { label: 'AVS: UNKNOWN', result: 'black' };
+                return { label: 'AVS: UNKNOWN', result: 'black' };
+            }
+            function parseAmount(str) {
+                if (!str) return 0;
+                const n = parseFloat(str.replace(/[^0-9.]/g, ''));
+                return isNaN(n) ? 0 : n;
+            }
+            function buildCardMatchTag(dbBilling, card) {
+                const db = dbBilling || {};
+                const dna = card || {};
+                const dbName = (db.cardholder || '').toLowerCase();
+                const dnaName = (dna['Card holder'] || '').toLowerCase();
+                const dbDigits = (db.last4 || '').replace(/\D+/g, '');
+                const dnaDigits = (dna['Card number'] || '').replace(/\D+/g, '').slice(-4);
+                const dbExp = (db.expiry || '').replace(/\D+/g, '');
+                const dnaExp = (dna['Expiry date'] || '').replace(/\D+/g, '');
+                if (!dbName && !dbDigits && !dbExp) return '';
+                const match = dbName && dnaName && dbName === dnaName && dbDigits && dnaDigits && dbDigits === dnaDigits && dbExp && dnaExp && dbExp === dnaExp;
+                const cls = match ? 'copilot-tag-green' : 'copilot-tag-purple';
+                const text = match ? 'DB MATCH' : 'DB MISMATCH';
+                return `<span class="copilot-tag ${cls}">${text}</span>`;
+            }
+            if (dna && dna.payment) {
+                const proc = dna.payment.processing || {};
+                const card = dna.payment.card || {};
+                const tags = [];
+                if (proc['CVC/CVV']) {
+                    const r = formatCvv(proc['CVC/CVV']);
+                    tags.push(`<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`);
+                }
+                if (proc['AVS']) {
+                    const r = formatAvs(proc['AVS']);
+                    tags.push(`<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`);
+                }
+                if (order && order.billing) {
+                    const tag = buildCardMatchTag(order.billing, card);
+                    if (tag) tags.push(tag);
+                }
+                if (tags.length) lines.push(`<div class="trial-line">${tags.join(' ')}</div>`);
+
+                const tx = dna.transactions || {};
+                const settled = parseAmount((tx['Settled'] || tx['Authorised / Settled'] || {}).amount);
+                const total = parseAmount((tx['Total'] || tx['Total transactions'] || {}).amount);
+                if (total) {
+                    const pct = Math.round(settled / total * 100);
+                    lines.push(`<div class="trial-line">SETTLED: ${pct}%</div>`);
+                }
+                const cb = parseInt((tx['Chargebacks'] || tx['Chargeback'] || {}).count || '0', 10);
+                lines.push(`<div class="trial-line">CB: ${cb}</div>`);
+            }
+            if (kount) {
+                if (Array.isArray(kount.declines)) lines.push(`<div class="trial-line">VIP DECLINES: ${kount.declines.length}</div>`);
+                if (kount.ekata && kount.ekata.proxyRisk) lines.push(`<div class="trial-line">Proxy: ${escapeHtml(kount.ekata.proxyRisk)}</div>`);
+                if (kount.emailAge) lines.push(`<div class="trial-line">Email age: ${escapeHtml(kount.emailAge)}</div>`);
+            }
+            if (order && Array.isArray(order.members)) {
+                const names = order.members.map(m => m.name).filter(Boolean);
+                if (order.billing && order.billing.cardholder) names.push(order.billing.cardholder);
+                if (names.length) lines.push(`<div class="trial-line">Names: ${escapeHtml(names.join(', '))}</div>`);
+            }
+            if (!lines.length) return null;
+            return `<div class="trial-close">✕</div><h4 style="margin-top:0">TRIAL SUMMARY</h4>${lines.join('')}`;
+        }
+
         function formatIssueText(text) {
             if (!text) return '';
             let formatted = text.replace(/\s*(\d+\s*[).])/g, (m,g)=>'\n'+g+' ');
@@ -531,6 +636,7 @@
         window.addEventListener('focus', () => {
             loadDnaSummary();
             loadKountSummary();
+            showTrialFloater();
         });
     });
 })();
