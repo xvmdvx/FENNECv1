@@ -1771,7 +1771,8 @@
             formationDate: company ? company.formationDate : null,
             registeredAgent: hasAgentInfo ? { name: agent.name, address: agent.address } : null,
             members: directors,
-            billing
+            billing,
+            clientLtv: client.ltv
         };
         chrome.storage.local.set({
             sidebarDb: dbSections,

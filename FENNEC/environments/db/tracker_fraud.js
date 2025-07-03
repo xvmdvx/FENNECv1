@@ -34,6 +34,7 @@
                         <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (BETA)" />
                         <span>FENNEC (BETA)</span>
                     </div>
+                    <button id="copilot-clear-tabs">🗑</button>
                     <button id="copilot-close">✕</button>
                 </div>
                 <div class="order-summary-header">ORDER SUMMARY</div>
@@ -61,6 +62,12 @@
                 const style = document.getElementById('copilot-db-padding');
                 if (style) style.remove();
             };
+            const clearBtn = sidebar.querySelector('#copilot-clear-tabs');
+            if (clearBtn) {
+                clearBtn.onclick = () => {
+                    chrome.runtime.sendMessage({ action: 'closeOtherTabs' });
+                };
+            }
         }
 
         function runXray(orderId) {
@@ -227,6 +234,15 @@
             const parts = d.split('-');
             const dt = new Date(parts[0], parseInt(parts[1],10)-1, parts[2]);
             return dt.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+        }
+
+        function getClientLtv() {
+            const row = document.querySelector('#vclient table tbody tr');
+            if (row) {
+                const cells = row.querySelectorAll('td');
+                if (cells[2]) return (cells[2].innerText || cells[2].textContent || '').trim();
+            }
+            return '';
         }
 
         function insertFraudSummary() {
@@ -437,12 +453,22 @@
                 const html = buildTrialHtml(data.adyenDnaInfo, data.kountInfo, data.sidebarOrderInfo);
                 if (!html) return;
                 let overlay = document.getElementById('fennec-trial-overlay');
+                let title = document.getElementById('fennec-trial-title');
                 if (overlay) overlay.remove();
+                if (title) title.remove();
                 overlay = document.createElement('div');
                 overlay.id = 'fennec-trial-overlay';
                 overlay.innerHTML = html;
+                title = document.createElement('div');
+                title.id = 'fennec-trial-title';
+                title.className = 'trial-title';
+                title.textContent = 'FRAUD REVIEW';
                 const close = overlay.querySelector('.trial-close');
-                if (close) close.addEventListener('click', () => overlay.remove());
+                if (close) close.addEventListener('click', () => {
+                    overlay.remove();
+                    title.remove();
+                });
+                document.body.appendChild(title);
                 document.body.appendChild(overlay);
             });
         }
@@ -507,7 +533,10 @@
                 if (order.billing.expiry) dbLines.push(`<div class="trial-line">${escapeHtml(order.billing.expiry)}</div>`);
                 const tag = dna && dna.payment ? buildCardMatchTag(order.billing, dna.payment.card || {}) : '';
                 if (tag && /copilot-tag-green/.test(tag)) pushFlag(tag);
-                dbLines.push(`<div class="trial-line">LTV: N/A</div>`);
+                let ltv = order && order.clientLtv;
+                if (!ltv) ltv = getClientLtv();
+                if (ltv) dbLines.push(`<div class="trial-line">LTV: ${escapeHtml(ltv)}</div>`);
+                else dbLines.push(`<div class="trial-line">LTV: N/A</div>`);
                 const btn = `<button id="sub-detection-btn">SUB DETECTION</button>`;
                 dbLines.push(`<div class="trial-line">${btn}</div>`);
             }
@@ -564,7 +593,6 @@
 
             const html = `
                 <div class="trial-close">✕</div>
-                <h4 class="trial-title">FRAUD REVIEW</h4>
                 <div class="trial-columns">
                     <div class="trial-col"><b>DB</b>${dbLines.join('')}</div>
                     <div class="trial-col"><b>ADYEN</b>${adyenLines.join('')}</div>
