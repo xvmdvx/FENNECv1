@@ -15,6 +15,21 @@
     let devMode = false;
     const fraudXray = new URLSearchParams(location.search).get('fraud_xray') === '1';
 
+    // Some DB pages do not show the correct LTV value until the order is
+    // refreshed. Refresh once the first time the order loads in a new tab.
+    (function refreshForLtv() {
+        const m = location.pathname.match(/(?:detail|storage\/incfile)\/(\d+)/);
+        const orderId = m ? m[1] : null;
+        if (!orderId) return;
+        const key = 'fennecLtvRefreshed_' + orderId;
+        if (sessionStorage.getItem(key)) return;
+        sessionStorage.setItem(key, '1');
+        window.addEventListener('load', () => {
+            console.log('[Copilot] Auto-refreshing order page to load LTV');
+            setTimeout(() => location.reload(), 300);
+        }, { once: true });
+    })();
+
     function showFloatingIcon() {
         if (document.getElementById("fennec-floating-icon")) return;
         const icon = document.createElement("img");
