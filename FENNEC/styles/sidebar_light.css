@@ -45,6 +45,14 @@
 .fennec-light-mode #fennec-coda-overlay .coda-result-item a {
     color: #0000ee;
 }
+.fennec-light-mode #fennec-trial-overlay {
+    background: #fff;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-close {
+    color: #000;
+}
 .fennec-light-mode .copilot-tag {
     background-color: #000;
     color: #fff !important;
