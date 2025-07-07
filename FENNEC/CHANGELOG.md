@@ -8,6 +8,7 @@
 - Diagnose overlay now supports Reinstatement orders and detects amendments or reinstatements in review.
 - Replaced `form.submit()` fallback with a submit event to mimic real clicks.
 - Added a brief delay after selecting the payment type so the page registers **Client Account** reliably.
+- Activating Review Mode from the popup now reloads DB pages so the sidebar appears automatically.
 - Fixed the Mistral chat box disappearing after loading the order summary.
 - The Mistral Box now sends prompts to a local Ollama server at
   `http://127.0.0.1:11434/api/generate`.

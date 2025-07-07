@@ -2,15 +2,18 @@
 const toggle = document.getElementById("extension-toggle");
 const optionsBtn = document.getElementById("options-btn");
 const reviewToggle = document.getElementById("review-toggle");
+let lastReviewMode = false;
 
 function loadState() {
     chrome.storage.local.get({ extensionEnabled: true, fennecReviewMode: false }, ({ extensionEnabled, fennecReviewMode }) => {
         toggle.checked = Boolean(extensionEnabled);
         reviewToggle.checked = Boolean(fennecReviewMode);
+        lastReviewMode = reviewToggle.checked;
     });
 }
 
 function saveState() {
+    const reviewChanged = reviewToggle.checked !== lastReviewMode;
     chrome.storage.local.set({ extensionEnabled: toggle.checked, fennecReviewMode: reviewToggle.checked }, () => {
         chrome.storage.sync.set({ fennecReviewMode: reviewToggle.checked }, () => {
             const urls = [
@@ -26,12 +29,13 @@ function saveState() {
                         tab.id,
                         { action: "fennecToggle", enabled: toggle.checked },
                         () => {
-                            if (chrome.runtime.lastError) {
+                            if (chrome.runtime.lastError || reviewChanged) {
                                 chrome.tabs.reload(tab.id);
                             }
                         }
                     );
                 });
+                lastReviewMode = reviewToggle.checked;
             });
         });
     });
