@@ -21,9 +21,6 @@
         "http://127.0.0.1:11434/*",
         "https://*/*"
     ],
-  "optional_host_permissions": [
-    "https://*/*"
-  ],
   "content_scripts": [
     {
       "matches": [
