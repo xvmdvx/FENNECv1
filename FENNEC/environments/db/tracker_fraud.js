@@ -423,26 +423,31 @@
             return `<div class="section-label">KOUNT</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
         }
 
-        function loadDnaSummary() {
-            const container = document.getElementById('dna-summary');
-            if (!container) return;
-            chrome.storage.local.get({ adyenDnaInfo: null, sidebarOrderInfo: null }, ({ adyenDnaInfo, sidebarOrderInfo }) => {
-                if (adyenDnaInfo) adyenDnaInfo.dbBilling = sidebarOrderInfo ? sidebarOrderInfo.billing : null;
-                const html = buildDnaHtml(adyenDnaInfo);
-                container.innerHTML = html || '';
-                attachCommonListeners(container);
-            });
-        }
+       function loadDnaSummary() {
+           const container = document.getElementById('dna-summary');
+           if (!container) return;
+           chrome.storage.local.get({ adyenDnaInfo: null, sidebarOrderInfo: null }, ({ adyenDnaInfo, sidebarOrderInfo }) => {
+               if (adyenDnaInfo) adyenDnaInfo.dbBilling = sidebarOrderInfo ? sidebarOrderInfo.billing : null;
+               const html = buildDnaHtml(adyenDnaInfo);
+               container.innerHTML = html || '';
+               attachCommonListeners(container);
+           });
+       }
 
-        function loadKountSummary() {
-            const container = document.getElementById('kount-summary');
-            if (!container) return;
-            chrome.storage.local.get({ kountInfo: null }, ({ kountInfo }) => {
-                const html = buildKountHtml(kountInfo);
-                container.innerHTML = html || '';
-                attachCommonListeners(container);
-            });
-        }
+        // Make callable from page scripts
+        window.loadDnaSummary = loadDnaSummary;
+
+       function loadKountSummary() {
+           const container = document.getElementById('kount-summary');
+           if (!container) return;
+           chrome.storage.local.get({ kountInfo: null }, ({ kountInfo }) => {
+               const html = buildKountHtml(kountInfo);
+               container.innerHTML = html || '';
+               attachCommonListeners(container);
+           });
+       }
+
+        window.loadKountSummary = loadKountSummary;
 
         function showTrialFloater(retries = 5) {
             const flag = sessionStorage.getItem('fennecShowTrialFloater');
