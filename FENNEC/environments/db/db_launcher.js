@@ -10,6 +10,7 @@
     let annualReportMode = false;
     let reinstatementMode = false;
     let miscMode = false;
+    let autoFamilyTreeDone = false;
     // Tracks whether Review Mode is active across DB pages
     let reviewMode = false;
     let devMode = false;
@@ -75,8 +76,10 @@
     }
 
     function autoOpenFamilyTree() {
+        if (autoFamilyTreeDone) return;
         const ftIcon = document.getElementById('family-tree-icon');
         if (ftIcon && ftIcon.style.display !== 'none') {
+            autoFamilyTreeDone = true;
             ftIcon.click();
         }
     }
