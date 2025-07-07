@@ -518,6 +518,21 @@
             const green = [];
             const red = [];
 
+            const dbName = order && order.billing ? order.billing.cardholder || '' : '';
+            const adyenName = dna && dna.payment && dna.payment.card ? dna.payment.card['Card holder'] || '' : '';
+            const kountName = kount && kount.ekata ? kount.ekata.residentName || '' : '';
+            const names = [dbName, adyenName, kountName];
+            let matchNames = false;
+            for (let i = 0; i < names.length; i++) {
+                for (let j = i + 1; j < names.length; j++) {
+                    if (namesMatch(names[i], names[j])) { matchNames = true; break; }
+                }
+                if (matchNames) break;
+            }
+            const iconHtml = matchNames
+                ? '<span class="name-match check">✔</span>'
+                : '<span class="name-match cross">✖</span>';
+
             function colorFor(res) {
                 if (res === 'green') return 'copilot-tag-green';
                 if (res === 'purple') return 'copilot-tag-purple';
@@ -548,6 +563,19 @@
                 const n = parseFloat(str.replace(/[^0-9.]/g, ''));
                 return isNaN(n) ? 0 : n;
             }
+
+            function normName(name) {
+                return (name || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim();
+            }
+
+            function namesMatch(a, b) {
+                a = normName(a); b = normName(b);
+                if (!a || !b) return false;
+                if (a === b) return true;
+                const pa = a.split(' ');
+                const pb = b.split(' ');
+                return pa[0] === pb[0] && pa[pa.length - 1] === pb[pb.length - 1];
+            }
             function buildCardMatchTag(dbBilling, card) {
                 const db = dbBilling || {};
                 const dna = card || {};
@@ -565,7 +593,7 @@
             }
 
             if (order && order.billing) {
-                dbLines.push(`<div class="trial-line">${escapeHtml(order.billing.cardholder || '')}</div>`);
+                dbLines.push(`<div class="trial-line">${escapeHtml(order.billing.cardholder || '')} ${iconHtml}</div>`);
                 if (order.billing.last4) dbLines.push(`<div class="trial-line">${escapeHtml(order.billing.last4)}</div>`);
                 if (order.billing.expiry) dbLines.push(`<div class="trial-line">${escapeHtml(order.billing.expiry)}</div>`);
                 const tag = dna && dna.payment ? buildCardMatchTag(order.billing, dna.payment.card || {}) : '';
@@ -576,12 +604,28 @@
                 else dbLines.push(`<div class="trial-line">LTV: N/A</div>`);
                 const btn = `<button id="sub-detection-btn" class="sub-detect-btn">SUB DETECTION</button>`;
                 dbLines.push(`<div class="trial-line">${btn}</div>`);
+                if (typeof order.hasVA === 'boolean') {
+                    dbLines.push(`<div class="trial-line">VA: ${order.hasVA ? 'Sí' : 'No'}</div>`);
+                }
+                if (typeof order.hasRA === 'boolean') {
+                    const txt = order.raExpired ? 'EXPIRED' : (order.hasRA ? 'Sí' : 'No');
+                    dbLines.push(`<div class="trial-line">RA: ${txt}</div>`);
+                }
+                if (order.billing.cardholder) {
+                    const card = order.billing.cardholder;
+                    const names = [];
+                    if (Array.isArray(order.members)) names.push(...order.members.map(m => m.name));
+                    if (order.registeredAgent && order.registeredAgent.name) names.push(order.registeredAgent.name);
+                    const match = names.some(n => namesMatch(n, card));
+                    const ftag = `<span class="copilot-tag ${match ? 'copilot-tag-green' : 'copilot-tag-purple'}">${match ? 'CARD MATCH' : 'CARD MISMATCH'}</span>`;
+                    pushFlag(ftag);
+                }
             }
 
             if (dna && dna.payment) {
                 const proc = dna.payment.processing || {};
                 const card = dna.payment.card || {};
-                if (card['Card holder']) adyenLines.push(`<div class="trial-line">${escapeHtml(card['Card holder'])}</div>`);
+                if (card['Card holder']) adyenLines.push(`<div class="trial-line">${escapeHtml(card['Card holder'])} ${iconHtml}</div>`);
                 if (card['Card number']) {
                     const digits = card['Card number'].replace(/\D+/g, '').slice(-4);
                     if (digits) adyenLines.push(`<div class="trial-line">${escapeHtml(digits)}</div>`);
@@ -618,7 +662,7 @@
 
             if (kount) {
                 if (kount.ekata && kount.ekata.residentName) {
-                    kountLines.push(`<div class="trial-line">Resident Name: ${escapeHtml(kount.ekata.residentName)}</div>`);
+                    kountLines.push(`<div class="trial-line">${escapeHtml(kount.ekata.residentName)} ${iconHtml}</div>`);
                 }
                 if (kount.ekata && kount.ekata.proxyRisk) {
                     kountLines.push(`<div class="trial-line">Proxy: ${escapeHtml(kount.ekata.proxyRisk)}</div>`);
@@ -631,8 +675,16 @@
 
             const summary = `<div class="trial-summary"><div class="trial-summary-col"><b>GREEN FLAGS</b><br>${green.join(' ') || 'None'}</div><div class="trial-summary-col"><b>RED FLAGS</b><br>${red.join(' ') || 'None'}</div></div>`;
 
+            const orderLines = [];
+            if (order) {
+                if (order.companyName) orderLines.push(`<div class="trial-line">${escapeHtml(order.companyName)}</div>`);
+                if (order.type) orderLines.push(`<div class="trial-line">${escapeHtml(order.type)}</div>`);
+                if (order.orderCost) orderLines.push(`<div class="trial-line">${escapeHtml(order.orderCost)}</div>`);
+            }
+
             const html = `
                 <div class="trial-close">✕</div>
+                <div class="trial-order"><div class="trial-col">${orderLines.join('')}</div></div>
                 <div class="trial-columns">
                     <div class="trial-col-wrap"><div class="trial-col-title">DB</div><div class="trial-col">${dbLines.join('')}</div></div>
                     <div class="trial-col-wrap"><div class="trial-col-title">ADYEN</div><div class="trial-col">${adyenLines.join('')}</div></div>
