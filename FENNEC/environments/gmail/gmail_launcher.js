@@ -1150,6 +1150,7 @@
             const dbBox = document.getElementById('db-summary-section');
             const issueContent = document.getElementById('issue-summary-content');
             const issueLabel = document.getElementById('issue-status-label');
+            const issueBox = document.getElementById('issue-summary-box');
             const icon = `<img src="${chrome.runtime.getURL('fennec_icon.png')}" class="loading-fennec"/>`;
             const dnaBox = document.querySelector('.copilot-dna');
             if (orderContainer) {
@@ -1157,7 +1158,39 @@
             }
             if (orderBox) orderBox.innerHTML = icon;
             if (dbBox) dbBox.innerHTML = icon;
-            if (issueContent) issueContent.innerHTML = icon;
+            if (issueBox) {
+                const msg = document.getElementById('quick-resolve-confirm');
+                if (msg) msg.remove();
+                const cText = document.getElementById('quick-resolve-comment-text');
+                if (cText) cText.remove();
+                let input = document.getElementById('issue-comment-input');
+                if (!input) {
+                    input = document.createElement('input');
+                    input.id = 'issue-comment-input';
+                    input.className = 'quick-resolve-comment';
+                    input.type = 'text';
+                    input.placeholder = 'Comment...';
+                    issueBox.appendChild(input);
+                } else {
+                    input.value = '';
+                }
+                let btn = document.getElementById('issue-resolve-btn');
+                if (!btn) {
+                    btn = document.createElement('button');
+                    btn.id = 'issue-resolve-btn';
+                    btn.className = 'copilot-button';
+                    btn.style.marginTop = '4px';
+                    btn.textContent = 'COMMENT & RESOLVE';
+                    issueBox.appendChild(btn);
+                } else {
+                    btn.textContent = 'COMMENT & RESOLVE';
+                }
+                if (issueContent) issueContent.innerHTML = icon;
+                issueBox.style.display = 'block';
+                setupResolveButton();
+            } else if (issueContent) {
+                issueContent.innerHTML = icon;
+            }
             if (dnaBox) {
                 const summary = dnaBox.querySelector('#dna-summary');
                 if (summary) summary.innerHTML = '';
@@ -1186,6 +1219,35 @@
                 if (content) content.innerHTML = '';
                 const label = issueBox.querySelector('#issue-status-label');
                 if (label) label.textContent = '';
+                const msg = document.getElementById('quick-resolve-confirm');
+                if (msg) msg.remove();
+                const cText = document.getElementById('quick-resolve-comment-text');
+                if (cText) cText.remove();
+                let input = document.getElementById('issue-comment-input');
+                if (!input) {
+                    input = document.createElement('input');
+                    input.id = 'issue-comment-input';
+                    input.className = 'quick-resolve-comment';
+                    input.type = 'text';
+                    input.placeholder = 'Comment...';
+                    issueBox.appendChild(input);
+                } else {
+                    input.value = '';
+                    issueBox.appendChild(input);
+                }
+                let btn = document.getElementById('issue-resolve-btn');
+                if (!btn) {
+                    btn = document.createElement('button');
+                    btn.id = 'issue-resolve-btn';
+                    btn.className = 'copilot-button';
+                    btn.style.marginTop = '4px';
+                    btn.textContent = 'COMMENT & RESOLVE';
+                    issueBox.appendChild(btn);
+                } else {
+                    btn.textContent = 'COMMENT & RESOLVE';
+                    issueBox.appendChild(btn);
+                }
+                setupResolveButton();
             }
             if (dnaSummary) dnaSummary.innerHTML = '';
             repositionDnaSummary();
@@ -1346,27 +1408,7 @@
             const clearSb = document.getElementById("copilot-clear");
             if (clearSb) clearSb.onclick = clearSidebar;
 
-            const resolveBtn = document.getElementById("issue-resolve-btn");
-            const commentInput = document.getElementById("issue-comment-input");
-            if (resolveBtn && commentInput) {
-                resolveBtn.onclick = () => {
-                    const comment = commentInput.value.trim();
-                    const orderId = (storedOrderInfo && storedOrderInfo.orderId) ||
-                        (currentContext && currentContext.orderNumber);
-                    if (!orderId) {
-                        alert("No order ID detected.");
-                        return;
-                    }
-                    if (!comment) {
-                        commentInput.focus();
-                        return;
-                    }
-                    chrome.storage.local.set({ fennecPendingComment: { orderId, comment } }, () => {
-                        const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
-                        chrome.runtime.sendMessage({ action: "openOrReuseTab", url, refocus: true, active: true });
-                    });
-                };
-            }
+            setupResolveButton();
             applyReviewMode();
             loadDnaSummary();
             loadKountSummary();
@@ -1473,6 +1515,30 @@
                     elapsed += intervalTime;
                 }, intervalTime);
             });
+        }
+
+        function setupResolveButton() {
+            const resolveBtn = document.getElementById("issue-resolve-btn");
+            const commentInput = document.getElementById("issue-comment-input");
+            if (!resolveBtn || !commentInput || resolveBtn.dataset.listenerAttached) return;
+            resolveBtn.dataset.listenerAttached = "true";
+            resolveBtn.onclick = () => {
+                const comment = commentInput.value.trim();
+                const orderId = (storedOrderInfo && storedOrderInfo.orderId) ||
+                    (currentContext && currentContext.orderNumber);
+                if (!orderId) {
+                    alert("No order ID detected.");
+                    return;
+                }
+                if (!comment) {
+                    commentInput.focus();
+                    return;
+                }
+                chrome.storage.local.set({ fennecPendingComment: { orderId, comment } }, () => {
+                    const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
+                    chrome.runtime.sendMessage({ action: "openOrReuseTab", url, refocus: true, active: true });
+                });
+            };
         }
 
         function setupDnaButton() {
