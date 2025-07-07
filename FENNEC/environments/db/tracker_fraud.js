@@ -610,9 +610,7 @@
                 }
                 const cardOk = dbName && dnaName && dbName === dnaName && dbDigits && dnaDigits && dbDigits === dnaDigits && dbExp && dnaExp && dbExp === dnaExp;
                 const tag = dna && dna.payment ? buildCardMatchTag(order.billing, dna.payment.card || {}) : '';
-                if (tag && /copilot-tag-green/.test(tag)) pushFlag(tag);
-                const tag = dna && dna.payment ? buildCardMatchTag(order.billing, dna.payment.card || {}) : '';
-                if (tag && /copilot-tag-green/.test(tag)) pushFlag(tag);
+                if (tag) pushFlag(tag);
                 let ltv = order && order.clientLtv;
                 if (!ltv) ltv = getClientLtv();
                 if (ltv) dbLines.push(`<div class="trial-line">LTV: ${escapeHtml(ltv)}</div>`);
