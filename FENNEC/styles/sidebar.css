@@ -194,6 +194,8 @@
     border: 1px solid #888;
     color: #000;
     box-sizing: border-box;
+    min-height: 40px;
+    resize: vertical;
 }
 
 .quick-resolve-comment-text {
