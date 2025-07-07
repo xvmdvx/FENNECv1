@@ -1795,6 +1795,10 @@
             registeredAgent: hasAgentInfo ? { name: agent.name, address: agent.address } : null,
             members: directors,
             billing,
+            hasVA,
+            hasRA,
+            raExpired,
+            orderCost: getOrderCost(),
             clientLtv: client.ltv,
             clientEmail: client.email
         };
@@ -2455,6 +2459,15 @@
         if (!li) return false;
         const span = li.querySelector('span.pull-right');
         return span && /expedited/i.test(getText(span));
+    }
+
+    function getOrderCost() {
+        const li = Array.from(document.querySelectorAll('li')).find(li => {
+            return /charge total/i.test(getText(li));
+        });
+        if (!li) return '';
+        const span = li.querySelector('.pull-right.total');
+        return span ? getText(span) : '';
     }
 
     function getParentOrderId() {

@@ -68,6 +68,10 @@
     gap: 12px;
     margin-bottom: 8px;
 }
+.fennec-light-mode #fennec-trial-overlay .trial-order {
+    text-align: center;
+    margin-bottom: 8px;
+}
 .fennec-light-mode #fennec-trial-overlay .trial-col-wrap {
     flex: 1;
     text-align: center;
@@ -210,6 +214,16 @@
 .fennec-light-mode .quick-resolve-comment {
     border: 1px solid #777;
     background: #fff;
+    color: #000;
+}
+
+.fennec-light-mode #fennec-trial-overlay .name-match {
+    margin-left: 4px;
+}
+.fennec-light-mode #fennec-trial-overlay .name-match.check {
+    color: #0a0;
+}
+.fennec-light-mode #fennec-trial-overlay .name-match.cross {
     color: #000;
 }
 
