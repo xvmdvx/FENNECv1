@@ -2002,6 +2002,9 @@
         });
     }
 
+    // Expose for other scripts that may call it
+    window.loadDnaSummary = loadDnaSummary;
+
     function buildKountHtml(info) {
         if (!info) return null;
         const parts = [];
@@ -2034,6 +2037,9 @@
             attachCommonListeners(container);
         });
     }
+
+    // Expose for other scripts
+    window.loadKountSummary = loadKountSummary;
 
     function formatIssueText(text) {
         if (!text) return '';
