@@ -207,6 +207,11 @@
     background: #fff;
     color: #000;
 }
+.fennec-light-mode .quick-resolve-comment {
+    border: 1px solid #777;
+    background: #fff;
+    color: #000;
+}
 
 /* Use inverted Fennec icon in light mode */
 .fennec-light-mode .copilot-icon,

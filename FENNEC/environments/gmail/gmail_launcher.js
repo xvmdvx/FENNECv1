@@ -1165,10 +1165,9 @@
                 if (cText) cText.remove();
                 let input = document.getElementById('issue-comment-input');
                 if (!input) {
-                    input = document.createElement('input');
+                    input = document.createElement('textarea');
                     input.id = 'issue-comment-input';
                     input.className = 'quick-resolve-comment';
-                    input.type = 'text';
                     input.placeholder = 'Comment...';
                     issueBox.appendChild(input);
                 } else {
@@ -1225,10 +1224,9 @@
                 if (cText) cText.remove();
                 let input = document.getElementById('issue-comment-input');
                 if (!input) {
-                    input = document.createElement('input');
+                    input = document.createElement('textarea');
                     input.id = 'issue-comment-input';
                     input.className = 'quick-resolve-comment';
-                    input.type = 'text';
                     input.placeholder = 'Comment...';
                     issueBox.appendChild(input);
                 } else {
@@ -1261,6 +1259,10 @@
                     chrome.storage.local.set({ sidebarFreezeId: null, adyenDnaInfo: null });
                 }
             });
+            if (!ctx) {
+                showInitialStatus();
+                return;
+            }
             fillOrderSummaryBox(ctx);
             loadDbSummary(ctx && ctx.orderNumber);
             if (ctx && ctx.orderNumber) checkLastIssue(ctx.orderNumber);
@@ -1359,7 +1361,7 @@
                     <div class="issue-summary-box" id="issue-summary-box" style="margin-top:10px;">
                         <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
                         <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
-                        <input id="issue-comment-input" class="quick-resolve-comment" type="text" placeholder="Comment..." />
+                        <textarea id="issue-comment-input" class="quick-resolve-comment" placeholder="Comment..."></textarea>
                         <button id="issue-resolve-btn" class="copilot-button" style="margin-top:4px;">COMMENT &amp; RESOLVE</button>
                     </div>
                     ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
