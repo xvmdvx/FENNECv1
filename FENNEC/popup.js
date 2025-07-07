@@ -20,6 +20,7 @@ function saveState() {
                 "https://mail.google.com/*",
                 "https://*.incfile.com/incfile/order/detail/*",
                 "https://*.incfile.com/storage/incfile/*",
+                "https://db.incfile.com/order-tracker/orders/fraud*",
                 "https://tools.usps.com/*"
             ];
 
