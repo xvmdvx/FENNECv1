@@ -816,6 +816,11 @@
     margin-left: 4px;
     font-weight: bold;
 }
+#fennec-trial-overlay .db-adyen-cross {
+    color: #000;
+    margin-left: 4px;
+    font-weight: bold;
+}
 #fennec-trial-overlay .name-match {
     margin-left: 4px;
 }

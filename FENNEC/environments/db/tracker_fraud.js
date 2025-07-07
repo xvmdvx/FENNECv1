@@ -594,19 +594,23 @@
 
             if (order && order.billing) {
                 dbLines.push(`<div class="trial-line trial-name">${escapeHtml(order.billing.cardholder || '')} ${iconHtml}</div>`);
-                const parts = [];
-                if (order.billing.expiry) parts.push(escapeHtml(order.billing.expiry));
-                if (order.billing.last4) parts.push(escapeHtml(order.billing.last4));
                 const dbDigits = (order.billing.last4 || '').replace(/\D+/g, '');
                 const dnaDigits = (dna && dna.payment && dna.payment.card ? dna.payment.card['Card number'] : '').replace(/\D+/g, '').slice(-4);
                 const dbExp = (order.billing.expiry || '').replace(/\D+/g, '');
                 const dnaExp = (dna && dna.payment && dna.payment.card ? dna.payment.card['Expiry date'] : '').replace(/\D+/g, '');
                 const dbName = (order.billing.cardholder || '').toLowerCase();
                 const dnaName = (dna && dna.payment && dna.payment.card ? dna.payment.card['Card holder'] : '').toLowerCase();
-                const cardOk = dbName && dnaName && dbName === dnaName && dbDigits && dnaDigits && dbDigits === dnaDigits && dbExp && dnaExp && dbExp === dnaExp;
-                if (parts.length) {
-                    dbLines.push(`<div class="trial-line trial-card-details">${parts.join(' \u2022 ')}${cardOk ? ' <span class="db-adyen-check">✔</span>' : ''}</div>`);
+                if (order.billing.expiry) {
+                    const ok = dbExp && dnaExp && dbExp === dnaExp;
+                    dbLines.push(`<div class="trial-line trial-card-details">${escapeHtml(order.billing.expiry)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></div>`);
                 }
+                if (order.billing.last4) {
+                    const ok = dbDigits && dnaDigits && dbDigits === dnaDigits;
+                    dbLines.push(`<div class="trial-line trial-card-details">${escapeHtml(order.billing.last4)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></div>`);
+                }
+                const cardOk = dbName && dnaName && dbName === dnaName && dbDigits && dnaDigits && dbDigits === dnaDigits && dbExp && dnaExp && dbExp === dnaExp;
+                const tag = dna && dna.payment ? buildCardMatchTag(order.billing, dna.payment.card || {}) : '';
+                if (tag && /copilot-tag-green/.test(tag)) pushFlag(tag);
                 const tag = dna && dna.payment ? buildCardMatchTag(order.billing, dna.payment.card || {}) : '';
                 if (tag && /copilot-tag-green/.test(tag)) pushFlag(tag);
                 let ltv = order && order.clientLtv;
@@ -614,11 +618,13 @@
                 if (ltv) dbLines.push(`<div class="trial-line">LTV: ${escapeHtml(ltv)}</div>`);
                 else dbLines.push(`<div class="trial-line">LTV: N/A</div>`);
                 if (typeof order.hasVA === 'boolean') {
-                    dbLines.push(`<div class="trial-line">VA: ${order.hasVA ? 'Sí' : 'No'}</div>`);
+                    const cls = order.hasVA ? 'copilot-tag copilot-tag-green' : 'copilot-tag copilot-tag-purple';
+                    dbLines.push(`<div class="trial-line">VA: <span class="${cls}">${order.hasVA ? 'Sí' : 'No'}</span></div>`);
                 }
                 if (typeof order.hasRA === 'boolean') {
                     const txt = order.raExpired ? 'EXPIRED' : (order.hasRA ? 'Sí' : 'No');
-                    dbLines.push(`<div class="trial-line">RA: ${txt}</div>`);
+                    const cls = order.raExpired ? 'copilot-tag copilot-tag-yellow' : (order.hasRA ? 'copilot-tag copilot-tag-green' : 'copilot-tag copilot-tag-purple');
+                    dbLines.push(`<div class="trial-line">RA: <span class="${cls}">${txt}</span></div>`);
                 }
                 const btn = `<button id="sub-detection-btn" class="sub-detect-btn">SUB DETECTION</button>`;
                 dbLines.push(`<div class="trial-line">${btn}</div>`);
@@ -637,25 +643,29 @@
                 const proc = dna.payment.processing || {};
                 const card = dna.payment.card || {};
                 if (card['Card holder']) adyenLines.push(`<div class="trial-line trial-name">${escapeHtml(card['Card holder'])} ${iconHtml}</div>`);
-                const parts = [];
-                if (card['Expiry date']) parts.push(escapeHtml(card['Expiry date']));
-                if (card['Card number']) {
-                    const digits = card['Card number'].replace(/\D+/g, '').slice(-4);
-                    if (digits) parts.push(escapeHtml(digits));
+                const adDigits = card['Card number'] ? card['Card number'].replace(/\D+/g, '').slice(-4) : '';
+                if (card['Expiry date']) {
+                    const ok = dbExp && dnaExp && dbExp === dnaExp;
+                    adyenLines.push(`<div class="trial-line trial-card-details">${escapeHtml(card['Expiry date'])} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></div>`);
                 }
-                if (parts.length) adyenLines.push(`<div class="trial-line trial-card-details">${parts.join(' \u2022 ')}</div>`);
+                if (adDigits) {
+                    const ok = dbDigits && adDigits && dbDigits === adDigits;
+                    adyenLines.push(`<div class="trial-line trial-card-details">${escapeHtml(adDigits)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></div>`);
+                }
                 if (proc['CVC/CVV']) {
                     const r = formatCvv(proc['CVC/CVV']);
-                    adyenLines.push(`<div class="trial-line">CVV: ${escapeHtml(proc['CVC/CVV'])}</div>`);
-                    if (r.result === 'green') {
+                    const ok = r.result === 'green';
+                    adyenLines.push(`<div class="trial-line">CVV: ${escapeHtml(proc['CVC/CVV'])} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></div>`);
+                    if (ok) {
                         const tag = `<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`;
                         pushFlag(tag);
                     }
                 }
                 if (proc['AVS']) {
                     const r = formatAvs(proc['AVS']);
-                    adyenLines.push(`<div class="trial-line">AVS: ${escapeHtml(proc['AVS'])}</div>`);
-                    if (r.result === 'green') {
+                    const ok = r.result === 'green';
+                    adyenLines.push(`<div class="trial-line">AVS: ${escapeHtml(proc['AVS'])} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></div>`);
+                    if (ok) {
                         const tag = `<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`;
                         pushFlag(tag);
                     }
@@ -665,12 +675,14 @@
                 const total = parseAmount((tx['Total'] || tx['Total transactions'] || {}).amount);
                 if (total) {
                     const pct = Math.round(settled / total * 100);
-                    adyenLines.push(`<div class="trial-line">Settled: ${pct}%</div>`);
-                    if (pct < 65) red.push('<span class="copilot-tag copilot-tag-purple">APPROVED %</span>');
+                    const ok = pct >= 65;
+                    adyenLines.push(`<div class="trial-line">Settled: ${pct}% (${settled}/${total}) <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></div>`);
+                    if (!ok) red.push('<span class="copilot-tag copilot-tag-purple">APPROVED %</span>');
                 }
                 const cb = parseInt((tx['Chargebacks'] || tx['Chargeback'] || {}).count || '0', 10);
-                adyenLines.push(`<div class="trial-line">CB: ${cb}</div>`);
-                if (cb >= 1) red.push('<span class="copilot-tag copilot-tag-purple">CB</span>');
+                const okCb = cb === 0;
+                adyenLines.push(`<div class="trial-line">CB: ${cb} <span class="${okCb ? 'db-adyen-check' : 'db-adyen-cross'}">${okCb ? '✔' : '✖'}</span></div>`);
+                if (!okCb) red.push('<span class="copilot-tag copilot-tag-purple">CB</span>');
             }
 
             if (kount) {
@@ -678,11 +690,19 @@
                     kountLines.push(`<div class="trial-line trial-name">${escapeHtml(kount.ekata.residentName)} ${iconHtml}</div>`);
                 }
                 if (kount.ekata && kount.ekata.proxyRisk) {
-                    kountLines.push(`<div class="trial-line">Proxy: ${escapeHtml(kount.ekata.proxyRisk)}</div>`);
-                    if (/^yes$/i.test(kount.ekata.proxyRisk)) red.push('<span class="copilot-tag copilot-tag-purple">PROXY YES</span>');
+                    const ok = /^no$/i.test(kount.ekata.proxyRisk);
+                    kountLines.push(`<div class="trial-line">Proxy: ${escapeHtml(kount.ekata.proxyRisk)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></div>`);
+                    if (!ok) red.push('<span class="copilot-tag copilot-tag-purple">PROXY YES</span>');
                 }
-                if (kount.emailAge) kountLines.push(`<div class="trial-line">Email age: ${escapeHtml(kount.emailAge)}</div>`);
-                if (Array.isArray(kount.declines)) kountLines.push(`<div class="trial-line">VIP DECLINES: ${kount.declines.length}</div>`);
+                if (kount.emailAge) {
+                    const num = parseInt(String(kount.emailAge).replace(/\D+/g, ''), 10) || 0;
+                    const ok = num > 1;
+                    kountLines.push(`<div class="trial-line">Email age: ${escapeHtml(kount.emailAge)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></div>`);
+                }
+                if (Array.isArray(kount.declines)) {
+                    const count = kount.declines.length;
+                    kountLines.push(`<div class="trial-line">VIP DECLINES: ${count} <span class="${count === 0 ? 'db-adyen-check' : 'db-adyen-cross'}">${count === 0 ? '✔' : '✖'}</span></div>`);
+                }
                 if (kount.ekata && kount.ekata.addressToName) kountLines.push(`<div class="trial-line">Address Name: ${escapeHtml(kount.ekata.addressToName)}</div>`);
             }
 
