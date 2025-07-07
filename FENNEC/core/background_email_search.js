@@ -271,7 +271,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 console.warn("[Copilot] Invalid sender URL", sender.tab.url);
             }
         }
-        const url = `${base}/incfile/order/detail/${orderId}`;
+        const url = `${base}/incfile/order/detail/${orderId}?fennec_no_store=1`;
         const query = { url: `${url}*` };
         let attempts = 15;
         let delay = 1000;
