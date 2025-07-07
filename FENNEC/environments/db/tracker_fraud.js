@@ -451,15 +451,16 @@
 
         // Displays the floating TRIAL SUMMARY once XRAY data is available.
         // Allow a few extra retries in case Kount or Adyen info is delayed.
-        function showTrialFloater(retries = 10) {
+        function showTrialFloater(retries = 10, force = false) {
             const flag = sessionStorage.getItem('fennecShowTrialFloater');
-            if (!flag || retries <= 0) return;
+            const overlayExists = document.getElementById('fennec-trial-overlay');
+            if ((!flag && !force && !overlayExists) || retries <= 0) return;
             const summary = document.getElementById('fraud-summary-box');
             if (summary) summary.remove();
             chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null }, data => {
                 const html = buildTrialHtml(data.adyenDnaInfo, data.kountInfo, data.sidebarOrderInfo);
                 if (!html) {
-                    setTimeout(() => showTrialFloater(retries - 1), 1000);
+                    setTimeout(() => showTrialFloater(retries - 1, force), 1000);
                     return;
                 }
                 sessionStorage.removeItem('fennecShowTrialFloater');
@@ -470,22 +471,22 @@
                 }
                 let overlay = document.getElementById('fennec-trial-overlay');
                 let title = document.getElementById('fennec-trial-title');
-                if (overlay) overlay.remove();
-                if (title) title.remove();
-                overlay = document.createElement('div');
-                overlay.id = 'fennec-trial-overlay';
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'fennec-trial-overlay';
+                    title = document.createElement('div');
+                    title.id = 'fennec-trial-title';
+                    title.className = 'trial-title';
+                    title.textContent = 'FRAUD REVIEW';
+                    document.body.appendChild(title);
+                    document.body.appendChild(overlay);
+                }
                 overlay.innerHTML = html;
-                title = document.createElement('div');
-                title.id = 'fennec-trial-title';
-                title.className = 'trial-title';
-                title.textContent = 'FRAUD REVIEW';
                 const close = overlay.querySelector('.trial-close');
                 if (close) close.addEventListener('click', () => {
                     overlay.remove();
                     title.remove();
                 });
-                document.body.appendChild(title);
-                document.body.appendChild(overlay);
                 const subBtn = overlay.querySelector('#sub-detection-btn');
                 if (subBtn) {
                     subBtn.addEventListener('click', () => {
@@ -868,13 +869,13 @@
                 loadKountSummary();
             }
             if (area === 'local' && (changes.adyenDnaInfo || changes.kountInfo)) {
-                showTrialFloater();
+                showTrialFloater(10, true);
             }
         });
         window.addEventListener('focus', () => {
             loadDnaSummary();
             loadKountSummary();
-            showTrialFloater();
+            showTrialFloater(10, true);
         });
     });
 })();
