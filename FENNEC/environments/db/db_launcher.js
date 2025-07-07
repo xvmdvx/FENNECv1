@@ -11,6 +11,7 @@
     let reinstatementMode = false;
     let miscMode = false;
     let autoFamilyTreeDone = false;
+    let noStore = new URLSearchParams(location.search).get('fennec_no_store') === '1';
     // Tracks whether Review Mode is active across DB pages
     let reviewMode = false;
     let devMode = false;
@@ -432,8 +433,8 @@
     }
 
     chrome.storage.local.get({ extensionEnabled: true, lightMode: false, fennecReviewMode: false, fennecDevMode: false }, ({ extensionEnabled, lightMode, fennecReviewMode, fennecDevMode }) => {
-        if (!extensionEnabled) {
-            console.log('[FENNEC] Extension disabled, skipping DB launcher.');
+        if (!extensionEnabled || noStore) {
+            console.log('[FENNEC] Extension disabled or no-store mode, skipping DB launcher.');
             return;
         }
         if (lightMode) {

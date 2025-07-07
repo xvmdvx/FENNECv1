@@ -42,6 +42,8 @@
   REVIEW XRAY flows to ensure the LTV value loads correctly.
 - Fixed duplicate parent order tabs in the Family Tree flow by creating only one background tab.
 - Fixed Family Tree auto-open on miscellaneous orders so the parent order opens only once.
+- Fetching the Family Tree for miscellaneous orders no longer overwrites Gmail
+  sidebar data with the parent order information.
 
 ## v0.3 - 2025-06-24
 
