@@ -123,7 +123,7 @@ function attachCommonListeners(rootEl) {
                     return;
                 }
             }
-            if (container.style.maxHeight && container.style.maxHeight !== '0px') {
+            if (container.style.maxHeight && parseInt(container.style.maxHeight) > 0) {
                 container.style.maxHeight = '0';
                 container.classList.add('ft-collapsed');
                 return;
