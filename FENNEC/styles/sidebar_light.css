@@ -242,6 +242,11 @@
     margin-left: 4px;
     font-weight: bold;
 }
+.fennec-light-mode #fennec-trial-overlay .db-adyen-cross {
+    color: #000;
+    margin-left: 4px;
+    font-weight: bold;
+}
 
 /* Use inverted Fennec icon in light mode */
 .fennec-light-mode .copilot-icon,
