@@ -449,7 +449,9 @@
 
         window.loadKountSummary = loadKountSummary;
 
-        function showTrialFloater(retries = 5) {
+        // Displays the floating TRIAL SUMMARY once XRAY data is available.
+        // Allow a few extra retries in case Kount or Adyen info is delayed.
+        function showTrialFloater(retries = 10) {
             const flag = sessionStorage.getItem('fennecShowTrialFloater');
             if (!flag || retries <= 0) return;
             const summary = document.getElementById('fraud-summary-box');
@@ -859,6 +861,9 @@
             }
             if (area === 'local' && changes.kountInfo) {
                 loadKountSummary();
+            }
+            if (area === 'local' && (changes.adyenDnaInfo || changes.kountInfo)) {
+                showTrialFloater();
             }
         });
         window.addEventListener('focus', () => {
