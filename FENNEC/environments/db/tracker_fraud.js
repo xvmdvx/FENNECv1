@@ -444,20 +444,23 @@
             });
         }
 
-        function showTrialFloater() {
+        function showTrialFloater(retries = 5) {
             const flag = sessionStorage.getItem('fennecShowTrialFloater');
-            if (!flag) return;
-            sessionStorage.removeItem('fennecShowTrialFloater');
+            if (!flag || retries <= 0) return;
             const summary = document.getElementById('fraud-summary-box');
             if (summary) summary.remove();
             chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null }, data => {
+                const html = buildTrialHtml(data.adyenDnaInfo, data.kountInfo, data.sidebarOrderInfo);
+                if (!html) {
+                    setTimeout(() => showTrialFloater(retries - 1), 1000);
+                    return;
+                }
+                sessionStorage.removeItem('fennecShowTrialFloater');
                 if (data.sidebarOrderInfo && data.sidebarOrderInfo.orderId) {
                     localStorage.setItem('fraudXrayCompleted', String(data.sidebarOrderInfo.orderId));
                 } else {
                     localStorage.setItem('fraudXrayCompleted', '1');
                 }
-                const html = buildTrialHtml(data.adyenDnaInfo, data.kountInfo, data.sidebarOrderInfo);
-                if (!html) return;
                 let overlay = document.getElementById('fennec-trial-overlay');
                 let title = document.getElementById('fennec-trial-title');
                 if (overlay) overlay.remove();
