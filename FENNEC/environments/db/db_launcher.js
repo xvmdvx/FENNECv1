@@ -2762,8 +2762,11 @@ function getLastHoldUser() {
         const orderId = getBasicOrderInfo().orderId;
         const key = 'fennecLtvRefreshed_' + orderId;
         if (sessionStorage.getItem('fraudXrayPending')) {
+            // Wait until the page reloads for accurate LTV
             sessionStorage.removeItem('fraudXrayPending');
-        } else if (!sessionStorage.getItem(key)) {
+            return;
+        }
+        if (!sessionStorage.getItem(key)) {
             return;
         }
         fraudXray = false;

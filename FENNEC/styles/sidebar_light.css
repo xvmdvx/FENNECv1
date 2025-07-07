@@ -226,6 +226,22 @@
 .fennec-light-mode #fennec-trial-overlay .name-match.cross {
     color: #000;
 }
+.fennec-light-mode #fennec-trial-overlay .trial-company-name {
+    font-size: calc(var(--sb-font-size) + 2px);
+    font-weight: bold;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-name {
+    font-size: calc(var(--sb-font-size) + 1px);
+    font-weight: bold;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-card-details {
+    font-size: calc(var(--sb-font-size) + 1px);
+}
+.fennec-light-mode #fennec-trial-overlay .db-adyen-check {
+    color: #0a0;
+    margin-left: 4px;
+    font-weight: bold;
+}
 
 /* Use inverted Fennec icon in light mode */
 .fennec-light-mode .copilot-icon,

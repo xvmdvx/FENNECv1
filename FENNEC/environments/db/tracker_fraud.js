@@ -593,17 +593,26 @@
             }
 
             if (order && order.billing) {
-                dbLines.push(`<div class="trial-line">${escapeHtml(order.billing.cardholder || '')} ${iconHtml}</div>`);
-                if (order.billing.last4) dbLines.push(`<div class="trial-line">${escapeHtml(order.billing.last4)}</div>`);
-                if (order.billing.expiry) dbLines.push(`<div class="trial-line">${escapeHtml(order.billing.expiry)}</div>`);
+                dbLines.push(`<div class="trial-line trial-name">${escapeHtml(order.billing.cardholder || '')} ${iconHtml}</div>`);
+                const parts = [];
+                if (order.billing.expiry) parts.push(escapeHtml(order.billing.expiry));
+                if (order.billing.last4) parts.push(escapeHtml(order.billing.last4));
+                const dbDigits = (order.billing.last4 || '').replace(/\D+/g, '');
+                const dnaDigits = (dna && dna.payment && dna.payment.card ? dna.payment.card['Card number'] : '').replace(/\D+/g, '').slice(-4);
+                const dbExp = (order.billing.expiry || '').replace(/\D+/g, '');
+                const dnaExp = (dna && dna.payment && dna.payment.card ? dna.payment.card['Expiry date'] : '').replace(/\D+/g, '');
+                const dbName = (order.billing.cardholder || '').toLowerCase();
+                const dnaName = (dna && dna.payment && dna.payment.card ? dna.payment.card['Card holder'] : '').toLowerCase();
+                const cardOk = dbName && dnaName && dbName === dnaName && dbDigits && dnaDigits && dbDigits === dnaDigits && dbExp && dnaExp && dbExp === dnaExp;
+                if (parts.length) {
+                    dbLines.push(`<div class="trial-line trial-card-details">${parts.join(' \u2022 ')}${cardOk ? ' <span class="db-adyen-check">✔</span>' : ''}</div>`);
+                }
                 const tag = dna && dna.payment ? buildCardMatchTag(order.billing, dna.payment.card || {}) : '';
                 if (tag && /copilot-tag-green/.test(tag)) pushFlag(tag);
                 let ltv = order && order.clientLtv;
                 if (!ltv) ltv = getClientLtv();
                 if (ltv) dbLines.push(`<div class="trial-line">LTV: ${escapeHtml(ltv)}</div>`);
                 else dbLines.push(`<div class="trial-line">LTV: N/A</div>`);
-                const btn = `<button id="sub-detection-btn" class="sub-detect-btn">SUB DETECTION</button>`;
-                dbLines.push(`<div class="trial-line">${btn}</div>`);
                 if (typeof order.hasVA === 'boolean') {
                     dbLines.push(`<div class="trial-line">VA: ${order.hasVA ? 'Sí' : 'No'}</div>`);
                 }
@@ -611,6 +620,8 @@
                     const txt = order.raExpired ? 'EXPIRED' : (order.hasRA ? 'Sí' : 'No');
                     dbLines.push(`<div class="trial-line">RA: ${txt}</div>`);
                 }
+                const btn = `<button id="sub-detection-btn" class="sub-detect-btn">SUB DETECTION</button>`;
+                dbLines.push(`<div class="trial-line">${btn}</div>`);
                 if (order.billing.cardholder) {
                     const card = order.billing.cardholder;
                     const names = [];
@@ -625,12 +636,14 @@
             if (dna && dna.payment) {
                 const proc = dna.payment.processing || {};
                 const card = dna.payment.card || {};
-                if (card['Card holder']) adyenLines.push(`<div class="trial-line">${escapeHtml(card['Card holder'])} ${iconHtml}</div>`);
+                if (card['Card holder']) adyenLines.push(`<div class="trial-line trial-name">${escapeHtml(card['Card holder'])} ${iconHtml}</div>`);
+                const parts = [];
+                if (card['Expiry date']) parts.push(escapeHtml(card['Expiry date']));
                 if (card['Card number']) {
                     const digits = card['Card number'].replace(/\D+/g, '').slice(-4);
-                    if (digits) adyenLines.push(`<div class="trial-line">${escapeHtml(digits)}</div>`);
+                    if (digits) parts.push(escapeHtml(digits));
                 }
-                if (card['Expiry date']) adyenLines.push(`<div class="trial-line">${escapeHtml(card['Expiry date'])}</div>`);
+                if (parts.length) adyenLines.push(`<div class="trial-line trial-card-details">${parts.join(' \u2022 ')}</div>`);
                 if (proc['CVC/CVV']) {
                     const r = formatCvv(proc['CVC/CVV']);
                     adyenLines.push(`<div class="trial-line">CVV: ${escapeHtml(proc['CVC/CVV'])}</div>`);
@@ -662,7 +675,7 @@
 
             if (kount) {
                 if (kount.ekata && kount.ekata.residentName) {
-                    kountLines.push(`<div class="trial-line">${escapeHtml(kount.ekata.residentName)} ${iconHtml}</div>`);
+                    kountLines.push(`<div class="trial-line trial-name">${escapeHtml(kount.ekata.residentName)} ${iconHtml}</div>`);
                 }
                 if (kount.ekata && kount.ekata.proxyRisk) {
                     kountLines.push(`<div class="trial-line">Proxy: ${escapeHtml(kount.ekata.proxyRisk)}</div>`);
@@ -677,7 +690,7 @@
 
             const orderLines = [];
             if (order) {
-                if (order.companyName) orderLines.push(`<div class="trial-line">${escapeHtml(order.companyName)}</div>`);
+                if (order.companyName) orderLines.push(`<div class="trial-line trial-company-name">${escapeHtml(order.companyName)}</div>`);
                 if (order.type) orderLines.push(`<div class="trial-line">${escapeHtml(order.type)}</div>`);
                 if (order.orderCost) orderLines.push(`<div class="trial-line">${escapeHtml(order.orderCost)}</div>`);
             }
