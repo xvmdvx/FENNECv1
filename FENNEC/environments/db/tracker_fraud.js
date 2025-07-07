@@ -457,6 +457,10 @@
             const summary = document.getElementById('fraud-summary-box');
             if (summary) summary.remove();
             chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null }, data => {
+                if (!data.adyenDnaInfo) {
+                    setTimeout(() => showTrialFloater(retries - 1), 1000);
+                    return;
+                }
                 const html = buildTrialHtml(data.adyenDnaInfo, data.kountInfo, data.sidebarOrderInfo);
                 if (!html) {
                     setTimeout(() => showTrialFloater(retries - 1), 1000);
