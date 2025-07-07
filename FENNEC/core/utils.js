@@ -108,7 +108,8 @@ function attachCommonListeners(rootEl) {
         });
     });
     const ftIcon = document.getElementById('family-tree-icon');
-    if (ftIcon) {
+    if (ftIcon && !ftIcon.dataset.listenerAttached) {
+        ftIcon.dataset.listenerAttached = 'true';
         ftIcon.addEventListener('click', () => {
             console.log('[Copilot] Family Tree icon clicked');
             let container = document.getElementById('family-tree-orders');
