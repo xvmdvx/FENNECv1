@@ -41,6 +41,7 @@
 - DB order pages now refresh automatically only during FRAUD REVIEW or
   REVIEW XRAY flows to ensure the LTV value loads correctly.
 - Fixed duplicate parent order tabs in the Family Tree flow by creating only one background tab.
+- Fixed Family Tree auto-open on miscellaneous orders so the parent order opens only once.
 
 ## v0.3 - 2025-06-24
 
