@@ -528,6 +528,11 @@
             const green = [];
             const red = [];
 
+            let dbDigits = '';
+            let dbExp = '';
+            let dnaDigits = '';
+            let dnaExp = '';
+
             const dbName = order && order.billing ? order.billing.cardholder || '' : '';
             const adyenName = dna && dna.payment && dna.payment.card ? dna.payment.card['Card holder'] || '' : '';
             const kountName = kount && kount.ekata ? kount.ekata.residentName || '' : '';
@@ -604,10 +609,10 @@
 
             if (order && order.billing) {
                 dbLines.push(`<div class="trial-line trial-name">${escapeHtml(order.billing.cardholder || '')} ${iconHtml}</div>`);
-                const dbDigits = (order.billing.last4 || '').replace(/\D+/g, '');
-                const dnaDigits = (dna && dna.payment && dna.payment.card ? dna.payment.card['Card number'] : '').replace(/\D+/g, '').slice(-4);
-                const dbExp = (order.billing.expiry || '').replace(/\D+/g, '');
-                const dnaExp = (dna && dna.payment && dna.payment.card ? dna.payment.card['Expiry date'] : '').replace(/\D+/g, '');
+                dbDigits = (order.billing.last4 || '').replace(/\D+/g, '');
+                dnaDigits = (dna && dna.payment && dna.payment.card ? dna.payment.card['Card number'] : '').replace(/\D+/g, '').slice(-4);
+                dbExp = (order.billing.expiry || '').replace(/\D+/g, '');
+                dnaExp = (dna && dna.payment && dna.payment.card ? dna.payment.card['Expiry date'] : '').replace(/\D+/g, '');
                 const dbName = (order.billing.cardholder || '').toLowerCase();
                 const dnaName = (dna && dna.payment && dna.payment.card ? dna.payment.card['Card holder'] : '').toLowerCase();
                 if (order.billing.expiry) {
