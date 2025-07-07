@@ -254,9 +254,9 @@
                 .map(d => `<li class="fraud-date-item" data-date="${d}" style="cursor:pointer">${formatSummaryDate(d)}: <b>${summary.dateCounts[d]}</b></li>`)
                 .join('');
             container.innerHTML = `
-                <div class="white-box" id="fraud-summary-box" style="text-align:left">
+                <div class="white-box" id="fraud-summary-box" style="text-align:center">
                     <h4 style="margin-top:0; text-align:center"><b>SUMMARY</b></h4>
-                    <div><b>ORDERS:</b><ul>${dateItems}</ul></div>
+                    <div><b>ORDERS:</b><ul style="list-style:none;padding:0;margin:0;">${dateItems}</ul></div>
                     <div class="vip-declines" style="cursor:pointer"><b>VIP DECLINES:</b> ${summary.vipDecline}</div>
                     <div class="nm-mames" style="cursor:pointer"><b>NO MAMES:</b> ${summary.noMames}</div>
                     <canvas id="fraud-price-chart" width="260" height="100" style="margin-top:8px; width:50%"></canvas>
@@ -448,6 +448,8 @@
             const flag = sessionStorage.getItem('fennecShowTrialFloater');
             if (!flag) return;
             sessionStorage.removeItem('fennecShowTrialFloater');
+            const summary = document.getElementById('fraud-summary-box');
+            if (summary) summary.remove();
             chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null }, data => {
                 if (data.sidebarOrderInfo && data.sidebarOrderInfo.orderId) {
                     localStorage.setItem('fraudXrayCompleted', String(data.sidebarOrderInfo.orderId));
