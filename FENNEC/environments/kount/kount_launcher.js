@@ -77,7 +77,7 @@
                         chrome.storage.local.get({ fennecFraudAdyen: null }, ({ fennecFraudAdyen }) => {
                             if (fennecFraudAdyen) {
                                 chrome.storage.local.remove('fennecFraudAdyen');
-                                chrome.runtime.sendMessage({ action: 'openTab', url: fennecFraudAdyen, active: true });
+                                chrome.runtime.sendMessage({ action: 'openOrReuseTab', url: fennecFraudAdyen, active: true });
                             } else {
                                 chrome.runtime.sendMessage({ action: 'refocusTab' });
                             }
