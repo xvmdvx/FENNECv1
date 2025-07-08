@@ -61,14 +61,13 @@
 .fennec-light-mode #fennec-trial-title {
     text-align: center;
     font-weight: bold;
-    color: #000;
+    color: #fff;
     margin: 0 auto 4px;
     width: 840px;
-    padding: 6px 8px;
-    border-radius: 12px;
-    font-size: calc(var(--sb-font-size) + 26px) !important;
-    background: rgba(255,255,255,0.9);
-    text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+    padding: 4px 0;
+    border-radius: 8px;
+    font-size: calc(var(--sb-font-size) + 12px) !important;
+    text-shadow: 0 0 4px #fff;
 }
 .fennec-light-mode #fennec-trial-overlay .trial-columns {
     display: flex;
