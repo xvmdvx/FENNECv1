@@ -482,8 +482,11 @@
                     overlay.id = 'fennec-trial-overlay';
                     title = document.createElement('div');
                     title.id = 'fennec-trial-title';
-                    title.className = 'trial-title';
                     title.textContent = 'FRAUD REVIEW';
+                    title.style.fontSize = 'calc(var(--sb-font-size) + 18px)';
+                    title.style.padding = '6px 0';
+                    title.style.borderRadius = '12px';
+                    title.style.textShadow = '0 0 2px #fff, 0 0 6px #fff';
                     document.body.appendChild(title);
                     document.body.appendChild(overlay);
                 }
@@ -492,6 +495,7 @@
                 if (close) close.addEventListener('click', () => {
                     overlay.remove();
                     title.remove();
+                    chrome.runtime.sendMessage({ action: 'refocusTab' });
                 });
                 const subBtn = overlay.querySelector('#sub-detection-btn');
                 if (subBtn) {
@@ -560,6 +564,7 @@
                     title.remove();
                     clearSidebar();
                     showTrialSuccess();
+                    chrome.runtime.sendMessage({ action: 'refocusTab' });
                 }
 
                 const crBtn = overlay.querySelector('#trial-btn-cr');
@@ -574,7 +579,7 @@
                 let headerCls = 'trial-header-green';
                 if (crossCount > 4) headerCls = 'trial-header-red';
                 else if (crossCount > 0) headerCls = 'trial-header-purple';
-                title.className = 'trial-title ' + headerCls;
+                title.className = headerCls;
                 overlay.classList.remove('trial-header-green','trial-header-purple','trial-header-red');
                 overlay.classList.add(headerCls);
                 const orderHeader = overlay.querySelector('.trial-order');
