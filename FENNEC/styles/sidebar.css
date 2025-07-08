@@ -753,10 +753,10 @@
     color: #fff;
     margin: 0 auto 4px;
     width: 840px;
-    padding: 4px 0;
-    border-radius: 8px;
-    font-size: calc(var(--sb-font-size) + 12px) !important;
-    text-shadow: 0 0 4px #fff;
+    padding: 6px 0;
+    border-radius: 12px;
+    font-size: calc(var(--sb-font-size) + 18px) !important;
+    text-shadow: 0 0 2px #fff, 0 0 6px #fff;
 }
 
 #fennec-trial-overlay .trial-close {
