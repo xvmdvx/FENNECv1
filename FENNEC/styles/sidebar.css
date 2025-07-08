@@ -778,6 +778,8 @@
 #fennec-trial-overlay .trial-order {
     text-align: center;
     margin-bottom: 8px;
+    border-radius: 12px;
+    overflow: hidden;
 }
 #fennec-trial-overlay .trial-order .trial-col {
     border-radius: 12px;
@@ -788,7 +790,8 @@
     color: #000;
     padding: 2px 4px;
     border-radius: 4px;
-    display: inline-block;
+    display: block;
+    width: 100%;
 }
 #fennec-trial-overlay .trial-order .trial-company-name {
     font-size: calc(var(--sb-font-size) + 10px);
