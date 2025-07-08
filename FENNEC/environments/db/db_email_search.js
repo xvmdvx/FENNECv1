@@ -15,6 +15,20 @@
             });
         }
 
+        function waitForResults(callback) {
+            const tbody = document.querySelector('.search_result tbody');
+            if (!tbody) { setTimeout(() => waitForResults(callback), 100); return; }
+            const rows = tbody.querySelectorAll('tr');
+            if (rows.length) { callback(); return; }
+            const obs = new MutationObserver(() => {
+                if (tbody.querySelector('tr')) {
+                    obs.disconnect();
+                    callback();
+                }
+            });
+            obs.observe(tbody, { childList: true });
+        }
+
         function run() {
             const input = document.querySelector('#search_field');
             if (input) {
@@ -23,13 +37,10 @@
             }
             const btn = document.querySelector('button[type="submit"],input[type="submit"]');
             if (btn) btn.click();
-            const gather = () => {
-                const rows = document.querySelectorAll('.search_result tbody tr');
-                if (!rows.length) { setTimeout(gather, 500); return; }
+            waitForResults(() => {
                 const orders = collectOrders();
                 chrome.runtime.sendMessage({ action: 'dbEmailSearchResults', orders });
-            };
-            gather();
+            });
         }
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', run);
