@@ -525,9 +525,15 @@
                 const orderId = data.sidebarOrderInfo && data.sidebarOrderInfo.orderId;
                 function clickDbAction(selector) {
                     if (!orderId) return;
-                    const rows = Array.from(document.querySelectorAll(`tr[data-order-id="${orderId}"]`));
-                    for (const row of rows) {
-                        const btn = row.querySelector(selector);
+                    const targets = [];
+                    const link = document.querySelector(`a[href*="/order/detail/${orderId}"]`);
+                    if (link) {
+                        const row = link.closest('tr');
+                        if (row) targets.push(row);
+                    }
+                    document.querySelectorAll(`tr[data-order-id="${orderId}"]`).forEach(r => targets.push(r));
+                    for (const row of targets) {
+                        const btn = row && row.querySelector(selector);
                         if (btn) {
                             btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
                             return;
