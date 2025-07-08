@@ -2800,11 +2800,7 @@ function getLastHoldUser() {
         }
         if (client.email) parts.push(`"${client.email}"`);
         if (client.name) parts.push(`"${client.name}"`);
-        if (client.email) {
-            const base = 'https://db.incfile.com/order-tracker/orders/order-search';
-            const url = base + '?fennec_email=' + encodeURIComponent(client.email);
-            chrome.runtime.sendMessage({ action: 'openTab', url, active: true, refocus: true });
-        } else if (parts.length) {
+        if (!client.email && parts.length) {
             const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
             const gmailUrl = 'https://mail.google.com/mail/u/0/#search/' + query;
             chrome.runtime.sendMessage({ action: 'openTab', url: gmailUrl, active: true, refocus: true });
