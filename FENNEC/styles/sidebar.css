@@ -797,7 +797,9 @@
     background: none;
 }
 #fennec-trial-overlay .trial-order .trial-company-name {
-    font-size: calc(var(--sb-font-size) + 10px);
+    font-size: calc(var(--sb-font-size) + 12px);
+    display: inline-block;
+    width: auto;
 }
 #fennec-trial-overlay .trial-order .trial-tags .copilot-tag {
     font-size: calc(var(--sb-font-size) + 5px);
@@ -844,8 +846,10 @@
     margin: 4px 0;
 }
 #fennec-trial-overlay .trial-company-name {
-    font-size: calc(var(--sb-font-size) + 2px);
+    font-size: calc(var(--sb-font-size) + 12px);
     font-weight: bold;
+    display: inline-block;
+    width: auto;
 }
 #fennec-trial-overlay .trial-name {
     font-size: calc(var(--sb-font-size) + 1px);

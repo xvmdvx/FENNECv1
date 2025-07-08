@@ -869,15 +869,20 @@
 
             const orderLines = [];
             if (order) {
-                if (order.companyName) {
-                    orderLines.push(`<div class="trial-line trial-company-name">${escapeHtml(order.companyName)}</div>`);
-                }
-                const tags = [];
-                if (order.type) tags.push(`<span class="copilot-tag copilot-tag-lightgray">${escapeHtml(order.type)}</span>`);
-                if (typeof order.expedited === 'boolean') {
-                    tags.push(`<span class="copilot-tag copilot-tag-lightgray">${order.expedited ? 'EXPEDITED' : 'STANDARD'}</span>`);
-                }
-                if (order.orderCost) tags.push(`<span class="copilot-tag copilot-tag-lightgray">${escapeHtml(order.orderCost)}</span>`);
+            if (order.companyName) {
+                orderLines.push(`<div class="trial-line trial-company-name">${escapeHtml(order.companyName)}</div>`);
+            }
+            const tags = [];
+            if (order.type) {
+                const cleanType = String(order.type).replace(/BUSINESS\s*FORMATION/gi, '').trim();
+                if (cleanType) tags.push(`<span class="copilot-tag copilot-tag-lightgray">${escapeHtml(cleanType)}</span>`);
+            }
+            if (typeof order.expedited === 'boolean') {
+                const expText = order.expedited ? 'EXPEDITED' : 'STANDARD';
+                const expCls = order.expedited ? 'copilot-tag-green' : 'copilot-tag-lightgray';
+                tags.push(`<span class="copilot-tag ${expCls}">${expText}</span>`);
+            }
+            if (order.orderCost) tags.push(`<span class="copilot-tag copilot-tag-lightgray">${escapeHtml(order.orderCost)}</span>`);
                 if (tags.length) {
                     orderLines.push(`<div class="trial-line no-highlight trial-tags">${tags.join(' ')}</div>`);
                 }
