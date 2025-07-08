@@ -115,6 +115,9 @@
     padding: 6px 14px;
     margin-left: 8px;
 }
+.fennec-light-mode #fennec-trial-title.trial-header-green { background-color: rgba(46,204,113,0.3); }
+.fennec-light-mode #fennec-trial-title.trial-header-purple { background-color: rgba(128,0,128,0.3); }
+.fennec-light-mode #fennec-trial-title.trial-header-red { background-color: rgba(139,0,0,0.3); }
 .fennec-light-mode .trial-header-green { background-color: rgba(46,204,113,0.3); }
 .fennec-light-mode .trial-header-purple { background-color: rgba(128,0,128,0.3); }
 .fennec-light-mode .trial-header-red { background-color: rgba(139,0,0,0.3); }
