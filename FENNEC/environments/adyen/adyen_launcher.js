@@ -532,7 +532,10 @@
                     const networkTx = extractNetworkTransactions();
                     saveData({ transactions: stats, networkTransactions: networkTx, updated: Date.now() });
                     console.log('[FENNEC Adyen] DNA stats stored');
-                    chrome.runtime.sendMessage({ action: 'refocusTab' });
+                    chrome.storage.local.get({ sidebarOrderInfo: null }, ({ sidebarOrderInfo }) => {
+                        const email = sidebarOrderInfo ? sidebarOrderInfo.clientEmail : null;
+                        chrome.runtime.sendMessage({ action: 'focusDbSearch', email });
+                    });
                 });
             }
 
