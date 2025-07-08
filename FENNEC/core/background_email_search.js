@@ -389,32 +389,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
 
-    if (message.action === "countOrdersByEmail" && message.email && sender.tab) {
-        const originTab = sender.tab.id;
-        let base = "https://db.incfile.com";
-        try {
-            const url = new URL(sender.tab.url);
-            if (url.hostname.endsWith("incfile.com")) base = url.origin;
-        } catch (err) {
-            console.warn("[Copilot] Invalid sender URL", sender.tab.url);
-        }
-        const url = `${base}/order-tracker/orders/order-search?fennec_email=${encodeURIComponent(message.email)}`;
-        chrome.tabs.create({ url, active: false, windowId: sender.tab.windowId }, tab => {
-            if (chrome.runtime.lastError || !tab) { sendResponse(null); return; }
-            const resultListener = (msg, snd) => {
-                if (msg.action === 'dbEmailSearchResults' && snd.tab && snd.tab.id === tab.id) {
-                    chrome.runtime.onMessage.removeListener(resultListener);
-                    const orders = msg.orders || [];
-                    chrome.tabs.remove(tab.id);
-                    chrome.tabs.update(originTab, { active: true });
-                    sendResponse({ orderCount: orders.length });
-                }
-            };
-            chrome.runtime.onMessage.addListener(resultListener);
-        });
-        return true;
-    }
-
     if (message.action === "detectSubscriptions" && message.email && sender.tab) {
         const originTab = sender.tab.id;
         let base = "https://db.incfile.com";
