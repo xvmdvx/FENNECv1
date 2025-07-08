@@ -876,9 +876,9 @@
                 }
                 if (order.orderCost) tags.push(`<span class="copilot-tag copilot-tag-lightgray">${escapeHtml(order.orderCost)}</span>`);
                 if (tags.length) {
-                    orderLines.push(`<div class="trial-line trial-tags">${tags.join(' ')}</div>`);
+                    orderLines.push(`<div class="trial-line no-highlight trial-tags">${tags.join(' ')}</div>`);
                 }
-                orderLines.push(`<div class="trial-line trial-btn-line"><span id="trial-big-button"></span></div>`);
+                orderLines.push(`<div class="trial-line no-highlight trial-btn-line"><span id="trial-big-button"></span></div>`);
             }
 
             const html = `

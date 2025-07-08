@@ -793,6 +793,9 @@
     display: block;
     width: 100%;
 }
+#fennec-trial-overlay .trial-order .trial-line.no-highlight {
+    background: none;
+}
 #fennec-trial-overlay .trial-order .trial-company-name {
     font-size: calc(var(--sb-font-size) + 10px);
 }
