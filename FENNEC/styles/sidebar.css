@@ -734,7 +734,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: var(--sb-box-bg, #2e2e2e);
+    background-color: rgba(46,46,46,0.98);
     color: #f1f1f1;
     border: 1px solid gray;
     border-radius: 8px;
@@ -755,7 +755,7 @@
     width: 840px;
     padding: 4px 0;
     border-radius: 6px;
-    font-size: calc(var(--sb-font-size) + 2px);
+    font-size: calc(var(--sb-font-size) + 4px) !important;
 }
 
 #fennec-trial-overlay .trial-close {
@@ -776,13 +776,13 @@
     margin-bottom: 8px;
 }
 #fennec-trial-overlay .trial-order.trial-header-green .trial-col {
-    background-color: rgba(46,204,113,0.02);
+    background-color: rgba(46,204,113,0.99);
 }
 #fennec-trial-overlay .trial-order.trial-header-purple .trial-col {
-    background-color: rgba(128,0,128,0.02);
+    background-color: rgba(128,0,128,0.99);
 }
 #fennec-trial-overlay .trial-order.trial-header-red .trial-col {
-    background-color: rgba(139,0,0,0.02);
+    background-color: rgba(139,0,0,0.99);
 }
 #fennec-trial-overlay .trial-col-wrap {
     flex: 1;
@@ -965,9 +965,9 @@
     margin-left: 8px;
 }
 
-#fennec-trial-overlay.trial-header-green { background-color: rgba(46,204,113,0.02); }
-#fennec-trial-overlay.trial-header-purple { background-color: rgba(128,0,128,0.02); }
-#fennec-trial-overlay.trial-header-red { background-color: rgba(139,0,0,0.02); }
+#fennec-trial-overlay.trial-header-green { background-color: rgba(46,46,46,0.98); }
+#fennec-trial-overlay.trial-header-purple { background-color: rgba(46,46,46,0.98); }
+#fennec-trial-overlay.trial-header-red { background-color: rgba(46,46,46,0.98); }
 
 .trial-success-msg {
     position: fixed;
@@ -982,11 +982,11 @@
     font-weight: bold;
 }
 
-#fennec-trial-title.trial-header-green { background-color: rgba(46,204,113,0.02); }
-#fennec-trial-title.trial-header-purple { background-color: rgba(128,0,128,0.02); }
-#fennec-trial-title.trial-header-red { background-color: rgba(139,0,0,0.02); }
+#fennec-trial-title.trial-header-green { background-color: rgba(46,204,113,0.99); }
+#fennec-trial-title.trial-header-purple { background-color: rgba(128,0,128,0.99); }
+#fennec-trial-title.trial-header-red { background-color: rgba(139,0,0,0.99); }
 
-.trial-header-green { background-color: rgba(46,204,113,0.02); }
-.trial-header-purple { background-color: rgba(128,0,128,0.02); }
-.trial-header-red { background-color: rgba(139,0,0,0.02); }
+.trial-header-green { background-color: rgba(46,204,113,0.99); }
+.trial-header-purple { background-color: rgba(128,0,128,0.99); }
+.trial-header-red { background-color: rgba(139,0,0,0.99); }
 
