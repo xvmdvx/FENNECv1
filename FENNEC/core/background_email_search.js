@@ -390,53 +390,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === "detectSubscriptions" && message.email && sender.tab) {
-        const originTab = sender.tab.id;
-        let base = "https://db.incfile.com";
-        try {
-            const url = new URL(sender.tab.url);
-            if (url.hostname.endsWith("incfile.com")) base = url.origin;
-        } catch (err) {
-            console.warn("[Copilot] Invalid sender URL", sender.tab.url);
-        }
-        const url = `${base}/order-tracker/orders/order-search?fennec_email=${encodeURIComponent(message.email)}`;
-        chrome.tabs.create({ url, active: false, windowId: sender.tab.windowId }, tab => {
-            if (chrome.runtime.lastError || !tab) { sendResponse(null); return; }
-            const resultListener = (msg, snd) => {
-                if (msg.action === 'dbEmailSearchResults' && snd.tab && snd.tab.id === tab.id) {
-                    chrome.runtime.onMessage.removeListener(resultListener);
-                    const orders = msg.orders || [];
-                    const formationIds = orders
-                        .filter(o => /formation|silver|gold|platinum/i.test(o.type))
-                        .map(o => o.orderId)
-                        .filter(Boolean);
-                    let idx = 0;
-                    const activeSubs = [];
-                    const checkNext = () => {
-                        if (idx >= formationIds.length) {
-                            chrome.tabs.remove(tab.id);
-                            chrome.tabs.update(originTab, { active: true });
-                            sendResponse({ orderCount: orders.length, activeSubs, ltv: message.ltv });
-                            return;
-                        }
-                        const id = formationIds[idx++];
-                        const detailUrl = `${base}/incfile/order/detail/${id}?fennec_sub_check=1`;
-                        chrome.tabs.create({ url: detailUrl, active: false, windowId: sender.tab.windowId }, oTab => {
-                            const listener = (tid, info) => {
-                                if (tid === oTab.id && info.status === 'complete') {
-                                    chrome.tabs.onUpdated.removeListener(listener);
-                                    chrome.tabs.sendMessage(oTab.id, { action: 'getActiveSubs' }, resp => {
-                                        if (resp && Array.isArray(resp.subs) && resp.subs.length) activeSubs.push(id);
-                                        chrome.tabs.remove(oTab.id, checkNext);
-                                    });
-                                }
-                            };
-                            chrome.tabs.onUpdated.addListener(listener);
-                        });
-                    };
-                    checkNext();
+        const winId = sender.tab.windowId;
+        const encoded = encodeURIComponent(message.email);
+        chrome.tabs.query({ windowId: winId }, tabs => {
+            const searchTab = tabs.find(t => t.url && t.url.includes("/order-tracker/orders/order-search") && t.url.includes("fennec_email=" + encoded));
+            if (!searchTab) {
+                sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
+                return;
+            }
+            chrome.tabs.sendMessage(searchTab.id, { action: 'getEmailOrders' }, resp => {
+                if (chrome.runtime.lastError || !resp) {
+                    sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
+                } else {
+                    sendResponse({ orderCount: (resp.orders || []).length, activeSubs: [], ltv: message.ltv });
                 }
-            };
-            chrome.runtime.onMessage.addListener(resultListener);
+            });
         });
         return true;
     }

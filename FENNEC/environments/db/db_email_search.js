@@ -4,6 +4,17 @@
         const params = new URLSearchParams(location.search);
         const email = params.get('fennec_email');
         if (!email) return;
+        function collectOrders() {
+            const rows = document.querySelectorAll('.search_result tbody tr');
+            return Array.from(rows).map(r => {
+                const link = r.querySelector('a[href*="/order/detail/"]');
+                const id = link ? link.textContent.replace(/\D+/g, '') : '';
+                const typeCell = r.querySelector('td:nth-child(4)');
+                const type = typeCell ? typeCell.textContent.trim() : '';
+                return { orderId: id, type };
+            });
+        }
+
         function run() {
             const input = document.querySelector('#search_field');
             if (input) {
@@ -15,13 +26,7 @@
             const gather = () => {
                 const rows = document.querySelectorAll('.search_result tbody tr');
                 if (!rows.length) { setTimeout(gather, 500); return; }
-                const orders = Array.from(rows).map(r => {
-                    const link = r.querySelector('a[href*="/order/detail/"]');
-                    const id = link ? link.textContent.replace(/\D+/g, '') : '';
-                    const typeCell = r.querySelector('td:nth-child(4)');
-                    const type = typeCell ? typeCell.textContent.trim() : '';
-                    return { orderId: id, type };
-                });
+                const orders = collectOrders();
                 chrome.runtime.sendMessage({ action: 'dbEmailSearchResults', orders });
             };
             gather();
@@ -29,5 +34,11 @@
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', run);
         } else run();
+
+        chrome.runtime.onMessage.addListener((msg, snd, sendResponse) => {
+            if (msg.action === 'getEmailOrders') {
+                sendResponse({ orders: collectOrders() });
+            }
+        });
     });
 })();
