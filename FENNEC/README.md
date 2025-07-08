@@ -205,8 +205,8 @@ ICONS/BUTTONS/FUNCTIONS:
    2. DNA
    Focus returns to the original email once information is retrieved.
 🩻 XRAY: Runs SEARCH and DNA operations one after the other and opens the Kount workflow page when available.
-   After DNA loads the extension switches to the DB email search tab until results appear,
-   then focus returns to the original email at the end.
+   After DNA loads the extension briefly opens the DB email search page until the order history appears,
+   then focus returns to the Fraud tracker at the end.
    A KOUNT summary box appears below DNA after the data is extracted.
 🤖 FILE: Automator that opens and fills the SOS filing process.
 

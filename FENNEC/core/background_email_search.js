@@ -705,6 +705,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         }
                     });
                 });
+            } else if (encoded) {
+                const url = "https://db.incfile.com/order-tracker/orders/order-search?fennec_email=" + encoded;
+                chrome.tabs.create({ url, active: true, windowId: sender.tab.windowId }, newTab => {
+                    if (chrome.runtime.lastError) {
+                        console.error("[Copilot] Error opening DB search tab:", chrome.runtime.lastError.message);
+                        return;
+                    }
+                    chrome.storage.local.set({ fennecDbSearchTab: newTab.id });
+                });
             } else {
                 chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
                     if (fennecReturnTab) {
