@@ -2769,6 +2769,10 @@ function getLastHoldUser() {
 
     function runFraudXray() {
         if (!fraudXray) return;
+        if (localStorage.getItem('fraudXrayCompleted')) {
+            fraudXray = false;
+            return;
+        }
         const orderId = getBasicOrderInfo().orderId;
         const key = 'fennecLtvRefreshed_' + orderId;
         if (sessionStorage.getItem('fraudXrayPending')) {

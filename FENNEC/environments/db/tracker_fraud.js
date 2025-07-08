@@ -475,6 +475,7 @@
                 } else {
                     localStorage.setItem('fraudXrayCompleted', '1');
                 }
+                chrome.runtime.sendMessage({ action: 'refocusTab' });
                 let overlay = document.getElementById('fennec-trial-overlay');
                 let title = document.getElementById('fennec-trial-title');
                 if (!overlay) {
