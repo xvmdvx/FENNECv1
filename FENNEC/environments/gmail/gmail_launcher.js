@@ -1278,7 +1278,8 @@
                 sidebarOrderId: null,
                 sidebarOrderInfo: null,
                 adyenDnaInfo: null,
-                sidebarFreezeId: null
+                sidebarFreezeId: null,
+                sidebarSnapshot: null
             });
             showInitialStatus();
             applyReviewMode();
@@ -1375,6 +1376,7 @@
                 sidebarBgColor: '#212121',
                 sidebarBoxColor: '#2e2e2e'
             }, opts => applySidebarDesign(sidebar, opts));
+            loadSidebarSnapshot(sidebar);
 
             console.log("[Copilot] Sidebar INYECTADO en Gmail.");
 
@@ -1443,6 +1445,14 @@
             if (area === 'local' && changes.adyenDnaInfo) {
                 loadDnaSummary();
             loadKountSummary();
+            }
+            if (area === 'local' && changes.sidebarSnapshot && changes.sidebarSnapshot.newValue) {
+                const sb = document.getElementById('copilot-sidebar');
+                if (sb) {
+                    sb.innerHTML = changes.sidebarSnapshot.newValue;
+                    attachCommonListeners(sb);
+                    repositionDnaSummary();
+                }
             }
             if (area === 'sync' && changes.fennecReviewMode) {
                 reviewMode = changes.fennecReviewMode.newValue;
