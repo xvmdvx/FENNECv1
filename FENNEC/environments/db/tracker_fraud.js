@@ -483,7 +483,14 @@
                     title = document.createElement('div');
                     title.id = 'fennec-trial-title';
                     title.textContent = 'FRAUD REVIEW';
-                    title.style.setProperty('font-size', 'calc(var(--sb-font-size) + 26px)', 'important');
+                    const sidebarEl = document.getElementById('copilot-sidebar');
+                    let baseSize = 13;
+                    if (sidebarEl) {
+                        const s = window.getComputedStyle(sidebarEl).fontSize;
+                        const n = parseFloat(s);
+                        if (!isNaN(n)) baseSize = n;
+                    }
+                    title.style.setProperty('font-size', (baseSize + 26) + 'px', 'important');
                     title.style.setProperty('line-height', '1.2', 'important');
                     title.style.setProperty('padding', '8px 0', 'important');
                     title.style.setProperty('border-radius', '12px', 'important');
@@ -495,7 +502,14 @@
                     document.body.appendChild(overlay);
                 } else {
                     // Ensure header styling persists if overlay already existed
-                    title.style.setProperty('font-size', 'calc(var(--sb-font-size) + 26px)', 'important');
+                    const sidebarEl2 = document.getElementById('copilot-sidebar');
+                    let baseSize2 = 13;
+                    if (sidebarEl2) {
+                        const s = window.getComputedStyle(sidebarEl2).fontSize;
+                        const n = parseFloat(s);
+                        if (!isNaN(n)) baseSize2 = n;
+                    }
+                    title.style.setProperty('font-size', (baseSize2 + 26) + 'px', 'important');
                     title.style.setProperty('line-height', '1.2', 'important');
                     title.style.setProperty('padding', '8px 0', 'important');
                     title.style.setProperty('border-radius', '12px', 'important');
