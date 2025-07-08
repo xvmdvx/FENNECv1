@@ -483,13 +483,26 @@
                     title = document.createElement('div');
                     title.id = 'fennec-trial-title';
                     title.textContent = 'FRAUD REVIEW';
-                    title.style.setProperty('font-size', 'calc(var(--sb-font-size) + 22px)', 'important');
-                    title.style.setProperty('padding', '6px 0', 'important');
+                    title.style.setProperty('font-size', 'calc(var(--sb-font-size) + 26px)', 'important');
+                    title.style.setProperty('line-height', '1.2', 'important');
+                    title.style.setProperty('padding', '8px 0', 'important');
                     title.style.setProperty('border-radius', '12px', 'important');
-                    title.style.setProperty('text-shadow', '0 0 2px #fff, 0 0 6px #fff', 'important');
+                    title.style.setProperty('text-shadow', '0 0 4px #fff, 0 0 8px #fff', 'important');
                     title.style.setProperty('box-shadow', '0 0 0 2px #fff inset', 'important');
+                    title.style.setProperty('background-color', 'inherit', 'important');
+                    title.style.setProperty('-webkit-text-stroke', '1px #fff', 'important');
                     document.body.appendChild(title);
                     document.body.appendChild(overlay);
+                } else {
+                    // Ensure header styling persists if overlay already existed
+                    title.style.setProperty('font-size', 'calc(var(--sb-font-size) + 26px)', 'important');
+                    title.style.setProperty('line-height', '1.2', 'important');
+                    title.style.setProperty('padding', '8px 0', 'important');
+                    title.style.setProperty('border-radius', '12px', 'important');
+                    title.style.setProperty('text-shadow', '0 0 4px #fff, 0 0 8px #fff', 'important');
+                    title.style.setProperty('box-shadow', '0 0 0 2px #fff inset', 'important');
+                    title.style.setProperty('background-color', 'inherit', 'important');
+                    title.style.setProperty('-webkit-text-stroke', '1px #fff', 'important');
                 }
                 overlay.innerHTML = html;
                 const close = overlay.querySelector('.trial-close');
