@@ -755,10 +755,8 @@
     width: 840px;
     padding: 6px 0;
     border-radius: 12px;
-    font-size: 35px !important;
-    line-height: 1.2;
-    text-shadow: 0 0 3px #fff, 0 0 8px #fff;
-    -webkit-text-stroke: 1px #fff;
+    font-size: calc(var(--sb-font-size) + 22px) !important;
+    text-shadow: 0 0 2px #fff, 0 0 6px #fff;
     box-shadow: 0 0 0 2px #fff inset;
 }
 

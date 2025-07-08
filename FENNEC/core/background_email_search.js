@@ -36,7 +36,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
         });
         if (message.refocus && sender && sender.tab) {
-            chrome.storage.local.set({ fennecReturnTab: sender.tab.id });
+            chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
+                if (!fennecReturnTab) {
+                    chrome.storage.local.set({ fennecReturnTab: sender.tab.id });
+                }
+            });
         }
     }
 
@@ -64,7 +68,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 });
             }
             if (message.refocus && sender && sender.tab) {
-                chrome.storage.local.set({ fennecReturnTab: sender.tab.id });
+                chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
+                    if (!fennecReturnTab) {
+                        chrome.storage.local.set({ fennecReturnTab: sender.tab.id });
+                    }
+                });
             }
         });
         return;
