@@ -1461,17 +1461,9 @@
             summaryParts.push(...addrEntries);
         }
 
-        // RA/VA line
-        const raTxt = raExpired ? 'EXPIRED' : (hasRA ? 'Sí' : 'No');
-        summaryParts.unshift(
-            `<div style="margin-left:10px"><span class="${raClass}">RA: ${raTxt}</span> ` +
-            `<span class="${vaClass}">VA: ${hasVA ? 'Sí' : 'No'}</span></div>`
-        );
-
         const quickSection = `
             <div class="white-box quick-summary-content" id="quick-summary" style="margin-bottom:10px">
                 ${summaryParts.join('')}
-                <div id="order-count-line" style="margin-left:10px"></div>
             </div>
         `;
         html += quickSection;
@@ -1828,14 +1820,6 @@
             initMistralChat();
             updateReviewDisplay();
             checkLastIssue(orderInfo.orderId);
-            if (client && client.email) {
-                chrome.runtime.sendMessage({ action: 'countOrdersByEmail', email: client.email }, resp => {
-                    if (resp && typeof resp.orderCount === 'number') {
-                        const el = document.getElementById('order-count-line');
-                        if (el) el.textContent = `Orders found: ${resp.orderCount}`;
-                    }
-                });
-            }
             if (miscMode) {
                 setTimeout(autoOpenFamilyTree, 100);
             }

@@ -801,17 +801,13 @@
             const orderLines = [];
             if (order) {
                 if (order.companyName) orderLines.push(`<div class="trial-line trial-company-name">${escapeHtml(order.companyName)}</div>`);
-                if (order.type) {
-                    let typeTxt = escapeHtml(order.type);
-                    if (order.expedited) typeTxt += ' • EXPEDITED';
-                    orderLines.push(`<div class="trial-line">${typeTxt}</div>`);
-                }
+                if (order.type) orderLines.push(`<div class="trial-line">${escapeHtml(order.type)}</div>`);
                 if (order.orderCost) orderLines.push(`<div class="trial-line">${escapeHtml(order.orderCost)}</div>`);
             }
 
             const html = `
-                <div class="trial-header"><div class="trial-close">✕</div>
-                <div class="trial-order"><div class="trial-col">${orderLines.join('')}<span id="trial-big-button"></span></div></div></div>
+                <div class="trial-close">✕</div>
+                <div class="trial-order"><div class="trial-col">${orderLines.join('')}<span id="trial-big-button"></span></div></div>
                 <div class="trial-columns">
                     <div class="trial-col-wrap"><div class="trial-col-title">DB</div><div class="trial-col">${dbLines.join('')}</div></div>
                     <div class="trial-col-wrap"><div class="trial-col-title">ADYEN</div><div class="trial-col">${adyenLines.join('')}</div></div>
