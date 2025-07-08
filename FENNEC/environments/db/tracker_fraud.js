@@ -453,7 +453,7 @@
         // Allow a few extra retries in case Kount or Adyen info is delayed.
         // DNA info may take a while to load for very large records.
         // Increase retries so the trial floater still appears.
-        function showTrialFloater(retries = 20, force = false) {
+        function showTrialFloater(retries = 60, force = false) {
             const flag = sessionStorage.getItem('fennecShowTrialFloater');
             const overlayExists = document.getElementById('fennec-trial-overlay');
             if ((!flag && !force && !overlayExists) || retries <= 0) return;
@@ -983,13 +983,13 @@
                 loadKountSummary();
             }
             if (area === 'local' && (changes.adyenDnaInfo || changes.kountInfo)) {
-                showTrialFloater(20, true);
+                showTrialFloater(60, true);
             }
         });
         window.addEventListener('focus', () => {
             loadDnaSummary();
             loadKountSummary();
-            showTrialFloater(20, true);
+            showTrialFloater(60, true);
         });
     });
 })();
