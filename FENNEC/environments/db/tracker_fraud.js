@@ -73,8 +73,7 @@
         function runXray(orderId) {
             const dbUrl = `https://db.incfile.com/incfile/order/detail/${orderId}?fraud_xray=1`;
             sessionStorage.setItem('fennecShowTrialFloater', '1');
-            // Do not store return tab for the initial XRAY detail tab
-            chrome.runtime.sendMessage({ action: 'openTab', url: dbUrl, active: true });
+            chrome.runtime.sendMessage({ action: 'openTab', url: dbUrl, active: true, refocus: true });
         }
 
         function addXrayIcon(el, orderId) {
@@ -484,12 +483,10 @@
                     title = document.createElement('div');
                     title.id = 'fennec-trial-title';
                     title.textContent = 'FRAUD REVIEW';
-                    title.style.setProperty('font-size', '35px', 'important');
-                    title.style.setProperty('line-height', '1.2', 'important');
+                    title.style.setProperty('font-size', 'calc(var(--sb-font-size) + 22px)', 'important');
                     title.style.setProperty('padding', '6px 0', 'important');
                     title.style.setProperty('border-radius', '12px', 'important');
-                    title.style.setProperty('text-shadow', '0 0 3px #fff, 0 0 8px #fff', 'important');
-                    title.style.setProperty('-webkit-text-stroke', '1px #fff', 'important');
+                    title.style.setProperty('text-shadow', '0 0 2px #fff, 0 0 6px #fff', 'important');
                     title.style.setProperty('box-shadow', '0 0 0 2px #fff inset', 'important');
                     document.body.appendChild(title);
                     document.body.appendChild(overlay);
