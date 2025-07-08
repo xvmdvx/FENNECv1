@@ -73,6 +73,7 @@
         function runXray(orderId) {
             const dbUrl = `https://db.incfile.com/incfile/order/detail/${orderId}?fraud_xray=1`;
             sessionStorage.setItem('fennecShowTrialFloater', '1');
+            localStorage.removeItem('fraudXrayFinished');
             chrome.runtime.sendMessage({ action: 'openTab', url: dbUrl, active: true, refocus: true });
         }
 
@@ -475,6 +476,7 @@
                 } else {
                     localStorage.setItem('fraudXrayCompleted', '1');
                 }
+                localStorage.setItem('fraudXrayFinished', '1');
                 chrome.runtime.sendMessage({ action: 'refocusTab' });
                 let overlay = document.getElementById('fennec-trial-overlay');
                 let title = document.getElementById('fennec-trial-title');

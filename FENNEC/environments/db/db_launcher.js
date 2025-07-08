@@ -16,6 +16,13 @@
     let reviewMode = false;
     let devMode = false;
     let fraudXray = new URLSearchParams(location.search).get('fraud_xray') === '1';
+    if (fraudXray && localStorage.getItem('fraudXrayFinished') === '1') {
+        const params = new URLSearchParams(location.search);
+        params.delete('fraud_xray');
+        const newUrl = location.pathname + (params.toString() ? '?' + params.toString() : '');
+        history.replaceState(null, '', newUrl);
+        fraudXray = false;
+    }
     let subCheck = new URLSearchParams(location.search).get('fennec_sub_check') === '1';
     const currentId = (location.pathname.match(/(?:detail|storage\/incfile)\/(\d+)/) || [])[1];
     const xrayDoneId = localStorage.getItem('fraudXrayCompleted');
