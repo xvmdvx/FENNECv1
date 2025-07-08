@@ -254,15 +254,18 @@
                 .sort()
                 .map(d => `<li class="fraud-date-item" data-date="${d}" style="cursor:pointer">${formatSummaryDate(d)}: <b>${summary.dateCounts[d]}</b></li>`)
                 .join('');
-            container.innerHTML = `
+            const html = `
                 <div class="white-box" id="fraud-summary-box" style="text-align:center">
                     <h4 style="margin-top:0; text-align:center"><b>SUMMARY</b></h4>
                     <div><b>ORDERS:</b><ul style="list-style:none;padding:0;margin:0;">${dateItems}</ul></div>
                     <div class="vip-declines" style="cursor:pointer"><b>VIP DECLINES:</b> ${summary.vipDecline}</div>
                     <div class="nm-mames" style="cursor:pointer"><b>NO MAMES:</b> ${summary.noMames}</div>
-                    <canvas id="fraud-price-chart" width="260" height="100" style="margin-top:8px; width:50%"></canvas>
                 </div>`;
-            drawPriceChart(summary.prices);
+            const changed = container.dataset.prevHtml !== html;
+            container.dataset.prevHtml = html;
+            if (changed) {
+                container.innerHTML = html;
+            }
             container.querySelectorAll('.fraud-date-item').forEach(li => {
                 li.addEventListener('click', () => toggleDateFilter(li.dataset.date));
             });
