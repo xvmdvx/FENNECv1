@@ -487,7 +487,9 @@
 
             function handleDnaPage() {
                 console.log('[FENNEC Adyen] Extracting DNA page stats');
-                waitForElement('.data-breakdown .item').then(() => {
+                // Large DNA pages can take a while to render all stats,
+                // so allow a longer wait time before giving up.
+                waitForElement('.data-breakdown .item', 30000).then(() => {
                     const stats = {};
                     document.querySelectorAll('.stats-bar-item').forEach(item => {
                         const label = item.querySelector('.stats-bar-item__label');
