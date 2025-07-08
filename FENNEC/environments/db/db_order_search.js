@@ -29,7 +29,7 @@
                 const rows = document.querySelectorAll('.search_result tbody tr');
                 if (!rows.length) { setTimeout(gather, 500); return; }
                 const orders = collectOrders();
-                chrome.runtime.sendMessage({ action: 'dbEmailSearchResults', orders });
+                chrome.runtime.sendMessage({ action: 'dbEmailSearchResults', orders }, () => { chrome.runtime.sendMessage({ action: 'refocusTab' }); });
             };
             gather();
         }
