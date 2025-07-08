@@ -955,6 +955,23 @@
     margin-left: 8px;
 }
 
+#fennec-trial-overlay.trial-header-green { background-color: rgba(46,204,113,0.3); }
+#fennec-trial-overlay.trial-header-purple { background-color: rgba(128,0,128,0.3); }
+#fennec-trial-overlay.trial-header-red { background-color: rgba(139,0,0,0.3); }
+
+.trial-success-msg {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.8);
+    color: #0f0;
+    padding: 8px 16px;
+    border-radius: 8px;
+    z-index: 1066;
+    font-weight: bold;
+}
+
 #fennec-trial-title.trial-header-green { background-color: rgba(46,204,113,0.3); }
 #fennec-trial-title.trial-header-purple { background-color: rgba(128,0,128,0.3); }
 #fennec-trial-title.trial-header-red { background-color: rgba(139,0,0,0.3); }

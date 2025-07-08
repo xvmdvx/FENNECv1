@@ -540,12 +540,28 @@
                         }
                     }
                 }
+                function showTrialSuccess() {
+                    const msg = document.createElement('div');
+                    msg.className = 'trial-success-msg';
+                    msg.textContent = 'Decision saved';
+                    document.body.appendChild(msg);
+                    setTimeout(() => { msg.remove(); }, 2000);
+                }
+
+                function handleTrialAction(selector) {
+                    clickDbAction(selector);
+                    overlay.remove();
+                    title.remove();
+                    clearSidebar();
+                    showTrialSuccess();
+                }
+
                 const crBtn = overlay.querySelector('#trial-btn-cr');
-                if (crBtn) crBtn.addEventListener('click', () => clickDbAction('.cancel-and-refund-potential-fraud'));
+                if (crBtn) crBtn.addEventListener('click', () => handleTrialAction('.cancel-and-refund-potential-fraud'));
                 const idBtn = overlay.querySelector('#trial-btn-id');
-                if (idBtn) idBtn.addEventListener('click', () => clickDbAction('.confirm-fraud-potential-fraud'));
+                if (idBtn) idBtn.addEventListener('click', () => handleTrialAction('.confirm-fraud-potential-fraud'));
                 const relBtn = overlay.querySelector('#trial-btn-release');
-                if (relBtn) relBtn.addEventListener('click', () => clickDbAction('.remove-potential-fraud'));
+                if (relBtn) relBtn.addEventListener('click', () => handleTrialAction('.remove-potential-fraud'));
 
                 const crossCount = overlay.querySelectorAll('.db-adyen-cross').length;
                 const bigSpot = overlay.querySelector('#trial-big-button');
@@ -557,19 +573,19 @@
                 overlay.classList.add(headerCls);
                 if (bigSpot) {
                     let srcBtn = relBtn;
-                    let handler = () => clickDbAction('.remove-potential-fraud');
+                    let selector = '.remove-potential-fraud';
                     if (crossCount > 4) {
                         srcBtn = crBtn;
-                        handler = () => clickDbAction('.cancel-and-refund-potential-fraud');
+                        selector = '.cancel-and-refund-potential-fraud';
                     } else if (crossCount > 0) {
                         srcBtn = idBtn;
-                        handler = () => clickDbAction('.confirm-fraud-potential-fraud');
+                        selector = '.confirm-fraud-potential-fraud';
                     }
                     if (srcBtn) {
                         const bigBtn = srcBtn.cloneNode(true);
                         bigBtn.id = '';
                         bigBtn.classList.add('big-trial-btn');
-                        bigBtn.addEventListener('click', handler);
+                        bigBtn.addEventListener('click', () => handleTrialAction(selector));
                         bigSpot.appendChild(bigBtn);
                     }
                 }
