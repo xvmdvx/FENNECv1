@@ -458,7 +458,7 @@
             const summary = document.getElementById('fraud-summary-box');
             if (summary) summary.remove();
             chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null }, data => {
-                if (!data.adyenDnaInfo && retries > 0) {
+                if ((!data.adyenDnaInfo || !data.adyenDnaInfo.payment) && retries > 0) {
                     setTimeout(() => showTrialFloater(retries - 1, force), 1000);
                     return;
                 }
