@@ -398,6 +398,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
                 return;
             }
+            chrome.tabs.update(searchTab.id, { active: true });
             chrome.tabs.sendMessage(searchTab.id, { action: 'getEmailOrders' }, resp => {
                 if (chrome.runtime.lastError || !resp) {
                     sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
