@@ -53,6 +53,7 @@
     max-width: 840px;
     padding: 24px 32px;
     font-size: var(--sb-font-size);
+    border-radius: 12px;
 }
 .fennec-light-mode #fennec-trial-overlay .trial-close {
     color: #000;
@@ -64,9 +65,9 @@
     margin: 0 auto 4px;
     width: 840px;
     padding: 4px 0;
-    border-radius: 6px;
-    font-size: calc(var(--sb-font-size) + 8px) !important;
-    text-shadow: 0 0 2px #fff;
+    border-radius: 8px;
+    font-size: calc(var(--sb-font-size) + 12px) !important;
+    text-shadow: 0 0 4px #fff;
 }
 .fennec-light-mode #fennec-trial-overlay .trial-columns {
     display: flex;
