@@ -569,8 +569,11 @@
                 if (crossCount > 4) headerCls = 'trial-header-red';
                 else if (crossCount > 0) headerCls = 'trial-header-purple';
                 title.className = 'trial-title ' + headerCls;
-                overlay.classList.remove('trial-header-green','trial-header-purple','trial-header-red');
-                overlay.classList.add(headerCls);
+                const orderHeader = overlay.querySelector('.trial-order');
+                if (orderHeader) {
+                    orderHeader.classList.remove('trial-header-green','trial-header-purple','trial-header-red');
+                    orderHeader.classList.add(headerCls);
+                }
                 if (bigSpot) {
                     let srcBtn = relBtn;
                     let selector = '.remove-potential-fraud';
@@ -588,6 +591,23 @@
                         bigBtn.addEventListener('click', () => handleTrialAction(selector));
                         bigSpot.appendChild(bigBtn);
                     }
+                }
+                if (data.sidebarOrderInfo && data.sidebarOrderInfo.clientEmail) {
+                    chrome.runtime.sendMessage({
+                        action: 'detectSubscriptions',
+                        email: data.sidebarOrderInfo.clientEmail,
+                        ltv: data.sidebarOrderInfo.clientLtv || ''
+                    }, resp => {
+                        if (!resp) return;
+                        const dbCol = overlay.querySelector('.trial-col');
+                        if (!dbCol) return;
+                        const line = document.createElement('div');
+                        line.className = 'trial-line';
+                        line.textContent = `Orders Found: ${resp.orderCount}`;
+                        const raVa = dbCol.querySelector('.ra-va-line');
+                        if (raVa && raVa.nextSibling) dbCol.insertBefore(line, raVa.nextSibling);
+                        else dbCol.appendChild(line);
+                    });
                 }
             });
         }
@@ -702,14 +722,18 @@
                 if (!ltv) ltv = getClientLtv();
                 if (ltv) dbLines.push(`<div class="trial-line">LTV: ${escapeHtml(ltv)}</div>`);
                 else dbLines.push(`<div class="trial-line">LTV: N/A</div>`);
-                if (typeof order.hasVA === 'boolean') {
-                    const cls = order.hasVA ? 'copilot-tag copilot-tag-green' : 'copilot-tag copilot-tag-purple';
-                    dbLines.push(`<div class="trial-line">VA: <span class="${cls}">${order.hasVA ? 'Sí' : 'No'}</span></div>`);
-                }
+                const raVa = [];
                 if (typeof order.hasRA === 'boolean') {
                     const txt = order.raExpired ? 'EXPIRED' : (order.hasRA ? 'Sí' : 'No');
                     const cls = order.raExpired ? 'copilot-tag copilot-tag-yellow' : (order.hasRA ? 'copilot-tag copilot-tag-green' : 'copilot-tag copilot-tag-purple');
-                    dbLines.push(`<div class="trial-line">RA: <span class="${cls}">${txt}</span></div>`);
+                    raVa.push(`RA: <span class="${cls}">${txt}</span>`);
+                }
+                if (typeof order.hasVA === 'boolean') {
+                    const cls = order.hasVA ? 'copilot-tag copilot-tag-green' : 'copilot-tag copilot-tag-purple';
+                    raVa.push(`VA: <span class="${cls}">${order.hasVA ? 'Sí' : 'No'}</span>`);
+                }
+                if (raVa.length) {
+                    dbLines.push(`<div class="trial-line ra-va-line">${raVa.join(' ')}</div>`);
                 }
                 const btn = `<button id="sub-detection-btn" class="sub-detect-btn">SUB DETECTION</button>`;
                 dbLines.push(`<div class="trial-line">${btn}</div>`);
@@ -801,7 +825,13 @@
             const orderLines = [];
             if (order) {
                 if (order.companyName) orderLines.push(`<div class="trial-line trial-company-name">${escapeHtml(order.companyName)}</div>`);
-                if (order.type) orderLines.push(`<div class="trial-line">${escapeHtml(order.type)}</div>`);
+                if (order.type) {
+                    let typeText = escapeHtml(order.type);
+                    if (typeof order.expedited === 'boolean') {
+                        typeText += order.expedited ? ' (EXPEDITED)' : ' (NOT EXPEDITED)';
+                    }
+                    orderLines.push(`<div class="trial-line">${typeText}</div>`);
+                }
                 if (order.orderCost) orderLines.push(`<div class="trial-line">${escapeHtml(order.orderCost)}</div>`);
             }
 
