@@ -518,6 +518,41 @@
                         });
                     });
                 }
+                const orderId = data.sidebarOrderInfo && data.sidebarOrderInfo.orderId;
+                function clickDbAction(selector) {
+                    if (!orderId) return;
+                    const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
+                    if (!row) return;
+                    const btn = row.querySelector(selector);
+                    if (btn) btn.click();
+                }
+                const crBtn = overlay.querySelector('#trial-btn-cr');
+                if (crBtn) crBtn.addEventListener('click', () => clickDbAction('.cancel-and-refund-potential-fraud'));
+                const idBtn = overlay.querySelector('#trial-btn-id');
+                if (idBtn) idBtn.addEventListener('click', () => clickDbAction('.confirm-fraud-potential-fraud'));
+                const relBtn = overlay.querySelector('#trial-btn-release');
+                if (relBtn) relBtn.addEventListener('click', () => clickDbAction('.remove-potential-fraud'));
+
+                const crossCount = overlay.querySelectorAll('.db-adyen-cross').length;
+                const bigSpot = overlay.querySelector('#trial-big-button');
+                if (bigSpot) {
+                    let srcBtn = relBtn;
+                    let handler = () => clickDbAction('.remove-potential-fraud');
+                    if (crossCount > 4) {
+                        srcBtn = crBtn;
+                        handler = () => clickDbAction('.cancel-and-refund-potential-fraud');
+                    } else if (crossCount > 0) {
+                        srcBtn = idBtn;
+                        handler = () => clickDbAction('.confirm-fraud-potential-fraud');
+                    }
+                    if (srcBtn) {
+                        const bigBtn = srcBtn.cloneNode(true);
+                        bigBtn.id = '';
+                        bigBtn.classList.add('big-trial-btn');
+                        bigBtn.addEventListener('click', handler);
+                        bigSpot.appendChild(bigBtn);
+                    }
+                }
             });
         }
 
@@ -720,7 +755,12 @@
                 if (kount.ekata && kount.ekata.addressToName) kountLines.push(`<div class="trial-line">Address Name: ${escapeHtml(kount.ekata.addressToName)}</div>`);
             }
 
-            const summary = `<div class="trial-summary"><div class="trial-summary-col"><b>GREEN FLAGS</b><br>${green.join(' ') || 'None'}</div><div class="trial-summary-col"><b>RED FLAGS</b><br>${red.join(' ') || 'None'}</div></div>`;
+            const actions = `
+                <div class="trial-actions">
+                    <button id="trial-btn-cr" class="trial-action-btn trial-btn-cr">C&R</button>
+                    <button id="trial-btn-id" class="trial-action-btn trial-btn-id">ID CONFIRM</button>
+                    <button id="trial-btn-release" class="trial-action-btn trial-btn-release">RELEASE (NO)</button>
+                </div>`;
 
             const orderLines = [];
             if (order) {
@@ -731,13 +771,13 @@
 
             const html = `
                 <div class="trial-close">✕</div>
-                <div class="trial-order"><div class="trial-col">${orderLines.join('')}</div></div>
+                <div class="trial-order"><div class="trial-col">${orderLines.join('')}<span id="trial-big-button"></span></div></div>
                 <div class="trial-columns">
                     <div class="trial-col-wrap"><div class="trial-col-title">DB</div><div class="trial-col">${dbLines.join('')}</div></div>
                     <div class="trial-col-wrap"><div class="trial-col-title">ADYEN</div><div class="trial-col">${adyenLines.join('')}</div></div>
                     <div class="trial-col-wrap"><div class="trial-col-title">KOUNT</div><div class="trial-col">${kountLines.join('')}</div></div>
                 </div>
-                ${summary}
+                ${actions}
             `;
 
             return html;
