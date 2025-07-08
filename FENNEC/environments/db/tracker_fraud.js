@@ -509,18 +509,22 @@
                             const line1 = document.createElement('div');
                             line1.className = 'trial-line';
                             line1.textContent = `Orders: ${resp.orderCount}`;
-                            dbCol.appendChild(line1);
+                            const raVa = dbCol.querySelector('.ra-va-line');
+                            if (raVa && raVa.nextSibling) dbCol.insertBefore(line1, raVa.nextSibling);
+                            else dbCol.appendChild(line1);
+                            let line2 = null;
                             if (resp.ltv) {
                                 const ratio = resp.orderCount && parseFloat(resp.ltv) ? (resp.orderCount / parseFloat(resp.ltv)).toFixed(2) : 'N/A';
-                                const line2 = document.createElement('div');
+                                line2 = document.createElement('div');
                                 line2.className = 'trial-line';
                                 line2.textContent = `Orders/LTV: ${ratio}`;
-                                dbCol.appendChild(line2);
+                                dbCol.insertBefore(line2, line1.nextSibling);
                             }
                             const line3 = document.createElement('div');
                             line3.className = 'trial-line';
                             line3.textContent = 'Active Subs: ' + (resp.activeSubs.length ? resp.activeSubs.join(', ') : 'None');
-                            dbCol.appendChild(line3);
+                            const insertPoint = line2 ? line2.nextSibling : line1.nextSibling;
+                            dbCol.insertBefore(line3, insertPoint);
                         });
                     });
                 }

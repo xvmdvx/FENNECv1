@@ -2222,7 +2222,6 @@
                         comment
                     }
                 });
-                chrome.runtime.sendMessage({ action: 'refocusTab' });
             } else {
                 setTimeout(fillComment, 500);
             }
@@ -2255,7 +2254,6 @@
                         comment
                     }
                 });
-                chrome.runtime.sendMessage({ action: 'refocusTab' });
             } else {
                 setTimeout(fill, 500);
             }
