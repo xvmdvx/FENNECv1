@@ -525,10 +525,14 @@
                 const orderId = data.sidebarOrderInfo && data.sidebarOrderInfo.orderId;
                 function clickDbAction(selector) {
                     if (!orderId) return;
-                    const row = document.querySelector(`tr[data-order-id="${orderId}"]`);
-                    if (!row) return;
-                    const btn = row.querySelector(selector);
-                    if (btn) btn.click();
+                    const rows = Array.from(document.querySelectorAll(`tr[data-order-id="${orderId}"]`));
+                    for (const row of rows) {
+                        const btn = row.querySelector(selector);
+                        if (btn) {
+                            btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                            return;
+                        }
+                    }
                 }
                 const crBtn = overlay.querySelector('#trial-btn-cr');
                 if (crBtn) crBtn.addEventListener('click', () => clickDbAction('.cancel-and-refund-potential-fraud'));
