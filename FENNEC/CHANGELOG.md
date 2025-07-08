@@ -8,6 +8,7 @@
 - Family Tree detects duplicate orders in review, processing or hold and adds a ❌ icon to cancel and refund them.
 - Diagnose overlay now supports Reinstatement orders and detects amendments or reinstatements in review.
 - Replaced `form.submit()` fallback with a submit event to mimic real clicks.
+- XRAY flow opens the DB order search page with the client's email instead of a Gmail search tab.
 - Added a brief delay after selecting the payment type so the page registers **Client Account** reliably.
 - Activating Review Mode from the popup now reloads DB pages so the sidebar appears automatically.
 - The Fraud tracker page also reloads so Review Mode shows the sidebar.
