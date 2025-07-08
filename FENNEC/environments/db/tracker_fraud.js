@@ -569,6 +569,8 @@
                 if (crossCount > 4) headerCls = 'trial-header-red';
                 else if (crossCount > 0) headerCls = 'trial-header-purple';
                 title.className = 'trial-title ' + headerCls;
+                overlay.classList.remove('trial-header-green','trial-header-purple','trial-header-red');
+                overlay.classList.add(headerCls);
                 const orderHeader = overlay.querySelector('.trial-order');
                 if (orderHeader) {
                     orderHeader.classList.remove('trial-header-green','trial-header-purple','trial-header-red');
