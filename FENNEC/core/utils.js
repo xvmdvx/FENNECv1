@@ -41,6 +41,23 @@ function abbreviateOrderType(type) {
 }
 window.abbreviateOrderType = abbreviateOrderType;
 
+function storeSidebarSnapshot(sidebar) {
+    if (!sidebar) return;
+    chrome.storage.local.set({ sidebarSnapshot: sidebar.innerHTML });
+}
+window.storeSidebarSnapshot = storeSidebarSnapshot;
+
+function loadSidebarSnapshot(sidebar) {
+    if (!sidebar) return;
+    chrome.storage.local.get({ sidebarSnapshot: null }, ({ sidebarSnapshot }) => {
+        if (sidebarSnapshot) {
+            sidebar.innerHTML = sidebarSnapshot;
+            attachCommonListeners(sidebar);
+        }
+    });
+}
+window.loadSidebarSnapshot = loadSidebarSnapshot;
+
 function attachCommonListeners(rootEl) {
     if (!rootEl) return;
     rootEl.querySelectorAll('.copilot-address').forEach(el => {

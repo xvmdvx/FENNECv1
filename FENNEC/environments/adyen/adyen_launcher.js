@@ -298,6 +298,7 @@
                         const html = buildDnaHtml(adyenDnaInfo);
                         container.innerHTML = html || '';
                         attachCommonListeners(container);
+                        if (isDnaPage) storeSidebarSnapshot(document.getElementById('copilot-sidebar'));
                     });
                 });
             }
@@ -310,6 +311,7 @@
                         container.innerHTML = sidebarDb.join('');
                         container.style.display = 'block';
                         attachCommonListeners(container);
+                        if (isDnaPage) storeSidebarSnapshot(document.getElementById('copilot-sidebar'));
                         const qbox = container.querySelector('#quick-summary');
                         if (qbox) {
                             qbox.classList.remove('quick-summary-collapsed');
@@ -344,6 +346,7 @@
                     label.textContent = '';
                     label.className = 'issue-status-label';
                 }
+                if (isDnaPage) storeSidebarSnapshot(document.getElementById('copilot-sidebar'));
             }
 
             function checkLastIssue(orderId) {
@@ -386,7 +389,8 @@
                     sidebarOrderId: null,
                     sidebarOrderInfo: null,
                     adyenDnaInfo: null,
-                    sidebarFreezeId: null
+                    sidebarFreezeId: null,
+                    sidebarSnapshot: null
                 });
                 showInitialStatus();
             }
@@ -421,6 +425,7 @@
                     sidebarBgColor: '#212121',
                     sidebarBoxColor: '#2e2e2e'
                 }, opts => applySidebarDesign(sidebar, opts));
+                loadSidebarSnapshot(sidebar);
                 document.body.style.marginRight = '340px';
                 const closeBtn = sidebar.querySelector('#copilot-close');
                 if (closeBtn) {
@@ -532,6 +537,7 @@
             }
 
             const path = window.location.pathname;
+            const isDnaPage = path.includes('showOilSplashList.shtml');
             console.log('[FENNEC Adyen] Path:', path);
             const ready = document.readyState === 'loading' ? 'DOMContentLoaded' : null;
             if (ready) {
@@ -578,6 +584,13 @@
             chrome.storage.onChanged.addListener((changes, area) => {
                 if (area === 'local' && changes.sidebarDb) loadDbSummary();
                 if (area === 'local' && changes.adyenDnaInfo) loadDnaSummary();
+                if (area === 'local' && changes.sidebarSnapshot && changes.sidebarSnapshot.newValue) {
+                    const sb = document.getElementById('copilot-sidebar');
+                    if (sb) {
+                        sb.innerHTML = changes.sidebarSnapshot.newValue;
+                        attachCommonListeners(sb);
+                    }
+                }
             });
         } catch (e) {
             console.error('[FENNEC Adyen] Launcher error:', e);

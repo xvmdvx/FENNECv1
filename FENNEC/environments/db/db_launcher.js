@@ -511,6 +511,7 @@
                         sidebarBgColor: '#212121',
                         sidebarBoxColor: '#2e2e2e'
                     }, opts => applySidebarDesign(sidebar, opts));
+                    loadSidebarSnapshot(sidebar);
 
                     updateReviewDisplay();
                     const closeBtn = sidebar.querySelector('#copilot-close');
@@ -2093,7 +2094,8 @@
             sidebarOrderId: null,
             sidebarOrderInfo: null,
             adyenDnaInfo: null,
-            sidebarFreezeId: null
+            sidebarFreezeId: null,
+            sidebarSnapshot: null
         });
         const body = document.getElementById('copilot-body-content');
         if (body) body.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:40px">No DB data.</div>';
@@ -2852,6 +2854,13 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
     if (area === 'local' && changes.kountInfo) {
         loadKountSummary();
+    }
+    if (area === 'local' && changes.sidebarSnapshot && changes.sidebarSnapshot.newValue) {
+        const sb = document.getElementById('copilot-sidebar');
+        if (sb) {
+            sb.innerHTML = changes.sidebarSnapshot.newValue;
+            attachCommonListeners(sb);
+        }
     }
 });
 
