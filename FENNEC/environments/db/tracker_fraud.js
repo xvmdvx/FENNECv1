@@ -458,6 +458,10 @@
             const summary = document.getElementById('fraud-summary-box');
             if (summary) summary.remove();
             chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null }, data => {
+                if (!data.adyenDnaInfo && retries > 0) {
+                    setTimeout(() => showTrialFloater(retries - 1, force), 1000);
+                    return;
+                }
                 const html = buildTrialHtml(data.adyenDnaInfo, data.kountInfo, data.sidebarOrderInfo);
                 if (!html) {
                     setTimeout(() => showTrialFloater(retries - 1, force), 1000);
@@ -535,6 +539,10 @@
 
                 const crossCount = overlay.querySelectorAll('.db-adyen-cross').length;
                 const bigSpot = overlay.querySelector('#trial-big-button');
+                let headerCls = 'trial-header-green';
+                if (crossCount > 4) headerCls = 'trial-header-red';
+                else if (crossCount > 0) headerCls = 'trial-header-purple';
+                title.className = 'trial-title ' + headerCls;
                 if (bigSpot) {
                     let srcBtn = relBtn;
                     let handler = () => clickDbAction('.remove-potential-fraud');
