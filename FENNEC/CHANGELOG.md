@@ -3,6 +3,7 @@
 ## Unreleased
 
 - The payment step logs the dropdown selector and value before clicking **Continue** so you can confirm **Client Account** is selected.
+- Trial header fills the width and changes color (green, purple or red) based on the main action. ADYEN info reliably appears after XRAY.
 - Fraud Review shows a floating **TRIAL SUMMARY** with CVV, AVS, DB match and Kount checks after returning from XRAY.
 - TRIAL SUMMARY overlay now waits for XRAY data and retries briefly if the information isn't ready.
 - Family Tree detects duplicate orders in review, processing or hold and adds a ❌ icon to cancel and refund them.
