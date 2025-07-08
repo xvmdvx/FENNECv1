@@ -755,8 +755,9 @@
     width: 840px;
     padding: 6px 0;
     border-radius: 12px;
-    font-size: calc(var(--sb-font-size) + 18px) !important;
+    font-size: calc(var(--sb-font-size) + 22px) !important;
     text-shadow: 0 0 2px #fff, 0 0 6px #fff;
+    box-shadow: 0 0 0 2px #fff inset;
 }
 
 #fennec-trial-overlay .trial-close {

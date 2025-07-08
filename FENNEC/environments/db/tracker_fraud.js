@@ -483,10 +483,11 @@
                     title = document.createElement('div');
                     title.id = 'fennec-trial-title';
                     title.textContent = 'FRAUD REVIEW';
-                    title.style.fontSize = 'calc(var(--sb-font-size) + 18px)';
-                    title.style.padding = '6px 0';
-                    title.style.borderRadius = '12px';
-                    title.style.textShadow = '0 0 2px #fff, 0 0 6px #fff';
+                    title.style.setProperty('font-size', 'calc(var(--sb-font-size) + 22px)', 'important');
+                    title.style.setProperty('padding', '6px 0', 'important');
+                    title.style.setProperty('border-radius', '12px', 'important');
+                    title.style.setProperty('text-shadow', '0 0 2px #fff, 0 0 6px #fff', 'important');
+                    title.style.setProperty('box-shadow', '0 0 0 2px #fff inset', 'important');
                     document.body.appendChild(title);
                     document.body.appendChild(overlay);
                 }
