@@ -36,9 +36,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
         });
         if (message.refocus && sender && sender.tab) {
-            chrome.storage.local.get({ fennecReturnStack: [] }, ({ fennecReturnStack }) => {
-                fennecReturnStack.push(sender.tab.id);
-                chrome.storage.local.set({ fennecReturnStack });
+            chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
+                if (!fennecReturnTab) {
+                    chrome.storage.local.set({ fennecReturnTab: sender.tab.id });
+                }
             });
         }
     }
@@ -67,9 +68,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 });
             }
             if (message.refocus && sender && sender.tab) {
-                chrome.storage.local.get({ fennecReturnStack: [] }, ({ fennecReturnStack }) => {
-                    fennecReturnStack.push(sender.tab.id);
-                    chrome.storage.local.set({ fennecReturnStack });
+                chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
+                    if (!fennecReturnTab) {
+                        chrome.storage.local.set({ fennecReturnTab: sender.tab.id });
+                    }
                 });
             }
         });
@@ -686,15 +688,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === "refocusTab") {
-        chrome.storage.local.get({ fennecReturnStack: [] }, ({ fennecReturnStack }) => {
-            const tabId = fennecReturnStack.pop();
-            if (!tabId) return;
-            chrome.tabs.update(tabId, { active: true }, () => {
-                if (chrome.runtime.lastError) {
-                    console.error("[Copilot] Error focusing tab:", chrome.runtime.lastError.message);
-                }
-                chrome.storage.local.set({ fennecReturnStack });
-            });
+        chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
+            if (fennecReturnTab) {
+                chrome.tabs.update(fennecReturnTab, { active: true }, () => {
+                    if (chrome.runtime.lastError) {
+                        console.error("[Copilot] Error focusing tab:", chrome.runtime.lastError.message);
+                    }
+                    chrome.storage.local.set({ fennecReturnTab: null });
+                });
+            }
         });
         return;
     }
