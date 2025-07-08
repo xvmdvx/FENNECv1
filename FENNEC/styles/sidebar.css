@@ -783,7 +783,7 @@
     border-radius: 12px;
 }
 #fennec-trial-overlay .trial-order .trial-line {
-    font-size: calc(var(--sb-font-size) + 4px);
+    font-size: calc(var(--sb-font-size) + 6px);
     background: rgba(255,255,255,0.9);
     color: #000;
     padding: 2px 4px;
@@ -791,7 +791,13 @@
     display: inline-block;
 }
 #fennec-trial-overlay .trial-order .trial-company-name {
-    font-size: calc(var(--sb-font-size) + 7px);
+    font-size: calc(var(--sb-font-size) + 10px);
+}
+#fennec-trial-overlay .trial-order .trial-tags .copilot-tag {
+    font-size: calc(var(--sb-font-size) + 5px);
+}
+#fennec-trial-overlay .trial-order .trial-btn-line {
+    margin-top: 4px;
 }
 #fennec-trial-overlay .trial-order.trial-header-green .trial-col {
     background-color: rgba(46,204,113,0.99);
@@ -981,6 +987,7 @@
     font-size: calc(var(--sb-font-size) + 7px);
     padding: 6px 14px;
     margin-left: 8px;
+    opacity: 0.5;
 }
 
 #fennec-trial-overlay.trial-header-green { background-color: rgba(46,46,46,0.98); }

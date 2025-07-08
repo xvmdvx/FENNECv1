@@ -866,20 +866,24 @@
 
             const orderLines = [];
             if (order) {
-                if (order.companyName) orderLines.push(`<div class="trial-line trial-company-name">${escapeHtml(order.companyName)}</div>`);
-                if (order.type) {
-                    let typeText = escapeHtml(order.type);
-                    if (typeof order.expedited === 'boolean') {
-                        typeText += order.expedited ? ' (EXPEDITED)' : ' (NOT EXPEDITED)';
-                    }
-                    orderLines.push(`<div class="trial-line">${typeText}</div>`);
+                if (order.companyName) {
+                    orderLines.push(`<div class="trial-line trial-company-name">${escapeHtml(order.companyName)}</div>`);
                 }
-                if (order.orderCost) orderLines.push(`<div class="trial-line">${escapeHtml(order.orderCost)}</div>`);
+                const tags = [];
+                if (order.type) tags.push(`<span class="copilot-tag copilot-tag-lightgray">${escapeHtml(order.type)}</span>`);
+                if (typeof order.expedited === 'boolean') {
+                    tags.push(`<span class="copilot-tag copilot-tag-lightgray">${order.expedited ? 'EXPEDITED' : 'STANDARD'}</span>`);
+                }
+                if (order.orderCost) tags.push(`<span class="copilot-tag copilot-tag-lightgray">${escapeHtml(order.orderCost)}</span>`);
+                if (tags.length) {
+                    orderLines.push(`<div class="trial-line trial-tags">${tags.join(' ')}</div>`);
+                }
+                orderLines.push(`<div class="trial-line trial-btn-line"><span id="trial-big-button"></span></div>`);
             }
 
             const html = `
                 <div class="trial-close">✕</div>
-                <div class="trial-order"><div class="trial-col">${orderLines.join('')}<span id="trial-big-button"></span></div></div>
+                <div class="trial-order"><div class="trial-col">${orderLines.join('')}</div></div>
                 <div class="trial-columns">
                     <div class="trial-col-wrap"><div class="trial-col-title">DB</div><div class="trial-col">${dbLines.join('')}</div></div>
                     <div class="trial-col-wrap"><div class="trial-col-title">ADYEN</div><div class="trial-col">${adyenLines.join('')}</div></div>
