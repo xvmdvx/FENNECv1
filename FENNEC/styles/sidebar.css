@@ -750,13 +750,14 @@
 #fennec-trial-title {
     text-align: center;
     font-weight: bold;
-    color: #fff;
+    color: #000;
     margin: 0 auto 4px;
     width: 840px;
-    padding: 6px 0;
+    padding: 6px 8px;
     border-radius: 12px;
-    font-size: calc(var(--sb-font-size) + 22px) !important;
-    text-shadow: 0 0 2px #fff, 0 0 6px #fff;
+    font-size: calc(var(--sb-font-size) + 26px) !important;
+    background: rgba(255,255,255,0.9);
+    text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
     box-shadow: 0 0 0 2px #fff inset;
 }
 
