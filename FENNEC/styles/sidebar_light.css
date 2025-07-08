@@ -90,20 +90,22 @@
 }
 .fennec-light-mode #fennec-trial-overlay .trial-actions {
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
+    gap: 8px;
     margin-top: 8px;
 }
 .fennec-light-mode #fennec-trial-overlay .trial-action-btn {
-    border: none;
+    border: 1px solid #ccc;
     border-radius: 6px;
     padding: 4px 10px;
-    color: #fff;
+    background-color: #fff;
+    color: #000;
     font-weight: bold;
     cursor: pointer;
 }
-.fennec-light-mode #fennec-trial-overlay .trial-btn-cr { background-color: #8B0000; }
-.fennec-light-mode #fennec-trial-overlay .trial-btn-id { background-color: #800080; }
-.fennec-light-mode #fennec-trial-overlay .trial-btn-release { background-color: #2ecc71; }
+.fennec-light-mode #fennec-trial-overlay .trial-btn-cr { background-color: #fff; color: #000; }
+.fennec-light-mode #fennec-trial-overlay .trial-btn-id { background-color: #fff; color: #000; }
+.fennec-light-mode #fennec-trial-overlay .trial-btn-release { background-color: #fff; color: #000; }
 .fennec-light-mode #fennec-trial-overlay .trial-action-btn:hover { opacity: 0.9; }
 .fennec-light-mode #fennec-trial-overlay .big-trial-btn {
     font-size: 16px;
