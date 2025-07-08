@@ -765,6 +765,10 @@
     font-weight: bold;
     color: #fff;
 }
+#fennec-trial-overlay .trial-header {
+    position: relative;
+    margin-bottom: 8px;
+}
 #fennec-trial-overlay .trial-columns {
     display: flex;
     gap: 12px;
@@ -772,7 +776,6 @@
 }
 #fennec-trial-overlay .trial-order {
     text-align: center;
-    margin-bottom: 8px;
 }
 #fennec-trial-overlay .trial-col-wrap {
     flex: 1;
@@ -955,9 +958,9 @@
     margin-left: 8px;
 }
 
-#fennec-trial-overlay.trial-header-green { background-color: rgba(46,204,113,0.3); }
-#fennec-trial-overlay.trial-header-purple { background-color: rgba(128,0,128,0.3); }
-#fennec-trial-overlay.trial-header-red { background-color: rgba(139,0,0,0.3); }
+#fennec-trial-overlay.trial-header-green .trial-header { background-color: rgba(46,204,113,0.3); }
+#fennec-trial-overlay.trial-header-purple .trial-header { background-color: rgba(128,0,128,0.3); }
+#fennec-trial-overlay.trial-header-red .trial-header { background-color: rgba(139,0,0,0.3); }
 
 .trial-success-msg {
     position: fixed;
