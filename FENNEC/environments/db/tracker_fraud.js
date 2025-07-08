@@ -640,7 +640,8 @@
                         ltv: data.sidebarOrderInfo.clientLtv || ''
                     }, resp => {
                         if (!resp) return;
-                        const dbCol = overlay.querySelector('.trial-col');
+                        const cols = overlay.querySelectorAll('.trial-columns .trial-col');
+                        const dbCol = cols && cols[0];
                         if (!dbCol) return;
                         const line = document.createElement('div');
                         line.className = 'trial-line';

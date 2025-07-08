@@ -783,12 +783,15 @@
     border-radius: 12px;
 }
 #fennec-trial-overlay .trial-order .trial-line {
-    font-size: calc(var(--sb-font-size) + 3px);
-    text-shadow: 0 0 2px #fff, 0 0 6px #fff;
-    -webkit-text-stroke: 0.5px #fff;
+    font-size: calc(var(--sb-font-size) + 4px);
+    background: rgba(255,255,255,0.9);
+    color: #000;
+    padding: 2px 4px;
+    border-radius: 4px;
+    display: inline-block;
 }
 #fennec-trial-overlay .trial-order .trial-company-name {
-    font-size: calc(var(--sb-font-size) + 5px);
+    font-size: calc(var(--sb-font-size) + 7px);
 }
 #fennec-trial-overlay .trial-order.trial-header-green .trial-col {
     background-color: rgba(46,204,113,0.99);
@@ -975,7 +978,7 @@
 .trial-action-btn:hover { opacity: 0.9; }
 
 .big-trial-btn {
-    font-size: 16px;
+    font-size: calc(var(--sb-font-size) + 7px);
     padding: 6px 14px;
     margin-left: 8px;
 }
