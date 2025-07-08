@@ -2792,11 +2792,11 @@ function getLastHoldUser() {
         if (client.email) {
             const base = 'https://db.incfile.com/order-tracker/orders/order-search';
             const url = base + '?fennec_email=' + encodeURIComponent(client.email);
-            chrome.runtime.sendMessage({ action: 'openTab', url, active: true });
+            chrome.runtime.sendMessage({ action: 'openTab', url, active: true, refocus: true });
         } else if (parts.length) {
             const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
             const gmailUrl = 'https://mail.google.com/mail/u/0/#search/' + query;
-            chrome.runtime.sendMessage({ action: 'openTab', url: gmailUrl, active: true });
+            chrome.runtime.sendMessage({ action: 'openTab', url: gmailUrl, active: true, refocus: true });
         }
         if (info.orderId) {
             const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
@@ -2806,7 +2806,7 @@ function getLastHoldUser() {
         if (kountLink) {
             const kountUrl = kountLink.href;
             setTimeout(() => {
-                chrome.runtime.sendMessage({ action: 'openTab', url: kountUrl, active: true });
+                chrome.runtime.sendMessage({ action: 'openTab', url: kountUrl, active: true, refocus: true });
             }, 1000);
         }
     }
