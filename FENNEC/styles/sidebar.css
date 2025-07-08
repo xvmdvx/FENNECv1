@@ -774,6 +774,15 @@
     text-align: center;
     margin-bottom: 8px;
 }
+#fennec-trial-overlay .trial-order.trial-header-green .trial-col {
+    background-color: rgba(46,204,113,0.3);
+}
+#fennec-trial-overlay .trial-order.trial-header-purple .trial-col {
+    background-color: rgba(128,0,128,0.3);
+}
+#fennec-trial-overlay .trial-order.trial-header-red .trial-col {
+    background-color: rgba(139,0,0,0.3);
+}
 #fennec-trial-overlay .trial-col-wrap {
     flex: 1;
     text-align: center;
