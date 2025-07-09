@@ -1673,38 +1673,64 @@
             container.className = 'update-fields';
             overlay.appendChild(container);
 
-            const fields = [
-                ['companyName', 'COMPANY NAME'],
-                ['companyPrincipal', 'COMPANY PRINCIPAL ADDRESS'],
-                ['companyMailing', 'COMPANY MAILING ADDRESS'],
-                ['purpose', 'PURPOSE'],
-                ['agentName', 'AGENT NAME'],
-                ['agentAddress', 'AGENT ADDRESS'],
-                ['memberName', 'MEMBER NAME'],
-                ['memberAddress', 'MEMBER ADDRESS'],
-                ['directors', 'DIRECTORS (NAME AND ADDRESS)'],
-                ['shareholders', 'SHAREHOLDERS (NAME AND ADDRESS)'],
-                ['officers', 'OFFICERS (NAME AND ADDRESS)']
+            const sections = [
+                ['COMPANY', [
+                    ['companyName', 'COMPANY NAME', storedOrderInfo ? storedOrderInfo.companyName : ''],
+                    ['companyPrincipal', 'COMPANY PRINCIPAL ADDRESS', storedOrderInfo ? (storedOrderInfo.companyAddress || '') : ''],
+                    ['companyMailing', 'COMPANY MAILING ADDRESS', storedOrderInfo ? (storedOrderInfo.companyMailing || '') : ''],
+                    ['purpose', 'PURPOSE', storedOrderInfo ? (storedOrderInfo.purpose || '') : '']
+                ]],
+                ['RA', [
+                    ['agentName', 'AGENT NAME', storedOrderInfo && storedOrderInfo.registeredAgent ? storedOrderInfo.registeredAgent.name : ''],
+                    ['agentAddress', 'AGENT ADDRESS', storedOrderInfo && storedOrderInfo.registeredAgent ? storedOrderInfo.registeredAgent.address : '']
+                ]],
+                ['MEMBERS/DIRECTORS', [
+                    ['memberName', 'MEMBER NAME', ''],
+                    ['memberAddress', 'MEMBER ADDRESS', '']
+                ]],
+                ['OFFICERS', [
+                    ['officers', 'OFFICERS (NAME AND ADDRESS)', '']
+                ]],
+                ['SHAREHOLDERS', [
+                    ['shareholders', 'SHAREHOLDERS (NAME AND ADDRESS)', '']
+                ]]
             ];
 
-            fields.forEach(([key, label]) => {
-                const row = document.createElement('div');
-                const cb = document.createElement('input');
-                cb.type = 'checkbox';
-                cb.dataset.field = key;
-                const lbl = document.createElement('label');
-                lbl.textContent = ' ' + label;
-                lbl.prepend(cb);
-                row.appendChild(lbl);
-                const input = document.createElement('textarea');
-                input.dataset.field = key;
-                input.style.display = 'none';
-                input.className = 'update-input';
-                cb.addEventListener('change', () => {
-                    input.style.display = cb.checked ? 'block' : 'none';
+            const fields = [];
+            sections.forEach(([title, items]) => {
+                const sec = document.createElement('div');
+                sec.className = 'update-section';
+                const h = document.createElement('div');
+                h.className = 'update-section-title';
+                h.textContent = title;
+                sec.appendChild(h);
+                items.forEach(([key, label, value]) => {
+                    const row = document.createElement('div');
+                    row.className = 'update-row';
+                    const cb = document.createElement('input');
+                    cb.type = 'checkbox';
+                    cb.dataset.field = key;
+                    const lbl = document.createElement('label');
+                    lbl.textContent = ' ' + label;
+                    lbl.prepend(cb);
+                    const span = document.createElement('span');
+                    span.className = 'update-current';
+                    if (value) span.textContent = ' (' + value + ')';
+                    lbl.appendChild(span);
+                    row.appendChild(lbl);
+                    const input = document.createElement('textarea');
+                    input.dataset.field = key;
+                    input.style.display = 'none';
+                    input.className = 'update-input';
+                    input.value = value || '';
+                    cb.addEventListener('change', () => {
+                        input.style.display = cb.checked ? 'block' : 'none';
+                    });
+                    row.appendChild(input);
+                    sec.appendChild(row);
+                    fields.push([key, input, cb]);
                 });
-                row.appendChild(input);
-                container.appendChild(row);
+                container.appendChild(sec);
             });
 
             const submit = document.createElement('button');

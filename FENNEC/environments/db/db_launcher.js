@@ -2323,28 +2323,29 @@
     function applyUpdateFields(updates) {
         if (!updates) return;
         const selectors = {
-            companyName: 'input[name="companyName"]',
-            companyPrincipal: 'input[name="company_principal_address"]',
-            companyMailing: 'input[name="company_mailing_address"]',
-            purpose: 'textarea[name="purpose"]',
-            agentName: 'input[name="agent_name"]',
-            agentAddress: 'input[name="agent_address"]',
-            memberName: 'input[name="member_name"]',
-            memberAddress: 'input[name="member_address"]',
-            directors: 'textarea[name="directors"]',
-            shareholders: 'textarea[name="shareholders"]',
-            officers: 'textarea[name="officers"]'
+            companyName: ['button[onclick*="modalEditCompInfo"]', '#modalEditCompInfo', '#compName1', 'button[onclick*="update-comp-info"]']
         };
-        Object.keys(updates).forEach(k => {
-            const sel = selectors[k];
-            const el = sel && document.querySelector(sel);
-            if (el) {
-                el.value = updates[k];
-                el.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-        });
-        const saveBtn = document.querySelector('#btnUpdateOrder');
-        if (saveBtn) saveBtn.click();
+        const queue = Object.keys(updates);
+        function next() {
+            if (!queue.length) return;
+            const key = queue.shift();
+            const cfg = selectors[key];
+            if (!cfg) { next(); return; }
+            const [btnSel, modalSel, inputSel, saveSel] = cfg;
+            const btn = document.querySelector(btnSel);
+            if (btn) btn.click();
+            setTimeout(() => {
+                const input = document.querySelector(modalSel + ' ' + inputSel);
+                if (input) {
+                    input.value = updates[key];
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                const save = document.querySelector(modalSel + ' ' + saveSel);
+                if (save) save.click();
+                setTimeout(next, 600);
+            }, 400);
+        }
+        next();
     }
 
     function processUpdateRequest(data) {
