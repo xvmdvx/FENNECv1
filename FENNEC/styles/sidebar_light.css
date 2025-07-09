@@ -301,6 +301,12 @@
     color: #000;
 }
 
+
+.fennec-light-mode .quick-resolve-file-icon {
+    color: #0a0;
+}
+
+
 .fennec-light-mode #fennec-trial-overlay .name-match {
     margin-left: 4px;
 }
