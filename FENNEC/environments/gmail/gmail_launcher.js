@@ -202,6 +202,7 @@
             const billingBox = container.querySelector("#billing-section-box");
             if (!quick || !orderBox) return;
             if (reviewMode) {
+                if (issueBox) issueBox.style.display = "block";
                 const compLabel = Array.from(container.querySelectorAll(".section-label"))
                     .find(l => l.textContent.trim().startsWith("COMPANY"));
                 const compBox = compLabel ? compLabel.nextElementSibling : null;
@@ -221,14 +222,9 @@
                     orderBox.appendChild(compBox);
                 }
                 if (compLabel) compLabel.remove();
-                orderBox.appendChild(quick);
-                quick.classList.remove("white-box");
-                quick.classList.remove("quick-summary-collapsed");
-                quick.style.margin = "8px 0 0";
-                quick.style.padding = "0";
-                quick.style.maxHeight = "none";
+                if (quick) quick.remove();
                 Array.from(container.children).forEach(el => {
-                    if (el !== quick && el !== clientLabel && el !== clientBox && el !== billingLabel && el !== billingBox) el.style.display = "none";
+                    if (el !== clientLabel && el !== clientBox && el !== billingLabel && el !== billingBox) el.style.display = "none";
                 });
                 if (clientLabel && clientBox) { clientLabel.style.display = ""; clientBox.style.display = ""; }
                 if (billingLabel && billingBox) { billingLabel.style.display = ""; billingBox.style.display = ""; }
@@ -866,6 +862,10 @@
             } else if (summary.parentElement !== dnaBox) {
                 dnaBox.appendChild(summary);
             }
+            const kount = document.getElementById('kount-summary');
+            if (kount && summary.nextSibling !== kount) {
+                dnaBox.insertBefore(kount, summary.nextSibling);
+            }
             const compLabel = Array.from(document.querySelectorAll('#copilot-sidebar .section-label'))
                 .find(el => el.textContent.trim().startsWith('COMPANY'));
             if (compLabel && dnaBox.nextElementSibling !== compLabel) {
@@ -1227,7 +1227,9 @@
             if (dnaBox) {
                 const summary = dnaBox.querySelector('#dna-summary');
                 if (summary) summary.innerHTML = '';
-                sessionSet({ adyenDnaInfo: null });
+                const kount = dnaBox.querySelector('#kount-summary');
+                if (kount) kount.innerHTML = '';
+                sessionSet({ adyenDnaInfo: null, kountInfo: null });
                 repositionDnaSummary();
             }
             if (issueLabel) {
@@ -1242,6 +1244,7 @@
             const dbBox = document.getElementById('db-summary-section');
             const issueBox = document.getElementById('issue-summary-box');
             const dnaSummary = document.getElementById('dna-summary');
+            const kountSummary = document.getElementById('kount-summary');
             let actionsRow = document.querySelector('#copilot-sidebar .copilot-actions');
             if (!actionsRow) {
                 const body = document.querySelector('#copilot-sidebar .copilot-body');
@@ -1306,6 +1309,7 @@
                 setupResolveButton();
             }
             if (dnaSummary) dnaSummary.innerHTML = '';
+            if (kountSummary) kountSummary.innerHTML = '';
             repositionDnaSummary();
         }
 
