@@ -914,6 +914,10 @@
     margin: 4px 0 8px;
     height: 40px;
 }
+.update-section-title {
+    font-weight: bold;
+    margin: 6px 0 4px;
+}
 
 #fennec-kb-backdrop {
     position: fixed;
