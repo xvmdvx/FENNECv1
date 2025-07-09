@@ -45,6 +45,10 @@
                         <div id="kount-summary" style="margin-top:10px"></div>
                     </div>
                     <div id="fraud-summary-section"></div>
+                    <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
+                        <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
+                        <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
+                    </div>
                     <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                     <div id="review-mode-label" class="review-mode-label" style="margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
                 </div>`;
@@ -940,6 +944,11 @@
 
         function formatIssueText(text) {
             if (!text) return '';
+            const norm = text.toLowerCase().replace(/\s+/g, ' ').trim();
+            if (norm.includes('a clear photo of the card used to pay for the order') &&
+                norm.includes('selfie holding your id')) {
+                return 'ID CONFIRMATION ISSUE';
+            }
             let formatted = text.replace(/\s*(\d+\s*[).])/g, (m,g)=>'\n'+g+' ');
             return formatted.replace(/^\n/, '').trim();
         }

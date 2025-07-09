@@ -2062,6 +2062,11 @@
 
     function formatIssueText(text) {
         if (!text) return '';
+        const norm = text.toLowerCase().replace(/\s+/g, ' ').trim();
+        if (norm.includes('a clear photo of the card used to pay for the order') &&
+            norm.includes('selfie holding your id')) {
+            return 'ID CONFIRMATION ISSUE';
+        }
         let formatted = text.replace(/\s*(\d+\s*[).])/g, (m, g) => '\n' + g + ' ');
         return formatted.replace(/^\n/, '').trim();
     }
