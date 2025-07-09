@@ -2193,6 +2193,16 @@
         ta.value = 'DUPLICATE ORDER';
     }
 
+    function clickFraudReviewButton() {
+        const btn = document.getElementById('fraud_review_action');
+        if (!btn) return;
+        btn.click();
+        setTimeout(() => {
+            const yes = document.getElementById('fraud-review-yes-button');
+            if (yes) yes.click();
+        }, 500);
+    }
+
     function formatDateLikeParent(text) {
         const d = new Date(text);
         if (isNaN(d)) return text;
@@ -2215,7 +2225,7 @@
         }
     }
 
-    function autoResolveIssue(comment) {
+    function autoResolveIssue(comment, cb) {
         const clickResolve = () => {
             const btn = Array.from(document.querySelectorAll('a'))
                 .find(a => /mark resolved/i.test(a.textContent));
@@ -2242,7 +2252,7 @@
                         resolved: true,
                         comment
                     }
-                });
+                }, cb);
             } else {
                 setTimeout(fillComment, 500);
             }
@@ -2250,7 +2260,7 @@
         clickResolve();
     }
 
-    function addOrderComment(comment) {
+    function addOrderComment(comment, cb) {
         const openModal = () => {
             const btn = Array.from(document.querySelectorAll('a,button'))
                 .find(el => /modalAddNote/.test(el.getAttribute('onclick') || ''));
@@ -2274,7 +2284,7 @@
                         resolved: false,
                         comment
                     }
-                });
+                }, cb);
             } else {
                 setTimeout(fill, 500);
             }
@@ -2288,11 +2298,16 @@
         if (!info.orderId || String(data.orderId) !== String(info.orderId)) return;
         chrome.storage.local.remove('fennecPendingComment');
         const issue = getLastIssueInfo();
+        const after = () => { if (data.release) setTimeout(clickFraudReviewButton, 500); };
         if (issue && issue.active) {
             if (data.cancel) sessionStorage.setItem('fennecCancelPending', '1');
-            autoResolveIssue(data.comment);
+            autoResolveIssue(data.comment, after);
         } else {
-            addOrderComment(data.comment);
+            if (data.comment) {
+                addOrderComment(data.comment, after);
+            } else {
+                after();
+            }
             if (data.cancel) setTimeout(openCancelPopup, 1500);
         }
     }
@@ -2317,8 +2332,8 @@
             });
         }).then(() => {
             sessionSet({ fennecUploadDone: { time: Date.now() } });
-            if (data.comment) {
-                processPendingComment({ orderId: data.orderId, comment: data.comment, cancel: data.cancel });
+            if (data.comment || data.release) {
+                processPendingComment({ orderId: data.orderId, comment: data.comment, cancel: data.cancel, release: data.release });
             }
         }).catch(err => console.warn('[Copilot] Upload failed:', err));
     }
