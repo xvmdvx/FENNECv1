@@ -1220,6 +1220,25 @@
             const dbBox = document.getElementById('db-summary-section');
             const issueBox = document.getElementById('issue-summary-box');
             const dnaSummary = document.getElementById('dna-summary');
+            let actionsRow = document.querySelector('#copilot-sidebar .copilot-actions');
+            if (!actionsRow) {
+                const body = document.querySelector('#copilot-sidebar .copilot-body');
+                actionsRow = document.createElement('div');
+                actionsRow.className = 'copilot-actions';
+                actionsRow.style.justifyContent = 'center';
+                if (body) body.prepend(actionsRow);
+            }
+            let searchBtn = document.getElementById('btn-email-search');
+            if (!searchBtn) {
+                searchBtn = document.createElement('button');
+                searchBtn.id = 'btn-email-search';
+                searchBtn.className = 'copilot-button';
+                searchBtn.textContent = '📧 SEARCH';
+                searchBtn.onclick = handleEmailSearchClick;
+                actionsRow.appendChild(searchBtn);
+            } else {
+                actionsRow.appendChild(searchBtn);
+            }
             if (orderContainer) orderContainer.style.display = 'none';
             if (dbBox) dbBox.style.display = 'none';
             if (issueBox) issueBox.style.display = 'none';
@@ -1276,6 +1295,7 @@
             });
             if (!ctx) {
                 showInitialStatus();
+                applyReviewMode();
                 return;
             }
             fillOrderSummaryBox(ctx);
