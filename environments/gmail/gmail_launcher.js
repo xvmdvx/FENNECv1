@@ -1209,16 +1209,16 @@
                 const dIcon = document.getElementById('dropped-file-icon');
                 if (dIcon) dIcon.remove();
                 let btn = document.getElementById('issue-resolve-btn');
-                const label = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
+                const btnLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
                 if (!btn) {
                     btn = document.createElement('button');
                     btn.id = 'issue-resolve-btn';
                     btn.className = 'copilot-button';
                     btn.style.marginTop = '4px';
-                    btn.textContent = label;
+                    btn.textContent = btnLabel;
                     issueBox.appendChild(btn);
                 } else {
-                    btn.textContent = label;
+                    btn.textContent = btnLabel;
                 }
                 const updBtn = document.getElementById('update-info-btn');
                 if (updBtn) issueBox.appendChild(updBtn);
@@ -1297,16 +1297,16 @@
                 const dIcon = document.getElementById('dropped-file-icon');
                 if (dIcon) dIcon.remove();
                 let btn = document.getElementById('issue-resolve-btn');
-                const label = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
+                const btnLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
                 if (!btn) {
                     btn = document.createElement('button');
                     btn.id = 'issue-resolve-btn';
                     btn.className = 'copilot-button';
                     btn.style.marginTop = '4px';
-                    btn.textContent = label;
+                    btn.textContent = btnLabel;
                     issueBox.appendChild(btn);
                 } else {
-                    btn.textContent = label;
+                    btn.textContent = btnLabel;
                     issueBox.appendChild(btn);
                 }
                 const updBtn = document.getElementById('update-info-btn');
