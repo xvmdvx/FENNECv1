@@ -878,6 +878,37 @@
     color: #000;
 }
 
+#fennec-update-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(46,46,46,0.98);
+    color: #f1f1f1;
+    border: 1px solid gray;
+    border-radius: 12px;
+    padding: 24px 32px;
+    z-index: 1065;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    font-size: var(--sb-font-size);
+    width: 500px;
+    max-width: 90%;
+    text-align: left;
+}
+
+#fennec-update-title {
+    text-align: center;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 8px;
+    font-size: calc(var(--sb-font-size) + 20px) !important;
+}
+#fennec-update-overlay .update-fields textarea {
+    width: 100%;
+    margin: 4px 0 8px;
+    height: 40px;
+}
+
 #fennec-kb-backdrop {
     position: fixed;
     top: 0;

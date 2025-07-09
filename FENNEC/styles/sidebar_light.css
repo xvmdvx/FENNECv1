@@ -310,6 +310,32 @@
 .fennec-light-mode #fennec-trial-overlay .name-match.cross {
     color: #000;
 }
+
+.fennec-light-mode #fennec-update-overlay {
+    background-color: rgba(255,255,255,0.98);
+    color: #000 !important;
+    border: 1px solid #777;
+    width: 500px;
+    max-width: 90%;
+    padding: 24px 32px;
+    font-size: var(--sb-font-size);
+    border-radius: 12px;
+}
+.fennec-light-mode #fennec-update-title {
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 8px;
+    font-size: calc(var(--sb-font-size) + 20px) !important;
+}
+.fennec-light-mode #fennec-update-overlay .update-fields textarea {
+    width: 100%;
+    margin: 4px 0 8px;
+    height: 40px;
+    background: #fff;
+    color: #000;
+    border: 1px solid #777;
+}
 .fennec-light-mode #fennec-trial-overlay .trial-company-name {
     font-size: calc(var(--sb-font-size) + 12px);
     font-weight: bold;
