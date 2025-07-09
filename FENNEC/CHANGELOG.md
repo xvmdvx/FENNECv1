@@ -154,3 +154,5 @@
 - CVV tags in DB SB Fraud Review correctly detect "Matches (M)" and the Fraud Review summary reappears after using CLEAR.
 - After DNA loads during the FRAUD REVIEW XRAY flow, focus switches to the DB email search tab until results load, then returns to the Fraud tracker.
 - The DB search page now opens only after DNA extraction so the order history is retrieved at the end of XRAY.
+- Comment & resolve now runs in the background without changing focus.
+- New UPDATE floater collects order edits and opens the DB tab silently.

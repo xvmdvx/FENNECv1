@@ -1372,6 +1372,7 @@
                         <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
                         <textarea id="issue-comment-input" class="quick-resolve-comment" placeholder="Comment..."></textarea>
                         <button id="issue-resolve-btn" class="copilot-button" style="margin-top:4px;">COMMENT &amp; RESOLVE</button>
+                        <button id="update-info-btn" class="copilot-button" style="margin-top:4px;">UPDATE</button>
                     </div>
                     ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
                     <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
@@ -1421,6 +1422,7 @@
             if (clearSb) clearSb.onclick = clearSidebar;
 
             setupResolveButton();
+            setupUpdateButton();
             applyReviewMode();
             loadDnaSummary();
             loadKountSummary();
@@ -1568,7 +1570,97 @@
                 }
                 chrome.storage.local.set({ fennecPendingComment: { orderId, comment } }, () => {
                     const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
-                    chrome.runtime.sendMessage({ action: "openOrReuseTab", url, refocus: true, active: true });
+                    chrome.runtime.sendMessage({ action: "openOrReuseTab", url, active: false });
+                });
+            };
+        }
+
+        function setupUpdateButton() {
+            const btn = document.getElementById('update-info-btn');
+            if (!btn || btn.dataset.listenerAttached) return;
+            btn.dataset.listenerAttached = 'true';
+            btn.onclick = showUpdateOverlay;
+        }
+
+        function showUpdateOverlay() {
+            const orderId = (storedOrderInfo && storedOrderInfo.orderId) ||
+                (currentContext && currentContext.orderNumber);
+            if (!orderId) { alert('No order ID detected.'); return; }
+
+            let overlay = document.getElementById('fennec-update-overlay');
+            if (overlay) overlay.remove();
+            overlay = document.createElement('div');
+            overlay.id = 'fennec-update-overlay';
+            const title = document.createElement('div');
+            title.id = 'fennec-update-title';
+            title.textContent = 'UPDATE ORDER INFO';
+            overlay.appendChild(title);
+            const close = document.createElement('div');
+            close.className = 'trial-close';
+            close.textContent = '✕';
+            close.addEventListener('click', () => overlay.remove());
+            overlay.appendChild(close);
+
+            const container = document.createElement('div');
+            container.className = 'update-fields';
+            overlay.appendChild(container);
+
+            const fields = [
+                ['companyName', 'COMPANY NAME'],
+                ['companyPrincipal', 'COMPANY PRINCIPAL ADDRESS'],
+                ['companyMailing', 'COMPANY MAILING ADDRESS'],
+                ['purpose', 'PURPOSE'],
+                ['agentName', 'AGENT NAME'],
+                ['agentAddress', 'AGENT ADDRESS'],
+                ['memberName', 'MEMBER NAME'],
+                ['memberAddress', 'MEMBER ADDRESS'],
+                ['directors', 'DIRECTORS (NAME AND ADDRESS)'],
+                ['shareholders', 'SHAREHOLDERS (NAME AND ADDRESS)'],
+                ['officers', 'OFFICERS (NAME AND ADDRESS)']
+            ];
+
+            fields.forEach(([key, label]) => {
+                const row = document.createElement('div');
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.dataset.field = key;
+                const lbl = document.createElement('label');
+                lbl.textContent = ' ' + label;
+                lbl.prepend(cb);
+                row.appendChild(lbl);
+                const input = document.createElement('textarea');
+                input.dataset.field = key;
+                input.style.display = 'none';
+                input.className = 'update-input';
+                cb.addEventListener('change', () => {
+                    input.style.display = cb.checked ? 'block' : 'none';
+                });
+                row.appendChild(input);
+                container.appendChild(row);
+            });
+
+            const submit = document.createElement('button');
+            submit.id = 'update-submit';
+            submit.className = 'copilot-button';
+            submit.style.marginTop = '8px';
+            submit.textContent = 'UPDATE';
+            overlay.appendChild(submit);
+
+            document.body.appendChild(overlay);
+
+            submit.onclick = () => {
+                const updates = {};
+                fields.forEach(([key]) => {
+                    const cb = overlay.querySelector(`input[data-field="${key}"]`);
+                    const input = overlay.querySelector(`textarea[data-field="${key}"]`);
+                    if (cb && cb.checked && input) {
+                        updates[key] = input.value.trim();
+                    }
+                });
+                chrome.storage.local.set({ fennecUpdateRequest: { orderId, updates } }, () => {
+                    const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
+                    chrome.runtime.sendMessage({ action: 'openOrReuseTab', url, active: false });
+                    overlay.remove();
                 });
             };
         }

@@ -2294,6 +2294,41 @@
         chrome.storage.local.set({ fennecDupCancelDone: { orderId: id } });
     }
 
+    function applyUpdateFields(updates) {
+        if (!updates) return;
+        const selectors = {
+            companyName: 'input[name="companyName"]',
+            companyPrincipal: 'input[name="company_principal_address"]',
+            companyMailing: 'input[name="company_mailing_address"]',
+            purpose: 'textarea[name="purpose"]',
+            agentName: 'input[name="agent_name"]',
+            agentAddress: 'input[name="agent_address"]',
+            memberName: 'input[name="member_name"]',
+            memberAddress: 'input[name="member_address"]',
+            directors: 'textarea[name="directors"]',
+            shareholders: 'textarea[name="shareholders"]',
+            officers: 'textarea[name="officers"]'
+        };
+        Object.keys(updates).forEach(k => {
+            const sel = selectors[k];
+            const el = sel && document.querySelector(sel);
+            if (el) {
+                el.value = updates[k];
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+        const saveBtn = document.querySelector('#btnUpdateOrder');
+        if (saveBtn) saveBtn.click();
+    }
+
+    function processUpdateRequest(data) {
+        if (!data) return;
+        const info = getBasicOrderInfo();
+        if (!info.orderId || String(info.orderId) !== String(data.orderId)) return;
+        chrome.storage.local.remove('fennecUpdateRequest');
+        applyUpdateFields(data.updates);
+    }
+
     function openCodaSearch() {
         let overlay = document.getElementById('fennec-coda-overlay');
         if (overlay) overlay.remove();
@@ -2823,6 +2858,10 @@ chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment
     processPendingComment(fennecPendingComment);
 });
 
+chrome.storage.local.get({ fennecUpdateRequest: null }, ({ fennecUpdateRequest }) => {
+    processUpdateRequest(fennecUpdateRequest);
+});
+
 chrome.storage.local.get({ fennecDupCancel: null }, ({ fennecDupCancel }) => {
     processDuplicateCancel(fennecDupCancel);
 });
@@ -2847,6 +2886,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
     if (area === 'local' && changes.fennecDupCancel) {
         processDuplicateCancel(changes.fennecDupCancel.newValue);
+    }
+    if (area === 'local' && changes.fennecUpdateRequest) {
+        processUpdateRequest(changes.fennecUpdateRequest.newValue);
     }
     if (area === 'local' && (changes.sidebarDb || changes.sidebarOrderId || changes.sidebarOrderInfo)) {
         const currentId = getBasicOrderInfo().orderId;
