@@ -2285,6 +2285,31 @@
         }
     }
 
+    function processPendingUpload(data) {
+        if (!data) return;
+        const info = getBasicOrderInfo();
+        if (!info.orderId || String(data.orderId) !== String(info.orderId)) return;
+        const m = location.pathname.match(/\/storage\/incfile\/(\d+)/);
+        if (!m) return;
+        chrome.storage.local.remove('fennecPendingUpload');
+        const token = document.querySelector('meta[name="csrf-token"]');
+        const csrf = token ? token.getAttribute('content') : '';
+        fetch(data.fileData).then(r => r.blob()).then(blob => {
+            const form = new FormData();
+            form.append('file', blob, data.fileName);
+            return fetch(`/storage/incfile/${data.orderId}/create`, {
+                method: 'POST',
+                body: form,
+                headers: { 'X-CSRF-TOKEN': csrf },
+                credentials: 'include'
+            });
+        }).then(() => {
+            if (data.comment) {
+                processPendingComment({ orderId: data.orderId, comment: data.comment, cancel: data.cancel });
+            }
+        }).catch(err => console.warn('[Copilot] Upload failed:', err));
+    }
+
     function processDuplicateCancel(id) {
         if (!id) return;
         const info = getBasicOrderInfo();
@@ -2858,6 +2883,10 @@ chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment
     processPendingComment(fennecPendingComment);
 });
 
+chrome.storage.local.get({ fennecPendingUpload: null }, ({ fennecPendingUpload }) => {
+    processPendingUpload(fennecPendingUpload);
+});
+
 chrome.storage.local.get({ fennecUpdateRequest: null }, ({ fennecUpdateRequest }) => {
     processUpdateRequest(fennecUpdateRequest);
 });
@@ -2883,6 +2912,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
     if (area === 'local' && changes.fennecPendingComment) {
         processPendingComment(changes.fennecPendingComment.newValue);
+    }
+    if (area === 'local' && changes.fennecPendingUpload) {
+        processPendingUpload(changes.fennecPendingUpload.newValue);
     }
     if (area === 'local' && changes.fennecDupCancel) {
         processDuplicateCancel(changes.fennecDupCancel.newValue);
