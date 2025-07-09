@@ -74,7 +74,17 @@
             const dbUrl = `https://db.incfile.com/incfile/order/detail/${orderId}?fraud_xray=1`;
             sessionStorage.setItem('fennecShowTrialFloater', '1');
             localStorage.removeItem('fraudXrayFinished');
-            chrome.runtime.sendMessage({ action: 'openTab', url: dbUrl, active: true, refocus: true });
+            chrome.storage.local.set({
+                fraudReviewSession: orderId,
+                sidebarFreezeId: orderId,
+                sidebarDb: [],
+                sidebarOrderId: null,
+                sidebarOrderInfo: null,
+                adyenDnaInfo: null,
+                kountInfo: null
+            }, () => {
+                chrome.runtime.sendMessage({ action: 'openTab', url: dbUrl, active: true, refocus: true });
+            });
         }
 
         function addXrayIcon(el, orderId) {
@@ -529,6 +539,7 @@
                 if (close) close.addEventListener('click', () => {
                     overlay.remove();
                     title.remove();
+                    endFraudSession();
                     chrome.runtime.sendMessage({ action: 'refocusTab' });
                 });
                 const subBtn = overlay.querySelector('#sub-detection-btn');
@@ -596,7 +607,7 @@
                     clickDbAction(selector);
                     overlay.remove();
                     title.remove();
-                    clearSidebar();
+                    endFraudSession();
                     showTrialSuccess();
                     chrome.runtime.sendMessage({ action: 'refocusTab' });
                 }
@@ -979,6 +990,18 @@
             if (fraud) fraud.innerHTML = '';
             if (issue) { const content = issue.querySelector('#issue-summary-content'); const label = issue.querySelector('#issue-status-label'); if (content) content.innerHTML = 'No issue data yet.'; if (label) { label.textContent = ''; label.className = 'issue-status-label'; } issue.style.display = 'none'; }
             insertFraudSummary();
+        }
+
+        function endFraudSession() {
+            clearSidebar();
+            chrome.storage.local.set({
+                fraudReviewSession: null,
+                kountInfo: null
+            });
+            localStorage.removeItem('fraudXrayCompleted');
+            localStorage.removeItem('fraudXrayFinished');
+            sessionStorage.removeItem('fennecShowTrialFloater');
+            showInitialStatus();
         }
 
         function showInitialStatus() {

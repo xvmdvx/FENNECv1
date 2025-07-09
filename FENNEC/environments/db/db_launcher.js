@@ -2781,6 +2781,7 @@ function getLastHoldUser() {
             return;
         }
         const orderId = getBasicOrderInfo().orderId;
+        chrome.storage.local.set({ fraudReviewSession: orderId, sidebarFreezeId: orderId });
         const key = 'fennecLtvRefreshed_' + orderId;
         if (sessionStorage.getItem('fraudXrayPending')) {
             // Wait until the page reloads for accurate LTV
