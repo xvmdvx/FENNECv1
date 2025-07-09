@@ -2304,6 +2304,7 @@
                 credentials: 'include'
             });
         }).then(() => {
+            chrome.storage.local.set({ fennecUploadDone: { time: Date.now() } });
             if (data.comment) {
                 processPendingComment({ orderId: data.orderId, comment: data.comment, cancel: data.cancel });
             }

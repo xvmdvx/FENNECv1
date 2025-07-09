@@ -1183,6 +1183,8 @@
                     input.value = '';
                 }
                 droppedFile = null;
+                const dIcon = document.getElementById('dropped-file-icon');
+                if (dIcon) dIcon.remove();
                 let btn = document.getElementById('issue-resolve-btn');
                 if (!btn) {
                     btn = document.createElement('button');
@@ -1244,6 +1246,8 @@
                     issueBox.appendChild(input);
                 }
                 droppedFile = null;
+                const dIcon = document.getElementById('dropped-file-icon');
+                if (dIcon) dIcon.remove();
                 let btn = document.getElementById('issue-resolve-btn');
                 if (!btn) {
                     btn = document.createElement('button');
@@ -1526,6 +1530,23 @@
                     }
                 }
             }
+            if (area === 'local' && changes.fennecUploadDone) {
+                chrome.storage.local.remove('fennecUploadDone');
+                const box = document.getElementById('issue-summary-box');
+                if (box) {
+                    let msg = document.getElementById('upload-confirm');
+                    if (!msg) {
+                        msg = document.createElement('div');
+                        msg.id = 'upload-confirm';
+                        msg.style.marginTop = '4px';
+                        msg.style.color = '#0a0';
+                        box.appendChild(msg);
+                    }
+                    msg.textContent = 'Document uploaded successfully.';
+                    msg.style.display = 'block';
+                    setTimeout(() => { if (msg) msg.style.display = 'none'; }, 3000);
+                }
+            }
         });
 
         // Ensure DNA summary refreshes when returning from Adyen
@@ -1566,6 +1587,14 @@
                 if (file) {
                     droppedFile = file;
                     resolveBtn.textContent = 'UPLOAD';
+                    let icon = document.getElementById('dropped-file-icon');
+                    if (!icon) {
+                        icon = document.createElement('div');
+                        icon.id = 'dropped-file-icon';
+                        icon.className = 'quick-resolve-file-icon';
+                        commentInput.parentNode.insertBefore(icon, commentInput.nextSibling);
+                    }
+                    icon.textContent = `📎 ${file.name}`;
                 }
             });
             resolveBtn.onclick = () => {
@@ -1578,13 +1607,16 @@
                 }
                 const file = droppedFile;
                 if (file) {
+                    const ext = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : '';
+                    const sanitized = comment ? comment.replace(/[^a-z0-9]/gi, '_').toLowerCase() : '';
+                    const newName = sanitized ? sanitized + ext : file.name;
                     const reader = new FileReader();
                     reader.onload = () => {
                         chrome.storage.local.set({
                             fennecPendingUpload: {
                                 orderId,
                                 comment,
-                                fileName: file.name,
+                                fileName: newName,
                                 fileData: reader.result
                             }
                         }, () => {
@@ -1593,6 +1625,8 @@
                             commentInput.value = '';
                             droppedFile = null;
                             resolveBtn.textContent = 'COMMENT & RESOLVE';
+                            const icon = document.getElementById('dropped-file-icon');
+                            if (icon) icon.remove();
                         });
                     };
                     reader.readAsDataURL(file);
