@@ -1659,6 +1659,7 @@
             if (overlay) overlay.remove();
             overlay = document.createElement('div');
             overlay.id = 'fennec-update-overlay';
+            overlay.style.opacity = '0';
             const title = document.createElement('div');
             title.id = 'fennec-update-title';
             title.textContent = 'UPDATE ORDER INFO';
@@ -1673,6 +1674,7 @@
             container.className = 'update-fields';
             overlay.appendChild(container);
 
+            const isLLC = storedOrderInfo && storedOrderInfo.isLLC;
             const sections = [
                 ['COMPANY', [
                     ['companyName', 'COMPANY NAME', storedOrderInfo ? storedOrderInfo.companyName : ''],
@@ -1684,17 +1686,19 @@
                     ['agentName', 'AGENT NAME', storedOrderInfo && storedOrderInfo.registeredAgent ? storedOrderInfo.registeredAgent.name : ''],
                     ['agentAddress', 'AGENT ADDRESS', storedOrderInfo && storedOrderInfo.registeredAgent ? storedOrderInfo.registeredAgent.address : '']
                 ]],
-                ['MEMBERS/DIRECTORS', [
-                    ['memberName', 'MEMBER NAME', ''],
-                    ['memberAddress', 'MEMBER ADDRESS', '']
-                ]],
-                ['OFFICERS', [
-                    ['officers', 'OFFICERS (NAME AND ADDRESS)', '']
-                ]],
-                ['SHAREHOLDERS', [
-                    ['shareholders', 'SHAREHOLDERS (NAME AND ADDRESS)', '']
+                [isLLC ? 'MEMBERS' : 'DIRECTORS', [
+                    ['memberName', isLLC ? 'MEMBER NAME' : 'DIRECTOR NAME', ''],
+                    ['memberAddress', isLLC ? 'MEMBER ADDRESS' : 'DIRECTOR ADDRESS', '']
                 ]]
             ];
+            if (!isLLC) {
+                sections.push(['OFFICERS', [
+                    ['officers', 'OFFICERS (NAME AND ADDRESS)', '']
+                ]]);
+                sections.push(['SHAREHOLDERS', [
+                    ['shareholders', 'SHAREHOLDERS (NAME AND ADDRESS)', '']
+                ]]);
+            }
 
             const fields = [];
             sections.forEach(([title, items]) => {
@@ -1704,32 +1708,37 @@
                 h.className = 'update-section-title';
                 h.textContent = title;
                 sec.appendChild(h);
+                const box = document.createElement('div');
+                box.className = 'update-box white-box';
                 items.forEach(([key, label, value]) => {
                     const row = document.createElement('div');
                     row.className = 'update-row';
+                    const labelDiv = document.createElement('label');
+                    labelDiv.className = 'update-label';
                     const cb = document.createElement('input');
                     cb.type = 'checkbox';
                     cb.dataset.field = key;
-                    const lbl = document.createElement('label');
-                    lbl.textContent = ' ' + label;
-                    lbl.prepend(cb);
-                    const span = document.createElement('span');
-                    span.className = 'update-current';
-                    if (value) span.textContent = ' (' + value + ')';
-                    lbl.appendChild(span);
-                    row.appendChild(lbl);
+                    labelDiv.appendChild(cb);
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = ' ' + label;
+                    labelDiv.appendChild(textSpan);
+                    const valueDiv = document.createElement('div');
+                    valueDiv.className = 'update-value';
+                    valueDiv.innerHTML = value ? escapeHtml(value) : '<span style="color:#aaa">-</span>';
+                    row.appendChild(labelDiv);
+                    row.appendChild(valueDiv);
                     const input = document.createElement('textarea');
                     input.dataset.field = key;
-                    input.style.display = 'none';
                     input.className = 'update-input';
                     input.value = value || '';
                     cb.addEventListener('change', () => {
-                        input.style.display = cb.checked ? 'block' : 'none';
+                        row.classList.toggle('checked', cb.checked);
                     });
                     row.appendChild(input);
-                    sec.appendChild(row);
+                    box.appendChild(row);
                     fields.push([key, input, cb]);
                 });
+                sec.appendChild(box);
                 container.appendChild(sec);
             });
 
@@ -1741,6 +1750,7 @@
             overlay.appendChild(submit);
 
             document.body.appendChild(overlay);
+            requestAnimationFrame(() => overlay.style.opacity = '1');
 
             submit.onclick = () => {
                 const updates = {};

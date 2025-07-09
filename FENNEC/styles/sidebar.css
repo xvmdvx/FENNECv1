@@ -900,6 +900,8 @@
     width: 500px;
     max-width: 90%;
     text-align: left;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 
 #fennec-update-title {
@@ -909,14 +911,49 @@
     margin-bottom: 8px;
     font-size: calc(var(--sb-font-size) + 20px) !important;
 }
-#fennec-update-overlay .update-fields textarea {
+#fennec-update-overlay .update-input {
     width: 100%;
-    margin: 4px 0 8px;
+    margin-top: 4px;
     height: 40px;
 }
 .update-section-title {
     font-weight: bold;
     margin: 6px 0 4px;
+}
+
+.update-box {
+    padding: 8px;
+    margin-bottom: 10px;
+}
+
+.update-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 4px 0;
+    font-size: 13px;
+}
+
+.update-label {
+    flex: 1;
+    text-align: right;
+}
+
+.update-value {
+    flex: 1;
+    word-break: break-word;
+}
+
+.update-input {
+    width: 100%;
+    margin-top: 4px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.update-row.checked .update-input {
+    max-height: 80px;
 }
 
 #fennec-kb-backdrop {

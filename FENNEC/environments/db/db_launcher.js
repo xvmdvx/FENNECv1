@@ -1806,6 +1806,7 @@
             formationDate: company ? company.formationDate : null,
             registeredAgent: hasAgentInfo ? { name: agent.name, address: agent.address } : null,
             members: directors,
+            isLLC,
             billing,
             hasVA,
             hasRA,

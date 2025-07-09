@@ -326,6 +326,8 @@
     padding: 24px 32px;
     font-size: var(--sb-font-size);
     border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 .fennec-light-mode #fennec-update-title {
     text-align: center;
@@ -334,9 +336,9 @@
     margin-bottom: 8px;
     font-size: calc(var(--sb-font-size) + 20px) !important;
 }
-.fennec-light-mode #fennec-update-overlay .update-fields textarea {
+.fennec-light-mode #fennec-update-overlay .update-input {
     width: 100%;
-    margin: 4px 0 8px;
+    margin-top: 4px;
     height: 40px;
     background: #fff;
     color: #000;
@@ -346,6 +348,44 @@
     font-weight: bold;
     margin: 6px 0 4px;
     color: #000;
+}
+
+.fennec-light-mode .update-box {
+    padding: 8px;
+    margin-bottom: 10px;
+}
+
+.fennec-light-mode .update-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 4px 0;
+    font-size: 13px;
+}
+
+.fennec-light-mode .update-label {
+    flex: 1;
+    text-align: right;
+}
+
+.fennec-light-mode .update-value {
+    flex: 1;
+    word-break: break-word;
+}
+
+.fennec-light-mode .update-input {
+    width: 100%;
+    margin-top: 4px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: #fff;
+    color: #000;
+    border: 1px solid #777;
+}
+
+.fennec-light-mode .update-row.checked .update-input {
+    max-height: 80px;
 }
 .fennec-light-mode #fennec-trial-overlay .trial-company-name {
     font-size: calc(var(--sb-font-size) + 12px);
