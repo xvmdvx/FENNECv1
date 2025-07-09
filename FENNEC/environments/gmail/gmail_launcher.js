@@ -630,6 +630,14 @@
             return details;
         }
 
+        function getVisibleEmailBodies() {
+            return Array.from(document.querySelectorAll('.a3s')).filter(el => el.offsetParent !== null);
+        }
+
+        function isEmailOpen() {
+            return getVisibleEmailBodies().length > 0;
+        }
+
         function extractOrderContextFromEmail() {
             try {
                 const senderSpan = document.querySelector("h3.iw span[email]");
@@ -637,7 +645,7 @@
                 const senderName = senderSpan?.innerText?.trim() || null;
 
                 const subjectText = document.querySelector('h2.hP')?.innerText || "";
-                const a3sNodes = document.querySelectorAll('.a3s');
+                const a3sNodes = getVisibleEmailBodies();
                 let fullText = subjectText;
                 a3sNodes.forEach(n => {
                     if (n.innerText) fullText += "\n" + n.innerText;
@@ -1434,7 +1442,7 @@
             const sidebar = document.getElementById('copilot-sidebar');
             if (sidebar) {
                 applyPaddingToMainPanels();
-                const hasEmail = !!document.querySelector('.a3s');
+                const hasEmail = isEmailOpen();
                 if (hasEmail !== lastEmailOpen) {
                     lastEmailOpen = hasEmail;
                     if (hasEmail) {
@@ -1573,7 +1581,7 @@
                 const skipSearch = button.dataset.skipSearch === "1";
                 delete button.dataset.skipSearch;
                 try {
-                    const bodyNode = document.querySelector(".a3s");
+                    const bodyNode = getVisibleEmailBodies()[0];
                     if (!bodyNode) {
                         alert("No se encontró el cuerpo del correo.");
                         return;
