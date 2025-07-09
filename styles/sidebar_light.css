@@ -1,0 +1,424 @@
+/* Overrides for minimal black and white light mode */
+.fennec-light-mode #copilot-sidebar {
+    background: #fff;
+    color: #000;
+}
+.fennec-light-mode #copilot-sidebar * {
+    color: #000;
+}
+.fennec-light-mode .copilot-header {
+    background: #000;
+    color: #fff !important;
+    border-bottom: 1px solid #777;
+}
+/* Ensure all header text stays white on the black bar */
+.fennec-light-mode .copilot-header,
+.fennec-light-mode .copilot-header * {
+    color: #fff !important;
+}
+.fennec-light-mode .copilot-button {
+    background-color: #fff;
+    color: #000;
+    border: 1px solid #777;
+}
+.fennec-light-mode .order-summary-box,
+.fennec-light-mode .intel-summary-box,
+.fennec-light-mode .issue-summary-box,
+.fennec-light-mode #copilot-sidebar .white-box,
+.fennec-light-mode #fennec-diagnose-overlay,
+.fennec-light-mode #fennec-diagnose-overlay .diag-card,
+.fennec-light-mode #fennec-diagnose-overlay .diag-issue {
+    background: #fff;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #fennec-coda-overlay {
+    background: #fff;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #fennec-coda-overlay input {
+    background: #fff;
+    color: #000;
+    border: 1px solid #777;
+}
+.fennec-light-mode #fennec-coda-overlay .coda-result-item a {
+    color: #0000ee;
+}
+.fennec-light-mode #fennec-trial-overlay {
+    background-color: rgba(255,255,255,0.98);
+    color: #000 !important;
+    border: 1px solid #777;
+    width: 840px;
+    max-width: 840px;
+    padding: 24px 32px;
+    font-size: var(--sb-font-size);
+    border-radius: 12px;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-close {
+    color: #000;
+}
+.fennec-light-mode #fennec-trial-title {
+    text-align: center;
+    font-weight: bold;
+    color: #fff;
+    margin: 0 auto 4px;
+    width: 840px;
+    padding: 8px 0;
+    border-radius: 12px;
+    font-size: calc(var(--sb-font-size) + 26px) !important;
+    line-height: 1.2;
+    text-shadow: 0 0 4px #fff, 0 0 8px #fff;
+    box-shadow: 0 0 0 2px #fff inset;
+    -webkit-text-stroke: 1px #fff;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-columns {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-order {
+    text-align: center;
+    margin-bottom: 8px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-order .trial-col {
+    border-radius: 12px;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-order .trial-line {
+    font-size: calc(var(--sb-font-size) + 6px);
+    background: rgba(255,255,255,0.9);
+    color: #000;
+    padding: 2px 4px;
+    border-radius: 4px;
+    display: block;
+    width: 100%;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-order .trial-line.no-highlight {
+    background: none;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-order .trial-company-name {
+    font-size: calc(var(--sb-font-size) + 12px);
+    display: inline-block;
+    width: auto;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-order .trial-tags .copilot-tag {
+    font-size: calc(var(--sb-font-size) + 5px);
+}
+.fennec-light-mode #fennec-trial-overlay .trial-order .trial-btn-line {
+    margin-top: 4px;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-order.trial-header-green .trial-col {
+    background-color: rgba(46,204,113,0.99);
+}
+.fennec-light-mode #fennec-trial-overlay .trial-order.trial-header-purple .trial-col {
+    background-color: rgba(128,0,128,0.99);
+}
+.fennec-light-mode #fennec-trial-overlay .trial-order.trial-header-red .trial-col {
+    background-color: rgba(139,0,0,0.99);
+}
+.fennec-light-mode #fennec-trial-overlay .trial-col-wrap {
+    flex: 1;
+    text-align: center;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-col-title {
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 2px;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-col {
+    text-align: center;
+    background: #d3d3d3;
+    color: #000;
+    padding: 8px;
+    border-radius: 8px;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-action-btn {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 4px 10px;
+    background-color: #fff;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-btn-cr { background-color: #fff; color: #000; }
+.fennec-light-mode #fennec-trial-overlay .trial-btn-id { background-color: #fff; color: #000; }
+.fennec-light-mode #fennec-trial-overlay .trial-btn-release { background-color: #fff; color: #000; }
+.fennec-light-mode #fennec-trial-overlay .trial-action-btn:hover { opacity: 0.9; }
+.fennec-light-mode #fennec-trial-overlay .big-trial-btn {
+    font-size: calc(var(--sb-font-size) + 7px);
+    padding: 6px 14px;
+    margin-left: 8px;
+    opacity: 0.5;
+}
+.fennec-light-mode #fennec-trial-overlay.trial-header-green { background-color: rgba(255,255,255,0.98); }
+.fennec-light-mode #fennec-trial-overlay.trial-header-purple { background-color: rgba(255,255,255,0.98); }
+.fennec-light-mode #fennec-trial-overlay.trial-header-red { background-color: rgba(255,255,255,0.98); }
+
+.fennec-light-mode .trial-success-msg {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.8);
+    color: #0a0;
+    padding: 8px 16px;
+    border-radius: 8px;
+    z-index: 1066;
+    font-weight: bold;
+}
+.fennec-light-mode #fennec-trial-title.trial-header-green { background-color: rgba(46,204,113,0.99); }
+.fennec-light-mode #fennec-trial-title.trial-header-purple { background-color: rgba(128,0,128,0.99); }
+.fennec-light-mode #fennec-trial-title.trial-header-red { background-color: rgba(139,0,0,0.99); }
+.fennec-light-mode .trial-header-green { background-color: rgba(46,204,113,0.99); }
+.fennec-light-mode .trial-header-purple { background-color: rgba(128,0,128,0.99); }
+.fennec-light-mode .trial-header-red { background-color: rgba(139,0,0,0.99); }
+.fennec-light-mode .copilot-tag {
+    background-color: #000;
+    color: #fff !important;
+}
+
+/* Keep tags readable inside white boxes */
+.fennec-light-mode #copilot-sidebar .copilot-tag {
+    color: #fff !important;
+}
+
+#dna-summary:empty {
+    display: none;
+}
+
+#copilot-sidebar .white-box .dna-label {
+    color: #000 !important;
+}
+#copilot-sidebar .white-box .dna-label.copilot-tag-black {
+    color: #fff !important;
+}
+
+.fennec-light-mode #fennec-kb-overlay {
+    background: #fff;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #fennec-kb-overlay .kb-close {
+    color: #000;
+}
+
+/* Ensure status labels remain visible */
+.fennec-light-mode #copilot-sidebar .issue-status-label,
+.fennec-light-mode #copilot-sidebar .review-mode-label {
+    color: #fff !important;
+}
+
+.fennec-light-mode #copilot-sidebar .copilot-tag-white {
+    background-color: #fff;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #copilot-sidebar .copilot-tag-lightgray {
+    background-color: #ddd;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #copilot-sidebar .company-summary-highlight {
+    background-color: #ddd;
+    color: #000 !important;
+    font-weight: bold;
+    border: 1px solid #777;
+    border-radius: 4px;
+    padding: 4px;
+    margin-bottom: 6px;
+    position: relative;
+}
+.fennec-light-mode #copilot-sidebar .white-box .company-summary-highlight,
+.fennec-light-mode #copilot-sidebar .white-box .company-summary-highlight * {
+    color: #000 !important;
+    font-weight: bold;
+}
+.fennec-light-mode #copilot-sidebar .copilot-tag-yellow {
+    background-color: #f7bc00;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+.fennec-light-mode #copilot-sidebar .copilot-tag.tx-label {
+    color: #000 !important;
+}
+
+.fennec-light-mode #fennec-diagnose-overlay .diag-order {
+    color: #000;
+}
+.fennec-light-mode .issue-status-active {
+    background-color: #000;
+    color: #fff !important;
+}
+.fennec-light-mode .issue-status-resolved {
+    background-color: #444;
+    color: #fff !important;
+}
+.fennec-light-mode .copilot-copy-icon {
+    color: #000;
+}
+
+.fennec-light-mode .company-search-toggle {
+    color: #000;
+}
+
+.fennec-light-mode .company-search-form input {
+    background: #fff;
+    color: #000 !important;
+    border: 1px solid #777;
+}
+
+/* Ensure header icon stays visible */
+.fennec-light-mode #copilot-close {
+    color: #fff;
+}
+.fennec-light-mode #copilot-clear-tabs {
+    color: #fff;
+}
+
+/* Darken summary text that uses inline styles */
+.fennec-light-mode #order-summary-content,
+.fennec-light-mode #issue-summary-content {
+    color: #000 !important;
+}
+
+.fennec-light-mode .quick-resolve-comment-text {
+    border: 1px solid #777;
+    background: #fff;
+    color: #000;
+}
+.fennec-light-mode .quick-resolve-comment {
+    border: 1px solid #777;
+    background: #fff;
+    color: #000;
+}
+
+
+.fennec-light-mode .quick-resolve-file-icon {
+    color: #0a0;
+}
+
+
+.fennec-light-mode #fennec-trial-overlay .name-match {
+    margin-left: 4px;
+}
+.fennec-light-mode #fennec-trial-overlay .name-match.check {
+    color: #0a0;
+}
+.fennec-light-mode #fennec-trial-overlay .name-match.cross {
+    color: #000;
+}
+
+.fennec-light-mode #fennec-update-overlay {
+    background-color: rgba(255,255,255,0.98);
+    color: #000 !important;
+    border: 1px solid #777;
+    width: 500px;
+    max-width: 90%;
+    padding: 24px 32px;
+    font-size: var(--sb-font-size);
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.fennec-light-mode #fennec-update-title {
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 8px;
+    font-size: calc(var(--sb-font-size) + 20px) !important;
+}
+.fennec-light-mode #fennec-update-overlay .update-input {
+    width: 100%;
+    margin-top: 4px;
+    height: 40px;
+    background: #fff;
+    color: #000;
+    border: 1px solid #777;
+}
+.fennec-light-mode .update-section-title {
+    font-weight: bold;
+    margin: 6px 0 4px;
+    color: #000;
+}
+
+.fennec-light-mode .update-box {
+    padding: 8px;
+    margin-bottom: 10px;
+}
+
+.fennec-light-mode .update-row {
+    display: flex;
+    flex-direction: column;
+    margin: 6px 0;
+    font-size: 13px;
+}
+
+.fennec-light-mode .update-label {
+    text-align: left;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+}
+
+.fennec-light-mode .update-value {
+    word-break: break-word;
+    background: rgba(255,255,255,0.9);
+    color: #000;
+    padding: 2px 4px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+}
+
+.fennec-light-mode .update-input {
+    width: 100%;
+    margin-top: 4px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: #fff;
+    color: #000;
+    border: 1px solid #777;
+}
+
+.fennec-light-mode .update-row.checked .update-input {
+    max-height: 80px;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-company-name {
+    font-size: calc(var(--sb-font-size) + 12px);
+    font-weight: bold;
+    display: inline-block;
+    width: auto;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-name {
+    font-size: calc(var(--sb-font-size) + 1px);
+    font-weight: bold;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-card-details {
+    font-size: calc(var(--sb-font-size) + 1px);
+}
+.fennec-light-mode #fennec-trial-overlay .db-adyen-check {
+    color: #0a0;
+    margin-left: 4px;
+    font-weight: bold;
+}
+.fennec-light-mode #fennec-trial-overlay .db-adyen-cross {
+    color: #000;
+    margin-left: 4px;
+    font-weight: bold;
+}
+
+/* Use inverted Fennec icon in light mode */
+.fennec-light-mode .copilot-icon,
+.fennec-light-mode #fennec-floating-icon,
+.fennec-light-mode .loading-fennec {
+    filter: brightness(0) invert(1);
+}

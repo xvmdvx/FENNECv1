@@ -1,0 +1,12 @@
+{
+  "name": "fennec-extension",
+  "version": "0.1.0",
+  "description": "Prototype Chrome extension for Gmail and DB interface",
+  "scripts": {
+    "test": "node manual-test.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "puppeteer": "^21.3.3"
+  }
+}

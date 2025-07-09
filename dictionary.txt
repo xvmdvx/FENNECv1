@@ -1,0 +1,80 @@
+FENNEC PROJECT: INTERNAL GLOSSARY
+
+────────────────────────────
+PREFIXES & CONTEXT INDICATORS
+────────────────────────────
+
+DB        → Refers to the DATABASE SYSTEM context (main interface, logic, orders)
+GM        → Refers to the GMAIL context (inbox, email view, content analysis)
+SB        → Refers to SIDEBAR component (regardless of context, DB or GM)
+REVIEW MODE → Indicates a special visual and functional mode for reviewing data
+MAIN      → Indicates FORMATION orders (Silver, Gold, Platinum tiers)
+MISC      → All NON-formation orders (Annual Reports, Amendments, Dissolutions, etc)
+
+────────────────────────────
+COMBINED REFERENCES & EXAMPLES
+────────────────────────────
+
+DB SB                → DATABASE SIDEBAR (global context - Classic mode)
+DB SB REVIEW MODE    → DATABASE SIDEBAR (global REVIEW MODE)
+DB SB MAIN           → DATABASE SIDEBAR for FORMATION orders only
+DB SB MISC           → DATABASE SIDEBAR for NON-FORMATION orders
+DB SB MAIN REVIEW MODE → DATABASE SIDEBAR in REVIEW MODE for FORMATION orders
+DB SB ALL REVIEW MODE = DB SB REVIEW MODE → DATABASE SIDEBAR in REVIEW MODE for ALL order types
+DB SB OFFICERS       → Officers section within DB SIDEBAR
+DB SB FILE          → Button at the bottom of the DB SIDEBAR that opens the filing automation window
+
+GM SB                → GMAIL SIDEBAR (visible during email inspection)
+GM SB REVIEW MODE    → GMAIL SIDEBAR when displaying full REVIEW MODE data
+GM SB XRAY     → The XRAY function/button/box inside the GMAIL SIDEBAR
+GM SB OPEN ORDER BUTTON     → [Deprecated] Former button in the GMAIL SIDEBAR used to open orders from Classic Mode.
+
+────────────────────────────
+NOTES
+────────────────────────────
+
+- Always use prefixes to ensure clarity when referencing components (e.g., "DB SB XRAY" instead of just "XRAY").
+- REVIEW MODE is a *visual and functional state*, not a component by itself.
+
+────────────────────────────
+ADDITIONAL FEATURES
+────────────────────────────
+
+Light Mode → Minimalist black-on-white style with an inverted Fennec icon
+Dev Mode → Temporary mode showing experimental features like the Mistral Box and FILE button
+DNA        → Shortcut button that opens Adyen payment details and shopper DNA
+Network Transactions → Counts and amounts from the DNA page Network section
+CODA Search → Menu option to query the KB via the Coda API
+Coda API token → Authentication key required for CODA Search
+Coda doc ID → Identifier of the Coda document searched by CODA Search
+Amendment orders → Changes to existing filings processed through the DB
+DNA Match Tag → Label indicating if Billing details agree with the DNA data
+Card Match Tag → Label showing if DB card details match the Adyen card info
+Transaction table → Colored summary of Adyen transactions
+Light Gray Tag → Label color used for Adyen DNA entries in Review Mode (light gray background with black text)
+Kount summary → Box showing email age, device location, VIP declines and Ekata results
+Knowledge Base overlay → Deprecated floating window that tried to show the Coda Knowledge Base over the DB page
+CVV → Card Verification Value result code
+AVS → Address Verification System result code
+Knowledge Base window → Popup covering about 70% of the DB page that shows the Coda Knowledge Base
+
+AR COMPLETED         → Legacy default comment for resolving a Family Tree order
+Annual Report filed → Comment template used when diagnosing Annual Report orders
+No AR required      → Comment template used when diagnosing Reinstatement orders
+Diagnose overlay → Floating panel listing Family Tree hold orders
+Comment Box → Editable field in the diagnose overlay prefilled with AR COMPLETED and the current order number
+Clear Tabs icon → Button that closes all other tabs in the window
+Clear SB button → Removes sidebar content and resets it to its initial state
+
+File Along → Opens a new window with TX SOS and guides formation filing automatically.
+Organizer → Person or entity that signs and submits the formation documents.
+Client Account → Prepaid balance used for TX SOS filings.
+Puppeteer → Node.js library for automated browser control
+TX SOS Puppeteer script → Node script that automates the full Texas formation filing.
+Mistral → Local AI model used for chat guidance
+Mistral Box → Chat area below REFRESH button
+Ollama → Local server running the Mistral API
+Retry button → Resends a prompt when the Mistral service is unavailable
+BOIR → Beneficial Ownership Information Report
+BETA → Early test version of Fennec
+Sidebar freeze → Mechanism locking sidebar data to the last processed order until XRAY runs again
