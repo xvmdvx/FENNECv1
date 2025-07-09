@@ -249,22 +249,10 @@
             const orderBoxEl = document.querySelector("#copilot-sidebar .order-summary-box");
             if (orderBoxEl) orderBoxEl.style.marginTop = reviewMode ? "4px" : "12px";
             const actionsRow = document.querySelector("#copilot-sidebar .copilot-actions");
-            const dnaRow = document.querySelector("#copilot-sidebar .copilot-dna");
-            const dnaBtn = document.getElementById("btn-dna");
             const xrayBtn = document.getElementById("btn-xray");
             const openOrder = document.getElementById("btn-open-order");
             if (reviewMode) {
                 if (openOrder) openOrder.style.display = "none";
-                if (actionsRow && !dnaBtn) {
-                    const btn = document.createElement("button");
-                    btn.id = "btn-dna";
-                    btn.className = "copilot-button";
-                    btn.textContent = "🧬 DNA";
-                    actionsRow.appendChild(btn);
-                    setupDnaButton();
-                    loadDnaSummary();
-            loadKountSummary();
-                }
                 if (actionsRow && !xrayBtn) {
                     const xbtn = document.createElement("button");
                     xbtn.id = "btn-xray";
@@ -275,10 +263,6 @@
                 }
             } else {
                 if (openOrder) openOrder.style.display = "";
-                if (dnaBtn) {
-                    dnaBtn.remove();
-                    refreshSidebar();
-                }
                 if (xrayBtn) xrayBtn.remove();
             }
             chrome.storage.sync.set({ fennecReviewMode: reviewMode });
@@ -1117,6 +1101,7 @@
             const box = document.getElementById('issue-summary-box');
             const content = document.getElementById('issue-summary-content');
             const label = document.getElementById('issue-status-label');
+            ensureIssueControls();
             const btn = document.getElementById('issue-resolve-btn');
             if (!box || !content || !label) return;
             box.style.display = 'block';
@@ -1236,10 +1221,47 @@
                 sessionSet({ adyenDnaInfo: null, kountInfo: null });
                 repositionDnaSummary();
             }
-            if (issueLabel) {
-                issueLabel.textContent = '';
-                issueLabel.className = 'issue-status-label';
+        if (issueLabel) {
+            issueLabel.textContent = '';
+            issueLabel.className = 'issue-status-label';
+        }
+    }
+
+        function ensureIssueControls(reset = false) {
+            const issueBox = document.getElementById('issue-summary-box');
+            if (!issueBox) return;
+            let input = document.getElementById('issue-comment-input');
+            if (!input) {
+                input = document.createElement('textarea');
+                input.id = 'issue-comment-input';
+                input.className = 'quick-resolve-comment';
+                input.placeholder = 'Comment...';
+                issueBox.appendChild(input);
+            } else if (reset) {
+                input.value = '';
+                issueBox.appendChild(input);
             }
+            if (reset) {
+                droppedFile = null;
+                const dIcon = document.getElementById('dropped-file-icon');
+                if (dIcon) dIcon.remove();
+            }
+            let btn = document.getElementById('issue-resolve-btn');
+            const btnLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
+            if (!btn) {
+                btn = document.createElement('button');
+                btn.id = 'issue-resolve-btn';
+                btn.className = 'copilot-button';
+                btn.style.marginTop = '4px';
+                btn.textContent = btnLabel;
+                issueBox.appendChild(btn);
+            } else {
+                btn.textContent = btnLabel;
+                issueBox.appendChild(btn);
+            }
+            const updBtn = document.getElementById('update-info-btn');
+            if (updBtn) issueBox.appendChild(updBtn);
+            setupResolveButton();
         }
 
         function showInitialStatus() {
@@ -1282,36 +1304,7 @@
                 if (msg) msg.remove();
                 const cText = document.getElementById('quick-resolve-comment-text');
                 if (cText) cText.remove();
-                let input = document.getElementById('issue-comment-input');
-                if (!input) {
-                    input = document.createElement('textarea');
-                    input.id = 'issue-comment-input';
-                    input.className = 'quick-resolve-comment';
-                    input.placeholder = 'Comment...';
-                    issueBox.appendChild(input);
-                } else {
-                    input.value = '';
-                    issueBox.appendChild(input);
-                }
-                droppedFile = null;
-                const dIcon = document.getElementById('dropped-file-icon');
-                if (dIcon) dIcon.remove();
-                let btn = document.getElementById('issue-resolve-btn');
-                const btnLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
-                if (!btn) {
-                    btn = document.createElement('button');
-                    btn.id = 'issue-resolve-btn';
-                    btn.className = 'copilot-button';
-                    btn.style.marginTop = '4px';
-                    btn.textContent = btnLabel;
-                    issueBox.appendChild(btn);
-                } else {
-                    btn.textContent = btnLabel;
-                    issueBox.appendChild(btn);
-                }
-                const updBtn = document.getElementById('update-info-btn');
-                if (updBtn) issueBox.appendChild(updBtn);
-                setupResolveButton();
+                ensureIssueControls(true);
             }
             if (dnaSummary) dnaSummary.innerHTML = '';
             if (kountSummary) kountSummary.innerHTML = '';
@@ -1846,48 +1839,6 @@
             };
         }
 
-        function setupDnaButton() {
-            const button = document.getElementById("btn-dna");
-            if (!button || button.dataset.listenerAttached) return;
-            button.dataset.listenerAttached = "true";
-            button.addEventListener("click", function () {
-                const skipSearch = button.dataset.skipSearch === "1";
-                delete button.dataset.skipSearch;
-                try {
-                    const bodyNode = getVisibleEmailBodies()[0];
-                    if (!bodyNode) {
-                        alert("No se encontró el cuerpo del correo.");
-                        return;
-                    }
-
-                    const subjectText = document.querySelector('h2.hP')?.innerText || "";
-                    const text = subjectText + "\n" + (bodyNode.innerText || "");
-                    const orderId = extractOrderNumber(text);
-                    if (!orderId) {
-                        alert("No se encontró ningún número de orden válido en el correo.");
-                        return;
-                    }
-                    function openAdyen() {
-                        console.log('[Copilot] Opening Adyen for order', orderId);
-                        const url = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${orderId}`;
-                        showDnaLoading();
-                        sessionSet({ sidebarFreezeId: orderId, fennecActiveSession: getFennecSessionId() }, () => {
-                            chrome.runtime.sendMessage({ action: "openTab", url, refocus: true, active: true });
-                        });
-                    }
-
-                    if (!storedOrderInfo || storedOrderInfo.orderId !== orderId) {
-                        if (!skipSearch) handleEmailSearchClick(false);
-                        setTimeout(openAdyen, 500);
-                    } else {
-                        openAdyen();
-                    }
-                } catch (error) {
-                    console.error("Error al intentar buscar en Adyen:", error);
-                    alert("Ocurrió un error al intentar buscar en Adyen.");
-                }
-            });
-        }
 
         function setupXrayButton() {
             const button = document.getElementById("btn-xray");
@@ -1895,21 +1846,9 @@
             button.dataset.listenerAttached = "true";
             button.addEventListener("click", function () {
                 handleEmailSearchClick(true);
-                setTimeout(() => {
-                    const dnaBtn = document.getElementById("btn-dna");
-                    if (dnaBtn) {
-                        dnaBtn.dataset.skipSearch = "1";
-                        dnaBtn.click();
-                    }
-                }, 500);
             });
         }
 
-        waitForElement("#btn-dna").then(() => {
-            setupDnaButton();
-        }).catch((err) => {
-            console.warn("[DNA] No se pudo inyectar el listener:", err);
-        });
 
     } catch (e) {
         console.error("[Copilot] ERROR en Gmail Launcher:", e);
