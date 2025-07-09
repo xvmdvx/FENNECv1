@@ -8,6 +8,7 @@
 - TRIAL SUMMARY overlay now waits for XRAY data and retries briefly if the information isn't ready.
 - TRIAL floater displays Kount linked order counts (email, IP, customer ID, payment, billing/shipping address and device).
 - Family Tree detects duplicate orders in review, processing or hold and adds a ❌ icon to cancel and refund them.
+- Issue comment box in Gmail now supports drag-and-drop uploads and no longer shows a file chooser.
 - Diagnose overlay now supports Reinstatement orders and detects amendments or reinstatements in review.
 - Replaced `form.submit()` fallback with a submit event to mimic real clicks.
 - XRAY flow opens the DB order search page with the client's email instead of a Gmail search tab.
