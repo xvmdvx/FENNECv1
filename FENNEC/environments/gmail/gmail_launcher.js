@@ -1196,6 +1196,8 @@
                 } else {
                     btn.textContent = 'COMMENT & RESOLVE';
                 }
+                const updBtn = document.getElementById('update-info-btn');
+                if (updBtn) issueBox.appendChild(updBtn);
                 if (issueContent) issueContent.innerHTML = icon;
                 issueBox.style.display = 'block';
                 setupResolveButton();
@@ -1260,6 +1262,8 @@
                     btn.textContent = 'COMMENT & RESOLVE';
                     issueBox.appendChild(btn);
                 }
+                const updBtn = document.getElementById('update-info-btn');
+                if (updBtn) issueBox.appendChild(updBtn);
                 setupResolveButton();
             }
             if (dnaSummary) dnaSummary.innerHTML = '';
