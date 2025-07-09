@@ -202,7 +202,10 @@
             const billingBox = container.querySelector("#billing-section-box");
             if (!quick || !orderBox) return;
             if (reviewMode) {
-                if (issueBox) issueBox.style.display = "block";
+                if (issueBox) {
+                    issueBox.style.display = "block";
+                    ensureIssueControls();
+                }
                 const compLabel = Array.from(container.querySelectorAll(".section-label"))
                     .find(l => l.textContent.trim().startsWith("COMPANY"));
                 const compBox = compLabel ? compLabel.nextElementSibling : null;
@@ -1386,7 +1389,14 @@
             }
 
             const data = { fennecActiveSession: getFennecSessionId() };
-            if (xray && context.orderNumber) {
+            if (!xray) {
+                Object.assign(data, {
+                    fraudReviewSession: null,
+                    sidebarFreezeId: null,
+                    adyenDnaInfo: null,
+                    kountInfo: null
+                });
+            } else if (context.orderNumber) {
                 Object.assign(data, {
                     fraudReviewSession: context.orderNumber,
                     sidebarFreezeId: context.orderNumber,
