@@ -41,7 +41,26 @@
                             })
                             .filter(Boolean);
 
-                        saveData({ emailAge, deviceLocation, ip, declines });
+                        const linked = {};
+                        document.querySelectorAll('#link-analysis tbody tr').forEach(row => {
+                            const th = row.querySelector('th');
+                            const countEl = row.querySelector('.count');
+                            if (!th || !countEl) return;
+                            const label = th.textContent.replace(/:\s*$/, '').trim();
+                            const num = parseInt(countEl.textContent.replace(/[^0-9]/g, ''), 10) || 0;
+                            switch (label) {
+                                case 'Email': linked.email = num; break;
+                                case 'IP Address': linked.ip = num; break;
+                                case 'Cust. ID': linked.custId = num; break;
+                                case 'Payment': linked.payment = num; break;
+                                case 'Bill Addr': linked.billAddr = num; break;
+                                case 'Ship Addr': linked.shipAddr = num; break;
+                                case 'Device ID': linked.deviceId = num; break;
+                                default: break;
+                            }
+                        });
+
+                        saveData({ emailAge, deviceLocation, ip, declines, linked });
 
                         const ekataLink = document.querySelector('a[href*="/workflow/ekata"]');
                         if (ekataLink) {
