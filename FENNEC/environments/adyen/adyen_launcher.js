@@ -7,6 +7,13 @@
             return;
         }
 
+        chrome.storage.local.get({ fennecActiveSession: null }, ({ fennecActiveSession }) => {
+            if (fennecActiveSession) {
+                sessionStorage.setItem('fennecSessionId', fennecActiveSession);
+            }
+            getFennecSessionId();
+        });
+
         try {
             const params = new URLSearchParams(window.location.search);
             const orderParam = params.get('fennec_order');
@@ -70,7 +77,7 @@
             function saveData(part) {
                 chrome.storage.local.get({ adyenDnaInfo: {} }, ({ adyenDnaInfo }) => {
                     const updated = Object.assign({}, adyenDnaInfo, part);
-                    chrome.storage.local.set({ adyenDnaInfo: updated });
+                    sessionSet({ adyenDnaInfo: updated });
                     console.log('[FENNEC Adyen] Data saved', part);
                 });
             }
@@ -384,7 +391,7 @@
             }
 
             function clearSidebar() {
-                chrome.storage.local.set({
+                sessionSet({
                     sidebarDb: [],
                     sidebarOrderId: null,
                     sidebarOrderInfo: null,
@@ -585,6 +592,10 @@
             }
 
             chrome.storage.onChanged.addListener((changes, area) => {
+                if (area === 'local' && changes.sidebarSessionId &&
+                    changes.sidebarSessionId.newValue !== getFennecSessionId()) {
+                    return;
+                }
                 if (area === 'local' && changes.sidebarDb) loadDbSummary();
                 if (area === 'local' && changes.adyenDnaInfo) loadDnaSummary();
                 if (area === 'local' && changes.sidebarSnapshot && changes.sidebarSnapshot.newValue) {

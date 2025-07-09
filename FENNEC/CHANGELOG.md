@@ -157,3 +157,4 @@
 - The DB search page now opens only after DNA extraction so the order history is retrieved at the end of XRAY.
 - Comment & resolve now runs in the background without changing focus.
 - New UPDATE floater collects order edits and opens the DB tab silently.
+- Gmail Review Mode now isolates each tab. Opening a new Gmail session resets the sidebar to the initial view instead of reusing old data.
