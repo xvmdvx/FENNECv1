@@ -257,7 +257,7 @@ GENERAL FEATURES:
 3. Enable **Developer mode** (toggle in the top right).
 4. Click **Load unpacked** and select the project folder. The sidebar will then
    be available when visiting supported pages.
-5. Open the extension **Options** from the menu or the Extensions page to set a default sidebar width and Review Mode. You can also toggle Review Mode directly from the extension popup.
+5. Open the extension **Options** from the menu or the Extensions page to set a default sidebar width and Review Mode. You can also toggle Review Mode directly from the extension popup. The popup now includes a **Reset Extension** button to clear saved settings and reload.
 
 
 ## Local Mistral integration
