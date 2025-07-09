@@ -872,6 +872,27 @@
                     kountLines.push(`<div class="trial-line">VIP DECLINES: ${count} <span class="${count === 0 ? 'db-adyen-check' : 'db-adyen-cross'}">${count === 0 ? '✔' : '✖'}</span></div>`);
                 }
                 if (kount.ekata && kount.ekata.addressToName) kountLines.push(`<div class="trial-line">Address Name: ${escapeHtml(kount.ekata.addressToName)}</div>`);
+
+                if (kount.linked) {
+                    const map = [
+                        ['email', 'Email'],
+                        ['ip', 'IP Address'],
+                        ['custId', 'Cust. ID'],
+                        ['payment', 'Payment'],
+                        ['billAddr', 'Bill Addr'],
+                        ['shipAddr', 'Ship Addr'],
+                        ['deviceId', 'Device ID']
+                    ];
+                    const total = map.reduce((sum, [k]) => sum + (parseInt(kount.linked[k] || 0, 10)), 0);
+                    if (total === 0) {
+                        kountLines.push(`<div class="trial-line">NO LINKED ORDERS <span class="db-adyen-check">✔</span></div>`);
+                    } else {
+                        map.forEach(([k, label]) => {
+                            const n = parseInt(kount.linked[k] || 0, 10);
+                            if (n > 0) kountLines.push(`<div class="trial-line">${label}: ${n}</div>`);
+                        });
+                    }
+                }
             }
 
             const actions = `
