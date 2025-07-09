@@ -1627,9 +1627,17 @@
         });
 
         // Ensure DNA summary refreshes when returning from Adyen
+        // and show comment controls once XRAY completes.
         window.addEventListener('focus', () => {
             loadDnaSummary();
             loadKountSummary();
+            if (localStorage.getItem('fraudXrayFinished') === '1') {
+                localStorage.removeItem('fraudXrayFinished');
+                ensureIssueControls(true);
+                if (currentContext && currentContext.orderNumber) {
+                    checkLastIssue(currentContext.orderNumber);
+                }
+            }
         });
 
         // --- OPEN ORDER listener reutilizable ---
