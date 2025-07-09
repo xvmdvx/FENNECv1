@@ -1181,6 +1181,17 @@
                 } else {
                     input.value = '';
                 }
+                let fileInput = document.getElementById('issue-file-input');
+                if (!fileInput) {
+                    fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.id = 'issue-file-input';
+                    fileInput.style.marginTop = '4px';
+                    issueBox.appendChild(fileInput);
+                } else {
+                    fileInput.value = '';
+                    issueBox.appendChild(fileInput);
+                }
                 let btn = document.getElementById('issue-resolve-btn');
                 if (!btn) {
                     btn = document.createElement('button');
@@ -1240,6 +1251,17 @@
                 } else {
                     input.value = '';
                     issueBox.appendChild(input);
+                }
+                let fileInput = document.getElementById('issue-file-input');
+                if (!fileInput) {
+                    fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.id = 'issue-file-input';
+                    fileInput.style.marginTop = '4px';
+                    issueBox.appendChild(fileInput);
+                } else {
+                    fileInput.value = '';
+                    issueBox.appendChild(fileInput);
                 }
                 let btn = document.getElementById('issue-resolve-btn');
                 if (!btn) {
@@ -1371,6 +1393,7 @@
                         <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
                         <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
                         <textarea id="issue-comment-input" class="quick-resolve-comment" placeholder="Comment..."></textarea>
+                        <input type="file" id="issue-file-input" style="margin-top:4px;" />
                         <button id="issue-resolve-btn" class="copilot-button" style="margin-top:4px;">COMMENT &amp; RESOLVE</button>
                         <button id="update-info-btn" class="copilot-button" style="margin-top:4px;">UPDATE</button>
                     </div>
@@ -1554,14 +1577,43 @@
         function setupResolveButton() {
             const resolveBtn = document.getElementById("issue-resolve-btn");
             const commentInput = document.getElementById("issue-comment-input");
+            const fileInput = document.getElementById("issue-file-input");
             if (!resolveBtn || !commentInput || resolveBtn.dataset.listenerAttached) return;
             resolveBtn.dataset.listenerAttached = "true";
+            if (fileInput && !fileInput.dataset.listenerAttached) {
+                fileInput.dataset.listenerAttached = "true";
+                fileInput.addEventListener('change', () => {
+                    resolveBtn.textContent = fileInput.files.length ? 'UPLOAD' : 'COMMENT & RESOLVE';
+                });
+            }
             resolveBtn.onclick = () => {
                 const comment = commentInput.value.trim();
                 const orderId = (storedOrderInfo && storedOrderInfo.orderId) ||
                     (currentContext && currentContext.orderNumber);
                 if (!orderId) {
                     alert("No order ID detected.");
+                    return;
+                }
+                const file = fileInput && fileInput.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        chrome.storage.local.set({
+                            fennecPendingUpload: {
+                                orderId,
+                                comment,
+                                fileName: file.name,
+                                fileData: reader.result
+                            }
+                        }, () => {
+                            const url = `https://db.incfile.com/storage/incfile/${orderId}`;
+                            chrome.runtime.sendMessage({ action: 'openOrReuseTab', url, active: false });
+                            commentInput.value = '';
+                            fileInput.value = '';
+                            resolveBtn.textContent = 'COMMENT & RESOLVE';
+                        });
+                    };
+                    reader.readAsDataURL(file);
                     return;
                 }
                 if (!comment) {
