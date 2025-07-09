@@ -2,6 +2,7 @@
 const toggle = document.getElementById("extension-toggle");
 const optionsBtn = document.getElementById("options-btn");
 const reviewToggle = document.getElementById("review-toggle");
+const resetBtn = document.getElementById("reset-btn");
 let lastReviewMode = false;
 
 function loadState() {
@@ -42,9 +43,19 @@ function saveState() {
     });
 }
 
+function resetExtension() {
+    if (!confirm("Reset all FENNEC data and reload?")) return;
+    chrome.storage.local.clear(() => {
+        chrome.storage.sync.clear(() => {
+            chrome.runtime.reload();
+        });
+    });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     loadState();
     toggle.addEventListener("change", saveState);
     reviewToggle.addEventListener("change", saveState);
     optionsBtn.addEventListener("click", () => chrome.runtime.openOptionsPage());
+    resetBtn.addEventListener("click", resetExtension);
 });
