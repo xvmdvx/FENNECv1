@@ -1378,8 +1378,11 @@
 
             const urls = [gmailSearchUrl];
 
-            if (context.orderNumber) {
-                let dbOrderUrl = `https://db.incfile.com/incfile/order/detail/${context.orderNumber}`;
+            const orderIdFallback = storedOrderInfo && storedOrderInfo.orderId;
+            const orderId = context.orderNumber || (xray ? orderIdFallback : null);
+
+            if (orderId) {
+                let dbOrderUrl = `https://db.incfile.com/incfile/order/detail/${orderId}`;
                 if (xray) dbOrderUrl += '?fraud_xray=1';
                 urls.push(dbOrderUrl);
             } else {
@@ -1396,10 +1399,10 @@
                     adyenDnaInfo: null,
                     kountInfo: null
                 });
-            } else if (context.orderNumber) {
+            } else if (orderId) {
                 Object.assign(data, {
-                    fraudReviewSession: context.orderNumber,
-                    sidebarFreezeId: context.orderNumber,
+                    fraudReviewSession: orderId,
+                    sidebarFreezeId: orderId,
                     sidebarDb: [],
                     sidebarOrderId: null,
                     sidebarOrderInfo: null,
@@ -1412,8 +1415,8 @@
             sessionSet(data, () => {
                 chrome.runtime.sendMessage({ action: "replaceTabs", urls });
             });
-            if (context.orderNumber) {
-                checkLastIssue(context.orderNumber);
+            if (orderId) {
+                checkLastIssue(orderId);
             }
         }
 
