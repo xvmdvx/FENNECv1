@@ -2,6 +2,30 @@
 
 FENNEC's principal function is injecting a SIDEBAR (SB) as a navigation companion that extracts information from relevant environments and displays it in a reordered manner to improve agents' productivity and reduce mental stress. Each environment has its unique layout depending on the type's necessities.
 
+## Directory overview
+
+The extension lives in the `FENNEC/` folder. Key pieces include:
+
+- `manifest.json` – Manifest V3 configuration. The service worker is `core/background_email_search.js`.
+- `core/` – Shared helpers and the service worker.
+  - `background_email_search.js` – handles messaging, tab control and CORS removal for the local Mistral integration.
+  - `utils.js` – common utilities such as copying text and opening search tabs.
+  - `mistral_chat.js` – chat widget used when Dev Mode is enabled.
+- `environments/` – Content scripts injected into specific sites:
+  - `gmail/gmail_launcher.js` – Gmail interface.
+  - `db/db_launcher.js` – Internal order pages.
+  - `adyen/adyen_launcher.js` – Adyen payment pages.
+  - `txsos/tx_sos_launcher.js` – Texas SOS filing site.
+  - `usps/usps_launcher.js` – USPS address verification.
+- `styles/` – Sidebar and options page stylesheets.
+- `popup.html` and `popup.js` – enable/disable the extension and open the options page.
+- `options.html` and `options.js` – persist user preferences such as sidebar width.
+- `dictionary.txt` – glossary of abbreviations used in the code and documentation.
+- `CHANGELOG.md` – lists new features and fixes.
+- `README.md` – this guide.
+
+For historical changes refer to the **Changelog**. It has been reset so future updates start from a clean slate.
+
 ## Features
 
 SIDEBAR HEADER:
