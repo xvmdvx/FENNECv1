@@ -1,5 +1,8 @@
 /* Overrides for minimal black and white light mode */
 .fennec-light-mode #copilot-sidebar {
+    --sb-bg: #fff;
+    --sb-text: #000;
+    --sb-box-bg: #fff;
     background: #fff;
     color: #000;
 }
