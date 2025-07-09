@@ -1428,10 +1428,22 @@
             }
         }
 
-        // Observador para reaplicar el padding cuando Gmail altere el DOM
+        // Observador para reaplicar el padding y detectar si hay correo abierto
+        let lastEmailOpen = null;
         const observer = new MutationObserver(() => {
-            const sidebarExists = !!document.getElementById('copilot-sidebar');
-            if (sidebarExists) applyPaddingToMainPanels();
+            const sidebar = document.getElementById('copilot-sidebar');
+            if (sidebar) {
+                applyPaddingToMainPanels();
+                const hasEmail = !!document.querySelector('.a3s');
+                if (hasEmail !== lastEmailOpen) {
+                    lastEmailOpen = hasEmail;
+                    if (hasEmail) {
+                        refreshSidebar();
+                    } else {
+                        showInitialStatus();
+                    }
+                }
+            }
         });
         observer.observe(document.body, { childList: true, subtree: true });
 
