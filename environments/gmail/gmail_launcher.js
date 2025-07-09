@@ -1124,7 +1124,10 @@
                 content.textContent = formatIssueText(info.text);
                 label.textContent = info.active ? 'ACTIVE' : 'RESOLVED';
                 label.className = 'issue-status-label ' + (info.active ? 'issue-status-active' : 'issue-status-resolved');
-                if (btn) btn.textContent = info.active ? 'RESOLVE & COMMENT' : 'COMMENT';
+                if (btn) {
+                    const activeLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
+                    btn.textContent = info.active ? activeLabel : 'COMMENT';
+                }
             } else {
                 const link = orderId ? `<a href="https://db.incfile.com/incfile/order/detail/${orderId}" target="_blank">${orderId}</a>` : '';
                 content.innerHTML = `NO ISSUE DETECTED FROM ORDER: ${link}`;
@@ -1206,15 +1209,16 @@
                 const dIcon = document.getElementById('dropped-file-icon');
                 if (dIcon) dIcon.remove();
                 let btn = document.getElementById('issue-resolve-btn');
+                const label = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
                 if (!btn) {
                     btn = document.createElement('button');
                     btn.id = 'issue-resolve-btn';
                     btn.className = 'copilot-button';
                     btn.style.marginTop = '4px';
-                    btn.textContent = 'COMMENT & RESOLVE';
+                    btn.textContent = label;
                     issueBox.appendChild(btn);
                 } else {
-                    btn.textContent = 'COMMENT & RESOLVE';
+                    btn.textContent = label;
                 }
                 const updBtn = document.getElementById('update-info-btn');
                 if (updBtn) issueBox.appendChild(updBtn);
@@ -1293,15 +1297,16 @@
                 const dIcon = document.getElementById('dropped-file-icon');
                 if (dIcon) dIcon.remove();
                 let btn = document.getElementById('issue-resolve-btn');
+                const label = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
                 if (!btn) {
                     btn = document.createElement('button');
                     btn.id = 'issue-resolve-btn';
                     btn.className = 'copilot-button';
                     btn.style.marginTop = '4px';
-                    btn.textContent = 'COMMENT & RESOLVE';
+                    btn.textContent = label;
                     issueBox.appendChild(btn);
                 } else {
-                    btn.textContent = 'COMMENT & RESOLVE';
+                    btn.textContent = label;
                     issueBox.appendChild(btn);
                 }
                 const updBtn = document.getElementById('update-info-btn');
@@ -1443,7 +1448,7 @@
                         <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
                         <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
                         <textarea id="issue-comment-input" class="quick-resolve-comment" placeholder="Comment..."></textarea>
-                        <button id="issue-resolve-btn" class="copilot-button" style="margin-top:4px;">COMMENT &amp; RESOLVE</button>
+                        <button id="issue-resolve-btn" class="copilot-button" style="margin-top:4px;">${reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE'}</button>
                         <button id="update-info-btn" class="copilot-button" style="margin-top:4px;">UPDATE</button>
                     </div>
                     ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
@@ -1694,7 +1699,7 @@
                             chrome.runtime.sendMessage({ action: 'openOrReuseTab', url, active: false });
                             commentInput.value = '';
                             droppedFile = null;
-                            resolveBtn.textContent = 'COMMENT & RESOLVE';
+                            resolveBtn.textContent = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
                             const icon = document.getElementById('dropped-file-icon');
                             if (icon) icon.remove();
                         });
@@ -1702,11 +1707,13 @@
                     reader.readAsDataURL(file);
                     return;
                 }
-                if (!comment) {
+                if (!comment && !reviewMode) {
                     commentInput.focus();
                     return;
                 }
-                sessionSet({ fennecPendingComment: { orderId, comment }, fennecActiveSession: getFennecSessionId() }, () => {
+                const data = { orderId, comment };
+                if (reviewMode && !comment) data.release = true;
+                sessionSet({ fennecPendingComment: data, fennecActiveSession: getFennecSessionId() }, () => {
                     const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
                     chrome.runtime.sendMessage({ action: "openOrReuseTab", url, active: false });
                 });
