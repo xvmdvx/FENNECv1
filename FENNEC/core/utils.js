@@ -28,6 +28,22 @@ function applySidebarDesign(sidebar, opts) {
 }
 window.applySidebarDesign = applySidebarDesign;
 
+function getFennecSessionId() {
+    let id = sessionStorage.getItem('fennecSessionId');
+    if (!id) {
+        id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        sessionStorage.setItem('fennecSessionId', id);
+    }
+    return id;
+}
+window.getFennecSessionId = getFennecSessionId;
+
+function sessionSet(data, cb) {
+    const obj = Object.assign({}, data, { sidebarSessionId: getFennecSessionId() });
+    chrome.storage.local.set(obj, cb);
+}
+window.sessionSet = sessionSet;
+
 function abbreviateOrderType(type) {
     const t = (type || '').toLowerCase();
     if (t.includes('annual report')) return 'AR';
@@ -43,14 +59,15 @@ window.abbreviateOrderType = abbreviateOrderType;
 
 function storeSidebarSnapshot(sidebar) {
     if (!sidebar) return;
-    chrome.storage.local.set({ sidebarSnapshot: sidebar.innerHTML });
+    sessionSet({ sidebarSnapshot: sidebar.innerHTML });
 }
 window.storeSidebarSnapshot = storeSidebarSnapshot;
 
 function loadSidebarSnapshot(sidebar) {
     if (!sidebar) return;
-    chrome.storage.local.get({ sidebarSnapshot: null }, ({ sidebarSnapshot }) => {
-        if (sidebarSnapshot) {
+    chrome.storage.local.get({ sidebarSnapshot: null, sidebarSessionId: null },
+        ({ sidebarSnapshot, sidebarSessionId }) => {
+        if (sidebarSnapshot && sidebarSessionId === getFennecSessionId()) {
             sidebar.innerHTML = sidebarSnapshot;
             attachCommonListeners(sidebar);
         }

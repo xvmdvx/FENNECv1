@@ -4,6 +4,12 @@
     window.addEventListener('beforeunload', () => {
         sessionStorage.removeItem("fennecSidebarClosed");
     });
+    chrome.storage.local.get({ fennecActiveSession: null }, ({ fennecActiveSession }) => {
+        if (fennecActiveSession) {
+            sessionStorage.setItem('fennecSessionId', fennecActiveSession);
+        }
+        getFennecSessionId();
+    });
     let currentOrderType = null;
     let currentOrderTypeText = null;
     let initQuickSummary = null;
@@ -1815,7 +1821,7 @@
             clientLtv: client.ltv,
             clientEmail: client.email
         };
-        chrome.storage.local.set({
+        sessionSet({
             sidebarDb: dbSections,
             sidebarOrderId: orderInfo.orderId,
             sidebarOrderInfo
@@ -2097,7 +2103,7 @@
     }
 
     function clearSidebar() {
-        chrome.storage.local.set({
+        sessionSet({
             sidebarDb: [],
             sidebarOrderId: null,
             sidebarOrderInfo: null,
@@ -2225,7 +2231,7 @@
                 save.click();
                 sessionStorage.removeItem('fennecAutoComment');
                 sessionStorage.setItem('fennecAddComment', comment);
-                chrome.storage.local.set({
+                sessionSet({
                     fennecQuickResolveDone: {
                         time: Date.now(),
                         resolved: true,
@@ -2257,7 +2263,7 @@
             if (ta && add) {
                 ta.value = comment;
                 add.click();
-                chrome.storage.local.set({
+                sessionSet({
                     fennecQuickResolveDone: {
                         time: Date.now(),
                         resolved: false,
@@ -2305,7 +2311,7 @@
                 credentials: 'include'
             });
         }).then(() => {
-            chrome.storage.local.set({ fennecUploadDone: { time: Date.now() } });
+            sessionSet({ fennecUploadDone: { time: Date.now() } });
             if (data.comment) {
                 processPendingComment({ orderId: data.orderId, comment: data.comment, cancel: data.cancel });
             }
@@ -2318,7 +2324,7 @@
         if (!info.orderId || String(info.orderId) !== String(id)) return;
         chrome.storage.local.remove('fennecDupCancel');
         startCancelProcedure();
-        chrome.storage.local.set({ fennecDupCancelDone: { orderId: id } });
+        sessionSet({ fennecDupCancelDone: { orderId: id } });
     }
 
     function applyUpdateFields(updates) {
@@ -2764,7 +2770,7 @@
                 const comment = commentBox.value.trim();
                 const data = { orderId: r.order.orderId, comment };
                 if (/cancel/i.test(btnLabel)) data.cancel = true;
-                chrome.storage.local.set({ fennecPendingComment: data }, () => {
+                sessionSet({ fennecPendingComment: data }, () => {
                     chrome.runtime.sendMessage({ action: 'openActiveTab', url: `${location.origin}/incfile/order/detail/${r.order.orderId}` });
                 });
             });
@@ -2844,7 +2850,7 @@ function getLastHoldUser() {
             return;
         }
         const orderId = getBasicOrderInfo().orderId;
-        chrome.storage.local.set({ fraudReviewSession: orderId, sidebarFreezeId: orderId });
+        sessionSet({ fraudReviewSession: orderId, sidebarFreezeId: orderId });
         const key = 'fennecLtvRefreshed_' + orderId;
         if (sessionStorage.getItem('fraudXrayPending')) {
             // Wait until the page reloads for accurate LTV
@@ -2871,7 +2877,7 @@ function getLastHoldUser() {
         }
         if (info.orderId) {
             const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
-            chrome.storage.local.set({ fennecFraudAdyen: adyenUrl });
+            sessionSet({ fennecFraudAdyen: adyenUrl });
         }
         const kountLink = document.querySelector('a[href*="awc.kount.net/workflow/detail"]');
         if (kountLink) {
@@ -2905,6 +2911,10 @@ if (pendingNote) {
 }
 
 chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.sidebarSessionId &&
+        changes.sidebarSessionId.newValue !== getFennecSessionId()) {
+        return;
+    }
     if (area === 'local' && changes.fennecReviewMode) {
         reviewMode = changes.fennecReviewMode.newValue;
         updateReviewDisplay();

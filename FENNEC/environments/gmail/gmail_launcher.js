@@ -27,6 +27,7 @@
         }
         try {
             const SIDEBAR_WIDTH = parseInt(sidebarWidth, 10) || 340;
+            getFennecSessionId();
             let reviewMode = sessionStorage.getItem('fennecReviewMode');
             reviewMode = reviewMode === null ? fennecReviewMode : reviewMode === 'true';
             let currentContext = null;
@@ -271,7 +272,7 @@
                 if (xrayBtn) xrayBtn.remove();
             }
             chrome.storage.sync.set({ fennecReviewMode: reviewMode });
-            chrome.storage.local.set({ fennecReviewMode: reviewMode });
+            sessionSet({ fennecReviewMode: reviewMode });
             updateDetailVisibility();
         }
 
@@ -1147,7 +1148,7 @@
             const afterBtn = xrayBtn || dnaBtn;
             if (afterBtn) dnaBox.insertBefore(summary, afterBtn.nextSibling); else dnaBox.appendChild(summary);
             summary.innerHTML = `<img src="${chrome.runtime.getURL('fennec_icon.png')}" class="loading-fennec"/>`;
-            chrome.storage.local.set({ adyenDnaInfo: null });
+            sessionSet({ adyenDnaInfo: null });
             repositionDnaSummary();
         }
 
@@ -1207,7 +1208,7 @@
             if (dnaBox) {
                 const summary = dnaBox.querySelector('#dna-summary');
                 if (summary) summary.innerHTML = '';
-                chrome.storage.local.set({ adyenDnaInfo: null });
+                sessionSet({ adyenDnaInfo: null });
                 repositionDnaSummary();
             }
             if (issueLabel) {
@@ -1294,7 +1295,7 @@
             currentContext = ctx;
             chrome.storage.local.get({ sidebarFreezeId: null }, ({ sidebarFreezeId }) => {
                 if (sidebarFreezeId && (!ctx || ctx.orderNumber !== sidebarFreezeId)) {
-                    chrome.storage.local.set({ sidebarFreezeId: null, adyenDnaInfo: null });
+                    sessionSet({ sidebarFreezeId: null, adyenDnaInfo: null });
                 }
             });
             if (!ctx) {
@@ -1312,7 +1313,7 @@
         function clearSidebar() {
             storedOrderInfo = null;
             currentContext = null;
-            chrome.storage.local.set({
+            sessionSet({
                 sidebarDb: [],
                 sidebarOrderId: null,
                 sidebarOrderInfo: null,
@@ -1362,7 +1363,9 @@
                 navigator.clipboard.writeText(context.email).catch(err => console.error("[FENNEC] Clipboard error:", err));
             }
 
-            chrome.runtime.sendMessage({ action: "replaceTabs", urls });
+            sessionSet({ fennecActiveSession: getFennecSessionId() }, () => {
+                chrome.runtime.sendMessage({ action: "replaceTabs", urls });
+            });
             if (context.orderNumber) {
                 checkLastIssue(context.orderNumber);
             }
@@ -1492,6 +1495,10 @@
         console.log("[Copilot] Intervalo de chequeo de sidebar lanzado (Gmail).");
 
         chrome.storage.onChanged.addListener((changes, area) => {
+            if (area === 'local' && changes.sidebarSessionId &&
+                changes.sidebarSessionId.newValue !== getFennecSessionId()) {
+                return;
+            }
             if (area === 'local' && changes.sidebarDb && document.getElementById('db-summary-section')) {
                 loadDbSummary();
             }
@@ -1636,13 +1643,14 @@
                     const newName = sanitized ? sanitized + ext : file.name;
                     const reader = new FileReader();
                     reader.onload = () => {
-                        chrome.storage.local.set({
+                        sessionSet({
                             fennecPendingUpload: {
                                 orderId,
                                 comment,
                                 fileName: newName,
                                 fileData: reader.result
-                            }
+                            },
+                            fennecActiveSession: getFennecSessionId()
                         }, () => {
                             const url = `https://db.incfile.com/storage/incfile/${orderId}`;
                             chrome.runtime.sendMessage({ action: 'openOrReuseTab', url, active: false });
@@ -1660,7 +1668,7 @@
                     commentInput.focus();
                     return;
                 }
-                chrome.storage.local.set({ fennecPendingComment: { orderId, comment } }, () => {
+                sessionSet({ fennecPendingComment: { orderId, comment }, fennecActiveSession: getFennecSessionId() }, () => {
                     const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
                     chrome.runtime.sendMessage({ action: "openOrReuseTab", url, active: false });
                 });
@@ -1785,7 +1793,7 @@
                         updates[key] = input.value.trim();
                     }
                 });
-                chrome.storage.local.set({ fennecUpdateRequest: { orderId, updates } }, () => {
+                sessionSet({ fennecUpdateRequest: { orderId, updates }, fennecActiveSession: getFennecSessionId() }, () => {
                     const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
                     chrome.runtime.sendMessage({ action: 'openOrReuseTab', url, active: false });
                     overlay.remove();
@@ -1818,7 +1826,7 @@
                         console.log('[Copilot] Opening Adyen for order', orderId);
                         const url = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${orderId}`;
                         showDnaLoading();
-                        chrome.storage.local.set({ sidebarFreezeId: orderId }, () => {
+                        sessionSet({ sidebarFreezeId: orderId, fennecActiveSession: getFennecSessionId() }, () => {
                             chrome.runtime.sendMessage({ action: "openTab", url, refocus: true, active: true });
                         });
                     }
