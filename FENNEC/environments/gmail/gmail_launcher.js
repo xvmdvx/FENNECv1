@@ -123,6 +123,17 @@
             const gmailBar = document.getElementById('gb');
             if (gmailBar) candidates.push(gmailBar);
 
+            // Detectamos paneles de visor (adjuntos, imágenes, etc.)
+            Array.from(document.body.children).forEach(el => {
+                const rect = el.getBoundingClientRect();
+                const style = getComputedStyle(el);
+                if ((style.position === 'fixed' || style.position === 'absolute') &&
+                    rect.width >= window.innerWidth * 0.8 &&
+                    rect.height >= window.innerHeight * 0.6) {
+                    candidates.push(el);
+                }
+            });
+
             const mainPanels = candidates.filter(el => {
                 const rect = el.getBoundingClientRect();
                 return rect.width > (window.innerWidth * 0.6);
@@ -133,11 +144,15 @@
                 mainPanels.push(document.body);
             }
 
-            mainPanels.forEach((el, i) => {
+            mainPanels.forEach(el => {
                 // Usamos margin-right para no desplazar
                 // elementos de paginación fuera de la vista
                 el.style.setProperty("margin-right", SIDEBAR_WIDTH + "px", "important");
                 el.style.setProperty("transition", "margin-right 0.2s", "important");
+                const style = getComputedStyle(el);
+                if (style.position === 'fixed' || style.position === 'absolute') {
+                    el.style.setProperty('right', SIDEBAR_WIDTH + 'px', 'important');
+                }
             });
 
             return mainPanels;
