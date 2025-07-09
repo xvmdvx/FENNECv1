@@ -232,7 +232,6 @@
                 });
                 if (clientLabel && clientBox) { clientLabel.style.display = ""; clientBox.style.display = ""; }
                 if (billingLabel && billingBox) { billingLabel.style.display = ""; billingBox.style.display = ""; }
-                if (issueBox) issueBox.style.display = "none";
             } else {
                 if (issueBox) issueBox.style.display = "";
                 orderBox.querySelectorAll('[data-review-merged="1"]').forEach(el => el.remove());
@@ -1348,7 +1347,7 @@
             repositionDnaSummary();
         }
 
-        function handleEmailSearchClick() {
+        function handleEmailSearchClick(xray = false) {
             showLoadingState();
 
             const context = extractOrderContextFromEmail();
@@ -1375,7 +1374,8 @@
             const urls = [gmailSearchUrl];
 
             if (context.orderNumber) {
-                const dbOrderUrl = `https://db.incfile.com/incfile/order/detail/${context.orderNumber}`;
+                let dbOrderUrl = `https://db.incfile.com/incfile/order/detail/${context.orderNumber}`;
+                if (xray) dbOrderUrl += '?fraud_xray=1';
                 urls.push(dbOrderUrl);
             } else {
                 const dbSearchUrl = "https://db.incfile.com/order-tracker/orders/order-search";
@@ -1383,7 +1383,21 @@
                 navigator.clipboard.writeText(context.email).catch(err => console.error("[FENNEC] Clipboard error:", err));
             }
 
-            sessionSet({ fennecActiveSession: getFennecSessionId() }, () => {
+            const data = { fennecActiveSession: getFennecSessionId() };
+            if (xray && context.orderNumber) {
+                Object.assign(data, {
+                    fraudReviewSession: context.orderNumber,
+                    sidebarFreezeId: context.orderNumber,
+                    sidebarDb: [],
+                    sidebarOrderId: null,
+                    sidebarOrderInfo: null,
+                    adyenDnaInfo: null,
+                    kountInfo: null
+                });
+                sessionStorage.setItem('fennecShowTrialFloater', '1');
+                localStorage.removeItem('fraudXrayFinished');
+            }
+            sessionSet(data, () => {
                 chrome.runtime.sendMessage({ action: "replaceTabs", urls });
             });
             if (context.orderNumber) {
@@ -1852,7 +1866,7 @@
                     }
 
                     if (!storedOrderInfo || storedOrderInfo.orderId !== orderId) {
-                        if (!skipSearch) handleEmailSearchClick();
+                        if (!skipSearch) handleEmailSearchClick(false);
                         setTimeout(openAdyen, 500);
                     } else {
                         openAdyen();
@@ -1869,7 +1883,7 @@
             if (!button || button.dataset.listenerAttached) return;
             button.dataset.listenerAttached = "true";
             button.addEventListener("click", function () {
-                handleEmailSearchClick();
+                handleEmailSearchClick(true);
                 setTimeout(() => {
                     const dnaBtn = document.getElementById("btn-dna");
                     if (dnaBtn) {
