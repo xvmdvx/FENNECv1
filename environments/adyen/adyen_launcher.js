@@ -413,10 +413,12 @@
                 sidebar.id = 'copilot-sidebar';
                 sidebar.innerHTML = `
                     <div class="copilot-header">
+                        <span id="qa-toggle" class="quick-actions-toggle">☰</span>
                         <div class="copilot-title">
                             <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (BETA)" />
                             <span>FENNEC (BETA)</span>
                         </div>
+                        <button id="copilot-clear-tabs">🗑</button>
                         <button id="copilot-close">✕</button>
                     </div>
                     <div class="copilot-body">
@@ -444,6 +446,12 @@
                     closeBtn.onclick = () => {
                         sidebar.remove();
                         document.body.style.marginRight = '';
+                    };
+                }
+                const clearTabsBtn = sidebar.querySelector('#copilot-clear-tabs');
+                if (clearTabsBtn) {
+                    clearTabsBtn.onclick = () => {
+                        chrome.runtime.sendMessage({ action: 'closeOtherTabs' });
                     };
                 }
                 const clearSb = sidebar.querySelector('#copilot-clear');
