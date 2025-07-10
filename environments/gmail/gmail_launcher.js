@@ -1396,6 +1396,11 @@
                     adyenDnaInfo: null,
                     kountInfo: null
                 });
+                // Clear any leftover XRAY flags so SEARCH only opens Gmail and DB
+                sessionStorage.removeItem('fennecShowTrialFloater');
+                localStorage.removeItem('fraudXrayCompleted');
+                localStorage.removeItem('fraudXrayFinished');
+                chrome.storage.local.remove('fennecFraudAdyen');
             } else if (context.orderNumber) {
                 Object.assign(data, {
                     fraudReviewSession: context.orderNumber,
