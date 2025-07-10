@@ -1397,7 +1397,8 @@
                     fraudReviewSession: null,
                     sidebarFreezeId: null,
                     adyenDnaInfo: null,
-                    kountInfo: null
+                    kountInfo: null,
+                    fennecFraudAdyen: null
                 });
             } else if (orderId) {
                 Object.assign(data, {
