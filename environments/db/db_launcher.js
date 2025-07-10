@@ -2898,9 +2898,12 @@ function getLastHoldUser() {
         if (info.orderId) {
             const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
             sessionSet({ fennecFraudAdyen: adyenUrl });
+
+            const kountLink = document.querySelector('a[href*="kount.net"][href*="workflow/detail"]');
+            if (kountLink) {
+                chrome.runtime.sendMessage({ action: 'openTab', url: kountLink.href, active: true });
+            }
         }
-        // Opening Kount automatically caused an extra tab when using the SEARCH
-        // button. This step has been removed so only Gmail and DB tabs open.
     }
 
 chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment }) => {
