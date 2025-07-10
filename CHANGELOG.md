@@ -6,3 +6,4 @@ All notable changes to this project will be documented in this file.
 - Start of new changelog.
 - Added Reset Extension button in the popup to clear storage and reload.
 - Added hamburger and trash icons to Review Mode header across all environments.
+- Fixed SEARCH button triggering XRAY instead of opening Gmail and DB tabs.

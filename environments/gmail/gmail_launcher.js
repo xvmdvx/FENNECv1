@@ -1288,7 +1288,7 @@
                 searchBtn.id = 'btn-email-search';
                 searchBtn.className = 'copilot-button';
                 searchBtn.textContent = '📧 SEARCH';
-                searchBtn.onclick = handleEmailSearchClick;
+                searchBtn.onclick = () => handleEmailSearchClick();
                 actionsRow.appendChild(searchBtn);
             } else {
                 actionsRow.appendChild(searchBtn);
@@ -1499,7 +1499,7 @@
             }
 
             // Botón SEARCH (listener UNIFICADO)
-            document.getElementById("btn-email-search").onclick = handleEmailSearchClick;
+            document.getElementById("btn-email-search").onclick = () => handleEmailSearchClick();
             const rBtn = document.getElementById("copilot-refresh");
             if (devMode && rBtn) rBtn.onclick = refreshSidebar;
             const clearSb = document.getElementById("copilot-clear");
