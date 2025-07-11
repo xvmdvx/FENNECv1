@@ -33,6 +33,15 @@
             let currentContext = null;
             let storedOrderInfo = null;
             let droppedFiles = [];
+
+            function dedupeFiles(list) {
+                const seen = new Set();
+                return list.filter(f => {
+                    if (seen.has(f.name)) return false;
+                    seen.add(f.name);
+                    return true;
+                });
+            }
             // Preserve the latest DNA details across Gmail pages.
             // Older versions cleared the data on each load when no sidebar was
             // frozen, which prevented displaying Adyen's DNA in Review Mode.
@@ -1744,26 +1753,40 @@
         }
 
         async function convertFileToPdf(file) {
+            const { PDFDocument, StandardFonts } = window.PDFLib || {};
+            const arrayBuf = await file.arrayBuffer();
             if (file.type === 'application/pdf') {
                 const data = await fileToDataURL(file);
                 return { fileName: file.name, fileData: data };
             }
-            const dataUrl = await fileToDataURL(file);
-            const { PDFDocument } = window.PDFLib || {};
-            if (!PDFDocument) return { fileName: file.name, fileData: dataUrl };
+            if (!PDFDocument) {
+                const data = await fileToDataURL(file);
+                const name = file.name.replace(/\.[^/.]+$/, '') + '.pdf';
+                return { fileName: name, fileData: data };
+            }
             const pdf = await PDFDocument.create();
             try {
                 if (file.type.startsWith('image/')) {
                     const img = file.type === 'image/png'
-                        ? await pdf.embedPng(dataUrl)
-                        : await pdf.embedJpg(dataUrl);
+                        ? await pdf.embedPng(arrayBuf)
+                        : await pdf.embedJpg(arrayBuf);
                     const page = pdf.addPage([img.width, img.height]);
                     page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
                 } else {
-                    pdf.addPage();
+                    const page = pdf.addPage();
+                    const text = new TextDecoder().decode(arrayBuf).slice(0, 2000);
+                    const font = await pdf.embedFont(StandardFonts.Helvetica);
+                    const { height } = page.getSize();
+                    const lines = text.split(/\r?\n/);
+                    let y = height - 50;
+                    for (const line of lines) {
+                        page.drawText(line, { x: 50, y, font, size: 12 });
+                        y -= 14;
+                        if (y < 50) break;
+                    }
                 }
             } catch (err) {
-                console.warn('[Copilot] Image embed failed:', err);
+                console.warn('[Copilot] PDF conversion failed:', err);
                 pdf.addPage();
             }
             const pdfData = await pdf.saveAsBase64({ dataUri: true });
@@ -1779,9 +1802,11 @@
 
             const handleDrop = e => {
                 e.preventDefault();
+                e.stopPropagation();
                 const files = Array.from(e.dataTransfer.files || []);
                 if (files.length) {
                     droppedFiles.push(...files);
+                    droppedFiles = dedupeFiles(droppedFiles);
                     updateDroppedIcons();
                     updateResolveButtonLabel();
                 }
