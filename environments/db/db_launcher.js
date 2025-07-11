@@ -2321,21 +2321,29 @@
         chrome.storage.local.remove('fennecPendingUpload');
         const token = document.querySelector('meta[name="csrf-token"]');
         const csrf = token ? token.getAttribute('content') : '';
-        fetch(data.fileData).then(r => r.blob()).then(blob => {
-            const form = new FormData();
-            form.append('file', blob, data.fileName);
-            return fetch(`/storage/incfile/${data.orderId}/create`, {
-                method: 'POST',
-                body: form,
-                headers: { 'X-CSRF-TOKEN': csrf },
-                credentials: 'include'
-            });
-        }).then(() => {
-            sessionSet({ fennecUploadDone: { time: Date.now() } });
-            if (data.comment || data.release) {
-                processPendingComment({ orderId: data.orderId, comment: data.comment, cancel: data.cancel, release: data.release });
+        const files = Array.isArray(data.files) ? data.files : [{ fileName: data.fileName, fileData: data.fileData }];
+        const uploadNext = () => {
+            if (!files.length) {
+                if (data.comment || data.release) {
+                    processPendingComment({ orderId: data.orderId, comment: data.comment, cancel: data.cancel, release: data.release });
+                }
+                return;
             }
-        }).catch(err => console.warn('[Copilot] Upload failed:', err));
+            const file = files.shift();
+            fetch(file.fileData).then(r => r.blob()).then(blob => {
+                const form = new FormData();
+                form.append('file', blob, file.fileName);
+                return fetch(`/storage/incfile/${data.orderId}/create`, {
+                    method: 'POST',
+                    body: form,
+                    headers: { 'X-CSRF-TOKEN': csrf },
+                    credentials: 'include'
+                });
+            }).then(() => {
+                sessionSet({ fennecUploadDone: { time: Date.now() } }, uploadNext);
+            }).catch(err => { console.warn('[Copilot] Upload failed:', err); uploadNext(); });
+        };
+        uploadNext();
     }
 
     function processDuplicateCancel(id) {
