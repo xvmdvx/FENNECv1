@@ -1651,6 +1651,20 @@
             }
         });
 
+        // React to XRAY completion even if Gmail tab never lost focus
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'fraudXrayFinished' && e.newValue === '1') {
+                localStorage.removeItem('fraudXrayFinished');
+                const box = document.getElementById('issue-summary-box');
+                if (box) box.style.display = 'block';
+                ensureIssueControls(true);
+                updateDetailVisibility();
+                if (currentContext && currentContext.orderNumber) {
+                    checkLastIssue(currentContext.orderNumber);
+                }
+            }
+        });
+
         // --- OPEN ORDER listener reutilizable ---
         function waitForElement(selector, timeout = 10000) {
             return new Promise((resolve, reject) => {
