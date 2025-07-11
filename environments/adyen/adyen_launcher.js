@@ -1,6 +1,15 @@
+import BaseLauncher from '../../core/BaseLauncher.js';
+import Sidebar from '../../core/sidebar.js';
+
 // Auto-navigates to the DNA page and collects payment/transaction info when an
 // order number is provided via ?fennec_order= in the URL or session storage.
-(function() {
+
+export default class AdyenLauncher extends BaseLauncher {
+    constructor() {
+        super();
+        this.sidebar = new Sidebar();
+        const launcher = this;
+        (function() {
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) {
             console.log('[FENNEC] Extension disabled, skipping Adyen launcher.');
@@ -305,7 +314,7 @@
                         const html = buildDnaHtml(adyenDnaInfo);
                         container.innerHTML = html || '';
                         attachCommonListeners(container);
-                        if (isDnaPage) storeSidebarSnapshot(document.getElementById('copilot-sidebar'));
+                        if (isDnaPage) storeSidebarSnapshot(launcher.sidebar.element);
                     });
                 });
             }
@@ -318,7 +327,7 @@
                         container.innerHTML = sidebarDb.join('');
                         container.style.display = 'block';
                         attachCommonListeners(container);
-                        if (isDnaPage) storeSidebarSnapshot(document.getElementById('copilot-sidebar'));
+                        if (isDnaPage) storeSidebarSnapshot(launcher.sidebar.element);
                         const qbox = container.querySelector('#quick-summary');
                         if (qbox) {
                             qbox.classList.remove('quick-summary-collapsed');
@@ -358,7 +367,7 @@
                     label.textContent = '';
                     label.className = 'issue-status-label';
                 }
-                if (isDnaPage) storeSidebarSnapshot(document.getElementById('copilot-sidebar'));
+                if (isDnaPage) storeSidebarSnapshot(launcher.sidebar.element);
             }
 
             function checkLastIssue(orderId) {
@@ -409,7 +418,7 @@
 
             function injectSidebar() {
                 if (document.getElementById('copilot-sidebar')) return;
-                const sidebar = document.createElement('div');
+                const sidebar = launcher.sidebar.create();
                 sidebar.id = 'copilot-sidebar';
                 sidebar.innerHTML = `
                     <div class="copilot-header">
@@ -432,7 +441,7 @@
                         </div>
                         <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                     </div>`;
-                document.body.appendChild(sidebar);
+                launcher.sidebar.attach(document.body);
                 chrome.storage.sync.get({
                     sidebarFontSize: 13,
                     sidebarFont: "'Inter', sans-serif",
@@ -444,7 +453,7 @@
                 const closeBtn = sidebar.querySelector('#copilot-close');
                 if (closeBtn) {
                     closeBtn.onclick = () => {
-                        sidebar.remove();
+                        launcher.sidebar.remove();
                         document.body.style.marginRight = '';
                     };
                 }
@@ -624,3 +633,7 @@
         }
     });
 })();
+    }
+}
+
+new AdyenLauncher();

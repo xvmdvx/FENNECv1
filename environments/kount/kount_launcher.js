@@ -1,4 +1,12 @@
-(function() {
+import BaseLauncher from '../../core/BaseLauncher.js';
+import Sidebar from '../../core/sidebar.js';
+
+export default class KountLauncher extends BaseLauncher {
+    constructor() {
+        super();
+        this.sidebar = new Sidebar();
+        const launcher = this;
+        (function() {
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) return;
         try {
@@ -112,3 +120,7 @@
         }
     });
 })();
+    }
+}
+
+new KountLauncher();
