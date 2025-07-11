@@ -1629,11 +1629,11 @@
                         msg.style.color = '#0a0';
                         box.appendChild(msg);
                     }
-                    msg.textContent = 'Document uploaded successfully.';
+                    msg.textContent = 'Document converted and uploaded.';
                     msg.style.display = 'block';
                     setTimeout(() => { if (msg) msg.style.display = 'none'; }, 3000);
                     const btn = document.getElementById('issue-resolve-btn');
-                    if (btn && reviewMode) btn.textContent = 'UPDATE';
+                    if (btn) btn.textContent = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
                     droppedFiles = [];
                     const list = document.getElementById('dropped-file-list');
                     if (list) list.remove();
