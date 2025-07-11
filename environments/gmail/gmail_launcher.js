@@ -1061,24 +1061,28 @@
             return `<div class="section-label">KOUNT</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
         }
 
-       function loadDnaSummary() {
+        function loadDnaSummary() {
             const container = document.getElementById('dna-summary');
             if (!container) return;
             console.log('[Copilot] Loading DNA summary');
-            chrome.storage.local.get({ adyenDnaInfo: null }, ({ adyenDnaInfo }) => {
-                const html = buildDnaHtml(adyenDnaInfo);
-                if (html) {
-                    console.log('[Copilot] DNA data found');
-                    container.innerHTML = html;
-                } else {
-                    console.log('[Copilot] No DNA data available');
-                    container.innerHTML = '';
-                }
-                attachCommonListeners(container);
-                repositionDnaSummary();
-                ensureIssueControls();
-                setupResolveButton();
-            });
+            try {
+                chrome.storage.local.get({ adyenDnaInfo: null }, ({ adyenDnaInfo }) => {
+                    const html = buildDnaHtml(adyenDnaInfo);
+                    if (html) {
+                        console.log('[Copilot] DNA data found');
+                        container.innerHTML = html;
+                    } else {
+                        console.log('[Copilot] No DNA data available');
+                        container.innerHTML = '';
+                    }
+                    attachCommonListeners(container);
+                    repositionDnaSummary();
+                    ensureIssueControls();
+                    setupResolveButton();
+                });
+            } catch (err) {
+                console.warn('[Copilot] loadDnaSummary failed:', err);
+            }
         }
 
         function loadKountSummary() {
@@ -1269,6 +1273,7 @@
             const updBtn = document.getElementById('update-info-btn');
             if (updBtn) issueBox.appendChild(updBtn);
             setupResolveButton();
+            updateResolveButtonLabel();
         }
 
         function showInitialStatus() {
@@ -1747,13 +1752,18 @@
             const { PDFDocument } = window.PDFLib || {};
             if (!PDFDocument) return { fileName: file.name, fileData: dataUrl };
             const pdf = await PDFDocument.create();
-            if (file.type.startsWith('image/')) {
-                const img = file.type === 'image/png'
-                    ? await pdf.embedPng(dataUrl)
-                    : await pdf.embedJpg(dataUrl);
-                const page = pdf.addPage([img.width, img.height]);
-                page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
-            } else {
+            try {
+                if (file.type.startsWith('image/')) {
+                    const img = file.type === 'image/png'
+                        ? await pdf.embedPng(dataUrl)
+                        : await pdf.embedJpg(dataUrl);
+                    const page = pdf.addPage([img.width, img.height]);
+                    page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+                } else {
+                    pdf.addPage();
+                }
+            } catch (err) {
+                console.warn('[Copilot] Image embed failed:', err);
                 pdf.addPage();
             }
             const pdfData = await pdf.saveAsBase64({ dataUri: true });
@@ -1762,11 +1772,11 @@
         }
 
         function setupResolveButton() {
-            const resolveBtn = document.getElementById("issue-resolve-btn");
-            const commentInput = document.getElementById("issue-comment-input");
-            if (!resolveBtn || !commentInput || resolveBtn.dataset.listenerAttached) return;
-            resolveBtn.dataset.listenerAttached = "true";
+            const resolveBtn = document.getElementById('issue-resolve-btn');
+            const commentInput = document.getElementById('issue-comment-input');
+            if (!resolveBtn || !commentInput) return;
             const issueBox = document.getElementById('issue-summary-box');
+
             const handleDrop = e => {
                 e.preventDefault();
                 const files = Array.from(e.dataTransfer.files || []);
@@ -1776,11 +1786,16 @@
                     updateResolveButtonLabel();
                 }
             };
+
             [commentInput, issueBox].forEach(el => {
-                if (!el) return;
+                if (!el || el.dataset.dropListenerAttached) return;
+                el.dataset.dropListenerAttached = 'true';
                 el.addEventListener('dragover', e => e.preventDefault());
                 el.addEventListener('drop', handleDrop);
             });
+
+            if (resolveBtn.dataset.listenerAttached) return;
+            resolveBtn.dataset.listenerAttached = 'true';
             resolveBtn.onclick = () => {
                 const comment = commentInput.value.trim();
                 const orderId = (storedOrderInfo && storedOrderInfo.orderId) ||
