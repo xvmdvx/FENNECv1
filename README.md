@@ -10,6 +10,8 @@ The extension lives in the `FENNEC/` folder. Key pieces include:
 - `core/` – Shared helpers and the service worker.
   - `background_email_search.js` – handles messaging, tab control and CORS removal for the local Mistral integration.
   - `utils.js` – common utilities such as copying text and opening search tabs.
+  - `sidebar.js` – `Sidebar` class used to build the sidebar container.
+  - `launcher.js` – base `Launcher` class for environment scripts.
   - `mistral_chat.js` – chat widget used when Dev Mode is enabled.
 - `environments/` – Content scripts injected into specific sites:
   - `gmail/gmail_launcher.js` – Gmail interface.
@@ -25,6 +27,13 @@ The extension lives in the `FENNEC/` folder. Key pieces include:
 - `README.md` – this guide.
 
 For historical changes refer to the **Changelog**. It has been reset so future updates start from a clean slate.
+
+### Object-oriented migration
+
+FENNEC began as purely procedural code. The new `sidebar.js` and `launcher.js` modules
+introduce basic classes so each environment can gradually adopt an object-oriented
+structure. Existing scripts still work as before; the classes are loaded globally
+and will be used incrementally in upcoming phases.
 
 ## Features
 

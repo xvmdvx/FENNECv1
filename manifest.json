@@ -29,6 +29,8 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/sidebar.js",
+        "core/launcher.js",
         "core/pdf-lib.min.js",
         "environments/gmail/gmail_launcher.js"
       ],
@@ -45,6 +47,8 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/sidebar.js",
+        "core/launcher.js",
         "core/mistral_chat.js",
         "environments/db/db_launcher.js"
       ],
@@ -60,6 +64,8 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/sidebar.js",
+        "core/launcher.js",
         "environments/db/tracker_fraud.js"
       ],
       "css": [
@@ -74,6 +80,8 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/sidebar.js",
+        "core/launcher.js",
         "environments/db/db_email_search.js"
       ]
     },
@@ -84,6 +92,8 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/sidebar.js",
+        "core/launcher.js",
         "environments/db/db_order_search.js"
       ]
     },
@@ -92,6 +102,8 @@
         "https://tools.usps.com/zip-code-lookup.htm*"
       ],
       "js": [
+        "core/sidebar.js",
+        "core/launcher.js",
         "environments/usps/usps_launcher.js"
       ]
     },
@@ -102,6 +114,8 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/sidebar.js",
+        "core/launcher.js",
         "environments/adyen/adyen_launcher.js"
       ],
       "css": [
@@ -116,6 +130,8 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/sidebar.js",
+        "core/launcher.js",
         "environments/txsos/tx_sos_launcher.js"
       ],
       "css": [
@@ -130,6 +146,8 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/sidebar.js",
+        "core/launcher.js",
         "environments/kount/kount_launcher.js"
       ]
     }
