@@ -1,5 +1,14 @@
+import BaseLauncher from '../../core/BaseLauncher.js';
+import Sidebar from '../../core/sidebar.js';
+
 // Autofills the Texas SOS login and payment pages when launched from the DB SB FILE button.
-(function() {
+
+export default class TxsosLauncher extends BaseLauncher {
+    constructor() {
+        super();
+        this.sidebar = new Sidebar();
+        const launcher = this;
+        (function() {
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) {
             console.log("[FENNEC] Extension disabled, skipping TX SOS launcher.");
@@ -146,3 +155,7 @@
         });
     });
 })();
+    }
+}
+
+new TxsosLauncher();

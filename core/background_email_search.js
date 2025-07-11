@@ -1,13 +1,20 @@
 // Background worker handling tab management and other extension messages
 // Use a declarative rule to strip the Origin header from local Mistral API
 // requests so Ollama accepts them without CORS errors.
-function registerMistralRule() {
-    chrome.declarativeNetRequest.updateDynamicRules({
-        removeRuleIds: [1],
-        addRules: [{
-            id: 1,
-            priority: 1,
-            action: {
+
+export default class BackgroundService {
+    constructor() {
+        this.registerMistralRule();
+        this.registerListeners();
+    }
+
+    registerMistralRule() {
+        chrome.declarativeNetRequest.updateDynamicRules({
+            removeRuleIds: [1],
+            addRules: [{
+                id: 1,
+                priority: 1,
+                action: {
                 type: "modifyHeaders",
                 requestHeaders: [{ header: "origin", operation: "remove" }]
             },
@@ -16,12 +23,11 @@ function registerMistralRule() {
                 resourceTypes: ["xmlhttprequest"]
             }
         }]
-    });
-}
+        });
+    }
 
-registerMistralRule();
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    registerListeners() {
+        chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "openTab" && message.url) {
         console.log("[Copilot] Forzando apertura de una pestaña:", message.url);
         const opts = { url: message.url, active: Boolean(message.active) };
@@ -758,3 +764,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return;
     }
 });
+    }
+}
+
+new BackgroundService();

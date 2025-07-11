@@ -1,6 +1,15 @@
+import BaseLauncher from '../../core/BaseLauncher.js';
+import Sidebar from '../../core/sidebar.js';
+
 // Injects the FENNEC sidebar into Gmail pages.
 // Pads main panels and the attachment viewer so content stays visible.
-(function persistentSidebar() {
+
+export default class GmailLauncher extends BaseLauncher {
+    constructor() {
+        super();
+        this.sidebar = new Sidebar();
+        const launcher = this;
+        (function persistentSidebar() {
     // Clear the closed flag on full reloads so the sidebar returns
     window.addEventListener('beforeunload', () => {
         sessionStorage.removeItem("fennecSidebarClosed");
@@ -1424,7 +1433,7 @@
         function injectSidebar(mainPanels) {
             if (document.getElementById('copilot-sidebar')) return;
 
-            const sidebar = document.createElement('div');
+            const sidebar = launcher.sidebar.create();
             sidebar.id = 'copilot-sidebar';
             sidebar.innerHTML = `
                 <div class="copilot-header">
@@ -1462,7 +1471,7 @@
                     <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                 </div>
             `;
-            document.body.appendChild(sidebar);
+            launcher.sidebar.attach(document.body);
             chrome.storage.sync.get({
                 sidebarFontSize: 13,
                 sidebarFont: "'Inter', sans-serif",
@@ -1483,7 +1492,7 @@
 
             // Botón de cierre
             document.getElementById('copilot-close').onclick = () => {
-                sidebar.remove();
+                launcher.sidebar.remove();
                 // Limpiar el margin aplicado a los paneles
                 mainPanels.forEach(el => el.style.marginRight = '');
                 sessionStorage.setItem("fennecSidebarClosed", "true");
@@ -1878,3 +1887,7 @@
     });
     });
 })();
+    }
+}
+
+new GmailLauncher();

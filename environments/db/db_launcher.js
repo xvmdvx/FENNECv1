@@ -1,5 +1,14 @@
+import BaseLauncher from '../../core/BaseLauncher.js';
+import Sidebar from '../../core/sidebar.js';
+
 // Injects the FENNEC sidebar into DB pages.
-(function main() {
+
+export default class DbLauncher extends BaseLauncher {
+    constructor() {
+        super();
+        this.sidebar = new Sidebar();
+        const launcher = this;
+        (function main() {
     // Clear the closed flag on reloads so the sidebar reappears
     window.addEventListener('beforeunload', () => {
         sessionStorage.removeItem("fennecSidebarClosed");
@@ -481,7 +490,7 @@
 
                 (function injectSidebar() {
                     if (document.getElementById('copilot-sidebar')) return;
-                    const sidebar = document.createElement('div');
+                    const sidebar = launcher.sidebar.create();
                     sidebar.id = 'copilot-sidebar';
                     sidebar.innerHTML = `
                         <div class="copilot-header">
@@ -517,7 +526,7 @@
                             <div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
                         </div>
                     `;
-                    document.body.appendChild(sidebar);
+                    launcher.sidebar.attach(document.body);
                     chrome.storage.sync.get({
                         sidebarFontSize: 13,
                         sidebarFont: "'Inter', sans-serif",
@@ -530,7 +539,7 @@
                     const closeBtn = sidebar.querySelector('#copilot-close');
                     if (closeBtn) {
                         closeBtn.onclick = () => {
-                            sidebar.remove();
+                            launcher.sidebar.remove();
                             document.body.style.marginRight = '';
                             const style = document.getElementById('copilot-db-padding');
                             if (style) style.remove();
@@ -2983,3 +2992,7 @@ window.addEventListener('focus', () => {
     loadKountSummary();
 });
 })();
+    }
+}
+
+new DbLauncher();

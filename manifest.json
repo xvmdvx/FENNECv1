@@ -34,7 +34,8 @@
       "css": [
         "styles/sidebar.css",
         "styles/sidebar_light.css"
-      ]
+      ],
+      "type": "module"
     },
     {
       "matches": [
@@ -50,7 +51,8 @@
       "css": [
         "styles/sidebar.css",
         "styles/sidebar_light.css"
-      ]
+      ],
+      "type": "module"
     },
     {
       "matches": [
@@ -64,7 +66,8 @@
       "css": [
         "styles/sidebar.css",
         "styles/sidebar_light.css"
-      ]
+      ],
+      "type": "module"
     },
     {
       "matches": [
@@ -74,7 +77,8 @@
       "js": [
         "core/utils.js",
         "environments/db/db_email_search.js"
-      ]
+      ],
+      "type": "module"
     },
     {
       "matches": [
@@ -84,7 +88,8 @@
       "js": [
         "core/utils.js",
         "environments/db/db_order_search.js"
-      ]
+      ],
+      "type": "module"
     },
     {
       "matches": [
@@ -92,7 +97,8 @@
       ],
       "js": [
         "environments/usps/usps_launcher.js"
-      ]
+      ],
+      "type": "module"
     },
     {
       "matches": [
@@ -106,7 +112,8 @@
       "css": [
         "styles/sidebar.css",
         "styles/sidebar_light.css"
-      ]
+      ],
+      "type": "module"
     },
     {
       "matches": [
@@ -120,7 +127,8 @@
       "css": [
         "styles/sidebar.css",
         "styles/sidebar_light.css"
-      ]
+      ],
+      "type": "module"
     },
     {
       "matches": [
@@ -130,7 +138,8 @@
       "js": [
         "core/utils.js",
         "environments/kount/kount_launcher.js"
-      ]
+      ],
+      "type": "module"
     }
   ],
   "web_accessible_resources": [
