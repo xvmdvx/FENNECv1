@@ -1252,8 +1252,7 @@
                 if (list) list.remove();
             }
             let btn = document.getElementById('issue-resolve-btn');
-            let btnLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
-            if (droppedFiles.length) btnLabel = 'UPLOAD';
+            const btnLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
             if (!btn) {
                 btn = document.createElement('button');
                 btn.id = 'issue-resolve-btn';
@@ -1634,7 +1633,7 @@
                     msg.style.display = 'block';
                     setTimeout(() => { if (msg) msg.style.display = 'none'; }, 3000);
                     const btn = document.getElementById('issue-resolve-btn');
-                    if (btn && reviewMode) btn.textContent = 'UPLOAD';
+                    if (btn && reviewMode) btn.textContent = 'UPDATE';
                     droppedFiles = [];
                     const list = document.getElementById('dropped-file-list');
                     if (list) list.remove();
