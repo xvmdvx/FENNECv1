@@ -1637,7 +1637,10 @@
             loadKountSummary();
             if (localStorage.getItem('fraudXrayFinished') === '1') {
                 localStorage.removeItem('fraudXrayFinished');
+                const box = document.getElementById('issue-summary-box');
+                if (box) box.style.display = 'block';
                 ensureIssueControls(true);
+                updateDetailVisibility();
                 if (currentContext && currentContext.orderNumber) {
                     checkLastIssue(currentContext.orderNumber);
                 }
