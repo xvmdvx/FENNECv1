@@ -32,7 +32,7 @@
             reviewMode = reviewMode === null ? fennecReviewMode : reviewMode === 'true';
             let currentContext = null;
             let storedOrderInfo = null;
-            let droppedFile = null;
+            let droppedFiles = [];
             // Preserve the latest DNA details across Gmail pages.
             // Older versions cleared the data on each load when no sidebar was
             // frozen, which prevented displaying Adyen's DNA in Review Mode.
@@ -1195,9 +1195,9 @@
                 } else {
                     input.value = '';
                 }
-                droppedFile = null;
-                const dIcon = document.getElementById('dropped-file-icon');
-                if (dIcon) dIcon.remove();
+                droppedFiles = [];
+                const list = document.getElementById('dropped-file-list');
+                if (list) list.remove();
                 let btn = document.getElementById('issue-resolve-btn');
                 const btnLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
                 if (!btn) {
@@ -1247,9 +1247,9 @@
                 issueBox.appendChild(input);
             }
             if (reset) {
-                droppedFile = null;
-                const dIcon = document.getElementById('dropped-file-icon');
-                if (dIcon) dIcon.remove();
+                droppedFiles = [];
+                const list = document.getElementById('dropped-file-list');
+                if (list) list.remove();
             }
             let btn = document.getElementById('issue-resolve-btn');
             const btnLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
@@ -1632,6 +1632,11 @@
                     msg.textContent = 'Document uploaded successfully.';
                     msg.style.display = 'block';
                     setTimeout(() => { if (msg) msg.style.display = 'none'; }, 3000);
+                    const btn = document.getElementById('issue-resolve-btn');
+                    if (btn && reviewMode) btn.textContent = 'UPDATE';
+                    droppedFiles = [];
+                    const list = document.getElementById('dropped-file-list');
+                    if (list) list.remove();
                 }
             }
         });
@@ -1687,6 +1692,55 @@
             });
         }
 
+        function updateDroppedIcons() {
+            const commentInput = document.getElementById('issue-comment-input');
+            if (!commentInput) return;
+            let list = document.getElementById('dropped-file-list');
+            if (!list) {
+                list = document.createElement('div');
+                list.id = 'dropped-file-list';
+                commentInput.parentNode.insertBefore(list, commentInput.nextSibling);
+            }
+            list.innerHTML = '';
+            droppedFiles.forEach(f => {
+                const icon = document.createElement('div');
+                icon.className = 'dropped-file-icon quick-resolve-file-icon';
+                icon.textContent = `📎 ${f.name}`;
+                list.appendChild(icon);
+            });
+        }
+
+        function fileToDataURL(file) {
+            return new Promise(res => {
+                const r = new FileReader();
+                r.onload = () => res(r.result);
+                r.readAsDataURL(file);
+            });
+        }
+
+        async function convertFileToPdf(file) {
+            if (file.type === 'application/pdf') {
+                const data = await fileToDataURL(file);
+                return { fileName: file.name, fileData: data };
+            }
+            const dataUrl = await fileToDataURL(file);
+            const { PDFDocument } = window.PDFLib || {};
+            if (!PDFDocument) return { fileName: file.name, fileData: dataUrl };
+            const pdf = await PDFDocument.create();
+            if (file.type.startsWith('image/')) {
+                const img = file.type === 'image/png'
+                    ? await pdf.embedPng(dataUrl)
+                    : await pdf.embedJpg(dataUrl);
+                const page = pdf.addPage([img.width, img.height]);
+                page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+            } else {
+                pdf.addPage();
+            }
+            const pdfData = await pdf.saveAsBase64({ dataUri: true });
+            const name = file.name.replace(/\.[^/.]+$/, '') + '.pdf';
+            return { fileName: name, fileData: pdfData };
+        }
+
         function setupResolveButton() {
             const resolveBtn = document.getElementById("issue-resolve-btn");
             const commentInput = document.getElementById("issue-comment-input");
@@ -1695,18 +1749,11 @@
             commentInput.addEventListener('dragover', e => e.preventDefault());
             commentInput.addEventListener('drop', e => {
                 e.preventDefault();
-                const file = e.dataTransfer.files && e.dataTransfer.files[0];
-                if (file) {
-                    droppedFile = file;
+                const files = Array.from(e.dataTransfer.files || []);
+                if (files.length) {
+                    droppedFiles.push(...files);
                     resolveBtn.textContent = 'UPLOAD';
-                    let icon = document.getElementById('dropped-file-icon');
-                    if (!icon) {
-                        icon = document.createElement('div');
-                        icon.id = 'dropped-file-icon';
-                        icon.className = 'quick-resolve-file-icon';
-                        commentInput.parentNode.insertBefore(icon, commentInput.nextSibling);
-                    }
-                    icon.textContent = `📎 ${file.name}`;
+                    updateDroppedIcons();
                 }
             });
             resolveBtn.onclick = () => {
@@ -1717,32 +1764,26 @@
                     alert("No order ID detected.");
                     return;
                 }
-                const file = droppedFile;
-                if (file) {
-                    const ext = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : '';
-                    const sanitized = comment ? comment.replace(/[^a-z0-9]/gi, '_').toLowerCase() : '';
-                    const newName = sanitized ? sanitized + ext : file.name;
-                    const reader = new FileReader();
-                    reader.onload = () => {
+                const files = droppedFiles.slice();
+                if (files.length) {
+                    Promise.all(files.map(convertFileToPdf)).then(uploadList => {
                         sessionSet({
                             fennecPendingUpload: {
                                 orderId,
                                 comment,
-                                fileName: newName,
-                                fileData: reader.result
+                                files: uploadList
                             },
                             fennecActiveSession: getFennecSessionId()
                         }, () => {
                             const url = `https://db.incfile.com/storage/incfile/${orderId}`;
                             chrome.runtime.sendMessage({ action: 'openOrReuseTab', url, active: false });
                             commentInput.value = '';
-                            droppedFile = null;
+                            droppedFiles = [];
                             resolveBtn.textContent = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
-                            const icon = document.getElementById('dropped-file-icon');
-                            if (icon) icon.remove();
+                            const list = document.getElementById('dropped-file-list');
+                            if (list) list.remove();
                         });
-                    };
-                    reader.readAsDataURL(file);
+                    });
                     return;
                 }
                 if (!comment && !reviewMode) {
