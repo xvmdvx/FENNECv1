@@ -1562,6 +1562,10 @@
                     sb.innerHTML = changes.sidebarSnapshot.newValue;
                     attachCommonListeners(sb);
                     repositionDnaSummary();
+                    ensureIssueControls(true);
+                    setupResolveButton();
+                    setupUpdateButton();
+                    updateDetailVisibility();
                 }
             }
             if (area === 'sync' && changes.fennecReviewMode) {
