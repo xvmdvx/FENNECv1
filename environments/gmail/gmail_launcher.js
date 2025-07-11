@@ -1,15 +1,6 @@
-import BaseLauncher from '../../core/BaseLauncher.js';
-import Sidebar from '../../core/sidebar.js';
-
 // Injects the FENNEC sidebar into Gmail pages.
 // Pads main panels and the attachment viewer so content stays visible.
-
-export default class GmailLauncher extends BaseLauncher {
-    constructor() {
-        super();
-        this.sidebar = new Sidebar();
-        const launcher = this;
-        (function persistentSidebar() {
+(function persistentSidebar() {
     // Clear the closed flag on full reloads so the sidebar returns
     window.addEventListener('beforeunload', () => {
         sessionStorage.removeItem("fennecSidebarClosed");
@@ -1433,7 +1424,7 @@ export default class GmailLauncher extends BaseLauncher {
         function injectSidebar(mainPanels) {
             if (document.getElementById('copilot-sidebar')) return;
 
-            const sidebar = launcher.sidebar.create();
+            const sidebar = document.createElement('div');
             sidebar.id = 'copilot-sidebar';
             sidebar.innerHTML = `
                 <div class="copilot-header">
@@ -1471,7 +1462,7 @@ export default class GmailLauncher extends BaseLauncher {
                     <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                 </div>
             `;
-            launcher.sidebar.attach(document.body);
+            document.body.appendChild(sidebar);
             chrome.storage.sync.get({
                 sidebarFontSize: 13,
                 sidebarFont: "'Inter', sans-serif",
@@ -1492,7 +1483,7 @@ export default class GmailLauncher extends BaseLauncher {
 
             // Botón de cierre
             document.getElementById('copilot-close').onclick = () => {
-                launcher.sidebar.remove();
+                sidebar.remove();
                 // Limpiar el margin aplicado a los paneles
                 mainPanels.forEach(el => el.style.marginRight = '');
                 sessionStorage.setItem("fennecSidebarClosed", "true");
@@ -1887,7 +1878,3 @@ export default class GmailLauncher extends BaseLauncher {
     });
     });
 })();
-    }
-}
-
-new GmailLauncher();

@@ -1,14 +1,5 @@
-import BaseLauncher from '../../core/BaseLauncher.js';
-import Sidebar from '../../core/sidebar.js';
-
 // Injects the FENNEC sidebar into USPS pages.
-
-export default class UspsLauncher extends BaseLauncher {
-    constructor() {
-        super();
-        this.sidebar = new Sidebar();
-        const launcher = this;
-        (function() {
+(function() {
     chrome.runtime.onMessage.addListener((msg) => {
         if (msg.action === 'fennecToggle') {
             window.location.reload();
@@ -109,7 +100,3 @@ export default class UspsLauncher extends BaseLauncher {
     }
     });
 })();
-    }
-}
-
-new UspsLauncher();

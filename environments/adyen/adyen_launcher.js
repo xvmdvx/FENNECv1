@@ -1,15 +1,6 @@
-import BaseLauncher from '../../core/BaseLauncher.js';
-import Sidebar from '../../core/sidebar.js';
-
 // Auto-navigates to the DNA page and collects payment/transaction info when an
 // order number is provided via ?fennec_order= in the URL or session storage.
-
-export default class AdyenLauncher extends BaseLauncher {
-    constructor() {
-        super();
-        this.sidebar = new Sidebar();
-        const launcher = this;
-        (function() {
+(function() {
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) {
             console.log('[FENNEC] Extension disabled, skipping Adyen launcher.');
@@ -314,7 +305,7 @@ export default class AdyenLauncher extends BaseLauncher {
                         const html = buildDnaHtml(adyenDnaInfo);
                         container.innerHTML = html || '';
                         attachCommonListeners(container);
-                        if (isDnaPage) storeSidebarSnapshot(launcher.sidebar.element);
+                        if (isDnaPage) storeSidebarSnapshot(document.getElementById('copilot-sidebar'));
                     });
                 });
             }
@@ -327,7 +318,7 @@ export default class AdyenLauncher extends BaseLauncher {
                         container.innerHTML = sidebarDb.join('');
                         container.style.display = 'block';
                         attachCommonListeners(container);
-                        if (isDnaPage) storeSidebarSnapshot(launcher.sidebar.element);
+                        if (isDnaPage) storeSidebarSnapshot(document.getElementById('copilot-sidebar'));
                         const qbox = container.querySelector('#quick-summary');
                         if (qbox) {
                             qbox.classList.remove('quick-summary-collapsed');
@@ -367,7 +358,7 @@ export default class AdyenLauncher extends BaseLauncher {
                     label.textContent = '';
                     label.className = 'issue-status-label';
                 }
-                if (isDnaPage) storeSidebarSnapshot(launcher.sidebar.element);
+                if (isDnaPage) storeSidebarSnapshot(document.getElementById('copilot-sidebar'));
             }
 
             function checkLastIssue(orderId) {
@@ -418,7 +409,7 @@ export default class AdyenLauncher extends BaseLauncher {
 
             function injectSidebar() {
                 if (document.getElementById('copilot-sidebar')) return;
-                const sidebar = launcher.sidebar.create();
+                const sidebar = document.createElement('div');
                 sidebar.id = 'copilot-sidebar';
                 sidebar.innerHTML = `
                     <div class="copilot-header">
@@ -441,7 +432,7 @@ export default class AdyenLauncher extends BaseLauncher {
                         </div>
                         <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                     </div>`;
-                launcher.sidebar.attach(document.body);
+                document.body.appendChild(sidebar);
                 chrome.storage.sync.get({
                     sidebarFontSize: 13,
                     sidebarFont: "'Inter', sans-serif",
@@ -453,7 +444,7 @@ export default class AdyenLauncher extends BaseLauncher {
                 const closeBtn = sidebar.querySelector('#copilot-close');
                 if (closeBtn) {
                     closeBtn.onclick = () => {
-                        launcher.sidebar.remove();
+                        sidebar.remove();
                         document.body.style.marginRight = '';
                     };
                 }
@@ -633,7 +624,3 @@ export default class AdyenLauncher extends BaseLauncher {
         }
     });
 })();
-    }
-}
-
-new AdyenLauncher();
