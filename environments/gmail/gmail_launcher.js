@@ -1746,8 +1746,8 @@
             const commentInput = document.getElementById("issue-comment-input");
             if (!resolveBtn || !commentInput || resolveBtn.dataset.listenerAttached) return;
             resolveBtn.dataset.listenerAttached = "true";
-            commentInput.addEventListener('dragover', e => e.preventDefault());
-            commentInput.addEventListener('drop', e => {
+            const issueBox = document.getElementById('issue-summary-box');
+            const handleDrop = e => {
                 e.preventDefault();
                 const files = Array.from(e.dataTransfer.files || []);
                 if (files.length) {
@@ -1755,6 +1755,11 @@
                     resolveBtn.textContent = 'UPLOAD';
                     updateDroppedIcons();
                 }
+            };
+            [commentInput, issueBox].forEach(el => {
+                if (!el) return;
+                el.addEventListener('dragover', e => e.preventDefault());
+                el.addEventListener('drop', handleDrop);
             });
             resolveBtn.onclick = () => {
                 const comment = commentInput.value.trim();
