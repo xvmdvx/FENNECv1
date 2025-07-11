@@ -1076,6 +1076,8 @@
                 }
                 attachCommonListeners(container);
                 repositionDnaSummary();
+                ensureIssueControls();
+                setupResolveButton();
             });
         }
 
