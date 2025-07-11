@@ -1770,7 +1770,6 @@
                         sessionSet({
                             fennecPendingUpload: {
                                 orderId,
-                                comment,
                                 files: uploadList
                             },
                             fennecActiveSession: getFennecSessionId()
