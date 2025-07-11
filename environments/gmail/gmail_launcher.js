@@ -1198,6 +1198,7 @@
                 droppedFiles = [];
                 const list = document.getElementById('dropped-file-list');
                 if (list) list.remove();
+                updateResolveButtonLabel();
                 let btn = document.getElementById('issue-resolve-btn');
                 const btnLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
                 if (!btn) {
@@ -1250,6 +1251,7 @@
                 droppedFiles = [];
                 const list = document.getElementById('dropped-file-list');
                 if (list) list.remove();
+                updateResolveButtonLabel();
             }
             let btn = document.getElementById('issue-resolve-btn');
             const btnLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
@@ -1637,6 +1639,7 @@
                     droppedFiles = [];
                     const list = document.getElementById('dropped-file-list');
                     if (list) list.remove();
+                    updateResolveButtonLabel();
                 }
             }
         });
@@ -1710,6 +1713,23 @@
             });
         }
 
+        function allFilesPdf(files) {
+            return files.every(f =>
+                f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
+        }
+
+        function updateResolveButtonLabel() {
+            const btn = document.getElementById('issue-resolve-btn');
+            if (!btn) return;
+            if (droppedFiles.length) {
+                btn.textContent = allFilesPdf(droppedFiles) ?
+                    'UPLOAD' : 'CONVERT & UPLOAD';
+            } else {
+                btn.textContent = reviewMode ?
+                    'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
+            }
+        }
+
         function fileToDataURL(file) {
             return new Promise(res => {
                 const r = new FileReader();
@@ -1752,8 +1772,8 @@
                 const files = Array.from(e.dataTransfer.files || []);
                 if (files.length) {
                     droppedFiles.push(...files);
-                    resolveBtn.textContent = 'UPLOAD';
                     updateDroppedIcons();
+                    updateResolveButtonLabel();
                 }
             };
             [commentInput, issueBox].forEach(el => {
@@ -1783,9 +1803,9 @@
                             chrome.runtime.sendMessage({ action: 'openOrReuseTab', url, active: false });
                             commentInput.value = '';
                             droppedFiles = [];
-                            resolveBtn.textContent = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
                             const list = document.getElementById('dropped-file-list');
                             if (list) list.remove();
+                            updateResolveButtonLabel();
                         });
                     });
                     return;
