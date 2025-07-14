@@ -15,7 +15,8 @@
                 let type = '';
                 if (cells.length >= 6) type = cells[5].textContent.trim();
                 else if (cells.length >= 4) type = cells[3].textContent.trim();
-                return { orderId: id, type };
+                const status = cells.length >= 5 ? cells[4].textContent.trim() : '';
+                return { orderId: id, type, status };
             });
         }
 

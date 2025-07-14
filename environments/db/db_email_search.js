@@ -13,7 +13,9 @@
                 const id = link ? link.textContent.replace(/\D+/g, '') : '';
                 const typeCell = r.querySelector('td:nth-child(4)');
                 const type = typeCell ? typeCell.textContent.trim() : '';
-                return { orderId: id, type };
+                const statusCell = r.querySelector('td:nth-child(5)');
+                const status = statusCell ? statusCell.textContent.trim() : '';
+                return { orderId: id, type, status };
             });
         }
 
