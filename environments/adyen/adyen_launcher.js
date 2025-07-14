@@ -1,6 +1,7 @@
 // Auto-navigates to the DNA page and collects payment/transaction info when an
 // order number is provided via ?fennec_order= in the URL or session storage.
-(function() {
+class AdyenLauncher extends Launcher {
+    init() {
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) {
             console.log('[FENNEC] Extension disabled, skipping Adyen launcher.');
@@ -372,7 +373,7 @@
                 }
                 chrome.runtime.sendMessage({ action: 'checkLastIssue', orderId }, (resp) => {
                     if (chrome.runtime.lastError) {
-                        console.warn('[Copilot] Issue check failed:', chrome.runtime.lastError.message);
+                        console.warn('[FENNEC] Issue check failed:', chrome.runtime.lastError.message);
                         fillIssueBox(null, orderId);
                         return;
                     }
@@ -409,9 +410,8 @@
 
             function injectSidebar() {
                 if (document.getElementById('copilot-sidebar')) return;
-                const sidebar = document.createElement('div');
-                sidebar.id = 'copilot-sidebar';
-                sidebar.innerHTML = `
+                const sbObj = new Sidebar();
+                sbObj.build(`
                     <div class="copilot-header">
                         <span id="qa-toggle" class="quick-actions-toggle">☰</span>
                         <div class="copilot-title">
@@ -431,8 +431,9 @@
                             <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
                         </div>
                         <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
-                    </div>`;
-                document.body.appendChild(sidebar);
+                    </div>`);
+                sbObj.attach();
+                const sidebar = sbObj.element;
                 chrome.storage.sync.get({
                     sidebarFontSize: 13,
                     sidebarFont: "'Inter', sans-serif",
@@ -623,4 +624,7 @@
             console.error('[FENNEC Adyen] Launcher error:', e);
         }
     });
-})();
+    }
+}
+
+new AdyenLauncher().init();

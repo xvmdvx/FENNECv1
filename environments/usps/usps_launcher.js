@@ -1,5 +1,6 @@
 // Injects the FENNEC sidebar into USPS pages.
-(function() {
+class UspsLauncher extends Launcher {
+    init() {
     chrome.runtime.onMessage.addListener((msg) => {
         if (msg.action === 'fennecToggle') {
             window.location.reload();
@@ -99,4 +100,7 @@
         console.error('[FENNEC USPS] Launcher error:', e);
     }
     });
-})();
+    }
+}
+
+new UspsLauncher().init();

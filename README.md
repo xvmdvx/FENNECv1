@@ -35,6 +35,28 @@ introduce basic classes so each environment can gradually adopt an object-orient
 structure. Existing scripts still work as before; the classes are loaded globally
 and will be used incrementally in upcoming phases.
 
+
+Environment scripts now extend the `Launcher` base class and inject a `Sidebar` instance.
+Below is a minimal example:
+
+```javascript
+import Sidebar from './core/sidebar.js';
+import Launcher from './core/launcher.js';
+
+class ExampleLauncher extends Launcher {
+    detect() {
+        return location.hostname.includes('example.com');
+    }
+    init() {
+        const sb = new Sidebar();
+        sb.build('<div>Example</div>');
+        sb.attach();
+    }
+}
+
+new ExampleLauncher().init();
+```
+
 ## Features
 
 SIDEBAR HEADER:
