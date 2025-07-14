@@ -11,3 +11,4 @@ All notable changes to this project will be documented in this file.
 - Added Messenger module to unify extension messaging across environments.
   Uploaded files are converted to PDF before being sent and the button label
   changes to **UPDATE** after each upload.
+- Removed deprecated showDiagnoseResults helper and finalized documentation.
