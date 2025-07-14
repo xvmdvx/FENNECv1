@@ -35,7 +35,6 @@ introduce basic classes so each environment can gradually adopt an object-orient
 structure. Existing scripts still work as before; the classes are loaded globally
 and will be used incrementally in upcoming phases.
 
-#### Creating a launcher
 
 Environment scripts now extend the `Launcher` base class and inject a `Sidebar` instance.
 Below is a minimal example:
