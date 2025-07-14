@@ -85,3 +85,4 @@ Floater → Base overlay class for floating panels
 DiagnoseFloater → Floater showing parent order issues and actions
 TrialFloater → Floater used for Fraud Review summaries
 UpdateFloater → Floater for the Update Order overlay
+Messenger → Helper providing standardized messaging utilities

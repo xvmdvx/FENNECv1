@@ -1,6 +1,7 @@
 // Autofills the Texas SOS login and payment pages when launched from the DB SB FILE button.
 class TxSosLauncher extends Launcher {
     init() {
+    const bg = fennecMessenger;
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) {
             console.log("[FENNEC] Extension disabled, skipping TX SOS launcher.");

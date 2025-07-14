@@ -1,6 +1,7 @@
 // Injects the FENNEC sidebar into DB pages.
 class DBLauncher extends Launcher {
     init() {
+    const bg = fennecMessenger;
     // Clear the closed flag on reloads so the sidebar reappears
     window.addEventListener('beforeunload', () => {
         sessionStorage.removeItem("fennecSidebarClosed");
@@ -545,7 +546,7 @@ class DBLauncher extends Launcher {
                     const clearBtn = sidebar.querySelector('#copilot-clear-tabs');
                     if (clearBtn) {
                         clearBtn.onclick = () => {
-                            chrome.runtime.sendMessage({ action: "closeOtherTabs" });
+                            bg.closeOtherTabs();
                         };
                     }
                     const clearSb = sidebar.querySelector('#copilot-clear');
@@ -661,11 +662,11 @@ class DBLauncher extends Launcher {
                             if (parts.length && client.email) {
                                 const base = 'https://db.incfile.com/order-tracker/orders/order-search';
                                 const url = base + '?fennec_email=' + encodeURIComponent(client.email);
-                                chrome.runtime.sendMessage({ action: 'openActiveTab', url });
+                                bg.openActiveTab({ url });
                             } else if (parts.length) {
                                 const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
                                 const url = 'https://mail.google.com/mail/u/0/#search/' + query;
-                                chrome.runtime.sendMessage({ action: 'openActiveTab', url });
+                                bg.openActiveTab({ url });
                             }
                         });
 
@@ -2461,8 +2462,7 @@ class DBLauncher extends Launcher {
         const height = Math.round(window.innerHeight * 0.7);
         const left = window.screenX + Math.round((window.outerWidth - width) / 2);
         const top = window.screenY + Math.round((window.outerHeight - height) / 2);
-        chrome.runtime.sendMessage({
-            action: 'openKnowledgeBaseWindow',
+        bg.send('openKnowledgeBaseWindow', {
             state,
             orderType: type,
             width,
@@ -2473,7 +2473,7 @@ class DBLauncher extends Launcher {
     }
 
     function startFileAlong() {
-        chrome.runtime.sendMessage({ action: 'openFilingWindow', dbUrl: location.href });
+        bg.send('openFilingWindow', { dbUrl: location.href });
     }
 
     function getLastIssueInfo() {
@@ -2801,7 +2801,7 @@ class DBLauncher extends Launcher {
                 const data = { orderId: r.order.orderId, comment };
                 if (/cancel/i.test(btnLabel)) data.cancel = true;
                 sessionSet({ fennecPendingComment: data }, () => {
-                    chrome.runtime.sendMessage({ action: 'openActiveTab', url: `${location.origin}/incfile/order/detail/${r.order.orderId}` });
+                    bg.openActiveTab({ url: `${location.origin}/incfile/order/detail/${r.order.orderId}` });
                 });
             });
             card.appendChild(action);
@@ -2810,7 +2810,7 @@ class DBLauncher extends Launcher {
         };
 
         const promises = orders.map(o => new Promise(res => {
-            chrome.runtime.sendMessage({ action: 'fetchLastIssue', orderId: o.orderId }, resp => {
+            bg.send('fetchLastIssue', { orderId: o.orderId }, resp => {
                 const result = resp && resp.issueInfo
                     ? { order: o, issue: resp.issueInfo.text, active: resp.issueInfo.active }
                     : { order: o, issue: 'On hold', active: true };
@@ -2903,7 +2903,7 @@ function getLastHoldUser() {
         if (!client.email && parts.length) {
             const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
             const gmailUrl = 'https://mail.google.com/mail/u/0/#search/' + query;
-            chrome.runtime.sendMessage({ action: 'openTab', url: gmailUrl, active: true, refocus: true });
+            bg.openTab({ url: gmailUrl, active: true, refocus: true });
         }
         if (info.orderId) {
             const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
@@ -2911,7 +2911,7 @@ function getLastHoldUser() {
 
             const kountLink = document.querySelector('a[href*="kount.net"][href*="workflow/detail"]');
             if (kountLink) {
-                chrome.runtime.sendMessage({ action: 'openTab', url: kountLink.href, active: true });
+                bg.openTab({ url: kountLink.href, active: true });
             }
         }
     }

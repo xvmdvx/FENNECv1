@@ -1,6 +1,7 @@
 // Injects the FENNEC sidebar into USPS pages.
 class UspsLauncher extends Launcher {
     init() {
+    const bg = fennecMessenger;
     chrome.runtime.onMessage.addListener((msg) => {
         if (msg.action === 'fennecToggle') {
             window.location.reload();

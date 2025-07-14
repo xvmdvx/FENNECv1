@@ -1,4 +1,5 @@
 (function() {
+    const bg = fennecMessenger;
     chrome.storage.local.get({ extensionEnabled: true, lightMode: false }, opts => {
         if (!opts.extensionEnabled) return;
         if (opts.lightMode) {
@@ -71,7 +72,7 @@
             const clearBtn = sidebar.querySelector('#copilot-clear-tabs');
             if (clearBtn) {
                 clearBtn.onclick = () => {
-                    chrome.runtime.sendMessage({ action: 'closeOtherTabs' });
+                    bg.closeOtherTabs();
                 };
             }
         }
@@ -89,7 +90,7 @@
                 adyenDnaInfo: null,
                 kountInfo: null
             }, () => {
-                chrome.runtime.sendMessage({ action: 'openTab', url: dbUrl, active: true, refocus: true });
+                bg.openTab({ url: dbUrl, active: true, refocus: true });
             });
         }
 
@@ -496,7 +497,7 @@
                     localStorage.setItem('fraudXrayCompleted', '1');
                 }
                 localStorage.setItem('fraudXrayFinished', '1');
-                chrome.runtime.sendMessage({ action: 'refocusTab' });
+                bg.refocusTab();
                 trialFloater.ensure();
                 const overlay = trialFloater.element;
                 const title = trialFloater.header;
@@ -506,14 +507,13 @@
                     overlay.remove();
                     title.remove();
                     endFraudSession();
-                    chrome.runtime.sendMessage({ action: 'refocusTab' });
+                    bg.refocusTab();
                 });
                 const subBtn = overlay.querySelector('#sub-detection-btn');
                 if (subBtn) {
                     subBtn.addEventListener('click', () => {
                         subBtn.disabled = true;
-                        chrome.runtime.sendMessage({
-                            action: 'detectSubscriptions',
+                        bg.send('detectSubscriptions', {
                             email: (data.sidebarOrderInfo && data.sidebarOrderInfo.clientEmail) || '',
                             ltv: (data.sidebarOrderInfo && data.sidebarOrderInfo.clientLtv) || ''
                         }, resp => {
@@ -575,7 +575,7 @@
                     title.remove();
                     endFraudSession();
                     showTrialSuccess();
-                    chrome.runtime.sendMessage({ action: 'refocusTab' });
+                    bg.refocusTab();
                 }
 
                 const crBtn = overlay.querySelector('#trial-btn-cr');
@@ -617,8 +617,7 @@
                     }
                 }
                 if (data.sidebarOrderInfo && data.sidebarOrderInfo.clientEmail) {
-                    chrome.runtime.sendMessage({
-                        action: 'detectSubscriptions',
+                    bg.send('detectSubscriptions', {
                         email: data.sidebarOrderInfo.clientEmail,
                         ltv: data.sidebarOrderInfo.clientLtv || ''
                     }, resp => {
@@ -942,7 +941,7 @@
                 label.textContent = '';
                 label.className = 'issue-status-label';
             }
-            chrome.runtime.sendMessage({ action: 'checkLastIssue', orderId }, (resp) => {
+            bg.send('checkLastIssue', { orderId }, (resp) => {
                 if (chrome.runtime.lastError) {
                     fillIssueBox(null, orderId);
                     return;

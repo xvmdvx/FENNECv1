@@ -1,6 +1,7 @@
 // Injects the FENNEC sidebar into Gmail pages.
 // Pads main panels and the attachment viewer so content stays visible.
 (function persistentSidebar() {
+    const bg = fennecMessenger;
     // Clear the closed flag on full reloads so the sidebar returns
     window.addEventListener('beforeunload', () => {
         sessionStorage.removeItem("fennecSidebarClosed");
@@ -733,7 +734,7 @@
             if (link && orderId) {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
-                    chrome.runtime.sendMessage({ action: 'openActiveTab', url });
+                    bg.openActiveTab({ url });
                 });
             }
             attachCommonListeners(summaryBox);
@@ -1150,7 +1151,7 @@
                 label.textContent = '';
                 label.className = 'issue-status-label';
             }
-            chrome.runtime.sendMessage({ action: "checkLastIssue", orderId }, (resp) => {
+            bg.send('checkLastIssue', { orderId }, (resp) => {
                 if (chrome.runtime.lastError) {
                     console.warn("[Copilot] Issue check failed:", chrome.runtime.lastError.message);
                     fillIssueBox(null, orderId);
@@ -1433,7 +1434,7 @@
                 localStorage.removeItem('fraudXrayFinished');
             }
             sessionSet(data, () => {
-                chrome.runtime.sendMessage({ action: "replaceTabs", urls });
+                bg.replaceTabs({ urls });
             });
             if (orderId) {
                 checkLastIssue(orderId);
@@ -1513,7 +1514,7 @@ sbObj.build(`
             const clearBtn = document.getElementById('copilot-clear-tabs');
             if (clearBtn) {
                 clearBtn.onclick = () => {
-                    chrome.runtime.sendMessage({ action: "closeOtherTabs" });
+                    bg.closeOtherTabs();
                 };
             }
 
@@ -1841,7 +1842,7 @@ sbObj.build(`
                             fennecActiveSession: getFennecSessionId()
                         }, () => {
                             const url = `https://db.incfile.com/storage/incfile/${orderId}`;
-                            chrome.runtime.sendMessage({ action: 'openOrReuseTab', url, active: false });
+                            bg.openOrReuseTab({ url, active: false });
                             commentInput.value = '';
                             droppedFiles = [];
                             const list = document.getElementById('dropped-file-list');
@@ -1859,7 +1860,7 @@ sbObj.build(`
                 if (reviewMode && !comment) data.release = true;
                 sessionSet({ fennecPendingComment: data, fennecActiveSession: getFennecSessionId() }, () => {
                     const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
-                    chrome.runtime.sendMessage({ action: "openOrReuseTab", url, active: false });
+                    bg.openOrReuseTab({ url, active: false });
                 });
             };
         }
@@ -1980,7 +1981,7 @@ sbObj.build(`
                 });
                 sessionSet({ fennecUpdateRequest: { orderId, updates }, fennecActiveSession: getFennecSessionId() }, () => {
                     const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
-                    chrome.runtime.sendMessage({ action: 'openOrReuseTab', url, active: false });
+                    bg.openOrReuseTab({ url, active: false });
                     overlay.remove();
                 });
             };
