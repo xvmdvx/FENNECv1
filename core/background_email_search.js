@@ -1,3 +1,4 @@
+import "./background_controller.js";
 // Background worker handling tab management and other extension messages
 // Use a declarative rule to strip the Origin header from local Mistral API
 // requests so Ollama accepts them without CORS errors.

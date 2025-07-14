@@ -7,6 +7,7 @@
             document.body.classList.remove('fennec-light-mode');
         }
         const SIDEBAR_WIDTH = 340;
+        const trialFloater = new TrialFloater();
         chrome.storage.local.set({ fennecReviewMode: true });
         chrome.storage.sync.set({ fennecReviewMode: true });
 
@@ -474,9 +475,9 @@
         // Increase retries so the trial floater still appears.
         function showTrialFloater(retries = 60, force = false) {
             const flag = sessionStorage.getItem('fennecShowTrialFloater');
-            const overlayExists = document.getElementById('fennec-trial-overlay');
+            const overlayExists = trialFloater.exists();
             if ((!flag && !force && !overlayExists) || retries <= 0) return;
-            const summary = document.getElementById('fraud-summary-box');
+            const summary = document.getElementById("fraud-summary-box");
             if (summary) summary.remove();
             chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null }, data => {
                 if ((!data.adyenDnaInfo || !data.adyenDnaInfo.payment) && retries > 0) {
@@ -496,49 +497,9 @@
                 }
                 localStorage.setItem('fraudXrayFinished', '1');
                 chrome.runtime.sendMessage({ action: 'refocusTab' });
-                let overlay = document.getElementById('fennec-trial-overlay');
-                let title = document.getElementById('fennec-trial-title');
-                if (!overlay) {
-                    overlay = document.createElement('div');
-                    overlay.id = 'fennec-trial-overlay';
-                    title = document.createElement('div');
-                    title.id = 'fennec-trial-title';
-                    title.textContent = 'FRAUD REVIEW';
-                    const sidebarEl = document.getElementById('copilot-sidebar');
-                    let baseSize = 13;
-                    if (sidebarEl) {
-                        const s = window.getComputedStyle(sidebarEl).fontSize;
-                        const n = parseFloat(s);
-                        if (!isNaN(n)) baseSize = n;
-                    }
-                    title.style.setProperty('font-size', (baseSize + 26) + 'px', 'important');
-                    title.style.setProperty('line-height', '1.2', 'important');
-                    title.style.setProperty('padding', '8px 0', 'important');
-                    title.style.setProperty('border-radius', '12px', 'important');
-                    title.style.setProperty('text-shadow', '0 0 4px #fff, 0 0 8px #fff', 'important');
-                    title.style.setProperty('box-shadow', '0 0 0 2px #fff inset', 'important');
-                    title.style.setProperty('background-color', 'inherit', 'important');
-                    title.style.setProperty('-webkit-text-stroke', '1px #fff', 'important');
-                    document.body.appendChild(title);
-                    document.body.appendChild(overlay);
-                } else {
-                    // Ensure header styling persists if overlay already existed
-                    const sidebarEl2 = document.getElementById('copilot-sidebar');
-                    let baseSize2 = 13;
-                    if (sidebarEl2) {
-                        const s = window.getComputedStyle(sidebarEl2).fontSize;
-                        const n = parseFloat(s);
-                        if (!isNaN(n)) baseSize2 = n;
-                    }
-                    title.style.setProperty('font-size', (baseSize2 + 26) + 'px', 'important');
-                    title.style.setProperty('line-height', '1.2', 'important');
-                    title.style.setProperty('padding', '8px 0', 'important');
-                    title.style.setProperty('border-radius', '12px', 'important');
-                    title.style.setProperty('text-shadow', '0 0 4px #fff, 0 0 8px #fff', 'important');
-                    title.style.setProperty('box-shadow', '0 0 0 2px #fff inset', 'important');
-                    title.style.setProperty('background-color', 'inherit', 'important');
-                    title.style.setProperty('-webkit-text-stroke', '1px #fff', 'important');
-                }
+                trialFloater.ensure();
+                const overlay = trialFloater.element;
+                const title = trialFloater.header;
                 overlay.innerHTML = html;
                 const close = overlay.querySelector('.trial-close');
                 if (close) close.addEventListener('click', () => {
