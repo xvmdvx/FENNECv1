@@ -12,6 +12,7 @@ The extension lives in the `FENNEC/` folder. Key pieces include:
   - `utils.js` – common utilities such as copying text and opening search tabs.
   - `sidebar.js` – `Sidebar` class used to build the sidebar container.
   - `launcher.js` – base `Launcher` class for environment scripts.
+  - `messenger.js` – helper for sending/receiving messages consistently.
   - `mistral_chat.js` – chat widget used when Dev Mode is enabled.
 - `environments/` – Content scripts injected into specific sites:
   - `gmail/gmail_launcher.js` – Gmail interface.
@@ -64,7 +65,8 @@ Phase 4 converts legacy overlays to subclasses of `Floater`. The Diagnose panel 
 
 Phase 5 expands `BackgroundController` with helpers like `openOrReuseTab` and `replaceTabs` so the service worker delegates tab control to this class.
 
-Phase 6 will refine module usage and standardize messaging across environments.
+Phase 6 adds a `Messenger` helper used by all environments to send and receive
+messages in a uniform way.
 
 Phase 7 will clean up deprecated helpers and finalize the documentation.
 

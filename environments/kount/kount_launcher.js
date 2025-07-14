@@ -1,5 +1,6 @@
 class KountLauncher extends Launcher {
     init() {
+    const bg = fennecMessenger;
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) return;
         try {
@@ -66,7 +67,7 @@ class KountLauncher extends Launcher {
                         const ekataLink = document.querySelector('a[href*="/workflow/ekata"]');
                         if (ekataLink) {
                             const url = ekataLink.href.startsWith('http') ? ekataLink.href : location.origin + ekataLink.getAttribute('href');
-                            chrome.runtime.sendMessage({ action: 'openTab', url, active: true });
+                            bg.openTab({ url, active: true });
                         }
                     }, 500);
                 };
@@ -97,9 +98,9 @@ class KountLauncher extends Launcher {
                         chrome.storage.local.get({ fennecFraudAdyen: null }, ({ fennecFraudAdyen }) => {
                             if (fennecFraudAdyen) {
                                 chrome.storage.local.remove('fennecFraudAdyen');
-                                chrome.runtime.sendMessage({ action: 'openOrReuseTab', url: fennecFraudAdyen, active: true });
+                                bg.openOrReuseTab({ url: fennecFraudAdyen, active: true });
                             } else {
-                                chrome.runtime.sendMessage({ action: 'refocusTab' });
+                                bg.refocusTab();
                             }
                         });
                     }, 1500);

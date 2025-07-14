@@ -2,6 +2,7 @@
 // order number is provided via ?fennec_order= in the URL or session storage.
 class AdyenLauncher extends Launcher {
     init() {
+    const bg = fennecMessenger;
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) {
             console.log('[FENNEC] Extension disabled, skipping Adyen launcher.');
@@ -371,7 +372,7 @@ class AdyenLauncher extends Launcher {
                     label.textContent = '';
                     label.className = 'issue-status-label';
                 }
-                chrome.runtime.sendMessage({ action: 'checkLastIssue', orderId }, (resp) => {
+                bg.send('checkLastIssue', { orderId }, (resp) => {
                     if (chrome.runtime.lastError) {
                         console.warn('[FENNEC] Issue check failed:', chrome.runtime.lastError.message);
                         fillIssueBox(null, orderId);
@@ -452,7 +453,7 @@ class AdyenLauncher extends Launcher {
                 const clearTabsBtn = sidebar.querySelector('#copilot-clear-tabs');
                 if (clearTabsBtn) {
                     clearTabsBtn.onclick = () => {
-                        chrome.runtime.sendMessage({ action: 'closeOtherTabs' });
+                        bg.closeOtherTabs();
                     };
                 }
                 const clearSb = sidebar.querySelector('#copilot-clear');
@@ -555,7 +556,7 @@ class AdyenLauncher extends Launcher {
                     console.log('[FENNEC Adyen] DNA stats stored');
                     chrome.storage.local.get({ sidebarOrderInfo: null }, ({ sidebarOrderInfo }) => {
                         const email = sidebarOrderInfo ? sidebarOrderInfo.clientEmail : null;
-                        chrome.runtime.sendMessage({ action: 'focusDbSearch', email });
+                        bg.send('focusDbSearch', { email });
                     });
                 });
             }

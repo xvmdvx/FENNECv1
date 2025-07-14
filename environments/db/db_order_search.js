@@ -1,4 +1,5 @@
 (function() {
+    const bg = fennecMessenger;
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) return;
         const params = new URLSearchParams(location.search);
@@ -41,7 +42,7 @@
             if (btn) btn.click();
             waitForResults(() => {
                 const orders = collectOrders();
-                chrome.runtime.sendMessage({ action: 'dbEmailSearchResults', orders });
+                bg.send('dbEmailSearchResults', { orders });
             });
         }
         if (document.readyState === 'loading') {
