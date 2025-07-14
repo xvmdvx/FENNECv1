@@ -2821,10 +2821,6 @@ class DBLauncher extends Launcher {
         Promise.all(promises).then(() => loading.remove());
     }
 
-    function showDiagnoseResults() {
-        // legacy function kept for compatibility
-    }
-
 function getLastHoldUser() {
         const trigger = document.querySelector("a[onclick*='modalTrackOrderHistory']");
         if (trigger) trigger.click();

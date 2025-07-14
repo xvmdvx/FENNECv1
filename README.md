@@ -68,7 +68,8 @@ Phase 5 expands `BackgroundController` with helpers like `openOrReuseTab` and `r
 Phase 6 adds a `Messenger` helper used by all environments to send and receive
 messages in a uniform way.
 
-Phase 7 will clean up deprecated helpers and finalize the documentation.
+Phase 7 removes obsolete helpers (such as the unused `showDiagnoseResults`
+stub) and finalizes this documentation.
 
 ## Features
 
