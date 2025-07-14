@@ -1,4 +1,4 @@
-// Injects the FENNEC sidebar into DB pages.
+// Injects the FENNEC (POO) sidebar into DB pages.
 class DBLauncher extends Launcher {
     init() {
     const bg = fennecMessenger;
@@ -61,7 +61,7 @@ class DBLauncher extends Launcher {
         sessionStorage.setItem(key, '1');
         sessionStorage.setItem('fraudXrayPending', '1');
         window.addEventListener('load', () => {
-            console.log('[FENNEC] Auto-refreshing order page to load LTV');
+            console.log('[FENNEC (POO)] Auto-refreshing order page to load LTV');
             setTimeout(() => location.reload(), 300);
         }, { once: true });
     })();
@@ -349,7 +349,7 @@ class DBLauncher extends Launcher {
                         setTimeout(tryExtract, 500);
                     }
                 } catch (err) {
-                    console.warn('[FENNEC] Error extracting issue text:', err);
+                    console.warn('[FENNEC (POO)] Error extracting issue text:', err);
                     sendResponse({ issueInfo: null });
                 }
             };
@@ -362,7 +362,7 @@ class DBLauncher extends Launcher {
                 const parent = getBasicOrderInfo();
                 sendResponse({ childOrders: orders, parentInfo: parent });
             } catch (err) {
-                console.warn('[FENNEC] Error extracting child orders:', err);
+                console.warn('[FENNEC (POO)] Error extracting child orders:', err);
                 sendResponse({ childOrders: null, parentInfo: null });
             }
             return true;
@@ -378,7 +378,7 @@ class DBLauncher extends Launcher {
                 const subs = getActiveSubscriptions();
                 sendResponse({ subs });
             } catch (err) {
-                console.warn('[FENNEC] Error extracting subscriptions:', err);
+                console.warn('[FENNEC (POO)] Error extracting subscriptions:', err);
                 sendResponse({ subs: [] });
             }
             return true;
@@ -450,7 +450,7 @@ class DBLauncher extends Launcher {
 
     chrome.storage.local.get({ extensionEnabled: true, lightMode: false, fennecReviewMode: false, fennecDevMode: false }, ({ extensionEnabled, lightMode, fennecReviewMode, fennecDevMode }) => {
         if (!extensionEnabled || noStore) {
-            console.log('[FENNEC] Extension disabled or no-store mode, skipping DB launcher.');
+            console.log('[FENNEC (POO)] Extension disabled or no-store mode, skipping DB launcher.');
             return;
         }
         if (lightMode) {
@@ -465,7 +465,7 @@ class DBLauncher extends Launcher {
         function initSidebar() {
             if (sessionStorage.getItem("fennecSidebarClosed") === "true") { showFloatingIcon(); return; }
             if (!document.getElementById('copilot-sidebar')) {
-                console.log("[FENNEC] Sidebar no encontrado, inyectando en DB...");
+                console.log("[FENNEC (POO)] Sidebar no encontrado, inyectando en DB...");
 
                 const SIDEBAR_WIDTH = 340;
                 document.body.style.transition = 'margin-right 0.2s';
@@ -489,8 +489,8 @@ class DBLauncher extends Launcher {
                         <div class="copilot-header">
                             <span id="qa-toggle" class="quick-actions-toggle">☰</span>
                             <div class="copilot-title">
-                                <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (BETA)" />
-                                <span>FENNEC (BETA)</span>
+                                <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (POO)" />
+                                <span>FENNEC (POO)</span>
                             </div>
                             <button id="copilot-clear-tabs">🗑</button>
                             <button id="copilot-close">✕</button>
@@ -538,7 +538,7 @@ class DBLauncher extends Launcher {
                             const style = document.getElementById('copilot-db-padding');
                             if (style) style.remove();
                             sessionStorage.setItem("fennecSidebarClosed", "true");
-                            console.log("[FENNEC] Sidebar cerrado manualmente en DB.");
+                            console.log("[FENNEC (POO)] Sidebar cerrado manualmente en DB.");
                             showFloatingIcon();
                         };
                     }
@@ -712,7 +712,7 @@ class DBLauncher extends Launcher {
             initSidebar();
         }
     } catch (e) {
-        console.error("[FENNEC] ERROR en DB Launcher:", e);
+        console.error("[FENNEC (POO)] ERROR en DB Launcher:", e);
 
         const body = document.getElementById('copilot-body-content');
         if (body) {
@@ -2105,7 +2105,7 @@ class DBLauncher extends Launcher {
             const info = getLastIssueInfo();
             fillIssueBox(info, orderId);
         } catch (err) {
-            console.warn('[FENNEC] Issue extraction failed:', err);
+            console.warn('[FENNEC (POO)] Issue extraction failed:', err);
             fillIssueBox(null, orderId);
         }
     }
@@ -2166,12 +2166,12 @@ class DBLauncher extends Launcher {
 
     function openCancelPopup() {
         const statusBtn = document.querySelector('.btn-status-text');
-        if (!statusBtn) return console.warn('[FENNEC] Status dropdown not found');
+        if (!statusBtn) return console.warn('[FENNEC (POO)] Status dropdown not found');
         statusBtn.click();
         setTimeout(() => {
             const cancelLink = Array.from(document.querySelectorAll('.dropdown-menu a'))
                 .find(a => /cancel.*refund/i.test(a.textContent));
-            if (!cancelLink) return console.warn('[FENNEC] Cancel option not found');
+            if (!cancelLink) return console.warn('[FENNEC (POO)] Cancel option not found');
             sessionStorage.removeItem('fennecCancelPending');
             cancelLink.click();
             selectCancelReason();
@@ -2217,7 +2217,7 @@ class DBLauncher extends Launcher {
     }
 
     function startCancelProcedure() {
-        console.log('[FENNEC] Starting cancel procedure');
+        console.log('[FENNEC (POO)] Starting cancel procedure');
         const btn = Array.from(document.querySelectorAll('a'))
             .find(a => /mark resolved/i.test(a.textContent));
         if (btn) {
@@ -2344,7 +2344,7 @@ class DBLauncher extends Launcher {
                 });
             }).then(() => {
                 sessionSet({ fennecUploadDone: { time: Date.now() } }, uploadNext);
-            }).catch(err => { console.warn('[FENNEC] Upload failed:', err); uploadNext(); });
+            }).catch(err => { console.warn('[FENNEC (POO)] Upload failed:', err); uploadNext(); });
         };
         uploadNext();
     }
@@ -2421,17 +2421,17 @@ class DBLauncher extends Launcher {
             const q = input.value.trim();
             if (!q) return;
             results.textContent = "Loading...";
-            console.log("[FENNEC] CODA search query:", q);
+            console.log("[FENNEC (POO)] CODA search query:", q);
             fetch("https://coda.io/apis/v1/docs/QJWsDF3UZ6/search?q=" + encodeURIComponent(q), {
                 headers: { "Authorization": "Bearer 758d99dd-34d0-43a5-8896-595785019945" }
             })
                 .then(r => {
-                    console.log("[FENNEC] CODA search status:", r.status);
+                    console.log("[FENNEC (POO)] CODA search status:", r.status);
                     const status = r.status;
                     return r.json().catch(() => ({})).then(data => ({ status, data }));
                 })
                 .then(({ status, data }) => {
-                    console.log("[FENNEC] CODA search response:", data);
+                    console.log("[FENNEC (POO)] CODA search response:", data);
                     if (status !== 200) {
                         const msg = data && data.message ? data.message : "API request failed";
                         results.textContent = `Error ${status}: ${msg}`;
@@ -2449,7 +2449,7 @@ class DBLauncher extends Launcher {
                 })
                 .catch(err => {
                     results.textContent = "Network error";
-                    console.error("[FENNEC] Coda search error:", err);
+                    console.error("[FENNEC (POO)] Coda search error:", err);
                 });
         };
         btn.addEventListener('click', runSearch);
@@ -2587,10 +2587,10 @@ class DBLauncher extends Launcher {
     }
 
     function getParentOrderId() {
-        console.log("[FENNEC] Scanning for parent order in #vcomp");
+        console.log("[FENNEC (POO)] Scanning for parent order in #vcomp");
         const tab = document.querySelector('#vcomp') || document.querySelector('#vcompany');
         if (!tab) {
-            console.log("[FENNEC] #vcomp tab not found");
+            console.log("[FENNEC (POO)] #vcomp tab not found");
             return null;
         }
         const candidates = Array.from(
@@ -2598,31 +2598,31 @@ class DBLauncher extends Launcher {
         );
         const parentEl = candidates.find(el => /parent order/i.test(getText(el)));
         if (!parentEl) {
-            console.log("[FENNEC] Parent order element not found; scanned:");
+            console.log("[FENNEC (POO)] Parent order element not found; scanned:");
             candidates.forEach(el => {
                 const txt = getText(el).trim();
                 if (txt) console.log("- " + el.tagName + ": " + txt);
             });
             return null;
         }
-        console.log("[FENNEC] Parent order element text:", getText(parentEl).trim());
+        console.log("[FENNEC (POO)] Parent order element text:", getText(parentEl).trim());
         let anchor = parentEl.querySelector('a[href*="/order/detail/"]');
         if (!anchor && parentEl.nextElementSibling) {
             anchor = parentEl.nextElementSibling.querySelector('a[href*="/order/detail/"]');
         }
         if (anchor) {
-            console.log("[FENNEC] Found parent order link", anchor.href);
+            console.log("[FENNEC (POO)] Found parent order link", anchor.href);
             const m = anchor.href.match(/detail\/(\d+)/);
             if (m) {
-                console.log("[FENNEC] Extracted ID from href:", m[1]);
+                console.log("[FENNEC (POO)] Extracted ID from href:", m[1]);
                 return m[1];
             }
             const textId = anchor.textContent.replace(/\D/g, '');
             if (textId) {
-                console.log("[FENNEC] Extracted ID from link text:", textId);
+                console.log("[FENNEC (POO)] Extracted ID from link text:", textId);
                 return textId;
             }
-            console.log("[FENNEC] No numeric ID in parent link");
+            console.log("[FENNEC (POO)] No numeric ID in parent link");
         }
         let digits = parentEl.textContent.replace(/\D/g, "");
         if (!digits) {
@@ -2643,14 +2643,14 @@ class DBLauncher extends Launcher {
                 }
             }
             if (valEl) {
-                console.log("[FENNEC] Checked sibling text:", getText(valEl).trim());
+                console.log("[FENNEC (POO)] Checked sibling text:", getText(valEl).trim());
                 digits = valEl.textContent.replace(/\D/g, "");
             }
         }
-        if (digits) console.log("[FENNEC] Extracted ID from text:", digits);
+        if (digits) console.log("[FENNEC (POO)] Extracted ID from text:", digits);
         else {
-            console.log("[FENNEC] No digits found in parent element text or siblings");
-            console.log("[FENNEC] Parent text scanned:", getText(parentEl).trim());
+            console.log("[FENNEC (POO)] No digits found in parent element text or siblings");
+            console.log("[FENNEC (POO)] Parent text scanned:", getText(parentEl).trim());
         }
         return digits || null;
     }

@@ -44,7 +44,7 @@ function saveState() {
 }
 
 function resetExtension() {
-    if (!confirm("Reset all FENNEC data and reload?")) return;
+    if (!confirm("Reset all FENNEC (POO) data and reload?")) return;
     chrome.storage.local.clear(() => {
         chrome.storage.sync.clear(() => {
             chrome.runtime.reload();

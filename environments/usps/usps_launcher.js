@@ -1,4 +1,4 @@
-// Injects the FENNEC sidebar into USPS pages.
+// Injects the FENNEC (POO) sidebar into USPS pages.
 class UspsLauncher extends Launcher {
     init() {
     const bg = fennecMessenger;
@@ -9,7 +9,7 @@ class UspsLauncher extends Launcher {
     });
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) {
-            console.log('[FENNEC] Extension disabled, skipping USPS launcher.');
+            console.log('[FENNEC (POO)] Extension disabled, skipping USPS launcher.');
             return;
         }
         try {
@@ -88,7 +88,7 @@ class UspsLauncher extends Launcher {
                     findBtn.click();
                 }
             } catch (err) {
-                console.error('[FENNEC USPS] Error filling form:', err);
+                console.error('[FENNEC (POO) USPS] Error filling form:', err);
             }
         }
 
@@ -98,7 +98,7 @@ class UspsLauncher extends Launcher {
             fillAndSubmit();
         }
     } catch (e) {
-        console.error('[FENNEC USPS] Launcher error:', e);
+        console.error('[FENNEC (POO) USPS] Launcher error:', e);
     }
     });
     }

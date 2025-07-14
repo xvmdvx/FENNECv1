@@ -1,4 +1,4 @@
-// Injects the FENNEC sidebar into Gmail pages.
+// Injects the FENNEC (POO) sidebar into Gmail pages.
 // Pads main panels and the attachment viewer so content stays visible.
 (function persistentSidebar() {
     const bg = fennecMessenger;
@@ -18,7 +18,7 @@
         chrome.storage.local.get({ extensionEnabled: true, lightMode: false, fennecDevMode: false }, ({ extensionEnabled, lightMode, fennecDevMode: localDev }) => {
         const devMode = localDev || fennecDevMode;
         if (!extensionEnabled) {
-            console.log('[FENNEC] Extension disabled, skipping Gmail launcher.');
+            console.log('[FENNEC (POO)] Extension disabled, skipping Gmail launcher.');
             return;
         }
         if (lightMode) {
@@ -738,9 +738,9 @@
                 });
             }
             attachCommonListeners(summaryBox);
-            console.log("[FENNEC] Order Summary rellenado:", context);
+            console.log("[FENNEC (POO)] Order Summary rellenado:", context);
             if (context?.details) {
-                console.log("[FENNEC] Detalles de la orden:", context.details);
+                console.log("[FENNEC (POO)] Detalles de la orden:", context.details);
             }
         }
 
@@ -1408,7 +1408,7 @@
             } else {
                 const dbSearchUrl = "https://db.incfile.com/order-tracker/orders/order-search";
                 urls.push(dbSearchUrl);
-                navigator.clipboard.writeText(context.email).catch(err => console.error("[FENNEC] Clipboard error:", err));
+                navigator.clipboard.writeText(context.email).catch(err => console.error("[FENNEC (POO)] Clipboard error:", err));
             }
 
             const data = { fennecActiveSession: getFennecSessionId() };
@@ -1449,8 +1449,8 @@ sbObj.build(`
                 <div class="copilot-header">
                     <span id="qa-toggle" class="quick-actions-toggle">☰</span>
                     <div class="copilot-title">
-                        <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (BETA)" />
-                        <span>FENNEC (BETA)</span>
+                        <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (POO)" />
+                        <span>FENNEC (POO)</span>
                     </div>
                     <button id="copilot-clear-tabs">🗑</button>
                     <button id="copilot-close">✕</button>

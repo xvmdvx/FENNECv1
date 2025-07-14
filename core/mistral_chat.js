@@ -1,4 +1,4 @@
-// Chat UI and Mistral integration for FENNEC.
+// Chat UI and Mistral integration for FENNEC (POO).
 // Provides a simple chat interface using a local Mistral model if available.
 
 function sendToMistral(prompt) {

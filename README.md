@@ -1,10 +1,10 @@
-# FENNEC (BETA)
+# FENNEC (POO)
 
-FENNEC's principal function is injecting a SIDEBAR (SB) as a navigation companion that extracts information from relevant environments and displays it in a reordered manner to improve agents' productivity and reduce mental stress. Each environment has its unique layout depending on the type's necessities.
+FENNEC (POO)'s principal function is injecting a SIDEBAR (SB) as a navigation companion that extracts information from relevant environments and displays it in a reordered manner to improve agents' productivity and reduce mental stress. Each environment has its unique layout depending on the type's necessities.
 
 ## Directory overview
 
-The extension lives in the `FENNEC/` folder. Key pieces include:
+The extension FENNEC (POO) lives in the `FENNEC/` folder. Key pieces include:
 
 - `manifest.json` – Manifest V3 configuration. The service worker is `core/background_email_search.js`.
 - `core/` – Shared helpers and the service worker.
@@ -29,47 +29,9 @@ The extension lives in the `FENNEC/` folder. Key pieces include:
 
 For historical changes refer to the **Changelog**. It has been reset so future updates start from a clean slate.
 
-### Object-oriented migration
+### Architecture
 
-FENNEC began as purely procedural code. The new `sidebar.js` and `launcher.js` modules
-introduce basic classes so each environment can gradually adopt an object-oriented
-structure. Existing scripts still work as before; the classes are loaded globally
-and will be used incrementally in upcoming phases.
-
-
-Environment scripts now extend the `Launcher` base class and inject a `Sidebar` instance.
-Below is a minimal example:
-
-```javascript
-import Sidebar from './core/sidebar.js';
-import Launcher from './core/launcher.js';
-
-class ExampleLauncher extends Launcher {
-    detect() {
-        return location.hostname.includes('example.com');
-    }
-    init() {
-        const sb = new Sidebar();
-        sb.build('<div>Example</div>');
-        sb.attach();
-    }
-}
-
-new ExampleLauncher().init();
-
-```
-
-Phase 3 introduces the `Floater` overlay framework. `TrialFloater` reuses it for the Fraud Review summary and a `BackgroundController` skeleton now wraps basic service worker actions.
-
-Phase 4 converts legacy overlays to subclasses of `Floater`. The Diagnose panel now uses `DiagnoseFloater` and Gmail's Update form uses `UpdateFloater`.
-
-Phase 5 expands `BackgroundController` with helpers like `openOrReuseTab` and `replaceTabs` so the service worker delegates tab control to this class.
-
-Phase 6 adds a `Messenger` helper used by all environments to send and receive
-messages in a uniform way.
-
-Phase 7 removes obsolete helpers (such as the unused `showDiagnoseResults`
-stub) and finalizes this documentation.
+FENNEC (POO) now uses an object-oriented structure. The `Sidebar` class builds the main container while specialized `Floater` subclasses manage overlays such as Diagnose, Update and Fraud Review. Each environment implements a launcher that extends the `Launcher` base class, and background logic is coordinated through `BackgroundController` with the help of the `Messenger` utility for consistent communication.
 
 ## Features
 
