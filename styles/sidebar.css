@@ -789,7 +789,7 @@
     border-radius: 12px;
     overflow: hidden;
 }
-#fennec-trial-overlay .trial-info { flex: 1; }
+#fennec-trial-overlay .trial-info { flex: 1; text-align: center; }
 #fennec-trial-overlay .trial-action { display: flex; align-items: center; justify-content: center; }
 #fennec-trial-overlay .trial-order .trial-line {
     font-size: calc(var(--sb-font-size) + 6px);
@@ -870,6 +870,7 @@
 #fennec-trial-overlay .trial-card-details {
     font-size: calc(var(--sb-font-size) + 1px);
 }
+#fennec-trial-overlay .trial-card-info { margin: 2px 0; }
 #fennec-trial-overlay .db-adyen-check {
     color: #0a0;
     margin-left: 4px;
