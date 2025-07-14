@@ -286,7 +286,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 if (chrome.runtime.lastError || !resp) {
                     sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
                 } else {
-                    sendResponse({ orderCount: (resp.orders || []).length, activeSubs: [], ltv: message.ltv });
+                    const orders = Array.isArray(resp.orders) ? resp.orders : [];
+                    const counts = { cxl: 0, pending: 0, shipped: 0 };
+                    orders.forEach(o => {
+                        const s = String(o.status || '').toUpperCase();
+                        if (/CANCEL/.test(s)) counts.cxl++;
+                        else if (/PROCESSING|REVIEW|HOLD|TRANSFERRED/.test(s)) counts.pending++;
+                        else if (/SHIPPED/.test(s)) counts.shipped++;
+                    });
+                    counts.total = orders.length;
+                    sendResponse({ orderCount: orders.length, statusCounts: counts, activeSubs: [], ltv: message.ltv });
                 }
             });
         });

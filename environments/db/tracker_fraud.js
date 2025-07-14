@@ -627,12 +627,31 @@
                         const cols = overlay.querySelectorAll('.trial-columns .trial-col');
                         const dbCol = cols && cols[0];
                         if (!dbCol) return;
-                        const line = document.createElement('div');
-                        line.className = 'trial-line';
-                        line.textContent = `Orders Found: ${resp.orderCount}`;
-                        const raVa = dbCol.querySelector('.ra-va-line');
-                        if (raVa && raVa.nextSibling) dbCol.insertBefore(line, raVa.nextSibling);
-                        else dbCol.appendChild(line);
+                        const insertPoint = dbCol.querySelector('.after-card-line');
+                        const addLine = html => {
+                            const div = document.createElement('div');
+                            div.className = 'trial-line trial-two-col';
+                            div.innerHTML = html;
+                            if (insertPoint) dbCol.insertBefore(div, insertPoint);
+                            else dbCol.appendChild(div);
+                        };
+                        if (resp.statusCounts) {
+                            addLine(`<span class="trial-tag">CXL:</span><span class="trial-value">${resp.statusCounts.cxl}</span>`);
+                            addLine(`<span class="trial-tag">PENDING:</span><span class="trial-value">${resp.statusCounts.pending}</span>`);
+                            addLine(`<span class="trial-tag">SHIPPED:</span><span class="trial-value">${resp.statusCounts.shipped}</span>`);
+                            const sep = document.createElement('div');
+                            sep.className = 'trial-line trial-sep';
+                            if (insertPoint) dbCol.insertBefore(sep, insertPoint);
+                            else dbCol.appendChild(sep);
+                            addLine(`<span class="trial-tag">TOTAL:</span><span class="trial-value">${resp.statusCounts.total}</span>`);
+                            if (resp.ltv) {
+                                const per = resp.statusCounts.total - resp.statusCounts.cxl;
+                                const orderVal = per > 0 ? (parseFloat(resp.ltv) / per).toFixed(2) : 'N/A';
+                                addLine(`<span class="trial-tag">LTV:</span><span class="trial-value">${resp.ltv} P/ORDER: ${orderVal}</span>`);
+                            }
+                        } else {
+                            addLine(`<span class="trial-tag">Orders Found:</span><span class="trial-value">${resp.orderCount}</span>`);
+                        }
                     });
                 }
             });
@@ -709,6 +728,13 @@
                 const pb = b.split(' ');
                 return pa[0] === pb[0] && pa[pa.length - 1] === pb[pb.length - 1];
             }
+
+            function emailMatches(email, names = [], company = '') {
+                const norm = t => (t || '').toLowerCase().replace(/[^a-z]+/g, '');
+                const user = norm((email || '').split('@')[0]);
+                if (company && user.includes(norm(company))) return true;
+                return names.some(n => user.includes(norm(n)));
+            }
             function buildCardMatchTag(dbBilling, card) {
                 const db = dbBilling || {};
                 const dna = card || {};
@@ -731,36 +757,34 @@
                 dnaDigits = (dna && dna.payment && dna.payment.card ? dna.payment.card['Card number'] : '').replace(/\D+/g, '').slice(-4);
                 dbExp = (order.billing.expiry || '').replace(/\D+/g, '');
                 dnaExp = (dna && dna.payment && dna.payment.card ? dna.payment.card['Expiry date'] : '').replace(/\D+/g, '');
+                if (order.billing.expiry || order.billing.last4) {
+                    const parts = [];
+                    if (order.billing.expiry) parts.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(order.billing.expiry)}</span>`);
+                    if (order.billing.last4) parts.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(order.billing.last4)}</span>`);
+                    dbLines.push(`<div class="trial-line">${parts.join(' ')}</div>`);
+                    dbLines.push('<div class="trial-line trial-sep after-card-line"></div>');
+                }
                 const dbName = (order.billing.cardholder || '').toLowerCase();
                 const dnaName = (dna && dna.payment && dna.payment.card ? dna.payment.card['Card holder'] : '').toLowerCase();
-                if (order.billing.expiry) {
-                    const ok = dbExp && dnaExp && dbExp === dnaExp;
-                    dbLines.push(`<div class="trial-line trial-card-details">${escapeHtml(order.billing.expiry)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></div>`);
-                }
-                if (order.billing.last4) {
-                    const ok = dbDigits && dnaDigits && dbDigits === dnaDigits;
-                    dbLines.push(`<div class="trial-line trial-card-details">${escapeHtml(order.billing.last4)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></div>`);
-                }
                 const cardOk = dbName && dnaName && dbName === dnaName && dbDigits && dnaDigits && dbDigits === dnaDigits && dbExp && dnaExp && dbExp === dnaExp;
                 const tag = dna && dna.payment ? buildCardMatchTag(order.billing, dna.payment.card || {}) : '';
                 if (tag) pushFlag(tag);
-                let ltv = order && order.clientLtv;
-                if (!ltv) ltv = getClientLtv();
-                if (ltv) dbLines.push(`<div class="trial-line">LTV: ${escapeHtml(ltv)}</div>`);
-                else dbLines.push(`<div class="trial-line">LTV: N/A</div>`);
-                const raVa = [];
-                if (typeof order.hasRA === 'boolean') {
-                    const txt = order.raExpired ? 'EXPIRED' : (order.hasRA ? 'Sí' : 'No');
-                    const cls = order.raExpired ? 'copilot-tag copilot-tag-yellow' : (order.hasRA ? 'copilot-tag copilot-tag-green' : 'copilot-tag copilot-tag-purple');
-                    raVa.push(`RA: <span class="${cls}">${txt}</span>`);
+                const clientInfo = typeof getClientInfo === 'function' ? getClientInfo() : { name: '', email: '' };
+                const email = order.clientEmail || clientInfo.email || '';
+                const emailOk = emailMatches(email, [clientInfo.name, order.billing.cardholder], order.companyName);
+                dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">EMAIL:</span><span class="trial-value">${escapeHtml(email)} <span class="${emailOk ? 'db-adyen-check' : 'db-adyen-cross'}">${emailOk ? '✔' : '✖'}</span></span></div>`);
+                if (clientInfo.name) {
+                    const cOk = namesMatch(clientInfo.name, order.billing.cardholder);
+                    dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CLIENT:</span><span class="trial-value">${escapeHtml(clientInfo.name)} <span class="${cOk ? 'db-adyen-check' : 'db-adyen-cross'}">${cOk ? '✔' : '✖'}</span></span></div>`);
                 }
-                if (typeof order.hasVA === 'boolean') {
-                    const cls = order.hasVA ? 'copilot-tag copilot-tag-green' : 'copilot-tag copilot-tag-purple';
-                    raVa.push(`VA: <span class="${cls}">${order.hasVA ? 'Sí' : 'No'}</span>`);
+                if (Array.isArray(order.members) && order.members.length) {
+                    const items = order.members.map(m => {
+                        const ok = namesMatch(m.name, order.billing.cardholder) || namesMatch(m.name, clientInfo.name);
+                        return `<li>${escapeHtml(m.name)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></li>`;
+                    }).join('');
+                    dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">MEMBERS:</span><span class="trial-value"><ul class="member-list">${items}</ul></span></div>`);
                 }
-                if (raVa.length) {
-                    dbLines.push(`<div class="trial-line ra-va-line">${raVa.join(' ')}</div>`);
-                }
+                dbLines.push('<div class="trial-line trial-sep"></div>');
                 const btn = `<button id="sub-detection-btn" class="sub-detect-btn">SUB DETECTION</button>`;
                 dbLines.push(`<div class="trial-line">${btn}</div>`);
                 if (order.billing.cardholder) {
@@ -866,34 +890,43 @@
                 <div class="trial-actions">
                     <button id="trial-btn-cr" class="trial-action-btn trial-btn-cr">C&R</button>
                     <button id="trial-btn-id" class="trial-action-btn trial-btn-id">ID CONFIRM</button>
-                    <button id="trial-btn-release" class="trial-action-btn trial-btn-release">RELEASE (NO)</button>
+                    <button id="trial-btn-release" class="trial-action-btn trial-btn-release">RELEASE</button>
                 </div>`;
 
             const orderLines = [];
             if (order) {
-            if (order.companyName) {
-                orderLines.push(`<div class="trial-line trial-company-name">${escapeHtml(order.companyName)}</div>`);
-            }
-            const tags = [];
-            if (order.type) {
-                const cleanType = String(order.type).replace(/BUSINESS\s*FORMATION/gi, '').trim();
-                if (cleanType) tags.push(`<span class="copilot-tag copilot-tag-lightgray">${escapeHtml(cleanType)}</span>`);
-            }
-            if (typeof order.expedited === 'boolean') {
-                const expText = order.expedited ? 'EXPEDITED' : 'STANDARD';
-                const expCls = order.expedited ? 'copilot-tag-green' : 'copilot-tag-lightgray';
-                tags.push(`<span class="copilot-tag ${expCls}">${expText}</span>`);
-            }
-            if (order.orderCost) tags.push(`<span class="copilot-tag copilot-tag-lightgray">${escapeHtml(order.orderCost)}</span>`);
-                if (tags.length) {
-                    orderLines.push(`<div class="trial-line no-highlight trial-tags">${tags.join(' ')}</div>`);
+                if (order.companyName) {
+                    orderLines.push(`<div class="trial-line trial-company-name">${escapeHtml(order.companyName)}</div>`);
                 }
-                orderLines.push(`<div class="trial-line no-highlight trial-btn-line"><span id="trial-big-button"></span></div>`);
+                const tags2 = [];
+                if (order.type) {
+                    const cleanType = String(order.type).replace(/BUSINESS\s*FORMATION/gi, '').replace(/-\s*/g, '').trim();
+                    if (cleanType) tags2.push(`<span class="copilot-tag copilot-tag-lightgray">${escapeHtml(cleanType)}</span>`);
+                }
+                if (order.orderCost) tags2.push(`<span class="copilot-tag copilot-tag-lightgray">${escapeHtml(order.orderCost)}</span>`);
+                if (tags2.length) {
+                    orderLines.push(`<div class="trial-line no-highlight trial-tags">${tags2.join(' ')}</div>`);
+                }
+                const line3 = [];
+                if (typeof order.expedited === 'boolean') {
+                    const expText = order.expedited ? 'EXPEDITED' : 'NON EXPEDITED';
+                    line3.push(`<span class="copilot-tag copilot-tag-white">${expText}</span>`);
+                }
+                if (typeof order.hasRA === 'boolean') {
+                    const txt = order.raExpired ? 'EXPIRED' : (order.hasRA ? 'YES' : 'NO');
+                    line3.push(`RA: <span class="copilot-tag copilot-tag-white">${txt}</span>`);
+                }
+                if (typeof order.hasVA === 'boolean') {
+                    line3.push(`VA: <span class="copilot-tag copilot-tag-white">${order.hasVA ? 'YES' : 'NO'}</span>`);
+                }
+                if (line3.length) orderLines.push(`<div class="trial-line no-highlight trial-exp-va">${line3.join(' ')}</div>`);
             }
+
+            const orderHeaderHtml = `<div class="trial-order"><div class="trial-info">${orderLines.join('')}</div><div class="trial-action"><span id="trial-big-button"></span></div></div>`;
 
             const html = `
                 <div class="trial-close">✕</div>
-                <div class="trial-order"><div class="trial-col">${orderLines.join('')}</div></div>
+                ${orderHeaderHtml}
                 <div class="trial-columns">
                     <div class="trial-col-wrap"><div class="trial-col-title">DB</div><div class="trial-col">${dbLines.join('')}</div></div>
                     <div class="trial-col-wrap"><div class="trial-col-title">ADYEN</div><div class="trial-col">${adyenLines.join('')}</div></div>

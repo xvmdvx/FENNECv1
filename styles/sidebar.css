@@ -782,14 +782,15 @@
     margin-bottom: 8px;
 }
 #fennec-trial-overlay .trial-order {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-bottom: 8px;
     border-radius: 12px;
     overflow: hidden;
 }
-#fennec-trial-overlay .trial-order .trial-col {
-    border-radius: 12px;
-}
+#fennec-trial-overlay .trial-info { flex: 1; }
+#fennec-trial-overlay .trial-action { display: flex; align-items: center; justify-content: center; }
 #fennec-trial-overlay .trial-order .trial-line {
     font-size: calc(var(--sb-font-size) + 6px);
     background: rgba(255,255,255,0.9);
@@ -813,6 +814,11 @@
 #fennec-trial-overlay .trial-order .trial-btn-line {
     margin-top: 4px;
 }
+#fennec-trial-overlay .trial-two-col { display:flex; justify-content: space-between; align-items:center; }
+#fennec-trial-overlay .trial-two-col .trial-tag { font-weight:bold; margin-right:4px; }
+#fennec-trial-overlay .trial-two-col .trial-value { flex:1; text-align:left; }
+#fennec-trial-overlay .member-list { margin:0; padding-left:16px; }
+#fennec-trial-overlay .trial-sep { border-bottom:1px solid #555; margin:4px 0; }
 #fennec-trial-overlay .trial-order.trial-header-green .trial-col {
     background-color: rgba(46,204,113,0.99);
 }
