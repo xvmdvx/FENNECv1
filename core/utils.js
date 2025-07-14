@@ -82,7 +82,7 @@ function attachCommonListeners(rootEl) {
             e.preventDefault();
             const addr = el.dataset.address;
             if (!addr) return;
-            navigator.clipboard.writeText(addr).catch(err => console.warn('[Copilot] Clipboard', err));
+            navigator.clipboard.writeText(addr).catch(err => console.warn('[FENNEC] Clipboard', err));
             window.open('https://www.google.com/search?q=' + encodeURIComponent(addr), '_blank');
         });
     });
@@ -99,7 +99,7 @@ function attachCommonListeners(rootEl) {
         el.addEventListener('click', () => {
             const text = el.dataset.copy;
             if (!text) return;
-            navigator.clipboard.writeText(text).catch(err => console.warn('[Copilot] Clipboard', err));
+            navigator.clipboard.writeText(text).catch(err => console.warn('[FENNEC] Clipboard', err));
         });
     });
     rootEl.querySelectorAll('.copilot-sos').forEach(el => {
@@ -109,7 +109,7 @@ function attachCommonListeners(rootEl) {
             const query = el.dataset.query;
             const type = el.dataset.type || 'name';
             if (!url || !query) return;
-            navigator.clipboard.writeText(query).catch(err => console.warn('[Copilot] Clipboard', err));
+            navigator.clipboard.writeText(query).catch(err => console.warn('[FENNEC] Clipboard', err));
             chrome.runtime.sendMessage({ action: 'sosSearch', url, query, searchType: type });
         });
     });
@@ -138,14 +138,14 @@ function attachCommonListeners(rootEl) {
             e.preventDefault();
             const text = el.dataset.copy;
             if (!text) return;
-            navigator.clipboard.writeText(text).catch(err => console.warn('[Copilot] Clipboard', err));
+            navigator.clipboard.writeText(text).catch(err => console.warn('[FENNEC] Clipboard', err));
         });
     });
     const ftIcon = document.getElementById('family-tree-icon');
     if (ftIcon && !ftIcon.dataset.listenerAttached) {
         ftIcon.dataset.listenerAttached = 'true';
         ftIcon.addEventListener('click', () => {
-            console.log('[Copilot] Family Tree icon clicked');
+            console.log('[FENNEC] Family Tree icon clicked');
             let container = document.getElementById('family-tree-orders');
             if (!container) {
                 const qs = document.getElementById('quick-summary');
@@ -171,9 +171,9 @@ function attachCommonListeners(rootEl) {
                 return;
             }
             const parentId = typeof getParentOrderId === 'function' ? getParentOrderId() : null;
-            console.log('[Copilot] Detected parent order ID:', parentId);
+            console.log('[FENNEC] Detected parent order ID:', parentId);
             if (!parentId) {
-                console.warn('[Copilot] Parent order not found');
+                console.warn('[FENNEC] Parent order not found');
                 alert('Parent order not found');
                 return;
             }

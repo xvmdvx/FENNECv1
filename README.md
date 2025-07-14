@@ -35,6 +35,32 @@ introduce basic classes so each environment can gradually adopt an object-orient
 structure. Existing scripts still work as before; the classes are loaded globally
 and will be used incrementally in upcoming phases.
 
+### Extending Launchers
+
+To support a new website create a class that extends `Launcher` and builds a
+`Sidebar` instance in its `init()` method. The script should detect the page,
+instantiate the launcher and call `init()` once the DOM is ready.
+
+```javascript
+class ExampleLauncher extends Launcher {
+    detect() {
+        return location.hostname.includes('example.com');
+    }
+
+    init() {
+        this.sidebar = new Sidebar();
+        this.sidebar.build('<div>Hello Sidebar</div>');
+        this.sidebar.attach();
+    }
+}
+
+const launcher = new ExampleLauncher();
+if (launcher.detect()) launcher.init();
+```
+
+Place the file under `environments/` and add it to `manifest.json` so Chrome
+injects the script on matching pages.
+
 ## Features
 
 SIDEBAR HEADER:

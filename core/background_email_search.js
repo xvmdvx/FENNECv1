@@ -23,7 +23,7 @@ registerMistralRule();
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "openTab" && message.url) {
-        console.log("[Copilot] Forzando apertura de una pestaña:", message.url);
+        console.log("[FENNEC] Forzando apertura de una pestaña:", message.url);
         const opts = { url: message.url, active: Boolean(message.active) };
         if (message.windowId) {
             opts.windowId = message.windowId;
@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         chrome.tabs.create(opts, (tab) => {
             if (chrome.runtime.lastError) {
-                console.error("[Copilot] Error (openTab):", chrome.runtime.lastError.message);
+                console.error("[FENNEC] Error (openTab):", chrome.runtime.lastError.message);
             }
         });
         if (message.refocus && sender && sender.tab) {
@@ -51,7 +51,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (tab) {
                 chrome.tabs.update(tab.id, { active: Boolean(message.active) }, () => {
                     if (chrome.runtime.lastError) {
-                        console.error("[Copilot] Error focusing tab:", chrome.runtime.lastError.message);
+                        console.error("[FENNEC] Error focusing tab:", chrome.runtime.lastError.message);
                     }
                 });
             } else {
@@ -63,7 +63,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 }
                 chrome.tabs.create(opts, (t) => {
                     if (chrome.runtime.lastError) {
-                        console.error("[Copilot] Error (openOrReuseTab):", chrome.runtime.lastError.message);
+                        console.error("[FENNEC] Error (openOrReuseTab):", chrome.runtime.lastError.message);
                     }
                 });
             }
@@ -79,16 +79,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === "openActiveTab" && message.url) {
-        console.log("[Copilot] Forzando apertura de una pestaña activa:", message.url);
+        console.log("[FENNEC] Forzando apertura de una pestaña activa:", message.url);
         chrome.tabs.create({ url: message.url, active: true }, (tab) => {
             if (chrome.runtime.lastError) {
-                console.error("[Copilot] Error (openActiveTab):", chrome.runtime.lastError.message);
+                console.error("[FENNEC] Error (openActiveTab):", chrome.runtime.lastError.message);
             }
         });
     }
 
     if (message.action === "openTabs" && Array.isArray(message.urls)) {
-        console.log("[Copilot] Forzando apertura de múltiples pestañas:", message.urls);
+        console.log("[FENNEC] Forzando apertura de múltiples pestañas:", message.urls);
         const optsBase = { active: false };
         if (message.windowId) {
             optsBase.windowId = message.windowId;
@@ -99,14 +99,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             const opts = Object.assign({ url }, optsBase);
             chrome.tabs.create(opts, (tab) => {
                 if (chrome.runtime.lastError) {
-                    console.error("[Copilot] Error (openTabs) para URL", url, ":", chrome.runtime.lastError.message);
+                    console.error("[FENNEC] Error (openTabs) para URL", url, ":", chrome.runtime.lastError.message);
                 }
             });
         });
     }
 
     if (message.action === "replaceTabs" && Array.isArray(message.urls) && sender.tab) {
-        console.log("[Copilot] Reemplazando pestañas en la ventana:", message.urls);
+        console.log("[FENNEC] Reemplazando pestañas en la ventana:", message.urls);
         chrome.tabs.query({ windowId: sender.tab.windowId }, (tabs) => {
             const isDbOrGmail = (tab) =>
                 tab.url &&
@@ -119,12 +119,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (toClose.length) {
                 chrome.tabs.remove(toClose, () => {
                     if (chrome.runtime.lastError) {
-                        console.error("[Copilot] Error cerrando pestañas:", chrome.runtime.lastError.message);
+                        console.error("[FENNEC] Error cerrando pestañas:", chrome.runtime.lastError.message);
                     }
                     message.urls.forEach(url => {
                         chrome.tabs.create({ url, active: false, windowId: sender.tab.windowId }, (tab) => {
                             if (chrome.runtime.lastError) {
-                                console.error("[Copilot] Error abriendo pestaña", url, ":", chrome.runtime.lastError.message);
+                                console.error("[FENNEC] Error abriendo pestaña", url, ":", chrome.runtime.lastError.message);
                             }
                         });
                     });
@@ -133,7 +133,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 message.urls.forEach(url => {
                     chrome.tabs.create({ url, active: false, windowId: sender.tab.windowId }, (tab) => {
                         if (chrome.runtime.lastError) {
-                            console.error("[Copilot] Error abriendo pestaña", url, ":", chrome.runtime.lastError.message);
+                            console.error("[FENNEC] Error abriendo pestaña", url, ":", chrome.runtime.lastError.message);
                         }
                     });
                 });
@@ -147,7 +147,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (toClose.length) {
                 chrome.tabs.remove(toClose, () => {
                     if (chrome.runtime.lastError) {
-                        console.error("[Copilot] Error cerrando pestañas:", chrome.runtime.lastError.message);
+                        console.error("[FENNEC] Error cerrando pestañas:", chrome.runtime.lastError.message);
                     }
                 });
             }
@@ -164,7 +164,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     base = url.origin;
                 }
             } catch (err) {
-                console.warn("[Copilot] Invalid sender URL", sender.tab.url);
+                console.warn("[FENNEC] Invalid sender URL", sender.tab.url);
             }
         }
         const query = { url: `${base}/incfile/order/detail/${orderId}*` };
@@ -182,7 +182,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                             tryFetch();
                         }, delay);
                     } else {
-                        console.warn(`[Copilot] Issue check timed out for order ${orderId}`);
+                        console.warn(`[FENNEC] Issue check timed out for order ${orderId}`);
                         sendResponse({ issueInfo: null });
                     }
                     return;
@@ -196,7 +196,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                 tryFetch();
                             }, delay);
                         } else {
-                            console.warn(`[Copilot] Issue check timed out for order ${orderId}`);
+                            console.warn(`[FENNEC] Issue check timed out for order ${orderId}`);
                             sendResponse({ issueInfo: null });
                         }
                         return;
@@ -220,7 +220,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     base = url.origin;
                 }
             } catch (err) {
-                console.warn("[Copilot] Invalid sender URL", sender.tab.url);
+                console.warn("[FENNEC] Invalid sender URL", sender.tab.url);
             }
         }
         const query = { url: `${base}/incfile/order/detail/${orderId}*` };
@@ -238,7 +238,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                             tryFetch();
                         }, delay);
                     } else {
-                        console.warn(`[Copilot] Hold user check timed out for order ${orderId}`);
+                        console.warn(`[FENNEC] Hold user check timed out for order ${orderId}`);
                         sendResponse({ holdUser: null });
                     }
                     return;
@@ -252,7 +252,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                 tryFetch();
                             }, delay);
                         } else {
-                            console.warn(`[Copilot] Hold user check timed out for order ${orderId}`);
+                            console.warn(`[FENNEC] Hold user check timed out for order ${orderId}`);
                             sendResponse({ holdUser: null });
                         }
                         return;
@@ -276,7 +276,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     base = url.origin;
                 }
             } catch (err) {
-                console.warn("[Copilot] Invalid sender URL", sender.tab.url);
+                console.warn("[FENNEC] Invalid sender URL", sender.tab.url);
             }
         }
         const url = `${base}/incfile/order/detail/${orderId}?fennec_no_store=1`;
@@ -303,7 +303,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                 chrome.tabs.query(query, qs => { tab = qs && qs[0]; ensureLoaded(); });
                             }, delay);
                         } else {
-                            console.warn(`[Copilot] Child order fetch timed out for ${orderId}`);
+                            console.warn(`[FENNEC] Child order fetch timed out for ${orderId}`);
                             sendResponse({ childOrders: null, parentInfo: null });
                             if (createdTabId) chrome.tabs.remove(createdTabId);
                         }
@@ -311,7 +311,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     }
                     chrome.tabs.sendMessage(tab.id, { action: "getChildOrders" }, resp => {
                         if (chrome.runtime.lastError) {
-                            console.warn("[Copilot] Child order extraction error:", chrome.runtime.lastError.message);
+                            console.warn("[FENNEC] Child order extraction error:", chrome.runtime.lastError.message);
                             sendResponse({ childOrders: null, parentInfo: null });
                             if (createdTabId) chrome.tabs.remove(createdTabId);
                             return;
@@ -338,7 +338,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     base = url.origin;
                 }
             } catch (err) {
-                console.warn("[Copilot] Invalid sender URL", sender.tab.url);
+                console.warn("[FENNEC] Invalid sender URL", sender.tab.url);
             }
         }
         const url = `${base}/incfile/order/detail/${orderId}`;
@@ -365,7 +365,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                 chrome.tabs.query(query, qs => { tab = qs && qs[0]; ensureLoaded(); });
                             }, delay);
                         } else {
-                            console.warn(`[Copilot] Issue fetch timed out for ${orderId}`);
+                            console.warn(`[FENNEC] Issue fetch timed out for ${orderId}`);
                             sendResponse({ issueInfo: null });
                             if (createdTabId) chrome.tabs.remove(createdTabId);
                         }
@@ -375,7 +375,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         if (chrome.runtime.lastError || !resp || !resp.issueInfo) {
                             chrome.tabs.sendMessage(tab.id, { action: "getHoldUser" }, hold => {
                                 if (chrome.runtime.lastError) {
-                                    console.warn("[Copilot] Hold user fetch error:", chrome.runtime.lastError.message);
+                                    console.warn("[FENNEC] Hold user fetch error:", chrome.runtime.lastError.message);
                                     sendResponse({ issueInfo: null });
                                 } else {
                                     const user = hold && hold.holdUser ? `On hold by ${hold.holdUser}` : "On hold";
@@ -422,7 +422,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const openSearchTab = () => {
             chrome.tabs.create({ url: message.url, active: true }, (tab) => {
                 if (chrome.runtime.lastError) {
-                    console.error("[Copilot] Error opening SOS tab:", chrome.runtime.lastError.message);
+                    console.error("[FENNEC] Error opening SOS tab:", chrome.runtime.lastError.message);
                     return;
                 }
                 const inject = (tabId) => {
@@ -489,7 +489,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const url = "https://coda.io/d/Bizee-Filing-Department_dQJWsDF3UZ6/Knowledge-Base_suQao1ou";
         chrome.tabs.create({ url, active: true }, (tab) => {
             if (chrome.runtime.lastError) {
-                console.error("[Copilot] Error opening KB tab:", chrome.runtime.lastError.message);
+                console.error("[FENNEC] Error opening KB tab:", chrome.runtime.lastError.message);
                 return;
             }
             const inject = (tabId) => {
@@ -556,7 +556,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (typeof top === "number") opts.top = top;
         chrome.windows.create(opts, (win) => {
             if (chrome.runtime.lastError) {
-                console.error("[Copilot] Error opening KB window:", chrome.runtime.lastError.message);
+                console.error("[FENNEC] Error opening KB window:", chrome.runtime.lastError.message);
                 return;
             }
             const tab = win.tabs && win.tabs[0];
@@ -616,7 +616,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const txUrl = "https://direct.sos.state.tx.us/acct/acct-login.asp";
         chrome.windows.create({ url: txUrl, type: "popup" }, (win) => {
             if (chrome.runtime.lastError) {
-                console.error("[Copilot] Error opening filing window:", chrome.runtime.lastError.message);
+                console.error("[FENNEC] Error opening filing window:", chrome.runtime.lastError.message);
             }
         });
         return;
@@ -681,7 +681,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             .then(r => r.json())
             .then(j => sendResponse({ text: j.response || "" }))
             .catch(err => {
-                console.warn("[Copilot] Mistral fetch error:", err);
+                console.warn("[FENNEC] Mistral fetch error:", err);
                 sendResponse({ text: "Error" });
             });
         return true;
@@ -701,7 +701,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 chrome.storage.local.set({ fennecDbSearchTab: tab.id }, () => {
                     chrome.tabs.update(tab.id, { active: true }, () => {
                         if (chrome.runtime.lastError) {
-                            console.error("[Copilot] Error focusing DB search tab:", chrome.runtime.lastError.message);
+                            console.error("[FENNEC] Error focusing DB search tab:", chrome.runtime.lastError.message);
                         }
                     });
                 });
@@ -709,7 +709,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 const url = "https://db.incfile.com/order-tracker/orders/order-search?fennec_email=" + encoded;
                 chrome.tabs.create({ url, active: true, windowId: sender.tab.windowId }, newTab => {
                     if (chrome.runtime.lastError) {
-                        console.error("[Copilot] Error opening DB search tab:", chrome.runtime.lastError.message);
+                        console.error("[FENNEC] Error opening DB search tab:", chrome.runtime.lastError.message);
                         return;
                     }
                     chrome.storage.local.set({ fennecDbSearchTab: newTab.id });
@@ -719,7 +719,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     if (fennecReturnTab) {
                         chrome.tabs.update(fennecReturnTab, { active: true }, () => {
                             if (chrome.runtime.lastError) {
-                                console.error("[Copilot] Error focusing tab:", chrome.runtime.lastError.message);
+                                console.error("[FENNEC] Error focusing tab:", chrome.runtime.lastError.message);
                             }
                             chrome.storage.local.set({ fennecReturnTab: null });
                         });
@@ -735,7 +735,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (data.fennecDbSearchTab === sender.tab.id && data.fennecReturnTab) {
                 chrome.tabs.update(data.fennecReturnTab, { active: true }, () => {
                     if (chrome.runtime.lastError) {
-                        console.error("[Copilot] Error focusing tab:", chrome.runtime.lastError.message);
+                        console.error("[FENNEC] Error focusing tab:", chrome.runtime.lastError.message);
                     }
                     chrome.storage.local.set({ fennecDbSearchTab: null, fennecReturnTab: null });
                 });
@@ -749,7 +749,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (fennecReturnTab) {
                 chrome.tabs.update(fennecReturnTab, { active: true }, () => {
                     if (chrome.runtime.lastError) {
-                        console.error("[Copilot] Error focusing tab:", chrome.runtime.lastError.message);
+                        console.error("[FENNEC] Error focusing tab:", chrome.runtime.lastError.message);
                     }
                     chrome.storage.local.set({ fennecReturnTab: null });
                 });

@@ -372,7 +372,7 @@
                 }
                 chrome.runtime.sendMessage({ action: 'checkLastIssue', orderId }, (resp) => {
                     if (chrome.runtime.lastError) {
-                        console.warn('[Copilot] Issue check failed:', chrome.runtime.lastError.message);
+                        console.warn('[FENNEC] Issue check failed:', chrome.runtime.lastError.message);
                         fillIssueBox(null, orderId);
                         return;
                     }

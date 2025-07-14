@@ -149,7 +149,7 @@
             });
 
             if (mainPanels.length === 0) {
-                console.warn("[Copilot] No se encontró panel central grande. Usando body como fallback.");
+                console.warn("[FENNEC] No se encontró panel central grande. Usando body como fallback.");
                 mainPanels.push(document.body);
             }
 
@@ -660,7 +660,7 @@
                 });
 
                 if (!fullText.trim()) {
-                    console.warn("[Copilot] .a3s no tiene texto visible.");
+                    console.warn("[FENNEC] .a3s no tiene texto visible.");
                     return null;
                 }
 
@@ -675,9 +675,9 @@
                 const finalName = senderName || fallbackName || null;
 
                 // Log para depurar
-                console.log("[Copilot] Order:", orderNumber);
-                console.log("[Copilot] Email (remitente):", senderEmail);
-                console.log("[Copilot] Name (prioridad remitente):", finalName);
+                console.log("[FENNEC] Order:", orderNumber);
+                console.log("[FENNEC] Email (remitente):", senderEmail);
+                console.log("[FENNEC] Name (prioridad remitente):", finalName);
 
                 return {
                     orderNumber,
@@ -688,7 +688,7 @@
                     rawText: fullText
                 };
             } catch (err) {
-                console.warn("[Copilot] Error extrayendo contexto:", err);
+                console.warn("[FENNEC] Error extrayendo contexto:", err);
                 return null;
             }
         }
@@ -1073,15 +1073,15 @@
         function loadDnaSummary() {
             const container = document.getElementById('dna-summary');
             if (!container) return;
-            console.log('[Copilot] Loading DNA summary');
+            console.log('[FENNEC] Loading DNA summary');
             try {
                 chrome.storage.local.get({ adyenDnaInfo: null }, ({ adyenDnaInfo }) => {
                     const html = buildDnaHtml(adyenDnaInfo);
                     if (html) {
-                        console.log('[Copilot] DNA data found');
+                        console.log('[FENNEC] DNA data found');
                         container.innerHTML = html;
                     } else {
-                        console.log('[Copilot] No DNA data available');
+                        console.log('[FENNEC] No DNA data available');
                         container.innerHTML = '';
                     }
                     attachCommonListeners(container);
@@ -1090,7 +1090,7 @@
                     setupResolveButton();
                 });
             } catch (err) {
-                console.warn('[Copilot] loadDnaSummary failed:', err);
+                console.warn('[FENNEC] loadDnaSummary failed:', err);
             }
         }
 
@@ -1151,7 +1151,7 @@
             }
             chrome.runtime.sendMessage({ action: "checkLastIssue", orderId }, (resp) => {
                 if (chrome.runtime.lastError) {
-                    console.warn("[Copilot] Issue check failed:", chrome.runtime.lastError.message);
+                    console.warn("[FENNEC] Issue check failed:", chrome.runtime.lastError.message);
                     fillIssueBox(null, orderId);
                     return;
                 }
@@ -1489,7 +1489,7 @@ sbObj.build(`
             }, opts => applySidebarDesign(sidebar, opts));
             loadSidebarSnapshot(sidebar);
 
-            console.log("[Copilot] Sidebar INYECTADO en Gmail.");
+            console.log("[FENNEC] Sidebar INYECTADO en Gmail.");
 
             // Start with empty layout showing only action buttons.
             showInitialStatus();
@@ -1506,7 +1506,7 @@ sbObj.build(`
                 mainPanels.forEach(el => el.style.marginRight = '');
                 sessionStorage.setItem("fennecSidebarClosed", "true");
                 showFloatingIcon();
-                console.log("[Copilot] Sidebar cerrado manualmente en Gmail.");
+                console.log("[FENNEC] Sidebar cerrado manualmente en Gmail.");
             };
 
             const clearBtn = document.getElementById('copilot-clear-tabs');
@@ -1533,7 +1533,7 @@ sbObj.build(`
         function injectSidebarIfMissing() {
             if (sessionStorage.getItem("fennecSidebarClosed") === "true") { ensureFloatingIcon(); return; }
             if (!document.getElementById('copilot-sidebar')) {
-                console.log("[Copilot] Sidebar no encontrado, inyectando en Gmail...");
+                console.log("[FENNEC] Sidebar no encontrado, inyectando en Gmail...");
                 const mainPanels = applyPaddingToMainPanels();
                 injectSidebar(mainPanels);
                 showInitialStatus();
@@ -1560,7 +1560,7 @@ sbObj.build(`
         observer.observe(document.body, { childList: true, subtree: true });
 
         setInterval(injectSidebarIfMissing, 1200);
-        console.log("[Copilot] Intervalo de chequeo de sidebar lanzado (Gmail).");
+        console.log("[FENNEC] Intervalo de chequeo de sidebar lanzado (Gmail).");
 
         chrome.storage.onChanged.addListener((changes, area) => {
             if (area === 'local' && changes.sidebarSessionId &&
@@ -1786,7 +1786,7 @@ sbObj.build(`
                     }
                 }
             } catch (err) {
-                console.warn('[Copilot] PDF conversion failed:', err);
+                console.warn('[FENNEC] PDF conversion failed:', err);
                 pdf.addPage();
             }
             const pdfData = await pdf.saveAsBase64({ dataUri: true });
@@ -2001,7 +2001,7 @@ sbObj.build(`
 
 
     } catch (e) {
-        console.error("[Copilot] ERROR en Gmail Launcher:", e);
+        console.error("[FENNEC] ERROR en Gmail Launcher:", e);
     }
     });
     });

@@ -81,3 +81,6 @@ Sidebar freeze → Mechanism locking sidebar data to the last processed order un
 Launcher → Base class for page-specific scripts that inject the sidebar
 Sidebar → Class responsible for rendering sidebar HTML and applying styles
 Background Controller → Wrapper around the service worker handling tab reuse and message routing
+Floater → Base class for overlay panels in the extension
+DiagnoseFloater → Specialized Floater that lists hold orders from the Family Tree
+TrialFloater → Specialized Floater for Fraud Review actions
