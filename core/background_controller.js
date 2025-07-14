@@ -1,6 +1,7 @@
 // Skeleton controller wrapping service worker message handling.
 class BackgroundController {
     constructor() {
+        this.pendingUrls = new Set();
         chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             const fn = this[msg.action];
             if (typeof fn === 'function') {
@@ -27,11 +28,16 @@ class BackgroundController {
     }
 
     openOrReuseTab(msg, sender) {
+        const urlKey = msg.url;
+        if (this.pendingUrls.has(urlKey)) return;
+        this.pendingUrls.add(urlKey);
+        const finalize = () => this.pendingUrls.delete(urlKey);
+
         const query = { url: `${msg.url}*` };
         chrome.tabs.query(query, (tabs) => {
             const tab = tabs && tabs[0];
             if (tab) {
-                chrome.tabs.update(tab.id, { active: Boolean(msg.active) });
+                chrome.tabs.update(tab.id, { active: Boolean(msg.active) }, finalize);
             } else {
                 const opts = { url: msg.url, active: Boolean(msg.active) };
                 if (msg.windowId) {
@@ -39,7 +45,7 @@ class BackgroundController {
                 } else if (sender && sender.tab) {
                     opts.windowId = sender.tab.windowId;
                 }
-                chrome.tabs.create(opts);
+                chrome.tabs.create(opts, finalize);
             }
             if (msg.refocus && sender && sender.tab) {
                 chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
