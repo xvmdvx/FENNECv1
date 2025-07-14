@@ -2,6 +2,7 @@
 // order number is provided via ?fennec_order= in the URL or session storage.
 class AdyenLauncher extends Launcher {
     init() {
+    if (window.top !== window) return;
     const bg = fennecMessenger;
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) {

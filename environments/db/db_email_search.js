@@ -1,4 +1,5 @@
 (function() {
+    if (window.top !== window) return;
     const bg = fennecMessenger;
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) return;

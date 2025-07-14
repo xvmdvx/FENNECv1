@@ -1,4 +1,5 @@
 (function() {
+    if (window.top !== window) return;
     const bg = fennecMessenger;
     chrome.storage.local.get({ extensionEnabled: true, lightMode: false }, opts => {
         if (!opts.extensionEnabled) return;
@@ -90,7 +91,7 @@
                 adyenDnaInfo: null,
                 kountInfo: null
             }, () => {
-                bg.openTab({ url: dbUrl, active: true, refocus: true });
+                bg.openOrReuseTab({ url: dbUrl, active: true, refocus: true });
             });
         }
 

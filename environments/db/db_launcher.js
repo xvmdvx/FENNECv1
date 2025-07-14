@@ -1,6 +1,7 @@
 // Injects the FENNEC (POO) sidebar into DB pages.
 class DBLauncher extends Launcher {
     init() {
+    if (window.top !== window) return;
     const bg = fennecMessenger;
     // Clear the closed flag on reloads so the sidebar reappears
     window.addEventListener('beforeunload', () => {
@@ -2899,7 +2900,7 @@ function getLastHoldUser() {
         if (!client.email && parts.length) {
             const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
             const gmailUrl = 'https://mail.google.com/mail/u/0/#search/' + query;
-            bg.openTab({ url: gmailUrl, active: true, refocus: true });
+            bg.openOrReuseTab({ url: gmailUrl, active: true, refocus: true });
         }
         if (info.orderId) {
             const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
@@ -2907,7 +2908,7 @@ function getLastHoldUser() {
 
             const kountLink = document.querySelector('a[href*="kount.net"][href*="workflow/detail"]');
             if (kountLink) {
-                bg.openTab({ url: kountLink.href, active: true });
+                bg.openOrReuseTab({ url: kountLink.href, active: true });
             }
         }
     }
