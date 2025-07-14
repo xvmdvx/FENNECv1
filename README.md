@@ -27,7 +27,7 @@ The extension FENNEC (POO) lives in the `FENNEC/` folder. Key pieces include:
 - `CHANGELOG.md` – lists new features and fixes.
 - `README.md` – this guide.
 
-For historical changes refer to the **Changelog**. It has been reset so future updates start from a clean slate.
+For historical changes refer to the **Changelog**. This document is reset everytime requested by the user, ensuring changes are now reflected on README, DICTIONARY, AGENTS, etc.
 
 ### Architecture
 
@@ -41,8 +41,12 @@ It remains constant throughout all layouts, unless an IMPORTANT restriction is a
    Center: Icon, App name and version in parentheses.
    Right: Icon for clean window action. Close SB button.
 
-CLASSIC MODE:
-This is the default and most basic layout for the sidebar. It appears in Gmail (GM) and DB. Experimental features are hidden unless Dev Mode is enabled.
+PROFILES:
+  FILING: Equivale a la DB SB MAIN, con todas sus funcionalidades.
+  FILING/MISC:  DB SB MISC
+  ISSUES: GM SB + FILING + FILING/MISC
+  FRAUD: DB SB REVIEW MODE
+  ID CONFIRM: GM SB REVIEW MODE
 
 MAIN (BUSINESS FORMATION ORDERS: SILVER, GOLD, PLATINUM)
    DB:
@@ -225,20 +229,23 @@ Eexperimental mode where upcoming features are tested before release.
 
 ICONS/BUTTONS/FUNCTIONS:
 
-📧 SEARCH: Opens tabs in background:
+📧 SEARCH (GM SB & GM SB REVIEW MODE): Opens tabs in background:
    1. Gmail Search with Order Number, Customer Email, Customer Name. 
    2. Order in DB
+
 🗑 CLEAR TABS: Closes all tabs, except the one active, in current window.
-🧹 CLEAR: Resets the sidebar to its initial empty state in the current tab.
+
+🧹 CLEAR: Resets the sidebar to its INITIAL state depending on the enviroment.
+
 🔄 Refresh: Updates sidebar information instantly with information extracted from the active tab.
-🧬 DNA: Opens order payment information in Adyen and extracts relevant information from two tabs:
+
+🩻 XRAY: Runs SEARCH and Opens order payment information in Adyen and extracts relevant information from two tabs:
    1. Payment Details
-   2. DNA
-   Focus returns to the original email once information is retrieved.
-🩻 XRAY: Runs SEARCH and DNA operations one after the other and opens the Kount workflow page when available.
+   2. DNA one after the other and opens the Kount workflow page when available.
    After DNA loads the extension briefly opens the DB email search page until the order history appears,
    then focus returns to the Fraud tracker at the end.
    A KOUNT summary box appears below DNA after the data is extracted.
+   
 🤖 FILE: Automator that opens and fills the SOS filing process.
 
 GENERAL FEATURES:
