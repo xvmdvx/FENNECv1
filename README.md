@@ -58,7 +58,15 @@ new ExampleLauncher().init();
 
 ```
 
-Phase 3 introduces the `Floater` overlay framework. `TrialFloater` reuses it for the Fraud Review summary and a `BackgroundController` skeleton now wraps basic service worker actions. Future phases will migrate other overlays and messaging to these classes.
+Phase 3 introduces the `Floater` overlay framework. `TrialFloater` reuses it for the Fraud Review summary and a `BackgroundController` skeleton now wraps basic service worker actions.
+
+Phase 4 converts legacy overlays to subclasses of `Floater`. The Diagnose panel now uses `DiagnoseFloater` and Gmail's Update form uses `UpdateFloater`.
+
+Phase 5 expands `BackgroundController` with helpers like `openOrReuseTab` and `replaceTabs` so the service worker delegates tab control to this class.
+
+Phase 6 will refine module usage and standardize messaging across environments.
+
+Phase 7 will clean up deprecated helpers and finalize the documentation.
 
 ## Features
 

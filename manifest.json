@@ -33,6 +33,8 @@
         "core/launcher.js",
         "core/floater.js",
         "core/trial_floater.js",
+        "core/update_floater.js",
+        "core/diagnose_floater.js",
         "core/pdf-lib.min.js",
         "environments/gmail/gmail_launcher.js"
       ],
@@ -53,6 +55,8 @@
         "core/launcher.js",
         "core/floater.js",
         "core/trial_floater.js",
+        "core/update_floater.js",
+        "core/diagnose_floater.js",
         "core/mistral_chat.js",
         "environments/db/db_launcher.js"
       ],
@@ -72,6 +76,8 @@
         "core/launcher.js",
         "core/floater.js",
         "core/trial_floater.js",
+        "core/update_floater.js",
+        "core/diagnose_floater.js",
         "environments/db/tracker_fraud.js"
       ],
       "css": [
@@ -90,6 +96,8 @@
         "core/launcher.js",
         "core/floater.js",
         "core/trial_floater.js",
+        "core/update_floater.js",
+        "core/diagnose_floater.js",
         "environments/db/db_email_search.js"
       ]
     },
@@ -104,6 +112,8 @@
         "core/launcher.js",
         "core/floater.js",
         "core/trial_floater.js",
+        "core/update_floater.js",
+        "core/diagnose_floater.js",
         "environments/db/db_order_search.js"
       ]
     },
@@ -130,6 +140,8 @@
         "core/launcher.js",
         "core/floater.js",
         "core/trial_floater.js",
+        "core/update_floater.js",
+        "core/diagnose_floater.js",
         "environments/adyen/adyen_launcher.js"
       ],
       "css": [
@@ -148,6 +160,8 @@
         "core/launcher.js",
         "core/floater.js",
         "core/trial_floater.js",
+        "core/update_floater.js",
+        "core/diagnose_floater.js",
         "environments/txsos/tx_sos_launcher.js"
       ],
       "css": [
@@ -166,6 +180,8 @@
         "core/launcher.js",
         "core/floater.js",
         "core/trial_floater.js",
+        "core/update_floater.js",
+        "core/diagnose_floater.js",
         "environments/kount/kount_launcher.js"
       ]
     }

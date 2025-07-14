@@ -33,6 +33,7 @@
             let currentContext = null;
             let storedOrderInfo = null;
             let droppedFiles = [];
+            const updateFloater = new UpdateFloater();
 
             function dedupeFiles(list) {
                 const seen = new Set();
@@ -1875,15 +1876,13 @@ sbObj.build(`
                 (currentContext && currentContext.orderNumber);
             if (!orderId) { alert('No order ID detected.'); return; }
 
-            let overlay = document.getElementById('fennec-update-overlay');
-            if (overlay) overlay.remove();
-            overlay = document.createElement('div');
-            overlay.id = 'fennec-update-overlay';
-            overlay.style.opacity = '0';
-            const title = document.createElement('div');
-            title.id = 'fennec-update-title';
-            title.textContent = 'UPDATE ORDER INFO';
-            overlay.appendChild(title);
+            updateFloater.remove();
+            updateFloater.build();
+            updateFloater.element.style.opacity = '0';
+            updateFloater.attach();
+            let overlay = updateFloater.element;
+            const title = updateFloater.header;
+            if (title) overlay.appendChild(title);
             const close = document.createElement('div');
             close.className = 'trial-close';
             close.textContent = '✕';
@@ -1968,8 +1967,6 @@ sbObj.build(`
             submit.style.marginTop = '8px';
             submit.textContent = 'UPDATE';
             overlay.appendChild(submit);
-
-            document.body.appendChild(overlay);
             requestAnimationFrame(() => overlay.style.opacity = '1');
 
             submit.onclick = () => {
