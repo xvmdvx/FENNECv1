@@ -22,6 +22,7 @@ class DBLauncher extends Launcher {
     // Tracks whether Review Mode is active across DB pages
     let reviewMode = false;
     let devMode = false;
+    const diagnoseFloater = new DiagnoseFloater();
     let fraudXray = new URLSearchParams(location.search).get('fraud_xray') === '1';
     if (fraudXray && localStorage.getItem('fraudXrayFinished') === '1') {
         const params = new URLSearchParams(location.search);
@@ -2413,7 +2414,7 @@ class DBLauncher extends Launcher {
         const results = document.createElement('div');
         results.className = 'coda-results';
         overlay.appendChild(results);
-        document.body.appendChild(overlay);
+
 
         const runSearch = () => {
             const q = input.value.trim();
@@ -2723,10 +2724,10 @@ class DBLauncher extends Launcher {
         }
         originType = originType || (typeof currentOrderTypeText !== 'undefined' ? currentOrderTypeText : '');
         const isReinstatement = /reinstat/i.test(originType);
-        let overlay = document.getElementById('fennec-diagnose-overlay');
-        if (overlay) overlay.remove();
-        overlay = document.createElement('div');
-        overlay.id = 'fennec-diagnose-overlay';
+        diagnoseFloater.remove();
+        diagnoseFloater.build();
+        diagnoseFloater.attach();
+        let overlay = diagnoseFloater.element;
         const close = document.createElement('div');
         close.className = 'diag-close';
         close.textContent = '✕';
