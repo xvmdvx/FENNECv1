@@ -515,9 +515,12 @@
                 if (subBtn) {
                     subBtn.addEventListener('click', () => {
                         subBtn.disabled = true;
+                        const dna = data.adyenDnaInfo;
+                        const kount = data.kountInfo;
+                        const order = data.sidebarOrderInfo;
                         bg.send('detectSubscriptions', {
-                            email: (data.sidebarOrderInfo && data.sidebarOrderInfo.clientEmail) || '',
-                            ltv: (data.sidebarOrderInfo && data.sidebarOrderInfo.clientLtv) || ''
+                            email: (order && order.clientEmail) || '',
+                            ltv: (order && order.clientLtv) || ''
                         }, resp => {
                             subBtn.disabled = false;
                             if (!resp) return;
@@ -619,9 +622,12 @@
                     }
                 }
                 if (data.sidebarOrderInfo && data.sidebarOrderInfo.clientEmail) {
+                    const dna = data.adyenDnaInfo;
+                    const kount = data.kountInfo;
+                    const order = data.sidebarOrderInfo;
                     bg.send('detectSubscriptions', {
-                        email: data.sidebarOrderInfo.clientEmail,
-                        ltv: data.sidebarOrderInfo.clientLtv || ''
+                        email: order.clientEmail,
+                        ltv: order.clientLtv || ''
                     }, resp => {
                         if (!resp) return;
                         const cols = overlay.querySelectorAll('.trial-columns .trial-col');
@@ -643,11 +649,21 @@
                             sep.className = 'trial-line trial-sep';
                             if (insertPoint) dbCol.insertBefore(sep, insertPoint);
                             else dbCol.appendChild(sep);
-                            addLine(`<span class="trial-tag">TOTAL:</span><span class="trial-value">${resp.statusCounts.total}</span>`);
+                            const goodTotal = resp.statusCounts.total < resp.statusCounts.cxl * 0.5;
+                            addLine(`<span class="trial-tag">TOTAL:</span><span class="trial-value">${resp.statusCounts.total} <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span></span>`);
                             if (resp.ltv) {
                                 const per = resp.statusCounts.total - resp.statusCounts.cxl;
                                 const orderVal = per > 0 ? (parseFloat(resp.ltv) / per).toFixed(2) : 'N/A';
                                 addLine(`<span class="trial-tag">LTV:</span><span class="trial-value">${resp.ltv} P/ORDER: ${orderVal}</span>`);
+                            }
+                            const countries = collectCountries(order, dna, kount);
+                            if (countries.length) {
+                                const blank = document.createElement('div');
+                                blank.className = 'trial-line';
+                                blank.innerHTML = '&nbsp;';
+                                if (insertPoint) dbCol.insertBefore(blank, insertPoint);
+                                else dbCol.appendChild(blank);
+                                addLine(`<span class="trial-tag">COUNTRIES INVOLVED:</span><span class="trial-value">${countries.join(', ')}</span>`);
                             }
                         } else {
                             addLine(`<span class="trial-tag">Orders Found:</span><span class="trial-value">${resp.orderCount}</span>`);
@@ -716,6 +732,45 @@
                 return isNaN(n) ? 0 : n;
             }
 
+            function formatExpShort(text) {
+                if (!text) return '';
+                const digits = String(text).replace(/[^0-9]/g, '');
+                if (digits.length >= 4) {
+                    const mm = digits.slice(0,2).padStart(2, '0');
+                    const yy = digits.slice(-2);
+                    return `${mm}/${yy}`;
+                }
+                return text;
+            }
+
+            const STATE_ABBRS = 'AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY'.split(' ');
+            function guessCountry(text) {
+                if (!text) return null;
+                const t = String(text).toUpperCase();
+                if (/UNITED STATES|USA\b|US\b/.test(t)) return 'US';
+                if (/CANADA|\bCA\b/.test(t)) return 'CA';
+                if (/MEXICO|\bMX\b/.test(t)) return 'MX';
+                if (/UNITED KINGDOM|\bUK\b|\bGB\b/.test(t)) return 'GB';
+                if (/AUSTRALIA|\bAU\b/.test(t)) return 'AU';
+                const seg = t.split(',').pop().trim();
+                if (seg.length === 2 && !STATE_ABBRS.includes(seg)) return seg;
+                if (seg.length > 2 && /^[A-Z ]+$/.test(seg) && !STATE_ABBRS.includes(seg)) return seg.replace(/\s+/g,' ');
+                return null;
+            }
+
+            function collectCountries(order, dna, kount) {
+                const set = new Set();
+                const add = a => { const c = guessCountry(a); if (c) set.add(c); };
+                if (order) {
+                    if (order.billing && order.billing.address) add(order.billing.address);
+                    if (order.registeredAgent && order.registeredAgent.address) add(order.registeredAgent.address);
+                    if (Array.isArray(order.members)) order.members.forEach(m => add(m.address));
+                }
+                if (dna && dna.payment && dna.payment.shopper && dna.payment.shopper['Billing address']) add(dna.payment.shopper['Billing address']);
+                if (kount && kount.deviceLocation) add(kount.deviceLocation);
+                return Array.from(set);
+            }
+
             function normName(name) {
                 return (name || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim();
             }
@@ -759,9 +814,9 @@
                 dnaExp = (dna && dna.payment && dna.payment.card ? dna.payment.card['Expiry date'] : '').replace(/\D+/g, '');
                 if (order.billing.expiry || order.billing.last4) {
                     const parts = [];
-                    if (order.billing.expiry) parts.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(order.billing.expiry)}</span>`);
+                    if (order.billing.expiry) parts.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(formatExpShort(order.billing.expiry))}</span>`);
                     if (order.billing.last4) parts.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(order.billing.last4)}</span>`);
-                    dbLines.push(`<div class="trial-line">${parts.join(' ')}</div>`);
+                    dbLines.push(`<div class="trial-line trial-card-info">${parts.join(' ')}</div>`);
                     dbLines.push('<div class="trial-line trial-sep after-card-line"></div>');
                 }
                 const dbName = (order.billing.cardholder || '').toLowerCase();
@@ -901,9 +956,9 @@
                 const tags2 = [];
                 if (order.type) {
                     const cleanType = String(order.type).replace(/BUSINESS\s*FORMATION/gi, '').replace(/-\s*/g, '').trim();
-                    if (cleanType) tags2.push(`<span class="copilot-tag copilot-tag-lightgray">${escapeHtml(cleanType)}</span>`);
+                    if (cleanType) tags2.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(cleanType)}</span>`);
                 }
-                if (order.orderCost) tags2.push(`<span class="copilot-tag copilot-tag-lightgray">${escapeHtml(order.orderCost)}</span>`);
+                if (order.orderCost) tags2.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(order.orderCost)}</span>`);
                 if (tags2.length) {
                     orderLines.push(`<div class="trial-line no-highlight trial-tags">${tags2.join(' ')}</div>`);
                 }
@@ -914,10 +969,10 @@
                 }
                 if (typeof order.hasRA === 'boolean') {
                     const txt = order.raExpired ? 'EXPIRED' : (order.hasRA ? 'YES' : 'NO');
-                    line3.push(`RA: <span class="copilot-tag copilot-tag-white">${txt}</span>`);
+                    line3.push(`<span class="copilot-tag copilot-tag-white">RA: ${txt}</span>`);
                 }
                 if (typeof order.hasVA === 'boolean') {
-                    line3.push(`VA: <span class="copilot-tag copilot-tag-white">${order.hasVA ? 'YES' : 'NO'}</span>`);
+                    line3.push(`<span class="copilot-tag copilot-tag-white">VA: ${order.hasVA ? 'YES' : 'NO'}</span>`);
                 }
                 if (line3.length) orderLines.push(`<div class="trial-line no-highlight trial-exp-va">${line3.join(' ')}</div>`);
             }
