@@ -1087,7 +1087,20 @@
         window.addEventListener('focus', () => {
             loadDnaSummary();
             loadKountSummary();
-            showTrialFloater(60, true);
+            if (localStorage.getItem('fraudXrayFinished') === '1') {
+                localStorage.removeItem('fraudXrayFinished');
+                showTrialFloater(60, true);
+            } else {
+                showTrialFloater(60, true);
+            }
+        });
+
+        // React to XRAY completion even if this tab never regained focus
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'fraudXrayFinished' && e.newValue === '1') {
+                localStorage.removeItem('fraudXrayFinished');
+                showTrialFloater(60, true);
+            }
         });
     });
 })();
