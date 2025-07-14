@@ -2872,6 +2872,8 @@ function getLastHoldUser() {
 
     function runFraudXray() {
         if (!fraudXray) return;
+        if (sessionStorage.getItem('fraudXrayStarted')) return;
+        sessionStorage.setItem('fraudXrayStarted', '1');
         if (localStorage.getItem('fraudXrayCompleted')) {
             fraudXray = false;
             return;

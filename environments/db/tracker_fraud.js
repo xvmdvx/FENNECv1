@@ -492,6 +492,7 @@
                     return;
                 }
                 sessionStorage.removeItem('fennecShowTrialFloater');
+                sessionStorage.removeItem('fraudXrayStarted');
                 if (data.sidebarOrderInfo && data.sidebarOrderInfo.orderId) {
                     localStorage.setItem('fraudXrayCompleted', String(data.sidebarOrderInfo.orderId));
                 } else {
@@ -993,6 +994,7 @@
             localStorage.removeItem('fraudXrayCompleted');
             localStorage.removeItem('fraudXrayFinished');
             sessionStorage.removeItem('fennecShowTrialFloater');
+            sessionStorage.removeItem('fraudXrayStarted');
             showInitialStatus();
         }
 
