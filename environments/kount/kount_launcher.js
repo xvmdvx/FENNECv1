@@ -1,5 +1,6 @@
 class KountLauncher extends Launcher {
     init() {
+    if (window.top !== window) return;
     const bg = fennecMessenger;
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) return;
@@ -67,7 +68,7 @@ class KountLauncher extends Launcher {
                         const ekataLink = document.querySelector('a[href*="/workflow/ekata"]');
                         if (ekataLink) {
                             const url = ekataLink.href.startsWith('http') ? ekataLink.href : location.origin + ekataLink.getAttribute('href');
-                            bg.openTab({ url, active: true });
+                            bg.openOrReuseTab({ url, active: true });
                         }
                     }, 500);
                 };

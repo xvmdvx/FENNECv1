@@ -1,6 +1,7 @@
 // Injects the FENNEC (POO) sidebar into Gmail pages.
 // Pads main panels and the attachment viewer so content stays visible.
 (function persistentSidebar() {
+    if (window.top !== window) return;
     const bg = fennecMessenger;
     // Clear the closed flag on full reloads so the sidebar returns
     window.addEventListener('beforeunload', () => {

@@ -1,6 +1,7 @@
 // Injects the FENNEC (POO) sidebar into USPS pages.
 class UspsLauncher extends Launcher {
     init() {
+    if (window.top !== window) return;
     const bg = fennecMessenger;
     chrome.runtime.onMessage.addListener((msg) => {
         if (msg.action === 'fennecToggle') {
