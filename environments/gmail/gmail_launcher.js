@@ -1993,7 +1993,9 @@ sbObj.build(`
             const button = document.getElementById("btn-xray");
             if (!button || button.dataset.listenerAttached) return;
             button.dataset.listenerAttached = "true";
-            button.addEventListener("click", function () {
+            button.addEventListener("click", function (e) {
+                e.preventDefault();
+                e.stopPropagation();
                 handleEmailSearchClick(true);
             });
         }
