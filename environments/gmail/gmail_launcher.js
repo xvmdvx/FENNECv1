@@ -1442,9 +1442,8 @@
         function injectSidebar(mainPanels) {
             if (document.getElementById('copilot-sidebar')) return;
 
-            const sidebar = document.createElement('div');
-            sidebar.id = 'copilot-sidebar';
-            sidebar.innerHTML = `
+            const sbObj = new Sidebar();
+sbObj.build(`
                 <div class="copilot-header">
                     <span id="qa-toggle" class="quick-actions-toggle">☰</span>
                     <div class="copilot-title">
@@ -1479,8 +1478,9 @@
                     ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
                     <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
                 </div>
-            `;
-            document.body.appendChild(sidebar);
+            `);
+            sbObj.attach();
+            const sidebar = sbObj.element;
             chrome.storage.sync.get({
                 sidebarFontSize: 13,
                 sidebarFont: "'Inter', sans-serif",

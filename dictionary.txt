@@ -78,3 +78,9 @@ Retry button → Resends a prompt when the Mistral service is unavailable
 BOIR → Beneficial Ownership Information Report
 BETA → Early test version of Fennec
 Sidebar freeze → Mechanism locking sidebar data to the last processed order until XRAY runs again
+Launcher → Base class for page-specific scripts that inject the sidebar
+Sidebar → Class responsible for rendering sidebar HTML and applying styles
+Background Controller → Wrapper around the service worker handling tab reuse and message routing
+Floater → Base overlay class for floating panels
+DiagnoseFloater → Floater showing parent order issues and actions
+TrialFloater → Floater used for Fraud Review summaries

@@ -1,4 +1,5 @@
-(function() {
+class KountLauncher extends Launcher {
+    init() {
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) return;
         try {
@@ -111,4 +112,7 @@
             console.error('[FENNEC Kount] Launcher error:', e);
         }
     });
-})();
+    }
+}
+
+new KountLauncher().init();

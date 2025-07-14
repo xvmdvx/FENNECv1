@@ -1,5 +1,6 @@
 // Injects the FENNEC sidebar into DB pages.
-(function main() {
+class DBLauncher extends Launcher {
+    init() {
     // Clear the closed flag on reloads so the sidebar reappears
     window.addEventListener('beforeunload', () => {
         sessionStorage.removeItem("fennecSidebarClosed");
@@ -58,7 +59,7 @@
         sessionStorage.setItem(key, '1');
         sessionStorage.setItem('fraudXrayPending', '1');
         window.addEventListener('load', () => {
-            console.log('[Copilot] Auto-refreshing order page to load LTV');
+            console.log('[FENNEC] Auto-refreshing order page to load LTV');
             setTimeout(() => location.reload(), 300);
         }, { once: true });
     })();
@@ -462,7 +463,7 @@
         function initSidebar() {
             if (sessionStorage.getItem("fennecSidebarClosed") === "true") { showFloatingIcon(); return; }
             if (!document.getElementById('copilot-sidebar')) {
-                console.log("[Copilot] Sidebar no encontrado, inyectando en DB...");
+                console.log("[FENNEC] Sidebar no encontrado, inyectando en DB...");
 
                 const SIDEBAR_WIDTH = 340;
                 document.body.style.transition = 'margin-right 0.2s';
@@ -481,9 +482,8 @@
 
                 (function injectSidebar() {
                     if (document.getElementById('copilot-sidebar')) return;
-                    const sidebar = document.createElement('div');
-                    sidebar.id = 'copilot-sidebar';
-                    sidebar.innerHTML = `
+                    const sbObj = new Sidebar();
+                    sbObj.build(`
                         <div class="copilot-header">
                             <span id="qa-toggle" class="quick-actions-toggle">☰</span>
                             <div class="copilot-title">
@@ -516,8 +516,9 @@
                             </div>` : ``}
                             <div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
                         </div>
-                    `;
-                    document.body.appendChild(sidebar);
+                    `);
+                    sbObj.attach();
+                    const sidebar = sbObj.element;
                     chrome.storage.sync.get({
                         sidebarFontSize: 13,
                         sidebarFont: "'Inter', sans-serif",
@@ -535,7 +536,7 @@
                             const style = document.getElementById('copilot-db-padding');
                             if (style) style.remove();
                             sessionStorage.setItem("fennecSidebarClosed", "true");
-                            console.log("[Copilot] Sidebar cerrado manualmente en DB.");
+                            console.log("[FENNEC] Sidebar cerrado manualmente en DB.");
                             showFloatingIcon();
                         };
                     }
@@ -709,7 +710,7 @@
             initSidebar();
         }
     } catch (e) {
-        console.error("[Copilot] ERROR en DB Launcher:", e);
+        console.error("[FENNEC] ERROR en DB Launcher:", e);
 
         const body = document.getElementById('copilot-body-content');
         if (body) {
@@ -2102,7 +2103,7 @@
             const info = getLastIssueInfo();
             fillIssueBox(info, orderId);
         } catch (err) {
-            console.warn('[Copilot] Issue extraction failed:', err);
+            console.warn('[FENNEC] Issue extraction failed:', err);
             fillIssueBox(null, orderId);
         }
     }
@@ -2163,12 +2164,12 @@
 
     function openCancelPopup() {
         const statusBtn = document.querySelector('.btn-status-text');
-        if (!statusBtn) return console.warn('[Copilot] Status dropdown not found');
+        if (!statusBtn) return console.warn('[FENNEC] Status dropdown not found');
         statusBtn.click();
         setTimeout(() => {
             const cancelLink = Array.from(document.querySelectorAll('.dropdown-menu a'))
                 .find(a => /cancel.*refund/i.test(a.textContent));
-            if (!cancelLink) return console.warn('[Copilot] Cancel option not found');
+            if (!cancelLink) return console.warn('[FENNEC] Cancel option not found');
             sessionStorage.removeItem('fennecCancelPending');
             cancelLink.click();
             selectCancelReason();
@@ -2214,7 +2215,7 @@
     }
 
     function startCancelProcedure() {
-        console.log('[Copilot] Starting cancel procedure');
+        console.log('[FENNEC] Starting cancel procedure');
         const btn = Array.from(document.querySelectorAll('a'))
             .find(a => /mark resolved/i.test(a.textContent));
         if (btn) {
@@ -2341,7 +2342,7 @@
                 });
             }).then(() => {
                 sessionSet({ fennecUploadDone: { time: Date.now() } }, uploadNext);
-            }).catch(err => { console.warn('[Copilot] Upload failed:', err); uploadNext(); });
+            }).catch(err => { console.warn('[FENNEC] Upload failed:', err); uploadNext(); });
         };
         uploadNext();
     }
@@ -2418,17 +2419,17 @@
             const q = input.value.trim();
             if (!q) return;
             results.textContent = "Loading...";
-            console.log("[Copilot] CODA search query:", q);
+            console.log("[FENNEC] CODA search query:", q);
             fetch("https://coda.io/apis/v1/docs/QJWsDF3UZ6/search?q=" + encodeURIComponent(q), {
                 headers: { "Authorization": "Bearer 758d99dd-34d0-43a5-8896-595785019945" }
             })
                 .then(r => {
-                    console.log("[Copilot] CODA search status:", r.status);
+                    console.log("[FENNEC] CODA search status:", r.status);
                     const status = r.status;
                     return r.json().catch(() => ({})).then(data => ({ status, data }));
                 })
                 .then(({ status, data }) => {
-                    console.log("[Copilot] CODA search response:", data);
+                    console.log("[FENNEC] CODA search response:", data);
                     if (status !== 200) {
                         const msg = data && data.message ? data.message : "API request failed";
                         results.textContent = `Error ${status}: ${msg}`;
@@ -2446,7 +2447,7 @@
                 })
                 .catch(err => {
                     results.textContent = "Network error";
-                    console.error("[Copilot] Coda search error:", err);
+                    console.error("[FENNEC] Coda search error:", err);
                 });
         };
         btn.addEventListener('click', runSearch);
@@ -2585,10 +2586,10 @@
     }
 
     function getParentOrderId() {
-        console.log("[Copilot] Scanning for parent order in #vcomp");
+        console.log("[FENNEC] Scanning for parent order in #vcomp");
         const tab = document.querySelector('#vcomp') || document.querySelector('#vcompany');
         if (!tab) {
-            console.log("[Copilot] #vcomp tab not found");
+            console.log("[FENNEC] #vcomp tab not found");
             return null;
         }
         const candidates = Array.from(
@@ -2596,31 +2597,31 @@
         );
         const parentEl = candidates.find(el => /parent order/i.test(getText(el)));
         if (!parentEl) {
-            console.log("[Copilot] Parent order element not found; scanned:");
+            console.log("[FENNEC] Parent order element not found; scanned:");
             candidates.forEach(el => {
                 const txt = getText(el).trim();
                 if (txt) console.log("- " + el.tagName + ": " + txt);
             });
             return null;
         }
-        console.log("[Copilot] Parent order element text:", getText(parentEl).trim());
+        console.log("[FENNEC] Parent order element text:", getText(parentEl).trim());
         let anchor = parentEl.querySelector('a[href*="/order/detail/"]');
         if (!anchor && parentEl.nextElementSibling) {
             anchor = parentEl.nextElementSibling.querySelector('a[href*="/order/detail/"]');
         }
         if (anchor) {
-            console.log("[Copilot] Found parent order link", anchor.href);
+            console.log("[FENNEC] Found parent order link", anchor.href);
             const m = anchor.href.match(/detail\/(\d+)/);
             if (m) {
-                console.log("[Copilot] Extracted ID from href:", m[1]);
+                console.log("[FENNEC] Extracted ID from href:", m[1]);
                 return m[1];
             }
             const textId = anchor.textContent.replace(/\D/g, '');
             if (textId) {
-                console.log("[Copilot] Extracted ID from link text:", textId);
+                console.log("[FENNEC] Extracted ID from link text:", textId);
                 return textId;
             }
-            console.log("[Copilot] No numeric ID in parent link");
+            console.log("[FENNEC] No numeric ID in parent link");
         }
         let digits = parentEl.textContent.replace(/\D/g, "");
         if (!digits) {
@@ -2641,14 +2642,14 @@
                 }
             }
             if (valEl) {
-                console.log("[Copilot] Checked sibling text:", getText(valEl).trim());
+                console.log("[FENNEC] Checked sibling text:", getText(valEl).trim());
                 digits = valEl.textContent.replace(/\D/g, "");
             }
         }
-        if (digits) console.log("[Copilot] Extracted ID from text:", digits);
+        if (digits) console.log("[FENNEC] Extracted ID from text:", digits);
         else {
-            console.log("[Copilot] No digits found in parent element text or siblings");
-            console.log("[Copilot] Parent text scanned:", getText(parentEl).trim());
+            console.log("[FENNEC] No digits found in parent element text or siblings");
+            console.log("[FENNEC] Parent text scanned:", getText(parentEl).trim());
         }
         return digits || null;
     }
@@ -2990,4 +2991,7 @@ window.addEventListener('focus', () => {
     loadDnaSummary();
     loadKountSummary();
 });
-})();
+    }
+}
+
+new DBLauncher().init();
