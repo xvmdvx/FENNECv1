@@ -34,8 +34,8 @@
                 <div class="copilot-header">
                     <span id="qa-toggle" class="quick-actions-toggle">☰</span>
                     <div class="copilot-title">
-                        <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (BETA)" />
-                        <span>FENNEC (BETA)</span>
+                        <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (POO)" />
+                        <span>FENNEC (POO)</span>
                     </div>
                     <button id="copilot-clear-tabs">🗑</button>
                     <button id="copilot-close">✕</button>

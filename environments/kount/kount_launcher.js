@@ -8,7 +8,7 @@ class KountLauncher extends Launcher {
                 chrome.storage.local.get({ kountInfo: {} }, ({ kountInfo }) => {
                     const updated = Object.assign({}, kountInfo, part);
                     chrome.storage.local.set({ kountInfo: updated });
-                    console.log('[FENNEC Kount] Data saved', part);
+                    console.log('[FENNEC (POO) Kount] Data saved', part);
                 });
             }
 
@@ -110,7 +110,7 @@ class KountLauncher extends Launcher {
                 } else run();
             }
         } catch (e) {
-            console.error('[FENNEC Kount] Launcher error:', e);
+            console.error('[FENNEC (POO) Kount] Launcher error:', e);
         }
     });
     }

@@ -1,4 +1,4 @@
-// Base Launcher class for FENNEC environments.
+// Base Launcher class for FENNEC (POO) environments.
 // Concrete launchers should extend this class and implement the init() method.
 class Launcher {
     constructor() {

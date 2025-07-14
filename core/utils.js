@@ -1,4 +1,4 @@
-// Common utilities for FENNEC content scripts.
+// Common utilities for FENNEC (POO) content scripts.
 // Provides escapeHtml and attachCommonListeners helpers.
 
 function escapeHtml(text) {

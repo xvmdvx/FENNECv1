@@ -5,7 +5,7 @@ class AdyenLauncher extends Launcher {
     const bg = fennecMessenger;
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) {
-            console.log('[FENNEC] Extension disabled, skipping Adyen launcher.');
+            console.log('[FENNEC (POO)] Extension disabled, skipping Adyen launcher.');
             return;
         }
 
@@ -45,7 +45,7 @@ class AdyenLauncher extends Launcher {
             }
 
             function fillAndSubmit() {
-                console.log('[FENNEC Adyen] Filling search form for order', order);
+                console.log('[FENNEC (POO) Adyen] Filling search form for order', order);
                 waitForElement('.header-search__input, input[name="query"]').then(input => {
                     try {
                         if (!input) return;
@@ -58,7 +58,7 @@ class AdyenLauncher extends Launcher {
                             if (btn) btn.click();
                         });
                     } catch (err) {
-                        console.error('[FENNEC Adyen] Error filling form:', err);
+                        console.error('[FENNEC (POO) Adyen] Error filling form:', err);
                     }
                 });
             }
@@ -67,11 +67,11 @@ class AdyenLauncher extends Launcher {
                 waitForElement('a[href*="showTx.shtml?pspReference="]').then(link => {
                     try {
                         if (link) {
-                            console.log('[FENNEC Adyen] Opening most recent transaction');
+                            console.log('[FENNEC (POO) Adyen] Opening most recent transaction');
                             link.click();
                         }
                     } catch (err) {
-                        console.error('[FENNEC Adyen] Error opening result:', err);
+                        console.error('[FENNEC (POO) Adyen] Error opening result:', err);
                     }
                 });
             }
@@ -80,7 +80,7 @@ class AdyenLauncher extends Launcher {
                 chrome.storage.local.get({ adyenDnaInfo: {} }, ({ adyenDnaInfo }) => {
                     const updated = Object.assign({}, adyenDnaInfo, part);
                     sessionSet({ adyenDnaInfo: updated });
-                    console.log('[FENNEC Adyen] Data saved', part);
+                    console.log('[FENNEC (POO) Adyen] Data saved', part);
                 });
             }
 
@@ -374,7 +374,7 @@ class AdyenLauncher extends Launcher {
                 }
                 bg.send('checkLastIssue', { orderId }, (resp) => {
                     if (chrome.runtime.lastError) {
-                        console.warn('[FENNEC] Issue check failed:', chrome.runtime.lastError.message);
+                        console.warn('[FENNEC (POO)] Issue check failed:', chrome.runtime.lastError.message);
                         fillIssueBox(null, orderId);
                         return;
                     }
@@ -416,8 +416,8 @@ class AdyenLauncher extends Launcher {
                     <div class="copilot-header">
                         <span id="qa-toggle" class="quick-actions-toggle">☰</span>
                         <div class="copilot-title">
-                            <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (BETA)" />
-                            <span>FENNEC (BETA)</span>
+                            <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (POO)" />
+                            <span>FENNEC (POO)</span>
                         </div>
                         <button id="copilot-clear-tabs">🗑</button>
                         <button id="copilot-close">✕</button>
@@ -486,7 +486,7 @@ class AdyenLauncher extends Launcher {
             }
 
             function handlePaymentPage() {
-                console.log('[FENNEC Adyen] Extracting payment page details');
+                console.log('[FENNEC (POO) Adyen] Extracting payment page details');
                 const card = extractSection('Card details') || {};
                 if (card['Card number']) {
                     card['Card number'] = card['Card number']
@@ -502,18 +502,18 @@ class AdyenLauncher extends Launcher {
                 waitForElement('a[href*="showOilSplashList.shtml"]').then(link => {
                     try {
                         if (link) {
-                            console.log('[FENNEC Adyen] Opening DNA tab');
+                            console.log('[FENNEC (POO) Adyen] Opening DNA tab');
                             window.open(link.href, '_blank');
                             sessionStorage.removeItem('fennec_order');
                         }
                     } catch (err) {
-                        console.error('[FENNEC Adyen] Error opening DNA:', err);
+                        console.error('[FENNEC (POO) Adyen] Error opening DNA:', err);
                     }
                 });
             }
 
             function handleDnaPage() {
-                console.log('[FENNEC Adyen] Extracting DNA page stats');
+                console.log('[FENNEC (POO) Adyen] Extracting DNA page stats');
                 // Large DNA pages can take a while to render all stats,
                 // so allow a longer wait time before giving up.
                 waitForElement('.data-breakdown .item', 30000).then(() => {
@@ -553,7 +553,7 @@ class AdyenLauncher extends Launcher {
 
                     const networkTx = extractNetworkTransactions();
                     saveData({ transactions: stats, networkTransactions: networkTx, updated: Date.now() });
-                    console.log('[FENNEC Adyen] DNA stats stored');
+                    console.log('[FENNEC (POO) Adyen] DNA stats stored');
                     chrome.storage.local.get({ sidebarOrderInfo: null }, ({ sidebarOrderInfo }) => {
                         const email = sidebarOrderInfo ? sidebarOrderInfo.clientEmail : null;
                         bg.send('focusDbSearch', { email });
@@ -563,7 +563,7 @@ class AdyenLauncher extends Launcher {
 
             const path = window.location.pathname;
             const isDnaPage = path.includes('showOilSplashList.shtml');
-            console.log('[FENNEC Adyen] Path:', path);
+            console.log('[FENNEC (POO) Adyen] Path:', path);
             const ready = document.readyState === 'loading' ? 'DOMContentLoaded' : null;
             if (ready) {
                 document.addEventListener('DOMContentLoaded', injectSidebar);
@@ -622,7 +622,7 @@ class AdyenLauncher extends Launcher {
                 }
             });
         } catch (e) {
-            console.error('[FENNEC Adyen] Launcher error:', e);
+            console.error('[FENNEC (POO) Adyen] Launcher error:', e);
         }
     });
     }

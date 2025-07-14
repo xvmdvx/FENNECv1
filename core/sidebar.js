@@ -1,7 +1,5 @@
-// Sidebar class for FENNEC content scripts.
-// This wrapper helps move toward an object-oriented layout without breaking
-// existing procedural code. All methods rely on the same DOM structure used
-// previously.
+// Sidebar class for FENNEC (POO) content scripts.
+// Proporciona una envoltura orientada a objetos manteniendo la estructura de DOM existente.
 class Sidebar {
     constructor(id = 'copilot-sidebar') {
         this.id = id;
