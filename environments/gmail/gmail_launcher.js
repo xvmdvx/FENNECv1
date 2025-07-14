@@ -1668,7 +1668,6 @@ sbObj.build(`
             loadKountSummary();
             if (localStorage.getItem('fraudXrayFinished') === '1') {
                 localStorage.removeItem('fraudXrayFinished');
-                sessionStorage.removeItem('fraudXrayStarted');
                 const box = document.getElementById('issue-summary-box');
                 if (box) box.style.display = 'block';
                 ensureIssueControls(true);
@@ -1683,7 +1682,6 @@ sbObj.build(`
         window.addEventListener('storage', (e) => {
             if (e.key === 'fraudXrayFinished' && e.newValue === '1') {
                 localStorage.removeItem('fraudXrayFinished');
-                sessionStorage.removeItem('fraudXrayStarted');
                 const box = document.getElementById('issue-summary-box');
                 if (box) box.style.display = 'block';
                 ensureIssueControls(true);
