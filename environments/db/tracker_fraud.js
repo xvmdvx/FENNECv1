@@ -106,6 +106,7 @@
             btn.title = 'XRAY';
             btn.addEventListener('click', e => {
                 e.preventDefault();
+                e.stopPropagation();
                 const box = document.getElementById('fraud-summary-box');
                 if (box) box.remove();
                 runXray(orderId);
