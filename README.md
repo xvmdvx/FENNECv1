@@ -55,7 +55,10 @@ class ExampleLauncher extends Launcher {
 }
 
 new ExampleLauncher().init();
+
 ```
+
+Phase 3 introduces the `Floater` overlay framework. `TrialFloater` reuses it for the Fraud Review summary and a `BackgroundController` skeleton now wraps basic service worker actions. Future phases will migrate other overlays and messaging to these classes.
 
 ## Features
 
