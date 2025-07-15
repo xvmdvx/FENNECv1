@@ -63,31 +63,40 @@
         function downloadCsvOrders(cb) {
             const origBlob = window.Blob;
             let csv = null;
+            let finished = false;
             window.Blob = function(data, opts) {
                 if (Array.isArray(data) && typeof data[0] === 'string') {
                     csv = data[0];
+                    finished = true;
                 }
                 return new origBlob(data, opts);
             };
-            try {
-                if (typeof downloadOrderSearch === 'function') {
-                    downloadOrderSearch();
-                }
-            } finally {
+            function finalize() {
                 window.Blob = origBlob;
+                const ids = [];
+                if (csv) {
+                    csv.split('\n').forEach(line => {
+                        const m = line.match(/"?(22\d{10})"?/);
+                        if (m) ids.push(m[1]);
+                    });
+                }
+                cb(ids);
             }
-            const ids = [];
-            if (csv) {
-                csv.split('\n').forEach(line => {
-                    const m = line.match(/"?(22\d{10})"?/);
-                    if (m) ids.push(m[1]);
-                });
+            if (typeof downloadOrderSearch === 'function') {
+                downloadOrderSearch();
             }
-            cb(ids);
+            let attempts = 0;
+            (function waitCsv() {
+                if (finished || attempts > 50) return finalize();
+                attempts++;
+                setTimeout(waitCsv, 100);
+            })();
         }
 
         function openQueueView() {
             downloadCsvOrders(() => highlightMatches());
+            const genBtn = document.getElementById('generateCSV');
+            if (genBtn) genBtn.click();
             bg.openOrReuseTab({ url: 'https://db.incfile.com/order-tracker/orders/fraud?fennec_queue_scan=1', active: false });
         }
 

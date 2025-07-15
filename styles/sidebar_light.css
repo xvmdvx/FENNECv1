@@ -479,3 +479,12 @@
 .fennec-light-mode .loading-fennec {
     filter: brightness(0) invert(1);
 }
+
+@keyframes fennecFlash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.fennec-flash {
+    animation: fennecFlash 1s infinite;
+}
