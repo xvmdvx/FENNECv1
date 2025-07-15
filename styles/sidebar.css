@@ -1174,3 +1174,12 @@
     animation: fennecFlash 1s infinite;
 }
 
+#copilot-sidebar .state-count {
+    padding: 2px 0;
+}
+
+#copilot-sidebar .state-count.active {
+    text-decoration: underline;
+    font-weight: bold;
+}
+
