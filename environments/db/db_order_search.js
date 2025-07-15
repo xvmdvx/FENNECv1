@@ -29,17 +29,22 @@
             }).filter(o => o.id);
         }
 
-        function updateSummary() {
-            const orders = collectOrders();
+        function summarizeOrders(orders) {
             const stateCounts = {};
             let expCount = 0;
             orders.forEach(o => {
                 if (o.state) stateCounts[o.state] = (stateCounts[o.state] || 0) + 1;
                 if (o.expedited) expCount++;
             });
+            return { total: orders.length, stateCounts, expCount };
+        }
+
+        function updateSummary() {
+            const orders = collectOrders();
+            const { total, stateCounts, expCount } = summarizeOrders(orders);
             const box = document.getElementById('qs-summary');
             if (!box) return;
-            let html = `<div><b>TOTAL:</b> ${orders.length}</div>`;
+            let html = `<div><b>TOTAL:</b> ${total}</div>`;
             html += `<div><b>EXPEDITED:</b> ${expCount}</div>`;
             Object.keys(stateCounts)
                 .sort((a,b) => stateCounts[b] - stateCounts[a])
@@ -50,10 +55,29 @@
         }
 
         function observeTable() {
-            const tbody = document.querySelector('#tableStatusResults tbody');
-            if (!tbody) return;
+            const table = document.querySelector('#tableStatusResults');
+            if (!table) return;
             const obs = new MutationObserver(() => updateSummary());
-            obs.observe(tbody, { childList: true });
+            obs.observe(table, { childList: true, subtree: true });
+        }
+
+        function parseCsvLine(line) {
+            const parts = [];
+            let cur = '';
+            let inQuote = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    inQuote = !inQuote;
+                } else if (ch === ',' && !inQuote) {
+                    parts.push(cur);
+                    cur = '';
+                } else {
+                    cur += ch;
+                }
+            }
+            parts.push(cur);
+            return parts.map(p => p.replace(/^"|"$/g, '').trim());
         }
 
         function highlightMatches(ids) {
@@ -92,14 +116,19 @@
             };
             function finalize() {
                 window.Blob = origBlob;
-                const ids = [];
+                const orders = [];
                 if (csv) {
-                    csv.split('\n').forEach(line => {
-                        const m = line.match(/"?(22\d{10})"?/);
-                        if (m) ids.push(m[1]);
+                    const lines = csv.split('\n');
+                    lines.slice(1).forEach(line => {
+                        if (!line.trim()) return;
+                        const cols = parseCsvLine(line);
+                        const id = cols[0];
+                        const state = cols[1];
+                        const expedited = (cols[21] || '').toLowerCase().startsWith('y');
+                        if (id) orders.push({ id, state, expedited });
                     });
                 }
-                cb(ids);
+                cb(orders);
             }
             if (typeof downloadOrderSearch === 'function') {
                 downloadOrderSearch();
@@ -112,23 +141,28 @@
             })();
         }
 
-        function showCsvOrders(ids) {
+        function showCsvSummary(orders) {
             const box = document.getElementById('qs-summary');
             if (!box) return;
-            const html = ids.map(id => {
-                const flag = fraudSet.has(String(id)) ? ' ⚑' : '';
-                return `<div><a href="https://db.incfile.com/incfile/order/detail/${id}" target="_blank">${id}</a>${flag}</div>`;
-            }).join('');
+            const { total, stateCounts, expCount } = summarizeOrders(orders);
+            let html = `<div><b>TOTAL:</b> ${total}</div>`;
+            html += `<div><b>EXPEDITED:</b> ${expCount}</div>`;
+            Object.keys(stateCounts)
+                .sort((a,b) => stateCounts[b] - stateCounts[a])
+                .forEach(st => {
+                    html += `<div><b>${escapeHtml(st)}:</b> ${stateCounts[st]}</div>`;
+                });
             box.innerHTML = html;
         }
 
         function openQueueView() {
             const icon = document.querySelector('#copilot-sidebar .copilot-icon');
             if (icon) icon.classList.add('fennec-flash');
-            downloadCsvOrders(ids => {
+            downloadCsvOrders(orders => {
                 if (icon) icon.classList.remove('fennec-flash');
+                const ids = orders.map(o => o.id);
                 highlightMatches(ids);
-                showCsvOrders(ids);
+                showCsvSummary(orders);
             });
             const genBtn = document.getElementById('generateCSV');
             if (genBtn) genBtn.click();
@@ -204,9 +238,11 @@
 
         function init() {
             injectSidebar();
-            updateSummary();
-            observeTable();
-            highlightMatches();
+            waitForResults(() => {
+                updateSummary();
+                observeTable();
+                highlightMatches();
+            });
             if (email) initEmailSearch();
         }
 
