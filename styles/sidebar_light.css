@@ -142,6 +142,11 @@
     text-align: left;
     font-weight: bold;
 }
+.fennec-light-mode #fennec-trial-overlay .member-list {
+    margin: 0;
+    padding-left: 16px;
+    list-style: none;
+}
 .fennec-light-mode #fennec-trial-overlay .trial-order.trial-header-green .trial-col {
     background-color: rgba(46,204,113,0.99);
 }

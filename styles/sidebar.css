@@ -842,7 +842,11 @@
     text-align: left;
     font-weight: bold;
 }
-#fennec-trial-overlay .member-list { margin:0; padding-left:16px; }
+#fennec-trial-overlay .member-list {
+    margin: 0;
+    padding-left: 16px;
+    list-style: none;
+}
 #fennec-trial-overlay .trial-sep { border-bottom:1px solid #555; margin:4px 0; }
 #fennec-trial-overlay .trial-order.trial-header-green .trial-col {
     background-color: rgba(46,204,113,0.99);

@@ -848,6 +848,8 @@
                     }).join('');
                     dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">MEMBERS:</span><span class="trial-value"><ul class="member-list">${items}</ul></span></div>`);
                 }
+                dbLines.push('<div class="trial-line trial-sep"></div>');
+                dbLines.push('<div class="trial-line" style="text-align:center;font-weight:bold;">ORDERS:</div>');
                 dbLines.push('<div id="db-extra-info"></div>');
                 const btn = `<button id="sub-detection-btn" class="sub-detect-btn">SUB DETECTION</button>`;
                 dbLines.push(`<div class="trial-line">${btn}</div>`);
