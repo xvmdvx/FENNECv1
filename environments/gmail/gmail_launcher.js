@@ -35,6 +35,7 @@
             let currentContext = null;
             let storedOrderInfo = null;
             let droppedFiles = [];
+            let searchInProgress = false;
             const updateFloater = new UpdateFloater();
 
             function dedupeFiles(list) {
@@ -1374,6 +1375,8 @@
         }
 
         function handleEmailSearchClick(xray = false) {
+            if (searchInProgress) return;
+            searchInProgress = true;
             showLoadingState();
 
             const context = extractOrderContextFromEmail();
@@ -1436,6 +1439,7 @@
             }
             sessionSet(data, () => {
                 bg.replaceTabs({ urls });
+                setTimeout(() => { searchInProgress = false; }, 1000);
             });
             if (orderId) {
                 checkLastIssue(orderId);
@@ -1664,8 +1668,7 @@ sbObj.build(`
         // Ensure DNA summary refreshes when returning from Adyen
         // and show comment controls once XRAY completes.
         window.addEventListener('focus', () => {
-            loadDnaSummary();
-            loadKountSummary();
+            refreshSidebar();
             if (localStorage.getItem('fraudXrayFinished') === '1') {
                 localStorage.removeItem('fraudXrayFinished');
                 const box = document.getElementById('issue-summary-box');
@@ -1682,6 +1685,7 @@ sbObj.build(`
         window.addEventListener('storage', (e) => {
             if (e.key === 'fraudXrayFinished' && e.newValue === '1') {
                 localStorage.removeItem('fraudXrayFinished');
+                refreshSidebar();
                 const box = document.getElementById('issue-summary-box');
                 if (box) box.style.display = 'block';
                 ensureIssueControls(true);
