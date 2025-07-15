@@ -49,6 +49,13 @@
             box.innerHTML = html;
         }
 
+        function observeTable() {
+            const tbody = document.querySelector('#tableStatusResults tbody');
+            if (!tbody) return;
+            const obs = new MutationObserver(() => updateSummary());
+            obs.observe(tbody, { childList: true });
+        }
+
         function highlightMatches(ids) {
             const set = ids ? new Set(ids.map(String)) : fraudSet;
             const rows = document.querySelectorAll('#tableStatusResults tbody tr');
@@ -198,6 +205,7 @@
         function init() {
             injectSidebar();
             updateSummary();
+            observeTable();
             highlightMatches();
             if (email) initEmailSearch();
         }
