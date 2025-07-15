@@ -17,13 +17,18 @@
         function collectOrders() {
             const rows = document.querySelectorAll('#tableStatusResults tbody tr');
             return Array.from(rows).map(r => {
-                const link = r.querySelector('a[href*="/order/detail/"]');
-                const id = link ? link.textContent.replace(/\D+/g, '') : '';
-                const statusCell = r.querySelector('td:nth-child(5)');
+                const link = r.querySelector('a[data-detail-link*="/order/detail/"]') ||
+                             r.querySelector('a[href*="/order/detail/"]');
+                let id = '';
+                if (link) {
+                    const src = link.dataset.detailLink || link.textContent;
+                    id = (src || '').replace(/\D+/g, '');
+                }
+                const statusCell = r.querySelector('td:nth-child(4)');
                 const status = statusCell ? statusCell.textContent.trim() : '';
-                const stateCell = r.querySelector('td:nth-child(7)');
+                const stateCell = r.querySelector('td:nth-child(6)');
                 const state = stateCell ? stateCell.textContent.trim() : '';
-                const expCell = r.querySelector('td:nth-child(4) i.mdi-check-circle');
+                const expCell = r.querySelector('td:nth-child(5) i.mdi-check-circle');
                 const expedited = !!expCell;
                 return { id, status, state, expedited, row: r, link };
             }).filter(o => o.id);
@@ -84,9 +89,11 @@
             const set = ids ? new Set(ids.map(String)) : fraudSet;
             const rows = document.querySelectorAll('#tableStatusResults tbody tr');
             rows.forEach(r => {
-                const link = r.querySelector('a[href*="/order/detail/"]');
+                const link = r.querySelector('a[data-detail-link*="/order/detail/"]') ||
+                             r.querySelector('a[href*="/order/detail/"]');
                 if (!link) return;
-                const id = link.textContent.replace(/\D+/g, '');
+                const src = link.dataset.detailLink || link.textContent;
+                const id = (src || '').replace(/\D+/g, '');
                 let icon = r.querySelector('.fennec-fraud-flag');
                 if (set.has(id)) {
                     if (!icon) {
@@ -124,8 +131,9 @@
                         const cols = parseCsvLine(line);
                         const id = cols[0];
                         const state = cols[1];
+                        const status = cols[19] || '';
                         const expedited = (cols[21] || '').toLowerCase().startsWith('y');
-                        if (id) orders.push({ id, state, expedited });
+                        if (id) orders.push({ id, state, expedited, status });
                     });
                 }
                 cb(orders);
@@ -157,10 +165,16 @@
 
         function openQueueView() {
             const icon = document.querySelector('#copilot-sidebar .copilot-icon');
+            const progress = document.getElementById('qs-progress');
+            if (progress) {
+                progress.textContent = 'EXTENSION IS WORKING ON';
+                progress.style.display = 'block';
+            }
             if (icon) icon.classList.add('fennec-flash');
             downloadCsvOrders(orders => {
                 if (icon) icon.classList.remove('fennec-flash');
-                const ids = orders.map(o => o.id);
+                if (progress) progress.style.display = 'none';
+                const ids = orders.filter(o => /possible fraud/i.test(o.status)).map(o => o.id);
                 highlightMatches(ids);
                 showCsvSummary(orders);
             });
@@ -196,6 +210,7 @@
                 <div class="copilot-body" id="copilot-body-content">
                     <button id="queue-view-btn" class="copilot-button" style="width:100%;margin-bottom:8px">QUEUE VIEW</button>
                     <div id="qs-summary" class="white-box" style="margin-bottom:10px"></div>
+                    <div id="qs-progress" style="display:none;margin-bottom:10px;color:#ffa500;font-weight:bold"></div>
                 </div>`);
             sb.attach();
             chrome.storage.sync.get({
