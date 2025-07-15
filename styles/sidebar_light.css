@@ -142,9 +142,24 @@
     text-align: left;
     font-weight: bold;
 }
+.fennec-light-mode #fennec-trial-overlay .trial-four-col {
+    display: grid;
+    grid-template-columns: 30% 1fr 30% 1fr;
+    align-items: center;
+    column-gap: 4px;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-four-col .trial-tag {
+    font-weight: normal;
+    font-size: calc(var(--sb-font-size) - 1px);
+    text-align: right;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-four-col .trial-value {
+    text-align: left;
+    font-weight: bold;
+}
 .fennec-light-mode #fennec-trial-overlay .member-list {
     margin: 0;
-    padding-left: 16px;
+    padding-left: 0;
     list-style: none;
 }
 .fennec-light-mode #fennec-trial-overlay .trial-order.trial-header-green .trial-col {
