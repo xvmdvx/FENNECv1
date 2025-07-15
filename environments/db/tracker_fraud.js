@@ -10,6 +10,7 @@
         }
         const SIDEBAR_WIDTH = 340;
         const trialFloater = new TrialFloater();
+        let subDetectSeq = 0;
         chrome.storage.local.set({ fennecReviewMode: true });
         chrome.storage.sync.set({ fennecReviewMode: true });
 
@@ -515,6 +516,7 @@
                 if (subBtn) {
                     subBtn.addEventListener('click', () => {
                         subBtn.disabled = true;
+                        const req = ++subDetectSeq;
                         const dna = data.adyenDnaInfo;
                         const kount = data.kountInfo;
                         const order = data.sidebarOrderInfo;
@@ -522,6 +524,7 @@
                             email: (order && order.clientEmail) || '',
                             ltv: (order && order.clientLtv) || ''
                         }, resp => {
+                            if (req !== subDetectSeq) return;
                             subBtn.disabled = false;
                             if (!resp) return;
                             const dbCol = overlay.querySelector('.trial-col');
@@ -625,10 +628,12 @@
                     const dna = data.adyenDnaInfo;
                     const kount = data.kountInfo;
                     const order = data.sidebarOrderInfo;
+                    const req = ++subDetectSeq;
                     bg.send('detectSubscriptions', {
                         email: order.clientEmail,
                         ltv: order.clientLtv || ''
                     }, resp => {
+                        if (req !== subDetectSeq) return;
                         if (!resp) return;
                         const cols = overlay.querySelectorAll('.trial-columns .trial-col');
                         const dbCol = cols && cols[0];

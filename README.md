@@ -242,8 +242,8 @@ ICONS/BUTTONS/FUNCTIONS:
 🩻 XRAY: Runs SEARCH and Opens order payment information in Adyen and extracts relevant information from two tabs:
    1. Payment Details
    2. DNA one after the other and opens the Kount workflow page when available.
-   After DNA loads the extension briefly opens the DB email search page until the order history appears,
-   then focus returns to the Fraud tracker at the end.
+   The DB email search page is opened immediately so results load in the background.
+   Once DNA completes the search tab is focused to grab the history and then focus returns to the Fraud tracker.
    A KOUNT summary box appears below DNA after the data is extracted.
    
 🤖 FILE: Automator that opens and fills the SOS filing process.
