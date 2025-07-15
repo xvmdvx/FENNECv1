@@ -86,6 +86,17 @@
     border-radius: 12px;
     overflow: hidden;
 }
+.fennec-light-mode #fennec-trial-overlay .trial-info {
+    flex: 0 0 75%;
+    text-align: center;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-action {
+    flex: 0 0 25%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+}
 .fennec-light-mode #fennec-trial-overlay .trial-order .trial-col {
     border-radius: 12px;
 }

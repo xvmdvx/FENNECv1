@@ -789,13 +789,16 @@
     border-radius: 12px;
     overflow: hidden;
 }
-#fennec-trial-overlay .trial-info { flex: 1; text-align: center; }
+#fennec-trial-overlay .trial-info {
+    flex: 0 0 75%;
+    text-align: center;
+}
 #fennec-trial-overlay .trial-action {
+    flex: 0 0 25%;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0 12px;
-    min-width: 160px;
 }
 #fennec-trial-overlay .trial-order .trial-line {
     font-size: calc(var(--sb-font-size) + 6px);
