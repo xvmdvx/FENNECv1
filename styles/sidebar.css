@@ -814,9 +814,18 @@
 #fennec-trial-overlay .trial-order .trial-btn-line {
     margin-top: 4px;
 }
-#fennec-trial-overlay .trial-two-col { display:flex; justify-content: space-between; align-items:center; }
-#fennec-trial-overlay .trial-two-col .trial-tag { font-weight:bold; margin-right:4px; }
-#fennec-trial-overlay .trial-two-col .trial-value { flex:1; text-align:left; }
+#fennec-trial-overlay .trial-two-col {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    align-items: center;
+    column-gap: 4px;
+}
+#fennec-trial-overlay .trial-two-col .trial-tag {
+    font-weight: bold;
+    text-align: right;
+    margin-right: 0;
+}
+#fennec-trial-overlay .trial-two-col .trial-value { text-align: left; }
 #fennec-trial-overlay .member-list { margin:0; padding-left:16px; }
 #fennec-trial-overlay .trial-sep { border-bottom:1px solid #555; margin:4px 0; }
 #fennec-trial-overlay .trial-order.trial-header-green .trial-col {
@@ -866,11 +875,17 @@
 #fennec-trial-overlay .trial-name {
     font-size: calc(var(--sb-font-size) + 1px);
     font-weight: bold;
+    margin: 0 0 2px;
 }
 #fennec-trial-overlay .trial-card-details {
     font-size: calc(var(--sb-font-size) + 1px);
 }
-#fennec-trial-overlay .trial-card-info { margin: 2px 0; }
+#fennec-trial-overlay .trial-card-info {
+    margin: 2px 0;
+}
+#fennec-trial-overlay .trial-card-info .copilot-tag {
+    font-size: calc(var(--sb-font-size) + 5px);
+}
 #fennec-trial-overlay .db-adyen-check {
     color: #0a0;
     margin-left: 4px;

@@ -633,36 +633,39 @@
                         const cols = overlay.querySelectorAll('.trial-columns .trial-col');
                         const dbCol = cols && cols[0];
                         if (!dbCol) return;
-                        const insertPoint = dbCol.querySelector('.after-card-line');
+                        const extraInfo = dbCol.querySelector('#db-extra-info');
                         const addLine = html => {
+                            if (!extraInfo) return;
                             const div = document.createElement('div');
                             div.className = 'trial-line trial-two-col';
                             div.innerHTML = html;
-                            if (insertPoint) dbCol.insertBefore(div, insertPoint);
-                            else dbCol.appendChild(div);
+                            extraInfo.appendChild(div);
                         };
                         if (resp.statusCounts) {
                             addLine(`<span class="trial-tag">CXL:</span><span class="trial-value">${resp.statusCounts.cxl}</span>`);
                             addLine(`<span class="trial-tag">PENDING:</span><span class="trial-value">${resp.statusCounts.pending}</span>`);
                             addLine(`<span class="trial-tag">SHIPPED:</span><span class="trial-value">${resp.statusCounts.shipped}</span>`);
-                            const sep = document.createElement('div');
-                            sep.className = 'trial-line trial-sep';
-                            if (insertPoint) dbCol.insertBefore(sep, insertPoint);
-                            else dbCol.appendChild(sep);
+                            if (extraInfo) {
+                                const sep = document.createElement('div');
+                                sep.className = 'trial-line trial-sep';
+                                extraInfo.appendChild(sep);
+                            }
                             const goodTotal = resp.statusCounts.total < resp.statusCounts.cxl * 0.5;
                             addLine(`<span class="trial-tag">TOTAL:</span><span class="trial-value">${resp.statusCounts.total} <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span></span>`);
                             if (resp.ltv) {
+                                addLine(`<span class="trial-tag">LTV:</span><span class="trial-value">${resp.ltv}</span>`);
                                 const per = resp.statusCounts.total - resp.statusCounts.cxl;
                                 const orderVal = per > 0 ? (parseFloat(resp.ltv) / per).toFixed(2) : 'N/A';
-                                addLine(`<span class="trial-tag">LTV:</span><span class="trial-value">${resp.ltv} P/ORDER: ${orderVal}</span>`);
+                                addLine(`<span class="trial-tag">P/ORDER:</span><span class="trial-value">${orderVal}</span>`);
                             }
                             const countries = collectCountries(order, dna, kount);
                             if (countries.length) {
-                                const blank = document.createElement('div');
-                                blank.className = 'trial-line';
-                                blank.innerHTML = '&nbsp;';
-                                if (insertPoint) dbCol.insertBefore(blank, insertPoint);
-                                else dbCol.appendChild(blank);
+                                if (extraInfo) {
+                                    const blank = document.createElement('div');
+                                    blank.className = 'trial-line';
+                                    blank.innerHTML = '&nbsp;';
+                                    extraInfo.appendChild(blank);
+                                }
                                 addLine(`<span class="trial-tag">COUNTRIES INVOLVED:</span><span class="trial-value">${countries.join(', ')}</span>`);
                             }
                         } else {
@@ -817,7 +820,6 @@
                     if (order.billing.expiry) parts.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(formatExpShort(order.billing.expiry))}</span>`);
                     if (order.billing.last4) parts.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(order.billing.last4)}</span>`);
                     dbLines.push(`<div class="trial-line trial-card-info">${parts.join(' ')}</div>`);
-                    dbLines.push('<div class="trial-line trial-sep after-card-line"></div>');
                 }
                 const dbName = (order.billing.cardholder || '').toLowerCase();
                 const dnaName = (dna && dna.payment && dna.payment.card ? dna.payment.card['Card holder'] : '').toLowerCase();
@@ -839,7 +841,8 @@
                     }).join('');
                     dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">MEMBERS:</span><span class="trial-value"><ul class="member-list">${items}</ul></span></div>`);
                 }
-                dbLines.push('<div class="trial-line trial-sep"></div>');
+                dbLines.push('<div class="trial-line trial-sep db-extra-start"></div>');
+                dbLines.push('<div id="db-extra-info"></div>');
                 const btn = `<button id="sub-detection-btn" class="sub-detect-btn">SUB DETECTION</button>`;
                 dbLines.push(`<div class="trial-line">${btn}</div>`);
                 if (order.billing.cardholder) {
