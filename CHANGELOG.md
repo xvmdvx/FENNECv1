@@ -15,3 +15,5 @@ All notable changes to this project will be documented in this file.
 - Fixed duplicate tabs when triggering XRAY or SEARCH.
 - Fixed Trial floater not appearing after XRAY completion when the fraud tracker
   page was opened late.
+- Fixed Trial floater disappearing when reopening the fraud tracker after XRAY
+  had already finished.
