@@ -3,8 +3,6 @@
 (function persistentSidebar() {
     if (window.top !== window) return;
     const bg = fennecMessenger;
-    getFennecSessionId();
-    initializeFennecSession();
     // Clear the closed flag on full reloads so the sidebar returns
     window.addEventListener('beforeunload', () => {
         sessionStorage.removeItem("fennecSidebarClosed");
@@ -737,7 +735,7 @@
             if (link && orderId) {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
-                    propagateFlowSession(() => bg.openActiveTab({ url }));
+                    bg.openActiveTab({ url });
                 });
             }
             attachCommonListeners(summaryBox);
@@ -1414,7 +1412,7 @@
                 navigator.clipboard.writeText(context.email).catch(err => console.error("[FENNEC (POO)] Clipboard error:", err));
             }
 
-            const data = { fennecFlowSession: getFennecSessionId() };
+            const data = { fennecActiveSession: getFennecSessionId() };
             if (!xray) {
                 Object.assign(data, {
                     fraudReviewSession: null,
@@ -1842,7 +1840,7 @@ sbObj.build(`
                                 orderId,
                                 files: uploadList
                             },
-                            fennecFlowSession: getFennecSessionId()
+                            fennecActiveSession: getFennecSessionId()
                         }, () => {
                             const url = `https://db.incfile.com/storage/incfile/${orderId}`;
                             bg.openOrReuseTab({ url, active: false });
@@ -1861,7 +1859,7 @@ sbObj.build(`
                 }
                 const data = { orderId, comment };
                 if (reviewMode && !comment) data.release = true;
-                sessionSet({ fennecPendingComment: data, fennecFlowSession: getFennecSessionId() }, () => {
+                sessionSet({ fennecPendingComment: data, fennecActiveSession: getFennecSessionId() }, () => {
                     const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
                     bg.openOrReuseTab({ url, active: false });
                 });
@@ -1982,7 +1980,7 @@ sbObj.build(`
                         updates[key] = input.value.trim();
                     }
                 });
-                sessionSet({ fennecUpdateRequest: { orderId, updates }, fennecFlowSession: getFennecSessionId() }, () => {
+                sessionSet({ fennecUpdateRequest: { orderId, updates }, fennecActiveSession: getFennecSessionId() }, () => {
                     const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
                     bg.openOrReuseTab({ url, active: false });
                     overlay.remove();
