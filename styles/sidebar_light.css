@@ -115,6 +115,22 @@
 .fennec-light-mode #fennec-trial-overlay .trial-order .trial-btn-line {
     margin-top: 4px;
 }
+.fennec-light-mode #fennec-trial-overlay .trial-two-col {
+    display: grid;
+    grid-template-columns: 30% 1fr;
+    align-items: center;
+    column-gap: 4px;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-two-col .trial-tag {
+    font-weight: normal;
+    font-size: calc(var(--sb-font-size) - 1px);
+    text-align: right;
+    margin-right: 0;
+}
+.fennec-light-mode #fennec-trial-overlay .trial-two-col .trial-value {
+    text-align: left;
+    font-weight: bold;
+}
 .fennec-light-mode #fennec-trial-overlay .trial-order.trial-header-green .trial-col {
     background-color: rgba(46,204,113,0.99);
 }

@@ -647,9 +647,15 @@
                             extraInfo.appendChild(div);
                         };
                         if (resp.statusCounts) {
-                            addLine(`<span class="trial-tag">CXL:</span><span class="trial-value">${resp.statusCounts.cxl}</span>`);
-                            addLine(`<span class="trial-tag">PENDING:</span><span class="trial-value">${resp.statusCounts.pending}</span>`);
-                            addLine(`<span class="trial-tag">SHIPPED:</span><span class="trial-value">${resp.statusCounts.shipped}</span>`);
+                            if (parseInt(resp.statusCounts.cxl, 10) > 0) {
+                                addLine(`<span class="trial-tag">CXL:</span><span class="trial-value">${resp.statusCounts.cxl}</span>`);
+                            }
+                            if (parseInt(resp.statusCounts.pending, 10) > 0) {
+                                addLine(`<span class="trial-tag">PENDING:</span><span class="trial-value">${resp.statusCounts.pending}</span>`);
+                            }
+                            if (parseInt(resp.statusCounts.shipped, 10) > 0) {
+                                addLine(`<span class="trial-tag">SHIPPED:</span><span class="trial-value">${resp.statusCounts.shipped}</span>`);
+                            }
                             if (extraInfo) {
                                 const sep = document.createElement('div');
                                 sep.className = 'trial-line trial-sep';
