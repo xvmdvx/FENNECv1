@@ -287,12 +287,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
                 } else {
                     const orders = Array.isArray(resp.orders) ? resp.orders : [];
-                    const counts = { cxl: 0, pending: 0, shipped: 0 };
+                    const counts = { cxl: 0, pending: 0, shipped: 0, transferred: 0 };
                     orders.forEach(o => {
                         const s = String(o.status || '').toUpperCase();
                         if (/CANCEL/.test(s)) counts.cxl++;
-                        else if (/PROCESSING|REVIEW|HOLD|TRANSFERRED/.test(s)) counts.pending++;
+                        else if (/TRANSFERRED/.test(s)) counts.transferred++;
                         else if (/SHIPPED/.test(s)) counts.shipped++;
+                        else if (/PROCESSING|REVIEW|HOLD/.test(s)) counts.pending++;
                     });
                     counts.total = orders.length;
                     sendResponse({ orderCount: orders.length, statusCounts: counts, activeSubs: [], ltv: message.ltv });

@@ -659,12 +659,15 @@
                             if (parseInt(resp.statusCounts.shipped, 10) > 0) {
                                 addLine(`<span class="trial-tag">SHIPPED:</span><span class="trial-value">${resp.statusCounts.shipped}</span>`);
                             }
-                            const goodTotal = resp.statusCounts.total < resp.statusCounts.cxl * 0.5;
+                            const goodTotal = resp.statusCounts.total >= resp.statusCounts.cxl * 2;
                             addLine(`<span class="trial-tag">TOTAL:</span><span class="trial-value">${resp.statusCounts.total} <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span></span>`);
                             if (resp.ltv) {
                                 addLine(`<span class="trial-tag">LTV:</span><span class="trial-value">${resp.ltv}</span>`);
-                                const per = resp.statusCounts.total - resp.statusCounts.cxl;
-                                const orderVal = per > 0 ? (parseFloat(resp.ltv) / per).toFixed(2) : 'N/A';
+                                const per = (parseInt(resp.statusCounts.pending,10) || 0) +
+                                            (parseInt(resp.statusCounts.shipped,10) || 0) +
+                                            (parseInt(resp.statusCounts.transferred,10) || 0);
+                                const ltvNum = parseFloat(resp.ltv) || 0;
+                                const orderVal = per > 0 ? (ltvNum / per).toFixed(2) : '0';
                                 addLine(`<span class="trial-tag">P/ORDER:</span><span class="trial-value">${orderVal}</span>`);
                             }
                             const countries = collectCountries(order, dna, kount);
@@ -800,8 +803,14 @@
             function emailMatches(email, names = [], company = '') {
                 const norm = t => (t || '').toLowerCase().replace(/[^a-z]+/g, '');
                 const user = norm((email || '').split('@')[0]);
-                if (company && user.includes(norm(company))) return true;
-                return names.some(n => user.includes(norm(n)));
+                if (company) {
+                    const c = norm(company);
+                    if (c && new RegExp(c).test(user)) return true;
+                }
+                return names.some(n => {
+                    const p = norm(n);
+                    return p && new RegExp(p).test(user);
+                });
             }
             function buildCardMatchTag(dbBilling, card) {
                 const db = dbBilling || {};
@@ -840,16 +849,19 @@
                 const clientInfo = typeof getClientInfo === 'function' ? getClientInfo() : { name: '', email: '' };
                 const clientName = order.clientName || clientInfo.name || '';
                 const email = order.clientEmail || clientInfo.email || '';
-                const emailOk = emailMatches(email, [clientName, order.billing.cardholder], order.companyName);
+                const emailOk = emailMatches(email, [order.billing.cardholder, clientName], order.companyName);
                 dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">EMAIL:</span><span class="trial-value">${escapeHtml(email)} <span class="${emailOk ? 'db-adyen-check' : 'db-adyen-cross'}">${emailOk ? '✔' : '✖'}</span></span></div>`);
                 if (clientName) {
-                    const cOk = namesMatch(clientName, order.billing.cardholder);
+                    let cOk = namesMatch(clientName, order.billing.cardholder);
+                    if (!cOk && Array.isArray(order.members)) {
+                        cOk = order.members.some(m => namesMatch(clientName, m.name));
+                    }
                     dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CLIENT:</span><span class="trial-value">${escapeHtml(clientName)} <span class="${cOk ? 'db-adyen-check' : 'db-adyen-cross'}">${cOk ? '✔' : '✖'}</span></span></div>`);
                 }
                 if (Array.isArray(order.members) && order.members.length) {
                     const items = order.members.map(m => {
                         const ok = namesMatch(m.name, order.billing.cardholder) || namesMatch(m.name, clientInfo.name);
-                        return `<li>${escapeHtml(m.name)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></li>`;
+                        return `<li>${escapeHtml(m.name)}${ok ? ' <span class="db-adyen-check">✔</span>' : ''}</li>`;
                     }).join('');
                     dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">MEMBERS:</span><span class="trial-value"><ul class="member-list">${items}</ul></span></div>`);
                 }

@@ -2901,11 +2901,11 @@ function getLastHoldUser() {
         if (!client.email && parts.length) {
             const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
             const gmailUrl = 'https://mail.google.com/mail/u/0/#search/' + query;
-            bg.openOrReuseTab({ url: gmailUrl, active: true, refocus: true });
+            bg.openOrReuseTab({ url: gmailUrl, active: true });
         }
         if (client.email) {
             const searchUrl = `https://db.incfile.com/order-tracker/orders/order-search?fennec_email=${encodeURIComponent(client.email)}`;
-            bg.openOrReuseTab({ url: searchUrl, active: false, refocus: true });
+            bg.openOrReuseTab({ url: searchUrl, active: false });
         }
         if (info.orderId) {
             const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
