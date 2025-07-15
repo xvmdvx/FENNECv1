@@ -257,6 +257,13 @@ GENERAL FEATURES:
 - When the sidebar is opened manually in Gmail or Adyen, it starts empty and only shows the action buttons. Order details appear after using SEARCH, DNA or XRAY.
 - Visiting the Fraud tracker in DB automatically opens the sidebar in Review Mode and adds 🩻 XRAY icons next to each order number.
 
+### Session handling
+FENNEC manages three session levels:
+- **Tab session** – the default per-tab state with no order information shown.
+- **Window session** – tabs in the same browser window share a session id so the sidebar stays in sync.
+- **Flow session** – when the sidebar opens new tabs or windows, the current session id propagates to maintain continuity.
+Opening a page outside an existing flow resets the sidebar to its initial view. The Gmail inbox never displays order details.
+
 ## Known limitations
 - The scripts rely on the browser DOM provided by Chrome.
   
