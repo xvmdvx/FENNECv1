@@ -17,3 +17,4 @@ All notable changes to this project will be documented in this file.
   page was opened late.
 - Fixed Trial floater disappearing when reopening the fraud tracker after XRAY
   had already finished.
+- Set fraudXrayFinished when data is extracted so the Trial floater shows even if DB tab wasn't open.
