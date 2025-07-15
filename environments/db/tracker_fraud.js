@@ -656,11 +656,6 @@
                             if (parseInt(resp.statusCounts.shipped, 10) > 0) {
                                 addLine(`<span class="trial-tag">SHIPPED:</span><span class="trial-value">${resp.statusCounts.shipped}</span>`);
                             }
-                            if (extraInfo) {
-                                const sep = document.createElement('div');
-                                sep.className = 'trial-line trial-sep';
-                                extraInfo.appendChild(sep);
-                            }
                             const goodTotal = resp.statusCounts.total < resp.statusCounts.cxl * 0.5;
                             addLine(`<span class="trial-tag">TOTAL:</span><span class="trial-value">${resp.statusCounts.total} <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span></span>`);
                             if (resp.ltv) {
@@ -872,13 +867,12 @@
                 const card = dna.payment.card || {};
                 if (card['Card holder']) adyenLines.push(`<div class="trial-line trial-name">${escapeHtml(card['Card holder'])} ${iconHtml}</div>`);
                 const adDigits = card['Card number'] ? card['Card number'].replace(/\D+/g, '').slice(-4) : '';
-                if (card['Expiry date']) {
-                    const ok = dbExp && dnaExp && dbExp === dnaExp;
-                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">EXP:</span><span class="trial-value">${escapeHtml(card['Expiry date'])} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></span></div>`);
-                }
-                if (adDigits) {
-                    const ok = dbDigits && adDigits && dbDigits === adDigits;
-                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">DIGITS:</span><span class="trial-value">${escapeHtml(adDigits)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></span></div>`);
+                const cardParts = [];
+                if (card['Expiry date']) cardParts.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(formatExpShort(card['Expiry date']))}</span>`);
+                if (adDigits) cardParts.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(adDigits)}</span>`);
+                if (cardParts.length) {
+                    adyenLines.push(`<div class="trial-line trial-card-info">${cardParts.join(' ')}</div>`);
+                    adyenLines.push('<div class="trial-line trial-sep"></div>');
                 }
                 if (proc['CVC/CVV']) {
                     const r = formatCvv(proc['CVC/CVV']);
@@ -943,14 +937,17 @@
                         ['shipAddr', 'Ship Addr'],
                         ['deviceId', 'Device ID']
                     ];
-                    const total = map.reduce((sum, [k]) => sum + (parseInt(kount.linked[k] || 0, 10)), 0);
-                    if (total === 0) {
+                    const counts = map.map(([k]) => parseInt(kount.linked[k] || 0, 10));
+                    const total = counts.reduce((sum, n) => sum + n, 0);
+                    const lines = [];
+                    map.forEach(([k, label], idx) => {
+                        const n = counts[idx];
+                        if (n > 1) lines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">${label}:</span><span class="trial-value">${n}</span></div>`);
+                    });
+                    if (total === 0 || lines.length === 0) {
                         kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">NO LINKED ORDERS</span><span class="trial-value"><span class="db-adyen-check">✔</span></span></div>`);
                     } else {
-                        map.forEach(([k, label]) => {
-                            const n = parseInt(kount.linked[k] || 0, 10);
-                            if (n > 0) kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">${label}:</span><span class="trial-value">${n}</span></div>`);
-                        });
+                        lines.forEach(html => kountLines.push(html));
                     }
                 }
             }
