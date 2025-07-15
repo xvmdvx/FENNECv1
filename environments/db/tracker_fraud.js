@@ -11,6 +11,7 @@
         const SIDEBAR_WIDTH = 340;
         const trialFloater = new TrialFloater();
         let subDetectSeq = 0;
+        let floaterRefocusDone = false;
         chrome.storage.local.set({ fennecReviewMode: true });
         chrome.storage.sync.set({ fennecReviewMode: true });
         if (localStorage.getItem('fraudXrayFinished') === '1') {
@@ -503,7 +504,10 @@
                     localStorage.setItem('fraudXrayCompleted', '1');
                 }
                 localStorage.setItem('fraudXrayFinished', '1');
-                bg.refocusTab();
+                if (!floaterRefocusDone) {
+                    bg.refocusTab();
+                    floaterRefocusDone = true;
+                }
                 trialFloater.ensure();
                 const overlay = trialFloater.element;
                 const title = trialFloater.header;
@@ -587,6 +591,7 @@
                     endFraudSession();
                     showTrialSuccess();
                     bg.refocusTab();
+                    bg.closeOtherTabs();
                 }
 
                 const crBtn = overlay.querySelector('#trial-btn-cr');
@@ -1189,6 +1194,7 @@ function namesMatch(a, b) {
             localStorage.removeItem('fraudXrayCompleted');
             localStorage.removeItem('fraudXrayFinished');
             sessionStorage.removeItem('fennecShowTrialFloater');
+            floaterRefocusDone = false;
             showInitialStatus();
         }
 
