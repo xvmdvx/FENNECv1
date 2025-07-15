@@ -2902,6 +2902,10 @@ function getLastHoldUser() {
             const gmailUrl = 'https://mail.google.com/mail/u/0/#search/' + query;
             bg.openOrReuseTab({ url: gmailUrl, active: true, refocus: true });
         }
+        if (client.email) {
+            const searchUrl = `https://db.incfile.com/db-tools/scan-email-address?fennec_email=${encodeURIComponent(client.email)}`;
+            bg.openOrReuseTab({ url: searchUrl, active: false, refocus: true });
+        }
         if (info.orderId) {
             const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
             sessionSet({ fennecFraudAdyen: adyenUrl });
