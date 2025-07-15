@@ -205,6 +205,8 @@
         }
 
         function collectAllFraudOrders() {
+            const icon = document.querySelector('#copilot-sidebar .copilot-icon');
+            if (icon) icon.classList.add('fennec-flash');
             function gather() {
                 const select = document.querySelector('select[name="fraud_order_list_table_length"]');
                 if (select && select.value !== '-1') {
@@ -221,7 +223,10 @@
                     const link = r.querySelector('a[href*="/order/detail/"]');
                     return link ? link.textContent.replace(/\D+/g, '') : null;
                 }).filter(Boolean);
-                chrome.storage.local.set({ fennecFraudOrders: ids });
+                chrome.storage.local.set({ fennecFraudOrders: ids }, () => {
+                    if (icon) icon.classList.remove('fennec-flash');
+                    bg.closeTab();
+                });
             }
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', gather);

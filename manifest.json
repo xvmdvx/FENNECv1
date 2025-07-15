@@ -120,6 +120,10 @@
         "core/update_floater.js",
         "core/diagnose_floater.js",
         "environments/db/db_order_search.js"
+      ],
+      "css": [
+        "styles/sidebar.css",
+        "styles/sidebar_light.css"
       ]
     },
     {
