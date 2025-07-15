@@ -820,6 +820,7 @@
                     if (order.billing.expiry) parts.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(formatExpShort(order.billing.expiry))}</span>`);
                     if (order.billing.last4) parts.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(order.billing.last4)}</span>`);
                     dbLines.push(`<div class="trial-line trial-card-info">${parts.join(' ')}</div>`);
+                    dbLines.push('<div class="trial-line trial-sep"></div>');
                 }
                 const dbName = (order.billing.cardholder || '').toLowerCase();
                 const dnaName = (dna && dna.payment && dna.payment.card ? dna.payment.card['Card holder'] : '').toLowerCase();
