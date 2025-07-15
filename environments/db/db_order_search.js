@@ -44,19 +44,48 @@
             return { total: orders.length, stateCounts, expCount };
         }
 
-        function updateSummary() {
-            const orders = collectOrders();
-            const { total, stateCounts, expCount } = summarizeOrders(orders);
+        let currentFilterState = '';
+
+        function filterByState(state) {
+            if (currentFilterState === state) state = '';
+            currentFilterState = state;
+            const rows = document.querySelectorAll('#tableStatusResults tbody tr');
+            rows.forEach(r => {
+                const cell = r.querySelector('td:nth-child(6)');
+                const st = cell ? cell.textContent.trim() : '';
+                r.style.display = !state || st === state ? '' : 'none';
+            });
+            const items = document.querySelectorAll('#qs-summary .state-count');
+            items.forEach(it => {
+                if (it.dataset.state === state && state) it.classList.add('active');
+                else it.classList.remove('active');
+            });
+        }
+
+        function renderSummary(total, expCount, stateCounts) {
             const box = document.getElementById('qs-summary');
             if (!box) return;
             let html = `<div><b>TOTAL:</b> ${total}</div>`;
             html += `<div><b>EXPEDITED:</b> ${expCount}</div>`;
+            html += '<div style="display:flex;flex-wrap:wrap">';
             Object.keys(stateCounts)
                 .sort((a,b) => stateCounts[b] - stateCounts[a])
                 .forEach(st => {
-                    html += `<div><b>${escapeHtml(st)}:</b> ${stateCounts[st]}</div>`;
+                    html += `<span class="state-count" data-state="${escapeHtml(st)}" ` +
+                            `style="width:25%;cursor:pointer;display:inline-block">` +
+                            `<b>${escapeHtml(st)}:</b> ${stateCounts[st]}</span>`;
                 });
+            html += '</div>';
             box.innerHTML = html;
+            box.querySelectorAll('.state-count').forEach(el => {
+                el.addEventListener('click', () => filterByState(el.dataset.state));
+            });
+        }
+
+        function updateSummary() {
+            const orders = collectOrders();
+            const { total, stateCounts, expCount } = summarizeOrders(orders);
+            renderSummary(total, expCount, stateCounts);
         }
 
         function observeTable() {
@@ -150,24 +179,14 @@
         }
 
         function showCsvSummary(orders) {
-            const box = document.getElementById('qs-summary');
-            if (!box) return;
             const { total, stateCounts, expCount } = summarizeOrders(orders);
-            let html = `<div><b>TOTAL:</b> ${total}</div>`;
-            html += `<div><b>EXPEDITED:</b> ${expCount}</div>`;
-            Object.keys(stateCounts)
-                .sort((a,b) => stateCounts[b] - stateCounts[a])
-                .forEach(st => {
-                    html += `<div><b>${escapeHtml(st)}:</b> ${stateCounts[st]}</div>`;
-                });
-            box.innerHTML = html;
+            renderSummary(total, expCount, stateCounts);
         }
 
         function openQueueView() {
             const icon = document.querySelector('#copilot-sidebar .copilot-icon');
             const progress = document.getElementById('qs-progress');
             if (progress) {
-                progress.textContent = 'EXTENSION IS WORKING ON';
                 progress.style.display = 'block';
             }
             if (icon) icon.classList.add('fennec-flash');
