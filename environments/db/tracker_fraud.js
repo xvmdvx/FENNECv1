@@ -12,6 +12,8 @@
         const trialFloater = new TrialFloater();
         let subDetectSeq = 0;
         let floaterRefocusDone = false;
+        const queueScan = new URLSearchParams(location.search).get('fennec_queue_scan') === '1';
+        if (queueScan) collectAllFraudOrders();
         chrome.storage.local.set({ fennecReviewMode: true });
         chrome.storage.sync.set({ fennecReviewMode: true });
         if (localStorage.getItem('fraudXrayFinished') === '1') {
@@ -200,6 +202,32 @@
                 ctx.textAlign = 'center';
                 ctx.fillText(labels[i], x + 30, 97);
             });
+        }
+
+        function collectAllFraudOrders() {
+            function gather() {
+                const select = document.querySelector('select[name="fraud_order_list_table_length"]');
+                if (select && select.value !== '-1') {
+                    select.value = '-1';
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                    setTimeout(gather, 500);
+                    return;
+                }
+                const table = document.getElementById('fraud_order_list_table');
+                if (!table) { setTimeout(gather, 500); return; }
+                const rows = table.querySelectorAll('tbody tr');
+                if (!rows.length) { setTimeout(gather, 500); return; }
+                const ids = Array.from(rows).map(r => {
+                    const link = r.querySelector('a[href*="/order/detail/"]');
+                    return link ? link.textContent.replace(/\D+/g, '') : null;
+                }).filter(Boolean);
+                chrome.storage.local.set({ fennecFraudOrders: ids });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', gather);
+            } else {
+                gather();
+            }
         }
 
         let activeFilter = null;
