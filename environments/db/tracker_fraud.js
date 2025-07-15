@@ -1109,24 +1109,20 @@
 
         injectSidebar();
         scanOrders();
-        const manualOpen = !sessionStorage.getItem('fennecShowTrialFloater');
-        if (manualOpen) {
-            chrome.storage.local.set({ sidebarDb: [], sidebarOrderId: null, sidebarOrderInfo: null, adyenDnaInfo: null, kountInfo: null, sidebarFreezeId: null });
-            showInitialStatus();
-        } else {
-           loadDbSummary();
-           loadDnaSummary();
-           loadKountSummary();
-           // Ensure the trial overlay appears if XRAY finished before this
-           // page loaded by checking the persisted flag and showing the
-           // floater immediately.
-           if (localStorage.getItem('fraudXrayFinished') === '1') {
-               localStorage.removeItem('fraudXrayFinished');
-               showTrialFloater(60, true);
-           } else {
-               showTrialFloater(60, true);
-           }
-        }
+        chrome.storage.local.get({ fraudReviewSession: null }, ({ fraudReviewSession }) => {
+            let manualOpen = !sessionStorage.getItem('fennecShowTrialFloater');
+            const resume = manualOpen && fraudReviewSession;
+            if (resume) sessionStorage.setItem('fennecShowTrialFloater', '1');
+            if (manualOpen && !resume) {
+                chrome.storage.local.set({ sidebarDb: [], sidebarOrderId: null, sidebarOrderInfo: null, adyenDnaInfo: null, kountInfo: null, sidebarFreezeId: null });
+                showInitialStatus();
+            } else {
+                loadDbSummary();
+                loadDnaSummary();
+                loadKountSummary();
+                showTrialFloater(60, true);
+            }
+        });
         const clearBtn = document.getElementById('copilot-clear');
         if (clearBtn) clearBtn.onclick = clearSidebar;
 
