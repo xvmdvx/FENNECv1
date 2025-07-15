@@ -825,11 +825,11 @@
 }
 #fennec-trial-overlay .trial-two-col .trial-tag {
     font-weight: bold;
-    text-align: left;
+    text-align: right;
     margin-right: 0;
 }
 #fennec-trial-overlay .trial-two-col .trial-value {
-    text-align: right;
+    text-align: left;
 }
 #fennec-trial-overlay .member-list { margin:0; padding-left:16px; }
 #fennec-trial-overlay .trial-sep { border-bottom:1px solid #555; margin:4px 0; }
