@@ -2,6 +2,7 @@
 class BackgroundController {
     constructor() {
         this.pendingUrls = new Set();
+        this.replacingWindows = new Set();
         chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             const fn = this[msg.action];
             if (typeof fn === 'function') {
@@ -76,17 +77,23 @@ class BackgroundController {
 
     replaceTabs(msg, sender) {
         if (!sender.tab) return;
-        chrome.tabs.query({ windowId: sender.tab.windowId }, (tabs) => {
+        const winId = sender.tab.windowId;
+        if (this.replacingWindows.has(winId)) return;
+        this.replacingWindows.add(winId);
+        chrome.tabs.query({ windowId: winId }, (tabs) => {
             const isDbOrGmail = (tab) =>
                 tab.url && (tab.url.includes('mail.google.com') || tab.url.includes('db.incfile.com'));
             const toClose = tabs.filter(t => t.id !== sender.tab.id && isDbOrGmail(t)).map(t => t.id);
-            const openAll = () => msg.urls.forEach(url => {
-                chrome.tabs.create({ url, active: false, windowId: sender.tab.windowId });
-            });
+            const finalize = () => {
+                (msg.urls || []).forEach(url => {
+                    chrome.tabs.create({ url, active: false, windowId: winId });
+                });
+                setTimeout(() => this.replacingWindows.delete(winId), 1000);
+            };
             if (toClose.length) {
-                chrome.tabs.remove(toClose, openAll);
+                chrome.tabs.remove(toClose, finalize);
             } else {
-                openAll();
+                finalize();
             }
         });
     }

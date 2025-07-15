@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
   changes to **UPDATE** after each upload.
 - Removed deprecated showDiagnoseResults helper and finalized documentation.
 - Fixed duplicate tabs when triggering XRAY or SEARCH.
+- Fixed Gmail sidebar not refreshing after XRAY and avoided double DB and Gmail tabs when using SEARCH or XRAY.
 - Fixed Trial floater not appearing after XRAY completion when the fraud tracker
   page was opened late.
 - Fixed Trial floater disappearing when reopening the fraud tracker after XRAY
