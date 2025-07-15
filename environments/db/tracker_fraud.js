@@ -281,7 +281,7 @@
                 <div class="white-box" id="fraud-summary-box" style="text-align:center">
                     <h4 style="margin-top:0; text-align:center"><b>SUMMARY</b></h4>
                     <div><b>ORDERS:</b><ul style="list-style:none;padding:0;margin:0;">${dateItems}</ul></div>
-                    <div class="vip-declines" style="cursor:pointer"><b>VIP DECLINES:</b> ${summary.vipDecline}</div>
+                    <div class="vip-declines" style="cursor:pointer"><b>DECLINE:</b> ${summary.vipDecline}</div>
                     <div class="nm-mames" style="cursor:pointer"><b>NO MAMES:</b> ${summary.noMames}</div>
                 </div>`;
             const changed = container.dataset.prevHtml !== html;
@@ -596,7 +596,20 @@
                 const relBtn = overlay.querySelector('#trial-btn-release');
                 if (relBtn) relBtn.addEventListener('click', () => handleTrialAction('.remove-potential-fraud'));
 
-                const crossCount = overlay.querySelectorAll('.db-adyen-cross').length;
+                const crossCountTotal = overlay.querySelectorAll('.db-adyen-cross').length;
+                let crossCount = crossCountTotal;
+                if (crossCountTotal > 0) {
+                    const labels = ['AVS:', 'CLIENT:', 'EMAIL:', 'EMAIL AGE:'];
+                    let excl = 0;
+                    labels.forEach(l => {
+                        const line = Array.from(overlay.querySelectorAll('.trial-line')).find(div => {
+                            const t = div.querySelector('.trial-tag');
+                            return t && t.textContent.trim() === l;
+                        });
+                        if (line) excl += line.querySelectorAll('.db-adyen-cross').length;
+                    });
+                    if (crossCountTotal === excl) crossCount = 0;
+                }
                 const bigSpot = overlay.querySelector('#trial-big-button');
                 let headerCls = 'trial-header-green';
                 if (crossCount > 4) headerCls = 'trial-header-red';
@@ -649,37 +662,51 @@
                             div.innerHTML = html;
                             extraInfo.appendChild(div);
                         };
+                        const addFour = pairs => {
+                            if (!extraInfo) return;
+                            const div = document.createElement('div');
+                            div.className = 'trial-line trial-four-col';
+                            div.innerHTML = pairs.map(([t,v]) => `<span class="trial-tag">${t}:</span><span class="trial-value">${v}</span>`).join('');
+                            extraInfo.appendChild(div);
+                        };
                         if (resp.statusCounts) {
-                            if (parseInt(resp.statusCounts.cxl, 10) > 0) {
-                                addLine(`<span class="trial-tag">CXL:</span><span class="trial-value">${resp.statusCounts.cxl}</span>`);
-                            }
-                            if (parseInt(resp.statusCounts.pending, 10) > 0) {
-                                addLine(`<span class="trial-tag">PENDING:</span><span class="trial-value">${resp.statusCounts.pending}</span>`);
-                            }
-                            if (parseInt(resp.statusCounts.shipped, 10) > 0) {
-                                addLine(`<span class="trial-tag">SHIPPED:</span><span class="trial-value">${resp.statusCounts.shipped}</span>`);
+                            const pairs = [];
+                            if (parseInt(resp.statusCounts.cxl, 10) > 0) pairs.push(['CXL', resp.statusCounts.cxl]);
+                            if (parseInt(resp.statusCounts.pending, 10) > 0) pairs.push(['PENDING', resp.statusCounts.pending]);
+                            if (parseInt(resp.statusCounts.shipped, 10) > 0) pairs.push(['SHIPPED', resp.statusCounts.shipped]);
+                            if (parseInt(resp.statusCounts.transferred, 10) > 0) pairs.push(['TRANSFER', resp.statusCounts.transferred]);
+                            for (let i = 0; i < pairs.length; i += 2) {
+                                addFour(pairs.slice(i, i + 2));
                             }
                             const goodTotal = resp.statusCounts.total >= resp.statusCounts.cxl * 2;
                             addLine(`<span class="trial-tag">TOTAL:</span><span class="trial-value">${resp.statusCounts.total} <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span></span>`);
                             if (resp.ltv) {
-                                addLine(`<span class="trial-tag">LTV:</span><span class="trial-value">${resp.ltv}</span>`);
                                 const per = (parseInt(resp.statusCounts.pending,10) || 0) +
                                             (parseInt(resp.statusCounts.shipped,10) || 0) +
                                             (parseInt(resp.statusCounts.transferred,10) || 0);
                                 const ltvNum = parseFloat(resp.ltv) || 0;
                                 const orderVal = per > 0 ? (ltvNum / per).toFixed(2) : '0';
-                                addLine(`<span class="trial-tag">P/ORDER:</span><span class="trial-value">${orderVal}</span>`);
+                                addFour([['LTV', resp.ltv], ['P/ORDER', orderVal]]);
                             }
+                            const states = collectStates(order, dna, kount);
                             const countries = collectCountries(order, dna, kount);
-                            if (countries.length && extraInfo && !extraInfo.querySelector('.trial-countries-line')) {
+                            if ((states.length || countries.length) && extraInfo && !extraInfo.querySelector('.trial-countries-line')) {
                                 const blank = document.createElement('div');
                                 blank.className = 'trial-line';
                                 blank.innerHTML = '&nbsp;';
                                 extraInfo.appendChild(blank);
-                                const div = document.createElement('div');
-                                div.className = 'trial-line trial-two-col trial-countries-line';
-                                div.innerHTML = `<span class="trial-tag">COUNTRIES INVOLVED:</span><span class="trial-value">${countries.join(', ')}</span>`;
-                                extraInfo.appendChild(div);
+                                if (states.length) {
+                                    const div = document.createElement('div');
+                                    div.className = 'trial-line trial-two-col';
+                                    div.innerHTML = `<span class="trial-tag">STATES:</span><span class="trial-value">${states.join(', ')}</span>`;
+                                    extraInfo.appendChild(div);
+                                }
+                                if (countries.length) {
+                                    const div = document.createElement('div');
+                                    div.className = 'trial-line trial-two-col trial-countries-line';
+                                    div.innerHTML = `<span class="trial-tag">COUNTRIES:</span><span class="trial-value">${countries.join(', ')}</span>`;
+                                    extraInfo.appendChild(div);
+                                }
                             }
                         } else {
                             addLine(`<span class="trial-tag">Orders Found:</span><span class="trial-value">${resp.orderCount}</span>`);
@@ -760,6 +787,9 @@
             }
 
             const STATE_ABBRS = 'AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY'.split(' ');
+            const STATE_NAMES = [
+                'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'
+            ];
             function guessCountry(text) {
                 if (!text) return null;
                 const t = String(text).toUpperCase();
@@ -772,6 +802,32 @@
                 if (seg.length === 2 && !STATE_ABBRS.includes(seg)) return seg;
                 if (seg.length > 2 && /^[A-Z ]+$/.test(seg) && !STATE_ABBRS.includes(seg)) return seg.replace(/\s+/g,' ');
                 return null;
+            }
+
+            function guessState(text) {
+                if (!text) return null;
+                const t = String(text).toUpperCase();
+                const abbr = STATE_ABBRS.find(a => new RegExp('\\b' + a + '\\b').test(t));
+                if (abbr) return abbr;
+                for (let i = 0; i < STATE_NAMES.length; i++) {
+                    if (new RegExp('\\b' + STATE_NAMES[i].toUpperCase() + '\\b').test(t)) {
+                        return STATE_ABBRS[i];
+                    }
+                }
+                return null;
+            }
+
+            function collectStates(order, dna, kount) {
+                const set = new Set();
+                const add = a => { const s = guessState(a); if (s) set.add(s); };
+                if (order) {
+                    if (order.billing && order.billing.address) add(order.billing.address);
+                    if (order.registeredAgent && order.registeredAgent.address) add(order.registeredAgent.address);
+                    if (Array.isArray(order.members)) order.members.forEach(m => add(m.address));
+                }
+                if (dna && dna.payment && dna.payment.shopper && dna.payment.shopper['Billing address']) add(dna.payment.shopper['Billing address']);
+                if (kount && kount.deviceLocation) add(kount.deviceLocation);
+                return Array.from(set);
             }
 
             function collectCountries(order, dna, kount) {
@@ -791,13 +847,19 @@
                 return (name || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim();
             }
 
-            function namesMatch(a, b) {
+function namesMatch(a, b) {
+    a = normName(a); b = normName(b);
+    if (!a || !b) return false;
+    if (a === b) return true;
+    const pa = a.split(' ');
+    const pb = b.split(' ');
+    return pa[0] === pb[0] && pa[pa.length - 1] === pb[pb.length - 1];
+}
+
+            function namesPartialMatch(a, b) {
                 a = normName(a); b = normName(b);
                 if (!a || !b) return false;
-                if (a === b) return true;
-                const pa = a.split(' ');
-                const pb = b.split(' ');
-                return pa[0] === pb[0] && pa[pa.length - 1] === pb[pb.length - 1];
+                return a.includes(b) || b.includes(a);
             }
 
             function emailMatches(email, names = [], company = '') {
@@ -852,15 +914,20 @@
                 const emailOk = emailMatches(email, [order.billing.cardholder, clientName], order.companyName);
                 dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">EMAIL:</span><span class="trial-value">${escapeHtml(email)} <span class="${emailOk ? 'db-adyen-check' : 'db-adyen-cross'}">${emailOk ? '✔' : '✖'}</span></span></div>`);
                 if (clientName) {
-                    let cOk = namesMatch(clientName, order.billing.cardholder);
+                    let cOk = namesMatch(clientName, order.billing.cardholder) ||
+                               namesPartialMatch(clientName, order.billing.cardholder);
                     if (!cOk && Array.isArray(order.members)) {
-                        cOk = order.members.some(m => namesMatch(clientName, m.name));
+                        cOk = order.members.some(m => namesMatch(clientName, m.name) ||
+                                                     namesPartialMatch(clientName, m.name));
                     }
                     dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CLIENT:</span><span class="trial-value">${escapeHtml(clientName)} <span class="${cOk ? 'db-adyen-check' : 'db-adyen-cross'}">${cOk ? '✔' : '✖'}</span></span></div>`);
                 }
                 if (Array.isArray(order.members) && order.members.length) {
                     const items = order.members.map(m => {
-                        const ok = namesMatch(m.name, order.billing.cardholder) || namesMatch(m.name, clientInfo.name);
+                        const ok = namesMatch(m.name, order.billing.cardholder) ||
+                                   namesPartialMatch(m.name, order.billing.cardholder) ||
+                                   namesMatch(m.name, clientInfo.name) ||
+                                   namesPartialMatch(m.name, clientInfo.name);
                         return `<li>${escapeHtml(m.name)}${ok ? ' <span class="db-adyen-check">✔</span>' : ''}</li>`;
                     }).join('');
                     dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">MEMBERS:</span><span class="trial-value"><ul class="member-list">${items}</ul></span></div>`);
@@ -870,9 +937,13 @@
                 dbLines.push('<div id="db-extra-info"></div>');
                 const btn = `<button id="sub-detection-btn" class="sub-detect-btn">SUB DETECTION</button>`;
                 dbLines.push(`<div class="trial-line">${btn}</div>`);
+                const states = collectStates(order, dna, kount);
                 const countries = collectCountries(order, dna, kount);
+                if (states.length) {
+                    dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">STATES:</span><span class="trial-value">${states.join(', ')}</span></div>`);
+                }
                 if (countries.length) {
-                    dbLines.push(`<div class="trial-line trial-two-col trial-countries-line"><span class="trial-tag">COUNTRIES INVOLVED:</span><span class="trial-value">${countries.join(', ')}</span></div>`);
+                    dbLines.push(`<div class="trial-line trial-two-col trial-countries-line"><span class="trial-tag">COUNTRIES:</span><span class="trial-value">${countries.join(', ')}</span></div>`);
                 }
                 if (order.billing.cardholder) {
                     const card = order.billing.cardholder;
@@ -934,6 +1005,9 @@
                 if (kount.ekata && kount.ekata.residentName) {
                     kountLines.push(`<div class="trial-line trial-name">${escapeHtml(kount.ekata.residentName)} ${iconHtml}</div>`);
                 }
+                if (kount.ekata && kount.ekata.addressToName) {
+                    kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">ADDRESS NAME:</span><span class="trial-value">${escapeHtml(kount.ekata.addressToName)}</span></div>`);
+                }
                 if (kount.ekata && kount.ekata.proxyRisk) {
                     const ok = /^no$/i.test(kount.ekata.proxyRisk);
                     kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">PROXY:</span><span class="trial-value">${escapeHtml(kount.ekata.proxyRisk)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></span></div>`);
@@ -946,9 +1020,8 @@
                 }
                 if (Array.isArray(kount.declines)) {
                     const count = kount.declines.length;
-                    kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">VIP DECLINES:</span><span class="trial-value">${count} <span class="${count === 0 ? 'db-adyen-check' : 'db-adyen-cross'}">${count === 0 ? '✔' : '✖'}</span></span></div>`);
+                    kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">DECLINE:</span><span class="trial-value">${count} <span class="${count === 0 ? 'db-adyen-check' : 'db-adyen-cross'}">${count === 0 ? '✔' : '✖'}</span></span></div>`);
                 }
-                if (kount.ekata && kount.ekata.addressToName) kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">ADDRESS NAME:</span><span class="trial-value">${escapeHtml(kount.ekata.addressToName)}</span></div>`);
 
                 if (kount.linked) {
                     const map = [
