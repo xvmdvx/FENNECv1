@@ -21,31 +21,43 @@
                 const id = link ? link.textContent.replace(/\D+/g, '') : '';
                 const statusCell = r.querySelector('td:nth-child(5)');
                 const status = statusCell ? statusCell.textContent.trim() : '';
-                return { id, status, row: r, link };
+                const stateCell = r.querySelector('td:nth-child(7)');
+                const state = stateCell ? stateCell.textContent.trim() : '';
+                const expCell = r.querySelector('td:nth-child(4) i.mdi-check-circle');
+                const expedited = !!expCell;
+                return { id, status, state, expedited, row: r, link };
             }).filter(o => o.id);
         }
 
         function updateSummary() {
             const orders = collectOrders();
-            const counts = {};
-            orders.forEach(o => { counts[o.status] = (counts[o.status] || 0) + 1; });
+            const stateCounts = {};
+            let expCount = 0;
+            orders.forEach(o => {
+                if (o.state) stateCounts[o.state] = (stateCounts[o.state] || 0) + 1;
+                if (o.expedited) expCount++;
+            });
             const box = document.getElementById('qs-summary');
             if (!box) return;
             let html = `<div><b>TOTAL:</b> ${orders.length}</div>`;
-            Object.keys(counts).forEach(k => {
-                html += `<div><b>${escapeHtml(k)}:</b> ${counts[k]}</div>`;
-            });
+            html += `<div><b>EXPEDITED:</b> ${expCount}</div>`;
+            Object.keys(stateCounts)
+                .sort((a,b) => stateCounts[b] - stateCounts[a])
+                .forEach(st => {
+                    html += `<div><b>${escapeHtml(st)}:</b> ${stateCounts[st]}</div>`;
+                });
             box.innerHTML = html;
         }
 
-        function highlightMatches() {
+        function highlightMatches(ids) {
+            const set = ids ? new Set(ids.map(String)) : fraudSet;
             const rows = document.querySelectorAll('#tableStatusResults tbody tr');
             rows.forEach(r => {
                 const link = r.querySelector('a[href*="/order/detail/"]');
                 if (!link) return;
                 const id = link.textContent.replace(/\D+/g, '');
                 let icon = r.querySelector('.fennec-fraud-flag');
-                if (fraudSet.has(id)) {
+                if (set.has(id)) {
                     if (!icon) {
                         icon = document.createElement('span');
                         icon.textContent = '⚑';
@@ -93,8 +105,24 @@
             })();
         }
 
+        function showCsvOrders(ids) {
+            const box = document.getElementById('qs-summary');
+            if (!box) return;
+            const html = ids.map(id => {
+                const flag = fraudSet.has(String(id)) ? ' ⚑' : '';
+                return `<div><a href="https://db.incfile.com/incfile/order/detail/${id}" target="_blank">${id}</a>${flag}</div>`;
+            }).join('');
+            box.innerHTML = html;
+        }
+
         function openQueueView() {
-            downloadCsvOrders(() => highlightMatches());
+            const icon = document.querySelector('#copilot-sidebar .copilot-icon');
+            if (icon) icon.classList.add('fennec-flash');
+            downloadCsvOrders(ids => {
+                if (icon) icon.classList.remove('fennec-flash');
+                highlightMatches(ids);
+                showCsvOrders(ids);
+            });
             const genBtn = document.getElementById('generateCSV');
             if (genBtn) genBtn.click();
             bg.openOrReuseTab({ url: 'https://db.incfile.com/order-tracker/orders/fraud?fennec_queue_scan=1', active: false });
@@ -106,6 +134,16 @@
             document.body.style.transition = 'margin-right 0.2s';
             document.body.style.marginRight = SIDEBAR_WIDTH + 'px';
 
+            if (!document.getElementById('copilot-db-padding')) {
+                const style = document.createElement('style');
+                style.id = 'copilot-db-padding';
+                style.textContent = `
+                    #frm-search-order { margin-right: ${SIDEBAR_WIDTH}px !important; }
+                    .modal-fullscreen { width: calc(100% - ${SIDEBAR_WIDTH}px); }
+                `;
+                document.head.appendChild(style);
+            }
+
             const sb = new Sidebar();
             sb.build(`
                 <div class="copilot-header">
@@ -113,9 +151,9 @@
                         <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (POO)" />
                         <span>FENNEC (POO)</span>
                     </div>
-                    <button id="queue-view-btn" class="copilot-button">QUEUE VIEW</button>
                 </div>
                 <div class="copilot-body" id="copilot-body-content">
+                    <button id="queue-view-btn" class="copilot-button" style="width:100%;margin-bottom:8px">QUEUE VIEW</button>
                     <div id="qs-summary" class="white-box" style="margin-bottom:10px"></div>
                 </div>`);
             sb.attach();
