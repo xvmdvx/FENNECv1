@@ -2903,7 +2903,7 @@ function getLastHoldUser() {
             bg.openOrReuseTab({ url: gmailUrl, active: true, refocus: true });
         }
         if (client.email) {
-            const searchUrl = `https://db.incfile.com/db-tools/scan-email-address?fennec_email=${encodeURIComponent(client.email)}`;
+            const searchUrl = `https://db.incfile.com/order-tracker/orders/order-search?fennec_email=${encodeURIComponent(client.email)}`;
             bg.openOrReuseTab({ url: searchUrl, active: false, refocus: true });
         }
         if (info.orderId) {

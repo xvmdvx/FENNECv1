@@ -557,9 +557,13 @@ class AdyenLauncher extends Launcher {
                     console.log('[FENNEC (POO) Adyen] DNA stats stored');
                     // Mark XRAY as finished so the Trial floater shows even if DB wasn't focused
                     localStorage.setItem('fraudXrayFinished', '1');
-                    chrome.storage.local.get({ sidebarOrderInfo: null }, ({ sidebarOrderInfo }) => {
-                        const email = sidebarOrderInfo ? sidebarOrderInfo.clientEmail : null;
-                        bg.send('focusDbSearch', { email });
+                    chrome.storage.local.get({ fraudReviewSession: null, sidebarOrderInfo: null }, ({ fraudReviewSession, sidebarOrderInfo }) => {
+                        if (fraudReviewSession) {
+                            bg.send('refocusTab');
+                        } else {
+                            const email = sidebarOrderInfo ? sidebarOrderInfo.clientEmail : null;
+                            bg.send('focusDbSearch', { email });
+                        }
                     });
                 });
             }
