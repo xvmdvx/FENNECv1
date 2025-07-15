@@ -749,8 +749,8 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     font-size: var(--sb-font-size);
     text-align: left;
-    width: 840px;
-    max-width: 840px;
+    width: 1008px;
+    max-width: 1008px;
 }
 
 #fennec-trial-title {
@@ -758,7 +758,7 @@
     font-weight: bold;
     color: #fff;
     margin: 0 auto 4px;
-    width: 840px;
+    width: 1008px;
     padding: 8px 0;
     border-radius: 12px;
     font-size: calc(var(--sb-font-size) + 26px) !important;
@@ -809,6 +809,9 @@
     width: auto;
 }
 #fennec-trial-overlay .trial-order .trial-tags .copilot-tag {
+    font-size: calc(var(--sb-font-size) + 5px);
+}
+#fennec-trial-overlay .trial-exp-va .copilot-tag {
     font-size: calc(var(--sb-font-size) + 5px);
 }
 #fennec-trial-overlay .trial-order .trial-btn-line {
@@ -875,13 +878,13 @@
 #fennec-trial-overlay .trial-name {
     font-size: calc(var(--sb-font-size) + 1px);
     font-weight: bold;
-    margin: 0 0 2px;
+    margin: 0 0 1px;
 }
 #fennec-trial-overlay .trial-card-details {
     font-size: calc(var(--sb-font-size) + 1px);
 }
 #fennec-trial-overlay .trial-card-info {
-    margin: 2px 0;
+    margin: 0 0 2px;
 }
 #fennec-trial-overlay .trial-card-info .copilot-tag {
     font-size: calc(var(--sb-font-size) + 5px);
@@ -1101,7 +1104,7 @@
 .big-trial-btn {
     font-size: calc(var(--sb-font-size) + 7px);
     padding: 6px 14px;
-    margin-left: 8px;
+    margin-left: 0;
     opacity: 0.5;
 }
 
