@@ -4,18 +4,14 @@ class AdyenLauncher extends Launcher {
     init() {
     if (window.top !== window) return;
     const bg = fennecMessenger;
+    getFennecSessionId();
+    initializeFennecSession();
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) {
             console.log('[FENNEC (POO)] Extension disabled, skipping Adyen launcher.');
             return;
         }
 
-        chrome.storage.local.get({ fennecActiveSession: null }, ({ fennecActiveSession }) => {
-            if (fennecActiveSession) {
-                sessionStorage.setItem('fennecSessionId', fennecActiveSession);
-            }
-            getFennecSessionId();
-        });
 
         try {
             const params = new URLSearchParams(window.location.search);

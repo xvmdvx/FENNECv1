@@ -3,16 +3,14 @@ class DBLauncher extends Launcher {
     init() {
     if (window.top !== window) return;
     const bg = fennecMessenger;
-    // Clear the closed flag on reloads so the sidebar reappears
-    window.addEventListener('beforeunload', () => {
-        sessionStorage.removeItem("fennecSidebarClosed");
-    });
-    chrome.storage.local.get({ fennecActiveSession: null }, ({ fennecActiveSession }) => {
-        if (fennecActiveSession) {
-            sessionStorage.setItem('fennecSessionId', fennecActiveSession);
-        }
+    const start = () => {
+        // Clear the closed flag on reloads so the sidebar reappears
+        window.addEventListener('beforeunload', () => {
+            sessionStorage.removeItem("fennecSidebarClosed");
+        });
         getFennecSessionId();
-    });
+    };
+    initializeFennecSession(start);
     let currentOrderType = null;
     let currentOrderTypeText = null;
     let initQuickSummary = null;
@@ -663,11 +661,11 @@ class DBLauncher extends Launcher {
                             if (parts.length && client.email) {
                                 const base = 'https://db.incfile.com/order-tracker/orders/order-search';
                                 const url = base + '?fennec_email=' + encodeURIComponent(client.email);
-                                bg.openActiveTab({ url });
+                                propagateFlowSession(() => bg.openActiveTab({ url }));
                             } else if (parts.length) {
                                 const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
                                 const url = 'https://mail.google.com/mail/u/0/#search/' + query;
-                                bg.openActiveTab({ url });
+                                propagateFlowSession(() => bg.openActiveTab({ url }));
                             }
                         });
 
@@ -2801,7 +2799,7 @@ class DBLauncher extends Launcher {
                 const comment = commentBox.value.trim();
                 const data = { orderId: r.order.orderId, comment };
                 if (/cancel/i.test(btnLabel)) data.cancel = true;
-                sessionSet({ fennecPendingComment: data }, () => {
+                sessionSet({ fennecPendingComment: data, fennecFlowSession: getFennecSessionId() }, () => {
                     bg.openActiveTab({ url: `${location.origin}/incfile/order/detail/${r.order.orderId}` });
                 });
             });
@@ -2900,7 +2898,7 @@ function getLastHoldUser() {
         if (!client.email && parts.length) {
             const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
             const gmailUrl = 'https://mail.google.com/mail/u/0/#search/' + query;
-            bg.openOrReuseTab({ url: gmailUrl, active: true, refocus: true });
+            propagateFlowSession(() => bg.openOrReuseTab({ url: gmailUrl, active: true, refocus: true }));
         }
         if (info.orderId) {
             const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
@@ -2908,7 +2906,7 @@ function getLastHoldUser() {
 
             const kountLink = document.querySelector('a[href*="kount.net"][href*="workflow/detail"]');
             if (kountLink) {
-                bg.openOrReuseTab({ url: kountLink.href, active: true });
+                propagateFlowSession(() => bg.openOrReuseTab({ url: kountLink.href, active: true }));
             }
         }
     }

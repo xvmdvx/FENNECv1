@@ -28,6 +28,29 @@ function applySidebarDesign(sidebar, opts) {
 }
 window.applySidebarDesign = applySidebarDesign;
 
+function initializeFennecSession(cb) {
+    chrome.windows.getCurrent(win => {
+        const key = 'fennecWindowSession_' + win.id;
+        let winId = localStorage.getItem(key);
+        if (!winId) {
+            winId = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+            localStorage.setItem(key, winId);
+        }
+        chrome.storage.local.get({ fennecFlowSession: null }, ({ fennecFlowSession }) => {
+            if (fennecFlowSession) {
+                sessionStorage.setItem('fennecSessionId', fennecFlowSession);
+                chrome.storage.local.set({ fennecFlowSession: null, fennecActiveSession: fennecFlowSession }, cb);
+            } else if (!sessionStorage.getItem('fennecSessionId')) {
+                sessionStorage.setItem('fennecSessionId', winId);
+                if (cb) cb();
+            } else if (cb) {
+                cb();
+            }
+        });
+    });
+}
+window.initializeFennecSession = initializeFennecSession;
+
 function getFennecSessionId() {
     let id = sessionStorage.getItem('fennecSessionId');
     if (!id) {
@@ -43,6 +66,11 @@ function sessionSet(data, cb) {
     chrome.storage.local.set(obj, cb);
 }
 window.sessionSet = sessionSet;
+
+function propagateFlowSession(cb) {
+    sessionSet({ fennecFlowSession: getFennecSessionId() }, cb);
+}
+window.propagateFlowSession = propagateFlowSession;
 
 function abbreviateOrderType(type) {
     const t = (type || '').toLowerCase();
