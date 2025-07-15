@@ -13,6 +13,9 @@
         let subDetectSeq = 0;
         chrome.storage.local.set({ fennecReviewMode: true });
         chrome.storage.sync.set({ fennecReviewMode: true });
+        if (localStorage.getItem('fraudXrayFinished') === '1') {
+            sessionStorage.setItem('fennecShowTrialFloater', '1');
+        }
 
         function injectSidebar() {
             if (document.getElementById('copilot-sidebar')) return;
@@ -665,14 +668,15 @@
                                 addLine(`<span class="trial-tag">P/ORDER:</span><span class="trial-value">${orderVal}</span>`);
                             }
                             const countries = collectCountries(order, dna, kount);
-                            if (countries.length) {
-                                if (extraInfo) {
-                                    const blank = document.createElement('div');
-                                    blank.className = 'trial-line';
-                                    blank.innerHTML = '&nbsp;';
-                                    extraInfo.appendChild(blank);
-                                }
-                                addLine(`<span class="trial-tag">COUNTRIES INVOLVED:</span><span class="trial-value">${countries.join(', ')}</span>`);
+                            if (countries.length && extraInfo && !extraInfo.querySelector('.trial-countries-line')) {
+                                const blank = document.createElement('div');
+                                blank.className = 'trial-line';
+                                blank.innerHTML = '&nbsp;';
+                                extraInfo.appendChild(blank);
+                                const div = document.createElement('div');
+                                div.className = 'trial-line trial-two-col trial-countries-line';
+                                div.innerHTML = `<span class="trial-tag">COUNTRIES INVOLVED:</span><span class="trial-value">${countries.join(', ')}</span>`;
+                                extraInfo.appendChild(div);
                             }
                         } else {
                             addLine(`<span class="trial-tag">Orders Found:</span><span class="trial-value">${resp.orderCount}</span>`);
@@ -834,12 +838,13 @@
                 const tag = dna && dna.payment ? buildCardMatchTag(order.billing, dna.payment.card || {}) : '';
                 if (tag) pushFlag(tag);
                 const clientInfo = typeof getClientInfo === 'function' ? getClientInfo() : { name: '', email: '' };
+                const clientName = order.clientName || clientInfo.name || '';
                 const email = order.clientEmail || clientInfo.email || '';
-                const emailOk = emailMatches(email, [clientInfo.name, order.billing.cardholder], order.companyName);
+                const emailOk = emailMatches(email, [clientName, order.billing.cardholder], order.companyName);
                 dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">EMAIL:</span><span class="trial-value">${escapeHtml(email)} <span class="${emailOk ? 'db-adyen-check' : 'db-adyen-cross'}">${emailOk ? '✔' : '✖'}</span></span></div>`);
-                if (clientInfo.name) {
-                    const cOk = namesMatch(clientInfo.name, order.billing.cardholder);
-                    dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CLIENT:</span><span class="trial-value">${escapeHtml(clientInfo.name)} <span class="${cOk ? 'db-adyen-check' : 'db-adyen-cross'}">${cOk ? '✔' : '✖'}</span></span></div>`);
+                if (clientName) {
+                    const cOk = namesMatch(clientName, order.billing.cardholder);
+                    dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CLIENT:</span><span class="trial-value">${escapeHtml(clientName)} <span class="${cOk ? 'db-adyen-check' : 'db-adyen-cross'}">${cOk ? '✔' : '✖'}</span></span></div>`);
                 }
                 if (Array.isArray(order.members) && order.members.length) {
                     const items = order.members.map(m => {
@@ -853,6 +858,10 @@
                 dbLines.push('<div id="db-extra-info"></div>');
                 const btn = `<button id="sub-detection-btn" class="sub-detect-btn">SUB DETECTION</button>`;
                 dbLines.push(`<div class="trial-line">${btn}</div>`);
+                const countries = collectCountries(order, dna, kount);
+                if (countries.length) {
+                    dbLines.push(`<div class="trial-line trial-two-col trial-countries-line"><span class="trial-tag">COUNTRIES INVOLVED:</span><span class="trial-value">${countries.join(', ')}</span></div>`);
+                }
                 if (order.billing.cardholder) {
                     const card = order.billing.cardholder;
                     const names = [];

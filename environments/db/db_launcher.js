@@ -1823,7 +1823,8 @@ class DBLauncher extends Launcher {
             raExpired,
             orderCost: getOrderCost(),
             clientLtv: client.ltv,
-            clientEmail: client.email
+            clientEmail: client.email,
+            clientName: client.name
         };
         sessionSet({
             sidebarDb: dbSections,

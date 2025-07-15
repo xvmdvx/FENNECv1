@@ -20,3 +20,5 @@ All notable changes to this project will be documented in this file.
 - Set fraudXrayFinished when data is extracted so the Trial floater shows even if DB tab wasn't open.
 - DB email search is now opened in the background during XRAY and focused after DNA extraction.
 - Fixed duplicate "Orders Found" lines in the Trial floater.
+- Fixed Trial floater not showing after XRAY completion.
+- Added CLIENT and COUNTRIES INVOLVED lines to the DB box in the Trial floater.
