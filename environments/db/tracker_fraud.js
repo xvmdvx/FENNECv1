@@ -1117,6 +1117,15 @@
            loadDbSummary();
            loadDnaSummary();
            loadKountSummary();
+           // Ensure the trial overlay appears if XRAY finished before this
+           // page loaded by checking the persisted flag and showing the
+           // floater immediately.
+           if (localStorage.getItem('fraudXrayFinished') === '1') {
+               localStorage.removeItem('fraudXrayFinished');
+               showTrialFloater(60, true);
+           } else {
+               showTrialFloater(60, true);
+           }
         }
         const clearBtn = document.getElementById('copilot-clear');
         if (clearBtn) clearBtn.onclick = clearSidebar;
