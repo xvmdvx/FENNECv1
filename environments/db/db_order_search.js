@@ -550,10 +550,8 @@
 
         chrome.runtime.onMessage.addListener((msg, snd, sendResponse) => {
             if (msg.action === 'getEmailOrders') {
-                console.log('[Copilot] getEmailOrders request received');
                 const sendOrders = () => {
                     const orders = collectOrders().map(o => ({ orderId: o.id, type: '', status: o.status }));
-                    console.log(`[Copilot] Returning ${orders.length} orders`);
                     sendResponse({ orders });
                 };
                 const tbody = document.querySelector('#tableStatusResults tbody');
