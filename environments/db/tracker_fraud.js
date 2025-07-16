@@ -700,7 +700,7 @@
                     const order = data.sidebarOrderInfo;
                     const cols = overlay.querySelectorAll('.trial-columns .trial-col');
                     const dbCol = cols && cols[0];
-                    const fetchStats = (attempts = 5) => {
+                    const fetchStats = (attempts = 8) => {
                         const req = ++subDetectSeq;
                         console.log('[FENNEC (POO)] requesting email order count', {
                             email: order.clientEmail,
@@ -713,9 +713,14 @@
                         }, resp => {
                             console.log('[FENNEC (POO)] email search result', resp);
                             if (req !== subDetectSeq) return;
-                            if (!resp) return;
+                            if (!resp) {
+                                if (attempts > 0) {
+                                    setTimeout(() => fetchStats(attempts - 1), 1500);
+                                }
+                                return;
+                            }
                             if (resp.statusCounts && (resp.statusCounts.total === 0 || resp.statusCounts.total >= 100) && attempts > 0) {
-                                setTimeout(() => fetchStats(attempts - 1), 1000);
+                                setTimeout(() => fetchStats(attempts - 1), 1500);
                                 return;
                             }
                             if (!dbCol) return;
