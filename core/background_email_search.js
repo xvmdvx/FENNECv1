@@ -273,17 +273,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     function fetchEmailOrders(winId, email, callback) {
+        console.log('[FENNEC (POO)] fetchEmailOrders', { winId, email });
         const encoded = encodeURIComponent(email);
         chrome.tabs.query({ windowId: winId }, tabs => {
             const searchTabs = tabs.filter(t => t.url &&
                 (t.url.includes('/order-tracker/orders/order-search') ||
                  t.url.includes('/db-tools/scan-email-address')));
+            console.log('[FENNEC (POO)] available search tabs', searchTabs.map(t => t.url));
             let searchTab = searchTabs.find(t => t.url.includes('fennec_email=' + encoded));
             if (!searchTab) searchTab = searchTabs[0];
-            if (!searchTab) { callback(null); return; }
+            if (!searchTab) { console.log('[FENNEC (POO)] no search tab found'); callback(null); return; }
+            console.log('[FENNEC (POO)] using search tab', searchTab.id, searchTab.url);
             chrome.tabs.update(searchTab.id, { active: true });
             let attempts = 5;
             const sendReq = () => {
+                console.log('[FENNEC (POO)] getEmailOrders attempt', { attempts_left: attempts, tabId: searchTab.id });
                 chrome.tabs.sendMessage(searchTab.id, { action: 'getEmailOrders' }, resp => {
                     if (chrome.runtime.lastError || !resp) {
                         const msg = chrome.runtime.lastError ? chrome.runtime.lastError.message : 'no response';
@@ -295,6 +299,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         console.warn('[FENNEC (POO)] getEmailOrders failed:', msg);
                         callback(null);
                     } else {
+                        console.log('[FENNEC (POO)] getEmailOrders response', resp);
                         const orders = Array.isArray(resp.orders) ? resp.orders : [];
                         const counts = { cxl: 0, pending: 0, shipped: 0, transferred: 0 };
                         orders.forEach(o => {
