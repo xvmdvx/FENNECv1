@@ -1283,20 +1283,15 @@ function namesMatch(a, b) {
 
         injectSidebar();
         scanOrders();
-        chrome.storage.local.get({ fraudReviewSession: null }, ({ fraudReviewSession }) => {
-            let manualOpen = !sessionStorage.getItem('fennecShowTrialFloater');
-            const resume = manualOpen && fraudReviewSession;
-            if (resume) sessionStorage.setItem('fennecShowTrialFloater', '1');
-            if (manualOpen && !resume) {
+        chrome.storage.local.get({ fraudReviewSession: null }, () => {
+            if (!sessionStorage.getItem('fennecShowTrialFloater')) {
                 chrome.storage.local.set({ sidebarDb: [], sidebarOrderId: null, sidebarOrderInfo: null, adyenDnaInfo: null, kountInfo: null, sidebarFreezeId: null });
                 showInitialStatus();
             } else {
                 loadDbSummary();
                 loadDnaSummary();
                 loadKountSummary();
-                if (sessionStorage.getItem('fennecShowTrialFloater')) {
-                    showTrialFloater(60, true);
-                }
+                showTrialFloater(60, true);
             }
         });
         const clearBtn = document.getElementById('copilot-clear');
