@@ -701,77 +701,85 @@
                     const order = data.sidebarOrderInfo;
                     const cols = overlay.querySelectorAll('.trial-columns .trial-col');
                     const dbCol = cols && cols[0];
-                    const req = ++subDetectSeq;
-                    console.log('[FENNEC (POO)] requesting email order count', {
-                        email: order.clientEmail,
-                        ltv: order.clientLtv
-                    });
-                    bg.send('countEmailOrders', {
-                        email: order.clientEmail,
-                        ltv: order.clientLtv || ''
-                    }, resp => {
-                        console.log('[FENNEC (POO)] email search result', resp);
-                        if (req !== subDetectSeq) return;
-                        if (!resp) return;
-                        if (!dbCol) return;
-                        const extraInfo = dbCol.querySelector('#db-extra-info');
-                        const addLine = html => {
-                            if (!extraInfo) return;
-                            const div = document.createElement('div');
-                            div.className = 'trial-line trial-two-col';
-                            div.innerHTML = html;
-                            extraInfo.appendChild(div);
-                        };
-                        const addFour = pairs => {
-                            if (!extraInfo) return;
-                            const div = document.createElement('div');
-                            div.className = 'trial-line trial-four-col';
-                            div.innerHTML = pairs.map(([t,v]) => `<span class="trial-tag">${t}:</span><span class="trial-value">${v}</span>`).join('');
-                            extraInfo.appendChild(div);
-                        };
-                        if (resp.statusCounts) {
-                            console.log('[FENNEC (POO)] Email search status counts', resp.statusCounts);
-                            const pairs = [];
-                            if (parseInt(resp.statusCounts.cxl, 10) > 0) pairs.push(['CXL', resp.statusCounts.cxl]);
-                            if (parseInt(resp.statusCounts.pending, 10) > 0) pairs.push(['PENDING', resp.statusCounts.pending]);
-                            if (parseInt(resp.statusCounts.shipped, 10) > 0) pairs.push(['SHIPPED', resp.statusCounts.shipped]);
-                            if (parseInt(resp.statusCounts.transferred, 10) > 0) pairs.push(['TRANSFER', resp.statusCounts.transferred]);
-                            for (let i = 0; i < pairs.length; i += 2) {
-                                addFour(pairs.slice(i, i + 2));
+                    const fetchStats = (attempts = 5) => {
+                        const req = ++subDetectSeq;
+                        console.log('[FENNEC (POO)] requesting email order count', {
+                            email: order.clientEmail,
+                            ltv: order.clientLtv,
+                            attempts
+                        });
+                        bg.send('countEmailOrders', {
+                            email: order.clientEmail,
+                            ltv: order.clientLtv || ''
+                        }, resp => {
+                            console.log('[FENNEC (POO)] email search result', resp);
+                            if (req !== subDetectSeq) return;
+                            if (!resp) return;
+                            if (resp.statusCounts && resp.statusCounts.total === 0 && attempts > 0) {
+                                setTimeout(() => fetchStats(attempts - 1), 1000);
+                                return;
                             }
-                            const goodTotal = resp.statusCounts.total >= resp.statusCounts.cxl * 2;
-                            console.log('[FENNEC (POO)] total orders', resp.statusCounts.total, 'goodTotal', goodTotal);
-                            addLine(`<span class="trial-tag">TOTAL:</span><span class="trial-value">${resp.statusCounts.total} <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span></span>`);
-                            if (resp.ltv) {
-                                const per = (parseInt(resp.statusCounts.pending,10) || 0) +
-                                            (parseInt(resp.statusCounts.shipped,10) || 0) +
-                                            (parseInt(resp.statusCounts.transferred,10) || 0);
-                                const ltvNum = parseFloat(resp.ltv) || 0;
-                                const orderVal = per > 0 ? (ltvNum / per).toFixed(2) : '0';
-                                addFour([['LTV', resp.ltv], ['P/ORDER', orderVal]]);
-                            }
-                            const states = collectStates(order, dna, kount);
-                            const countries = collectCountries(order, dna, kount);
-                            if ((states.length || countries.length) && extraInfo && !extraInfo.querySelector('.trial-countries-line')) {
-                                const blank = document.createElement('div');
-                                blank.className = 'trial-line';
-                                blank.innerHTML = '&nbsp;';
-                                extraInfo.appendChild(blank);
-                                if (states.length) {
-                                    const div = document.createElement('div');
-                                    div.className = 'trial-line trial-two-col';
-                                    div.innerHTML = `<span class="trial-tag">STATES:</span><span class="trial-value">${states.join(', ')}</span>`;
-                                    extraInfo.appendChild(div);
+                            if (!dbCol) return;
+                            const extraInfo = dbCol.querySelector('#db-extra-info');
+                            const addLine = html => {
+                                if (!extraInfo) return;
+                                const div = document.createElement('div');
+                                div.className = 'trial-line trial-two-col';
+                                div.innerHTML = html;
+                                extraInfo.appendChild(div);
+                            };
+                            const addFour = pairs => {
+                                if (!extraInfo) return;
+                                const div = document.createElement('div');
+                                div.className = 'trial-line trial-four-col';
+                                div.innerHTML = pairs.map(([t,v]) => `<span class="trial-tag">${t}:</span><span class="trial-value">${v}</span>`).join('');
+                                extraInfo.appendChild(div);
+                            };
+                            if (resp.statusCounts) {
+                                console.log('[FENNEC (POO)] Email search status counts', resp.statusCounts);
+                                const pairs = [];
+                                if (parseInt(resp.statusCounts.cxl, 10) > 0) pairs.push(['CXL', resp.statusCounts.cxl]);
+                                if (parseInt(resp.statusCounts.pending, 10) > 0) pairs.push(['PENDING', resp.statusCounts.pending]);
+                                if (parseInt(resp.statusCounts.shipped, 10) > 0) pairs.push(['SHIPPED', resp.statusCounts.shipped]);
+                                if (parseInt(resp.statusCounts.transferred, 10) > 0) pairs.push(['TRANSFER', resp.statusCounts.transferred]);
+                                for (let i = 0; i < pairs.length; i += 2) {
+                                    addFour(pairs.slice(i, i + 2));
                                 }
-                                if (countries.length) {
-                                    const div = document.createElement('div');
-                                    div.className = 'trial-line trial-two-col trial-countries-line';
-                                    div.innerHTML = `<span class="trial-tag">COUNTRIES:</span><span class="trial-value">${countries.join(', ')}</span>`;
-                                    extraInfo.appendChild(div);
+                                const goodTotal = resp.statusCounts.total >= resp.statusCounts.cxl * 2;
+                                console.log('[FENNEC (POO)] total orders', resp.statusCounts.total, 'goodTotal', goodTotal);
+                                addLine(`<span class="trial-tag">TOTAL:</span><span class="trial-value">${resp.statusCounts.total} <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span></span>`);
+                                if (resp.ltv) {
+                                    const per = (parseInt(resp.statusCounts.pending,10) || 0) +
+                                                (parseInt(resp.statusCounts.shipped,10) || 0) +
+                                                (parseInt(resp.statusCounts.transferred,10) || 0);
+                                    const ltvNum = parseFloat(resp.ltv) || 0;
+                                    const orderVal = per > 0 ? (ltvNum / per).toFixed(2) : '0';
+                                    addFour([['LTV', resp.ltv], ['P/ORDER', orderVal]]);
+                                }
+                                const states = collectStates(order, dna, kount);
+                                const countries = collectCountries(order, dna, kount);
+                                if ((states.length || countries.length) && extraInfo && !extraInfo.querySelector('.trial-countries-line')) {
+                                    const blank = document.createElement('div');
+                                    blank.className = 'trial-line';
+                                    blank.innerHTML = '&nbsp;';
+                                    extraInfo.appendChild(blank);
+                                    if (states.length) {
+                                        const div = document.createElement('div');
+                                        div.className = 'trial-line trial-two-col';
+                                        div.innerHTML = `<span class="trial-tag">STATES:</span><span class="trial-value">${states.join(', ')}</span>`;
+                                        extraInfo.appendChild(div);
+                                    }
+                                    if (countries.length) {
+                                        const div = document.createElement('div');
+                                        div.className = 'trial-line trial-two-col trial-countries-line';
+                                        div.innerHTML = `<span class="trial-tag">COUNTRIES:</span><span class="trial-value">${countries.join(', ')}</span>`;
+                                        extraInfo.appendChild(div);
+                                    }
                                 }
                             }
-                        }
-                    });
+                        });
+                    };
+                    fetchStats();
                 }
             });
         }
