@@ -31,6 +31,15 @@
 
         function collectOrders() {
             const rows = document.querySelectorAll('#tableStatusResults tbody tr');
+            const headerCells = Array.from(document.querySelectorAll('#tableStatusResults thead th'));
+            const colIndex = { status: -1, state: -1, expedited: -1, ordered: -1 };
+            headerCells.forEach((th, idx) => {
+                const txt = th.textContent.trim().toLowerCase();
+                if (txt === 'status') colIndex.status = idx;
+                else if (txt === 'state') colIndex.state = idx;
+                else if (txt === 'expedited') colIndex.expedited = idx;
+                else if (txt.includes('ordered')) colIndex.ordered = idx;
+            });
             return Array.from(rows).map(r => {
                 const link = r.querySelector('a[data-detail-link*="/order/detail/"]') ||
                              r.querySelector('a[href*="/order/detail/"]');
@@ -39,14 +48,17 @@
                     const src = link.dataset.detailLink || link.textContent;
                     id = (src || '').replace(/\D+/g, '');
                 }
-                const statusCell = r.querySelector('td:nth-child(4)');
-                const status = statusCell ? statusCell.textContent.trim() : '';
-                const stateCell = r.querySelector('td:nth-child(6)');
-                const state = stateCell ? stateCell.textContent.trim() : '';
-                const expCell = r.querySelector('td:nth-child(5) i.mdi-check-circle');
-                const expedited = !!expCell;
-                const dateCell = r.querySelector('td:nth-child(11)');
-                const orderedDate = dateCell ? dateCell.textContent.trim() : '';
+                const cells = r.querySelectorAll('td');
+                const status = (colIndex.status >= 0 && cells[colIndex.status]) ?
+                                cells[colIndex.status].textContent.trim() : '';
+                const state = (colIndex.state >= 0 && cells[colIndex.state]) ?
+                               cells[colIndex.state].textContent.trim() : '';
+                let expedited = false;
+                if (colIndex.expedited >= 0 && cells[colIndex.expedited]) {
+                    expedited = !!cells[colIndex.expedited].querySelector('i.mdi-check-circle');
+                }
+                const orderedDate = (colIndex.ordered >= 0 && cells[colIndex.ordered]) ?
+                                   cells[colIndex.ordered].textContent.trim() : '';
                 r.dataset.ordered = orderedDate;
                 return { id, status, state, expedited, orderedDate, row: r, link };
             }).filter(o => o.id);
