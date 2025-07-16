@@ -33,3 +33,4 @@ All notable changes to this project will be documented in this file.
 - Fixed Orders Found value always showing 0 and removed the line from the Trial
   floater. The TOTAL line now reflects the real count once results load.
 - Separated order counting from subscription detection and added COUNTEMAILORDERS action.
+- Added retries when counting email orders so the Trial floater shows accurate totals.

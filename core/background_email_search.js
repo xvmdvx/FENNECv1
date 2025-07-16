@@ -282,24 +282,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             if (!searchTab) searchTab = searchTabs[0];
             if (!searchTab) { callback(null); return; }
             chrome.tabs.update(searchTab.id, { active: true });
-            chrome.tabs.sendMessage(searchTab.id, { action: 'getEmailOrders' }, resp => {
-                if (chrome.runtime.lastError || !resp) {
-                    console.warn('[FENNEC (POO)] getEmailOrders failed:', chrome.runtime.lastError ? chrome.runtime.lastError.message : 'no response');
-                    callback(null);
-                } else {
-                    const orders = Array.isArray(resp.orders) ? resp.orders : [];
-                    const counts = { cxl: 0, pending: 0, shipped: 0, transferred: 0 };
-                    orders.forEach(o => {
-                        const s = String(o.status || '').toUpperCase();
-                        if (/CANCEL/.test(s)) counts.cxl++;
-                        else if (/TRANSFERRED/.test(s)) counts.transferred++;
-                        else if (/SHIPPED/.test(s)) counts.shipped++;
-                        else if (/PROCESSING|REVIEW|HOLD/.test(s)) counts.pending++;
-                    });
-                    counts.total = orders.length;
-                    callback({ orders, counts });
-                }
-            });
+            let attempts = 5;
+            const sendReq = () => {
+                chrome.tabs.sendMessage(searchTab.id, { action: 'getEmailOrders' }, resp => {
+                    if (chrome.runtime.lastError || !resp) {
+                        const msg = chrome.runtime.lastError ? chrome.runtime.lastError.message : 'no response';
+                        if (/Could not establish connection|Receiving end does not exist/i.test(msg) && attempts > 0) {
+                            attempts--;
+                            setTimeout(sendReq, 500);
+                            return;
+                        }
+                        console.warn('[FENNEC (POO)] getEmailOrders failed:', msg);
+                        callback(null);
+                    } else {
+                        const orders = Array.isArray(resp.orders) ? resp.orders : [];
+                        const counts = { cxl: 0, pending: 0, shipped: 0, transferred: 0 };
+                        orders.forEach(o => {
+                            const s = String(o.status || '').toUpperCase();
+                            if (/CANCEL/.test(s)) counts.cxl++;
+                            else if (/TRANSFERRED/.test(s)) counts.transferred++;
+                            else if (/SHIPPED/.test(s)) counts.shipped++;
+                            else if (/PROCESSING|REVIEW|HOLD/.test(s)) counts.pending++;
+                        });
+                        counts.total = orders.length;
+                        callback({ orders, counts });
+                    }
+                });
+            };
+            sendReq();
         });
     }
 
