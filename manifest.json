@@ -204,7 +204,8 @@
       "resources": [
         "fennec_icon.png",
         "bg_holo.mp4",
-        "mistral-7b-instruct-v0.1.Q4_K_M.gguf"
+        "mistral-7b-instruct-v0.1.Q4_K_M.gguf",
+        "environments/db/csv_hook.js"
       ],
       "matches": [
         "<all_urls>"
