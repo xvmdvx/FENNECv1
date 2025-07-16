@@ -32,23 +32,45 @@
                 const state = stateCell ? stateCell.textContent.trim() : '';
                 const expCell = r.querySelector('td:nth-child(5) i.mdi-check-circle');
                 const expedited = !!expCell;
-                return { id, status, state, expedited, row: r, link };
+                const dateCell = r.querySelector('td:nth-child(11)');
+                const orderedDate = dateCell ? dateCell.textContent.trim() : '';
+                r.dataset.ordered = orderedDate;
+                return { id, status, state, expedited, orderedDate, row: r, link };
             }).filter(o => o.id);
         }
 
         function summarizeOrders(orders) {
             const stateCounts = {};
             const statusCounts = {};
+            const dateCounts = { today: 0, yesterday: 0, in3: 0, in7: 0, in14: 0, in30: 0 };
             let expCount = 0;
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const yday = new Date(today.getTime() - 86400000);
+            const d3 = new Date(today.getTime() + 3 * 86400000);
+            const d7 = new Date(today.getTime() + 7 * 86400000);
+            const d14 = new Date(today.getTime() + 14 * 86400000);
+            const d30 = new Date(today.getTime() + 30 * 86400000);
             orders.forEach(o => {
                 if (o.state) stateCounts[o.state] = (stateCounts[o.state] || 0) + 1;
                 if (o.status) statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
                 if (o.expedited) expCount++;
+                const d = o.orderedDate ? new Date(o.orderedDate) : null;
+                if (d && !isNaN(d)) {
+                    const sd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                    if (sd.getTime() === today.getTime()) dateCounts.today++;
+                    else if (sd.getTime() === yday.getTime()) dateCounts.yesterday++;
+                    else if (sd <= d3) dateCounts.in3++;
+                    else if (sd <= d7) dateCounts.in7++;
+                    else if (sd <= d14) dateCounts.in14++;
+                    else if (sd <= d30) dateCounts.in30++;
+                }
             });
-            return { total: orders.length, stateCounts, statusCounts, expCount };
+            return { total: orders.length, stateCounts, statusCounts, expCount, dateCounts };
         }
 
         let currentFilterState = '';
+        let currentFilterDate = '';
 
         function filterByState(state) {
             if (currentFilterState === state) state = '';
@@ -66,11 +88,46 @@
             });
         }
 
-        function renderSummary(total, expCount, stateCounts, statusCounts) {
+        function filterByDate(range) {
+            if (currentFilterDate === range) range = '';
+            currentFilterDate = range;
+            const rows = document.querySelectorAll('#tableStatusResults tbody tr');
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const yday = new Date(today.getTime() - 86400000);
+            const d3 = new Date(today.getTime() + 3 * 86400000);
+            const d7 = new Date(today.getTime() + 7 * 86400000);
+            const d14 = new Date(today.getTime() + 14 * 86400000);
+            const d30 = new Date(today.getTime() + 30 * 86400000);
+            rows.forEach(r => {
+                const text = r.dataset.ordered || '';
+                const d = text ? new Date(text) : null;
+                let show = true;
+                if (range && d && !isNaN(d)) {
+                    const sd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                    if (range === 'today') show = sd.getTime() === today.getTime();
+                    else if (range === 'yesterday') show = sd.getTime() === yday.getTime();
+                    else if (range === 'in3') show = sd > today && sd <= d3;
+                    else if (range === 'in7') show = sd > d3 && sd <= d7;
+                    else if (range === 'in14') show = sd > d7 && sd <= d14;
+                    else if (range === 'in30') show = sd > d14 && sd <= d30;
+                }
+                if (range && (!d || isNaN(d))) show = false;
+                r.style.display = show ? '' : 'none';
+            });
+            const items = document.querySelectorAll('#qs-summary .date-count');
+            items.forEach(it => {
+                if (it.dataset.range === range && range) it.classList.add('active');
+                else it.classList.remove('active');
+            });
+        }
+
+        function renderSummary(total, expCount, stateCounts, statusCounts, dateCounts) {
             const box = document.getElementById('qs-summary');
             if (!box) return;
             let html = `<div><b>TOTAL:</b> ${total}</div>`;
             html += `<div><b>EXPEDITED:</b> ${expCount}</div>`;
+            html += '<div style="margin-top:8px"><b>BY STATE</b></div>';
             html += '<div style="display:flex;flex-wrap:wrap">';
             Object.keys(stateCounts)
                 .sort((a,b) => stateCounts[b] - stateCounts[a])
@@ -79,6 +136,20 @@
                             `style="width:25%;cursor:pointer;display:inline-block">` +
                             `<b>${escapeHtml(st)}:</b> ${stateCounts[st]}</span>`;
                 });
+            html += '</div>';
+            html += '<div style="margin-top:8px"><b>BY DATE</b></div>';
+            html += '<div>';
+            [
+                ['today','TODAY'],
+                ['yesterday','YESTERDAY'],
+                ['in3','+3 DAYS'],
+                ['in7','+7 DAYS'],
+                ['in14','+2 WEEKS'],
+                ['in30','+1 MONTH']
+            ].forEach(([k,label]) => {
+                const cnt = dateCounts && dateCounts[k] ? dateCounts[k] : 0;
+                html += `<div class="date-count" data-range="${k}" style="cursor:pointer"><b>${label}:</b> ${cnt}</div>`;
+            });
             html += '</div>';
             if (statusCounts && Object.keys(statusCounts).length) {
                 html += '<div style="margin-top:8px">';
@@ -93,13 +164,16 @@
             box.querySelectorAll('.state-count').forEach(el => {
                 el.addEventListener('click', () => filterByState(el.dataset.state));
             });
+            box.querySelectorAll('.date-count').forEach(el => {
+                el.addEventListener('click', () => filterByDate(el.dataset.range));
+            });
         }
 
         function updateSummary() {
             if (skipSummaryUpdate) return;
             const orders = collectOrders();
-            const { total, stateCounts, statusCounts, expCount } = summarizeOrders(orders);
-            renderSummary(total, expCount, stateCounts, statusCounts);
+            const { total, stateCounts, statusCounts, expCount, dateCounts } = summarizeOrders(orders);
+            renderSummary(total, expCount, stateCounts, statusCounts, dateCounts);
         }
 
         function observeTable() {
@@ -207,9 +281,14 @@
                     rows.slice(1).forEach(cols => {
                         const id = cols[0];
                         const state = cols[1];
+                        const name = cols[2] || '';
                         const status = cols[19] || '';
                         const expedited = (cols[21] || '').toLowerCase().startsWith('y');
-                        if (id) orders.push({ id, state, expedited, status });
+                        const orderedDate = cols[22] || '';
+                        const expectedDate = cols[23] || '';
+                        const forwardedDate = cols[24] || '';
+                        const shippingDate = cols[25] || '';
+                        if (id) orders.push({ id, state, name, expedited, status, orderedDate, expectedDate, forwardedDate, shippingDate });
                     });
                 }
                 if (!csv) console.warn('[FENNEC] CSV not captured');
@@ -233,8 +312,47 @@
         }
 
         function showCsvSummary(orders) {
-            const { total, stateCounts, statusCounts, expCount } = summarizeOrders(orders);
-            renderSummary(total, expCount, stateCounts, statusCounts);
+            const { total, stateCounts, statusCounts, expCount, dateCounts } = summarizeOrders(orders);
+            renderSummary(total, expCount, stateCounts, statusCounts, dateCounts);
+        }
+
+        function injectCsvOrders(orders) {
+            const tableEl = document.getElementById('tableStatusResults');
+            if (!tableEl || typeof $(tableEl).DataTable !== 'function') return;
+            const table = $(tableEl).DataTable();
+            const existing = new Set();
+            table.rows().every(function() {
+                const d = this.data();
+                const id = d.ordernum || String(d[1] || '').replace(/\D+/g, '');
+                if (id) existing.add(String(id));
+            });
+            orders.forEach(o => {
+                if (existing.has(String(o.id))) return;
+                const expedited = o.expedited ? '<i class="mdi mdi-check-circle"></i>' : '';
+                const row = {
+                    upload_doc_link: `<a class="btn btn-transparent btn-sm" href="https://db.incfile.com/incfile/order/upload/${o.id}" target="_blank"><i class="fa fa-file-o"></i></a>`,
+                    ordernum: `<a data-detail-link="/order/detail/${o.id}" target="_blank">${o.id}</a>`,
+                    compName1: o.name || '',
+                    status: o.status || '',
+                    memberChange: '',
+                    expedited,
+                    entityState: o.state || '',
+                    orderType: '',
+                    entityType: '',
+                    dateForwarded: o.forwardedDate || '',
+                    dateOrdered: o.orderedDate || '',
+                    dateUpdated: o.shippingDate || '',
+                    dueDate: o.expectedDate || '',
+                    checkbox: '<div class="checkbox checkbox-primary"><input type="checkbox"><label></label></div>'
+                };
+                table.row.add(row);
+            });
+            table.draw(false);
+            Array.from(tableEl.querySelectorAll('tbody tr')).forEach(tr => {
+                const cell = tr.querySelector('td:nth-child(11)');
+                const ordered = cell ? cell.textContent.trim() : '';
+                tr.dataset.ordered = ordered;
+            });
         }
 
         function openQueueView() {
@@ -257,6 +375,7 @@
                 console.log(`[FENNEC] Highlighting ${ids.length} possible fraud orders`);
                 skipSummaryUpdate = true;
                 if (tableObserver) tableObserver.disconnect();
+                injectCsvOrders(orders);
                 highlightMatches(ids);
                 showCsvSummary(orders);
             });
