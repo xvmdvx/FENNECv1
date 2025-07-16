@@ -388,10 +388,15 @@
                         `  <button target="_blank" data-view-link="https://db.incfile.com/incfile/order/detail/${o.id}" class="btn btn-primary btn-sm btn-rounded view_comp_detail pull-right" style="margin-left:5px;width:60px">View</button>` +
                         `<button style="width:60px" class="btn btn-danger btn-sm btn-rounded copy pull-right" data-comp-name="${escapeHtml(o.name || '')}" data-name-search-link="https://icis.corp.delaware.gov/Ecorp/EntitySearch/NameSearch.aspx">Search</button></div></td>` +
                         `<td>${escapeHtml(o.status || '')}</td>` +
+                        `<td></td>` +
                         `<td>${expedited}</td>` +
                         `<td>${escapeHtml(o.state || '')}</td>` +
-                        `<td></td><td></td>` +
+                        `<td></td>` +
+                        `<td></td>` +
+                        `<td>${escapeHtml(o.forwardedDate || '')}</td>` +
                         `<td>${escapeHtml(o.orderedDate || '')}</td>` +
+                        `<td>${escapeHtml(o.expectedDate || '')}</td>` +
+                        `<td>${escapeHtml(o.shippingDate || '')}</td>` +
                         `<td><div class="checkbox checkbox-primary"> <input type="checkbox" class="chk_to_print" id="ord_${o.id}" value="${o.id}"> <label for="ord_${o.id}">&nbsp;</label> </div></td>` +
                         `</tr>`;
                     rows.push(rowHtml);
