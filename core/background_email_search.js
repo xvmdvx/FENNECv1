@@ -275,47 +275,66 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     function fetchEmailOrders(winId, email, callback) {
         console.log('[FENNEC (POO)] fetchEmailOrders', { winId, email });
         const encoded = encodeURIComponent(email);
-        chrome.tabs.query({ windowId: winId }, tabs => {
-            const searchTabs = tabs.filter(t => t.url &&
-                (t.url.includes('/order-tracker/orders/order-search') ||
-                 t.url.includes('/db-tools/scan-email-address')));
-            console.log('[FENNEC (POO)] available search tabs', searchTabs.map(t => t.url));
-            let searchTab = searchTabs.find(t => t.url.includes('fennec_email=' + encoded));
-            if (!searchTab) searchTab = searchTabs[0];
-            if (!searchTab) { console.log('[FENNEC (POO)] no search tab found'); callback(null); return; }
-            console.log('[FENNEC (POO)] using search tab', searchTab.id, searchTab.url);
-            chrome.tabs.update(searchTab.id, { active: true });
-            let attempts = 5;
-            const sendReq = () => {
-                console.log('[FENNEC (POO)] getEmailOrders attempt', { attempts_left: attempts, tabId: searchTab.id });
-                chrome.tabs.sendMessage(searchTab.id, { action: 'getEmailOrders' }, resp => {
-                    if (chrome.runtime.lastError || !resp) {
-                        const msg = chrome.runtime.lastError ? chrome.runtime.lastError.message : 'no response';
-                        if (/Could not establish connection|Receiving end does not exist/i.test(msg) && attempts > 0) {
-                            attempts--;
-                            setTimeout(sendReq, 500);
-                            return;
-                        }
-                        console.warn('[FENNEC (POO)] getEmailOrders failed:', msg);
-                        callback(null);
-                    } else {
-                        console.log('[FENNEC (POO)] getEmailOrders response', resp);
-                        const orders = Array.isArray(resp.orders) ? resp.orders : [];
-                        const counts = { cxl: 0, pending: 0, shipped: 0, transferred: 0 };
-                        orders.forEach(o => {
-                            const s = String(o.status || '').toUpperCase();
-                            if (/CANCEL/.test(s)) counts.cxl++;
-                            else if (/TRANSFERRED/.test(s)) counts.transferred++;
-                            else if (/SHIPPED/.test(s)) counts.shipped++;
-                            else if (/PROCESSING|REVIEW|HOLD/.test(s)) counts.pending++;
+        const queryTabs = () => {
+            chrome.tabs.query({ windowId: winId }, tabs => {
+                const searchTabs = tabs.filter(t => t.url &&
+                    (t.url.includes('/order-tracker/orders/order-search') ||
+                     t.url.includes('/db-tools/scan-email-address')));
+                console.log('[FENNEC (POO)] available search tabs', searchTabs.map(t => t.url));
+                let searchTab = searchTabs.find(t => t.url.includes('fennec_email=' + encoded));
+                if (!searchTab) searchTab = searchTabs[0];
+
+                let createdTabId = null;
+                const startFetch = () => {
+                    if (!searchTab) {
+                        const url = `https://db.incfile.com/order-tracker/orders/order-search?fennec_email=${encoded}`;
+                        chrome.tabs.create({ url, active: false, windowId: winId }, t => {
+                            searchTab = t;
+                            createdTabId = t.id;
+                            runFetch();
                         });
-                        counts.total = orders.length;
-                        callback({ orders, counts });
+                    } else {
+                        chrome.tabs.update(searchTab.id, { active: true }, runFetch);
                     }
-                });
-            };
-            sendReq();
-        });
+                };
+
+                let attempts = 8;
+                const runFetch = () => {
+                    console.log('[FENNEC (POO)] getEmailOrders attempt', { attempts_left: attempts, tabId: searchTab.id });
+                    chrome.tabs.sendMessage(searchTab.id, { action: 'getEmailOrders' }, resp => {
+                        if (chrome.runtime.lastError || !resp) {
+                            const msg = chrome.runtime.lastError ? chrome.runtime.lastError.message : 'no response';
+                            if (/Could not establish connection|Receiving end does not exist/i.test(msg) && attempts > 0) {
+                                attempts--;
+                                setTimeout(runFetch, 1000);
+                                return;
+                            }
+                            console.warn('[FENNEC (POO)] getEmailOrders failed:', msg);
+                            if (createdTabId) chrome.tabs.remove(createdTabId);
+                            callback(null);
+                        } else {
+                            console.log('[FENNEC (POO)] getEmailOrders response', resp);
+                            const orders = Array.isArray(resp.orders) ? resp.orders : [];
+                            const counts = { cxl: 0, pending: 0, shipped: 0, transferred: 0 };
+                            orders.forEach(o => {
+                                const s = String(o.status || '').toUpperCase();
+                                if (/CANCEL/.test(s)) counts.cxl++;
+                                else if (/TRANSFERRED/.test(s)) counts.transferred++;
+                                else if (/SHIPPED/.test(s)) counts.shipped++;
+                                else if (/PROCESSING|REVIEW|HOLD/.test(s)) counts.pending++;
+                            });
+                            counts.total = orders.length;
+                            if (createdTabId) chrome.tabs.remove(createdTabId);
+                            callback({ orders, counts });
+                        }
+                    });
+                };
+
+                startFetch();
+            });
+        };
+
+        queryTabs();
     }
 
     function checkOrderSubs(orderId, winId, done) {
