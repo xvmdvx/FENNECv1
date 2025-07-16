@@ -206,7 +206,8 @@
         "bg_holo.mp4",
         "mistral-7b-instruct-v0.1.Q4_K_M.gguf",
         "environments/db/csv_hook.js",
-        "environments/db/table_inject.js"
+        "environments/db/table_inject.js",
+        "environments/db/datatables_patch.js"
       ],
       "matches": [
         "<all_urls>"
