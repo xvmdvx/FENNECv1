@@ -249,6 +249,19 @@ ICONS/BUTTONS/FUNCTIONS:
    The DB email search page is opened immediately so results load in the background.
    Once DNA completes the search tab is focused to grab the history and then focus returns to the Fraud tracker.
    A KOUNT summary box appears below DNA after the data is extracted.
+
+### Fraud Review XRAY flow
+0. Click the XRAY icon in the fraud tracker list.
+1. Open the order in DB.
+2. Refresh DB to obtain the correct LTV.
+3. Open DB email search in a background tab so results start loading.
+4. Open KOUNT and extract data.
+5. Open EKATA and extract data.
+6. Open ADYEN and navigate to Payment Details, then extract data.
+7. Open ADYEN DNA.
+8. Return to the DB email search tab and wait for results. Once loaded, extract the order counts.
+9. Return to the original fraud tracker tab with the floater fully built and still showing LOADING if any value was missing.
+10. Finish the XRAY session once a decision is made, the floater is manually closed or a new XRAY session begins.
    
 🤖 FILE: Automator that opens and fills the SOS filing process.
 
