@@ -702,6 +702,10 @@
                     const cols = overlay.querySelectorAll('.trial-columns .trial-col');
                     const dbCol = cols && cols[0];
                     const req = ++subDetectSeq;
+                    console.log('[FENNEC (POO)] requesting email order count', {
+                        email: order.clientEmail,
+                        ltv: order.clientLtv
+                    });
                     bg.send('countEmailOrders', {
                         email: order.clientEmail,
                         ltv: order.clientLtv || ''
@@ -736,6 +740,7 @@
                                 addFour(pairs.slice(i, i + 2));
                             }
                             const goodTotal = resp.statusCounts.total >= resp.statusCounts.cxl * 2;
+                            console.log('[FENNEC (POO)] total orders', resp.statusCounts.total, 'goodTotal', goodTotal);
                             addLine(`<span class="trial-tag">TOTAL:</span><span class="trial-value">${resp.statusCounts.total} <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span></span>`);
                             if (resp.ltv) {
                                 const per = (parseInt(resp.statusCounts.pending,10) || 0) +
