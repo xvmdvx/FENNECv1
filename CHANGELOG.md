@@ -35,3 +35,4 @@ All notable changes to this project will be documented in this file.
 - Separated order counting from subscription detection and added COUNTEMAILORDERS action.
 - Added retries when counting email orders so the Trial floater shows accurate totals.
 - Suppressed DataTables Ajax error during Queue View.
+- Added logs to debug email order counts in the Trial floater.
