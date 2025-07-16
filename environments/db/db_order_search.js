@@ -189,19 +189,30 @@
             console.log('[FENNEC] Fraud flags applied');
         }
 
-        function downloadCsvOrders(cb) {
-            const origBlob = window.Blob;
-            let csv = null;
-            let finished = false;
-            window.Blob = function(data, opts) {
-                if (Array.isArray(data) && typeof data[0] === 'string') {
-                    csv = data[0];
-                    finished = true;
+        function injectCsvHook() {
+            const script = document.createElement('script');
+            script.textContent = `(
+                function() {
+                    if (window.__fennecCsvHook) return;
+                    window.__fennecCsvHook = true;
+                    const origBlob = window.Blob;
+                    window.Blob = function(data, opts) {
+                        if (Array.isArray(data) && typeof data[0] === 'string') {
+                            try { window.postMessage({ type: 'FENNEC_CSV_CAPTURE', csv: data[0] }, '*'); } catch (e) {}
+                            window.Blob = origBlob;
+                        }
+                        return new origBlob(data, opts);
+                    };
                 }
-                return new origBlob(data, opts);
-            };
+            )();`;
+            document.documentElement.appendChild(script);
+            script.remove();
+        }
+
+        function downloadCsvOrders(cb) {
+            let csv = null;
             function finalize() {
-                window.Blob = origBlob;
+                window.removeEventListener('message', onMsg);
                 const orders = [];
                 if (csv) {
                     const rows = parseCsv(csv);
@@ -218,20 +229,20 @@
                 console.log(`[FENNEC] Parsed ${orders.length} orders from CSV`);
                 cb(orders);
             }
+            function onMsg(e) {
+                if (e.source !== window || !e.data || e.data.type !== 'FENNEC_CSV_CAPTURE') return;
+                csv = e.data.csv;
+                clearTimeout(timeout);
+                finalize();
+            }
+            injectCsvHook();
+            window.addEventListener('message', onMsg);
             if (typeof downloadOrderSearch === 'function') {
                 downloadOrderSearch();
             } else {
                 console.warn('[FENNEC] downloadOrderSearch function not found');
             }
-            let attempts = 0;
-            (function waitCsv() {
-                if (finished || attempts > 100) {
-                    console.log(`[FENNEC] CSV capture finished: ${finished}, attempts: ${attempts}`);
-                    return finalize();
-                }
-                attempts++;
-                setTimeout(waitCsv, 100);
-            })();
+            const timeout = setTimeout(() => finalize(), 10000);
         }
 
         function showCsvSummary(orders) {
