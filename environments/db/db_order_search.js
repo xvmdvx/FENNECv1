@@ -57,6 +57,7 @@
             const statusCounts = {};
             const dateCounts = { today: 0, yesterday: 0, in3: 0, in7: 0, in14: 0, in30: 0 };
             let expCount = 0;
+            let fraudCount = 0;
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             const yday = new Date(today.getTime() - 86400000);
@@ -67,7 +68,10 @@
             orders.forEach(o => {
                 const abbr = toStateAbbr(o.state);
                 if (abbr) stateCounts[abbr] = (stateCounts[abbr] || 0) + 1;
-                if (o.status) statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
+                if (o.status) {
+                    statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
+                    if (/possible fraud/i.test(o.status)) fraudCount++;
+                }
                 if (o.expedited) expCount++;
                 const d = o.orderedDate ? new Date(o.orderedDate) : null;
                 if (d && !isNaN(d)) {
@@ -80,31 +84,14 @@
                     else if (sd <= d30) dateCounts.in30++;
                 }
             });
-            return { total: orders.length, stateCounts, statusCounts, expCount, dateCounts };
+            return { total: orders.length, stateCounts, statusCounts, expCount, dateCounts, fraudCount };
         }
 
         let currentFilterState = '';
         let currentFilterDate = '';
+        let hideFraud = false;
 
-        function filterByState(state) {
-            if (currentFilterState === state) state = '';
-            currentFilterState = state;
-            const rows = document.querySelectorAll('#tableStatusResults tbody tr');
-            rows.forEach(r => {
-                const cell = r.querySelector('td:nth-child(6)');
-                const st = toStateAbbr(cell ? cell.textContent.trim() : '');
-                r.style.display = !state || st === state ? '' : 'none';
-            });
-            const items = document.querySelectorAll('#qs-summary .state-count');
-            items.forEach(it => {
-                if (it.dataset.state === state && state) it.classList.add('active');
-                else it.classList.remove('active');
-            });
-        }
-
-        function filterByDate(range) {
-            if (currentFilterDate === range) range = '';
-            currentFilterDate = range;
+        function applyFilters() {
             const rows = document.querySelectorAll('#tableStatusResults tbody tr');
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -114,33 +101,62 @@
             const d14 = new Date(today.getTime() + 14 * 86400000);
             const d30 = new Date(today.getTime() + 30 * 86400000);
             rows.forEach(r => {
+                const stateCell = r.querySelector('td:nth-child(6)');
+                const st = toStateAbbr(stateCell ? stateCell.textContent.trim() : '');
                 const text = r.dataset.ordered || '';
                 const d = text ? new Date(text) : null;
+                const flagged = r.dataset.possibleFraud === '1';
                 let show = true;
-                if (range && d && !isNaN(d)) {
-                    const sd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-                    if (range === 'today') show = sd.getTime() === today.getTime();
-                    else if (range === 'yesterday') show = sd.getTime() === yday.getTime();
-                    else if (range === 'in3') show = sd > today && sd <= d3;
-                    else if (range === 'in7') show = sd > d3 && sd <= d7;
-                    else if (range === 'in14') show = sd > d7 && sd <= d14;
-                    else if (range === 'in30') show = sd > d14 && sd <= d30;
+                if (currentFilterState && st !== currentFilterState) show = false;
+                if (currentFilterDate) {
+                    if (d && !isNaN(d)) {
+                        const sd = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                        if (currentFilterDate === 'today') show = show && sd.getTime() === today.getTime();
+                        else if (currentFilterDate === 'yesterday') show = show && sd.getTime() === yday.getTime();
+                        else if (currentFilterDate === 'in3') show = show && sd > today && sd <= d3;
+                        else if (currentFilterDate === 'in7') show = show && sd > d3 && sd <= d7;
+                        else if (currentFilterDate === 'in14') show = show && sd > d7 && sd <= d14;
+                        else if (currentFilterDate === 'in30') show = show && sd > d14 && sd <= d30;
+                    } else show = false;
                 }
-                if (range && (!d || isNaN(d))) show = false;
+                if (hideFraud && flagged) show = false;
                 r.style.display = show ? '' : 'none';
             });
-            const items = document.querySelectorAll('#qs-summary .date-count');
-            items.forEach(it => {
-                if (it.dataset.range === range && range) it.classList.add('active');
+            document.querySelectorAll('#qs-summary .state-count').forEach(it => {
+                if (it.dataset.state === currentFilterState && currentFilterState) it.classList.add('active');
+                else it.classList.remove('active');
+            });
+            document.querySelectorAll('#qs-summary .date-count').forEach(it => {
+                if (it.dataset.range === currentFilterDate && currentFilterDate) it.classList.add('active');
                 else it.classList.remove('active');
             });
         }
 
-        function renderSummary(total, expCount, stateCounts, statusCounts, dateCounts) {
+        function filterByState(state) {
+            if (currentFilterState === state) state = '';
+            currentFilterState = state;
+            applyFilters();
+        }
+
+        function filterByDate(range) {
+            if (currentFilterDate === range) range = '';
+            currentFilterDate = range;
+            applyFilters();
+        }
+
+        function toggleFraud() {
+            hideFraud = !hideFraud;
+            const icon = document.getElementById('fraud-eye');
+            if (icon) icon.className = hideFraud ? 'ti ti-eye-off' : 'ti ti-eye';
+            applyFilters();
+        }
+
+        function renderSummary(total, expCount, fraudCount, stateCounts, statusCounts, dateCounts) {
             const box = document.getElementById('qs-summary');
             if (!box) return;
-            let html = `<div><b>TOTAL:</b> ${total}</div>`;
-            html += `<div><b>EXPEDITED:</b> ${expCount}</div>`;
+            let html = `<div><b>TOTAL:</b> <b>${total}</b></div>`;
+            html += `<div><b>EXPEDITED:</b> <b>${expCount}</b></div>`;
+            html += `<div id="fraud-toggle" style="cursor:pointer"><b>POSSIBLE FRAUD:</b> <b>${fraudCount}</b> <i id="fraud-eye" class="ti ti-eye" style="margin-left:4px"></i></div>`;
             html += '<div style="margin-top:8px"><b>BY STATE</b></div>';
             html += '<div style="display:flex;flex-wrap:wrap">';
             Object.keys(stateCounts)
@@ -148,7 +164,7 @@
                 .forEach(st => {
                     html += `<span class="state-count" data-state="${escapeHtml(st)}" ` +
                             `style="width:25%;cursor:pointer;display:inline-block">` +
-                            `<b>${escapeHtml(st)}:</b> ${stateCounts[st]}</span>`;
+                            `<b>${escapeHtml(st)}:</b> <b>${stateCounts[st]}</b></span>`;
                 });
             html += '</div>';
             let dateHtml = '';
@@ -161,7 +177,7 @@
                 ['in30','+1 MONTH']
             ].forEach(([k,label]) => {
                 const cnt = dateCounts && dateCounts[k] ? dateCounts[k] : 0;
-                if (cnt) dateHtml += `<div class="date-count" data-range="${k}" style="cursor:pointer"><b>${label}:</b> ${cnt}</div>`;
+                if (cnt) dateHtml += `<div class="date-count" data-range="${k}" style="cursor:pointer"><b>${label}:</b> <b>${cnt}</b></div>`;
             });
             if (dateHtml) {
                 html += '<div style="margin-top:8px"><b>BY DATE</b></div>';
@@ -172,7 +188,7 @@
                 Object.keys(statusCounts)
                     .sort((a,b) => statusCounts[b] - statusCounts[a])
                     .forEach(status => {
-                        html += `<div><b>${escapeHtml(status)}:</b> ${statusCounts[status]}</div>`;
+                        html += `<div><b>${escapeHtml(status)}:</b> <b>${statusCounts[status]}</b></div>`;
                     });
                 html += '</div>';
             }
@@ -183,13 +199,15 @@
             box.querySelectorAll('.date-count').forEach(el => {
                 el.addEventListener('click', () => filterByDate(el.dataset.range));
             });
+            const fraudEl = document.getElementById('fraud-toggle');
+            if (fraudEl) fraudEl.addEventListener('click', toggleFraud);
         }
 
         function updateSummary() {
             if (skipSummaryUpdate) return;
             const orders = collectOrders();
-            const { total, stateCounts, statusCounts, expCount, dateCounts } = summarizeOrders(orders);
-            renderSummary(total, expCount, stateCounts, statusCounts, dateCounts);
+            const { total, stateCounts, statusCounts, expCount, dateCounts, fraudCount } = summarizeOrders(orders);
+            renderSummary(total, expCount, fraudCount, stateCounts, statusCounts, dateCounts);
         }
 
         function observeTable() {
@@ -272,11 +290,14 @@
                         icon.style.marginRight = '3px';
                         link.prepend(icon);
                     }
-                } else if (icon) {
-                    icon.remove();
+                    r.dataset.possibleFraud = '1';
+                } else {
+                    if (icon) icon.remove();
+                    r.dataset.possibleFraud = '';
                 }
             });
             console.log('[FENNEC] Fraud flags applied');
+            applyFilters();
         }
 
         function injectCsvHook() {
@@ -328,9 +349,9 @@
         }
 
         function showCsvSummary(orders) {
-            const { total, stateCounts, statusCounts, expCount, dateCounts } = summarizeOrders(orders);
+            const { total, stateCounts, statusCounts, expCount, dateCounts, fraudCount } = summarizeOrders(orders);
             console.log(`[FENNEC] Rendering summary for ${total} CSV orders`);
-            renderSummary(total, expCount, stateCounts, statusCounts, dateCounts);
+            renderSummary(total, expCount, fraudCount, stateCounts, statusCounts, dateCounts);
         }
 
         function injectCsvOrders(orders) {
@@ -349,24 +370,22 @@
             });
             orders.forEach(o => {
                 if (existing.has(String(o.id))) return;
-                const expedited = o.expedited ? '<i class="mdi mdi-check-circle"></i>' : '';
-                const row = {
-                    upload_doc_link: `<a class="btn btn-transparent btn-sm" href="https://db.incfile.com/incfile/order/upload/${o.id}" target="_blank"><i class="fa fa-file-o"></i></a>`,
-                    ordernum: `<a data-detail-link="/order/detail/${o.id}" target="_blank">${o.id}</a>`,
-                    compName1: o.name || '',
-                    status: o.status || '',
-                    memberChange: '',
-                    expedited,
-                    entityState: o.state || '',
-                    orderType: '',
-                    entityType: '',
-                    dateForwarded: o.forwardedDate || '',
-                    dateOrdered: o.orderedDate || '',
-                    dateUpdated: o.shippingDate || '',
-                    dueDate: o.expectedDate || '',
-                    checkbox: '<div class="checkbox checkbox-primary"><input type="checkbox"><label></label></div>'
-                };
-                table.row.add(row);
+                const expedited = o.expedited ? '<i class="mdi mdi-check-circle" style="color:#3cb81e; font-size:25px; margin-left:20px; margin-top: -4px; display: inline-block"></i>' : '';
+                const rowHtml = `<tr class="even" data-ordered="${escapeHtml(o.orderedDate || '')}">` +
+                    `<td><a class="btn btn-transparent btn-sm" href="https://db.incfile.com/incfile/order/upload/${o.id}" target="_blank" data-toggle="tooltip" data-placement="right" data-trigger="hover" title="" data-original-title="Upload document for&lt;br&gt; ${escapeHtml(o.name || '')}"><i class="ti ti-upload"></i></a></td>` +
+                    `<td><a href="https://db.incfile.com/redirect-to-dashboard-staff-bypass/${o.id}" target="_blank" style="margin-right: 1rem;" title="" data-toggle="tooltip" data-original-title="Client Dashboard"><img src="/static/img/dashboard.ico" width="30" height="30" alt=""></a>` +
+                    `<a class="goto-orderdetail" href="javascript:void(0)" data-detail-link="https://db.incfile.com/incfile/order/detail/${o.id}" style="color:#2cabe3">${o.id}</a></td>` +
+                    `<td><div class="wrapper-comp"><span class="name-inside pull-left">${escapeHtml(o.name || '')}</span>` +
+                    `  <button target="_blank" data-view-link="https://db.incfile.com/incfile/order/detail/${o.id}" class="btn btn-primary btn-sm btn-rounded view_comp_detail pull-right" style="margin-left:5px;width:60px">View</button>` +
+                    `<button style="width:60px" class="btn btn-danger btn-sm btn-rounded copy pull-right" data-comp-name="${escapeHtml(o.name || '')}" data-name-search-link="https://icis.corp.delaware.gov/Ecorp/EntitySearch/NameSearch.aspx">Search</button></div></td>` +
+                    `<td>${escapeHtml(o.status || '')}</td>` +
+                    `<td>${expedited}</td>` +
+                    `<td>${escapeHtml(o.state || '')}</td>` +
+                    `<td></td><td></td>` +
+                    `<td>${escapeHtml(o.orderedDate || '')}</td>` +
+                    `<td><div class="checkbox checkbox-primary"> <input type="checkbox" class="chk_to_print" id="ord_${o.id}" value="${o.id}"> <label for="ord_${o.id}">&nbsp;</label> </div></td>` +
+                    `</tr>`;
+                table.row.add($(rowHtml)[0]);
             });
             table.draw(false);
             console.log('[FENNEC] Table updated with CSV orders');
