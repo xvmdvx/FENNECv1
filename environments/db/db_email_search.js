@@ -7,7 +7,9 @@
         const email = params.get('fennec_email');
         if (!email) return;
         function collectOrders() {
-            const rows = document.querySelectorAll('.search_result tbody tr');
+            const rows = document.querySelectorAll(
+                '.search_result tbody tr, #tableStatusResults tbody tr'
+            );
             return Array.from(rows).map(r => {
                 const link = r.querySelector('a[href*="/order/detail/"]');
                 const id = link ? link.textContent.replace(/\D+/g, '') : '';
@@ -29,7 +31,9 @@
         }
 
         function waitForResults(callback) {
-            const tbody = document.querySelector('.search_result tbody');
+            const tbody = document.querySelector(
+                '.search_result tbody, #tableStatusResults tbody'
+            );
             if (!tbody) { setTimeout(() => waitForResults(callback), 100); return; }
             const rows = tbody.querySelectorAll('tr');
             if (rows.length) { callback(); return; }
@@ -68,7 +72,9 @@
                     console.log('[FENNEC (POO)] db_email_search returning', orders.length, 'orders');
                     sendResponse({ orders, total });
                 };
-                const tbody = document.querySelector('.search_result tbody');
+                const tbody = document.querySelector(
+                    '.search_result tbody, #tableStatusResults tbody'
+                );
                 if (tbody && !tbody.querySelector('tr')) {
                     const obs = new MutationObserver(() => {
                         if (tbody.querySelector('tr')) {
