@@ -128,6 +128,40 @@
             return parts.map(p => p.replace(/^"|"$/g, '').trim());
         }
 
+        function parseCsv(text) {
+            const rows = [];
+            let cur = '';
+            let row = [];
+            let inQuote = false;
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i];
+                if (ch === '"') {
+                    if (text[i + 1] === '"') {
+                        cur += '"';
+                        i++;
+                    } else {
+                        inQuote = !inQuote;
+                    }
+                } else if (ch === ',' && !inQuote) {
+                    row.push(cur);
+                    cur = '';
+                } else if ((ch === '\n' || ch === '\r') && !inQuote) {
+                    if (ch === '\r' && text[i + 1] === '\n') i++;
+                    row.push(cur);
+                    rows.push(row.map(p => p.replace(/^"|"$/g, '').trim()));
+                    row = [];
+                    cur = '';
+                } else {
+                    cur += ch;
+                }
+            }
+            if (cur.length || row.length) {
+                row.push(cur);
+                rows.push(row.map(p => p.replace(/^"|"$/g, '').trim()));
+            }
+            return rows;
+        }
+
         function highlightMatches(ids) {
             const set = ids ? new Set(ids.map(String)) : fraudSet;
             const rows = document.querySelectorAll('#tableStatusResults tbody tr');
@@ -170,10 +204,9 @@
                 window.Blob = origBlob;
                 const orders = [];
                 if (csv) {
-                    const lines = csv.split('\n');
-                    lines.slice(1).forEach(line => {
-                        if (!line.trim()) return;
-                        const cols = parseCsvLine(line);
+                    const rows = parseCsv(csv);
+                    console.log(`[FENNEC] CSV text length ${csv.length}, rows ${rows.length}`);
+                    rows.slice(1).forEach(cols => {
                         const id = cols[0];
                         const state = cols[1];
                         const status = cols[19] || '';
@@ -182,6 +215,7 @@
                     });
                 }
                 if (!csv) console.warn('[FENNEC] CSV not captured');
+                console.log(`[FENNEC] Parsed ${orders.length} orders from CSV`);
                 cb(orders);
             }
             if (typeof downloadOrderSearch === 'function') {
@@ -191,7 +225,10 @@
             }
             let attempts = 0;
             (function waitCsv() {
-                if (finished || attempts > 50) return finalize();
+                if (finished || attempts > 100) {
+                    console.log(`[FENNEC] CSV capture finished: ${finished}, attempts: ${attempts}`);
+                    return finalize();
+                }
                 attempts++;
                 setTimeout(waitCsv, 100);
             })();
@@ -226,7 +263,12 @@
                 showCsvSummary(orders);
             });
             const genBtn = document.getElementById('generateCSV');
-            if (genBtn) genBtn.click();
+            if (genBtn) {
+                console.log('[FENNEC] Triggering built-in CSV download button');
+                genBtn.click();
+            } else {
+                console.warn('[FENNEC] generateCSV button not found');
+            }
             bg.openOrReuseTab({ url: 'https://db.incfile.com/order-tracker/orders/fraud?fennec_queue_scan=1', active: false });
         }
 
