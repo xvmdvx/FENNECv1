@@ -88,6 +88,7 @@ MAIN (BUSINESS FORMATION ORDERS: SILVER, GOLD, PLATINUM)
          - Header with ACTIVE/RESOLVED tag.
          - Issue text.
          - Comment input and **COMMENT & RESOLVE** button.
+      - Multiple document uploads are supported. Each file becomes a PDF and the button label switches to **UPDATE**.
       Quick resolve field under Issue summary
       Reuses any open DB tab for comments and resolves the issue only if active
       The comment box disappears after submission showing your comment and a
@@ -127,6 +128,7 @@ MISC (ALL NON-BUSINESS FORMATION ORDERS)
 REVIEW MODE:
 This is a detailed mode for the Revenue Assurance team to assist with the order review step.
 In Review Mode the sidebar stays locked across all tabs until DNA runs on a different order.
+The header shows the hamburger menu and trash icons so quick actions and CLEAR TABS remain available in any environment.
 
 MAIN:
    DB:
