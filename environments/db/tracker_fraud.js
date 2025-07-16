@@ -683,16 +683,6 @@
                     const kount = data.kountInfo;
                     const order = data.sidebarOrderInfo;
                     const req = ++subDetectSeq;
-                    const cols = overlay.querySelectorAll('.trial-columns .trial-col');
-                    const dbCol = cols && cols[0];
-                    const extraInfo = dbCol ? dbCol.querySelector('#db-extra-info') : null;
-                    let orderLine = null;
-                    if (extraInfo) {
-                        orderLine = document.createElement('div');
-                        orderLine.className = 'trial-line trial-two-col';
-                        orderLine.innerHTML = '<span class="trial-tag">Orders Found:</span><span class="trial-value">LOADING...</span>';
-                        extraInfo.appendChild(orderLine);
-                    }
                     bg.send('detectSubscriptions', {
                         email: order.clientEmail,
                         ltv: order.clientLtv || ''
@@ -749,15 +739,13 @@
                                     div.innerHTML = `<span class="trial-tag">STATES:</span><span class="trial-value">${states.join(', ')}</span>`;
                                     extraInfo.appendChild(div);
                                 }
-                            if (countries.length) {
-                                const div = document.createElement('div');
-                                div.className = 'trial-line trial-two-col trial-countries-line';
-                                div.innerHTML = `<span class="trial-tag">COUNTRIES:</span><span class="trial-value">${countries.join(', ')}</span>`;
-                                extraInfo.appendChild(div);
+                                if (countries.length) {
+                                    const div = document.createElement('div');
+                                    div.className = 'trial-line trial-two-col trial-countries-line';
+                                    div.innerHTML = `<span class="trial-tag">COUNTRIES:</span><span class="trial-value">${countries.join(', ')}</span>`;
+                                    extraInfo.appendChild(div);
+                                }
                             }
-                        }
-                        if (orderLine) {
-                            orderLine.innerHTML = `<span class="trial-tag">Orders Found:</span><span class="trial-value">${resp.orderCount}</span>`;
                         } else {
                             addLine(`<span class="trial-tag">Orders Found:</span><span class="trial-value">${resp.orderCount}</span>`);
                         }
