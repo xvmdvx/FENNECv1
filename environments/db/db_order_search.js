@@ -306,9 +306,16 @@
             applyFilters();
         }
 
-        function injectCsvHook() {
+       function injectCsvHook() {
+           const script = document.createElement('script');
+           script.src = chrome.runtime.getURL('environments/db/csv_hook.js');
+           document.documentElement.appendChild(script);
+           script.remove();
+       }
+
+        function injectDatatablesPatch() {
             const script = document.createElement('script');
-            script.src = chrome.runtime.getURL('environments/db/csv_hook.js');
+            script.src = chrome.runtime.getURL('environments/db/datatables_patch.js');
             document.documentElement.appendChild(script);
             script.remove();
         }
@@ -439,13 +446,9 @@
             // the CSV download fails.
             bg.openOrReuseTab({ url: 'https://db.incfile.com/order-tracker/orders/fraud?fennec_queue_scan=1', active: false });
 
-            // Suppress DataTables' default Ajax error alert which appears when
-            // triggering the CSV download. The table data is injected manually
-            // so the failed Ajax request is harmless.
-            const jq = window.jQuery || window.$;
-            if (jq && jq.fn && jq.fn.dataTable) {
-                jq.fn.dataTable.ext.errMode = 'none';
-            }
+            // Suppress DataTables Ajax error alerts in the page context so the
+            // warning dialog doesn't appear when the built-in request fails.
+            injectDatatablesPatch();
 
             // Trigger the standard CSV download in case the custom request fails.
             const genBtn = document.getElementById('generateCSV');
