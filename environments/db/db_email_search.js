@@ -62,7 +62,7 @@
                         }
                     });
                     obs.observe(tbody, { childList: true });
-                    setTimeout(() => { obs.disconnect(); sendOrders(); }, 10000);
+                    setTimeout(() => { obs.disconnect(); sendOrders(); }, 30000);
                     return true;
                 }
                 sendOrders();

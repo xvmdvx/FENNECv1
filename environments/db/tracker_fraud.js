@@ -698,16 +698,6 @@
                     const order = data.sidebarOrderInfo;
                     const cols = overlay.querySelectorAll('.trial-columns .trial-col');
                     const dbCol = cols && cols[0];
-                    let loadingLine = null;
-                    if (dbCol) {
-                        const extraInfo = dbCol.querySelector('#db-extra-info');
-                        if (extraInfo) {
-                            loadingLine = document.createElement('div');
-                            loadingLine.className = 'trial-line trial-two-col orders-loading';
-                            loadingLine.innerHTML = '<span class="trial-tag">Orders Found:</span><span class="trial-value">LOADING...</span>';
-                            extraInfo.appendChild(loadingLine);
-                        }
-                    }
                     const req = ++subDetectSeq;
                     bg.send('detectSubscriptions', {
                         email: order.clientEmail,
@@ -770,10 +760,6 @@
                                     extraInfo.appendChild(div);
                                 }
                             }
-                        } else if (loadingLine) {
-                            loadingLine.innerHTML = `<span class="trial-tag">Orders Found:</span><span class="trial-value">${resp.orderCount}</span>`;
-                        } else {
-                            addLine(`<span class="trial-tag">Orders Found:</span><span class="trial-value">${resp.orderCount}</span>`);
                         }
                     });
                 }
