@@ -64,6 +64,15 @@
             }).filter(o => o.id);
         }
 
+        function getTotalCount() {
+            const info = document.querySelector('.dataTables_info');
+            if (info) {
+                const m = info.textContent.match(/of\s+(\d+)\s+entries/i);
+                if (m) return parseInt(m[1], 10);
+            }
+            return collectOrders().length;
+        }
+
         function summarizeOrders(orders) {
             const stateCounts = {};
             const statusCounts = {};
@@ -575,7 +584,8 @@
             if (btn) btn.click();
             waitForResults(() => {
                 const orders = collectOrders().map(o => ({ orderId: o.id, type: '', status: o.status }));
-                bg.send('dbEmailSearchResults', { orders });
+                const total = getTotalCount();
+                bg.send('dbEmailSearchResults', { orders, total });
             });
         }
 
@@ -605,8 +615,9 @@
             if (msg.action === 'getEmailOrders') {
                 const sendOrders = () => {
                     const orders = collectOrders().map(o => ({ orderId: o.id, type: '', status: o.status }));
+                    const total = getTotalCount();
                     console.log('[FENNEC (POO)] db_order_search returning', orders.length, 'orders');
-                    sendResponse({ orders });
+                    sendResponse({ orders, total });
                 };
                 const tbody = document.querySelector('#tableStatusResults tbody');
                 if (tbody && !tbody.querySelector('tr')) {

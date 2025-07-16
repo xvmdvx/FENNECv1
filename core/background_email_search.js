@@ -294,7 +294,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                             runFetch();
                         });
                     } else {
-                        chrome.tabs.update(searchTab.id, { active: true }, runFetch);
+                        chrome.tabs.update(searchTab.id, { active: false }, runFetch);
                     }
                 };
 
@@ -310,7 +310,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                 return;
                             }
                             console.warn('[FENNEC (POO)] getEmailOrders failed:', msg);
-                            if (createdTabId) chrome.tabs.remove(createdTabId);
                             callback(null);
                         } else {
                             console.log('[FENNEC (POO)] getEmailOrders response', resp);
@@ -323,8 +322,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                 else if (/SHIPPED/.test(s)) counts.shipped++;
                                 else if (/PROCESSING|REVIEW|HOLD/.test(s)) counts.pending++;
                             });
-                            counts.total = orders.length;
-                            if (createdTabId) chrome.tabs.remove(createdTabId);
+                            counts.total = typeof resp.total === 'number' ? resp.total : orders.length;
                             callback({ orders, counts });
                         }
                     });
@@ -382,7 +380,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ orderCount: 0, statusCounts: null, ltv: message.ltv });
                 return;
             }
-            sendResponse({ orderCount: info.orders.length, statusCounts: info.counts, ltv: message.ltv });
+            sendResponse({ orderCount: info.counts.total, statusCounts: info.counts, ltv: message.ltv });
         });
         return true;
     }
@@ -397,7 +395,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             const next = () => {
                 const id = ids.shift();
                 if (!id) {
-                    sendResponse({ orderCount: info.orders.length, statusCounts: info.counts, activeSubs: active, ltv: message.ltv });
+                    sendResponse({ orderCount: info.counts.total, statusCounts: info.counts, activeSubs: active, ltv: message.ltv });
                     return;
                 }
                 checkOrderSubs(id, winId, subs => { if (subs && subs.length) active.push(...subs); next(); });
