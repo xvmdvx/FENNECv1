@@ -19,6 +19,12 @@
         if (localStorage.getItem('fraudXrayFinished') === '1') {
             sessionStorage.setItem('fennecShowTrialFloater', '1');
         }
+        chrome.storage.local.get({ fraudXrayFinished: null }, ({ fraudXrayFinished }) => {
+            if (fraudXrayFinished === '1') {
+                sessionStorage.setItem('fennecShowTrialFloater', '1');
+                chrome.storage.local.remove('fraudXrayFinished');
+            }
+        });
 
         function injectSidebar() {
             if (document.getElementById('copilot-sidebar')) return;
@@ -1319,6 +1325,10 @@ function namesMatch(a, b) {
             if (area === 'local' && (changes.adyenDnaInfo || changes.kountInfo)) {
                 showTrialFloater(60, true);
             }
+            if (area === 'local' && changes.fraudXrayFinished && changes.fraudXrayFinished.newValue === '1') {
+                chrome.storage.local.remove('fraudXrayFinished');
+                showTrialFloater(60, true);
+            }
         });
         window.addEventListener('focus', () => {
             loadDnaSummary();
@@ -1327,7 +1337,14 @@ function namesMatch(a, b) {
                 localStorage.removeItem('fraudXrayFinished');
                 showTrialFloater(60, true);
             } else {
-                showTrialFloater(60, true);
+                chrome.storage.local.get({ fraudXrayFinished: null }, ({ fraudXrayFinished }) => {
+                    if (fraudXrayFinished === '1') {
+                        chrome.storage.local.remove('fraudXrayFinished');
+                        showTrialFloater(60, true);
+                    } else {
+                        showTrialFloater(60, true);
+                    }
+                });
             }
         });
 

@@ -97,6 +97,7 @@ class KountLauncher extends Launcher {
                         saveData({ ekata: { ipValid, proxyRisk, addressToName, residentName } });
                         // Signal XRAY completion so the Trial floater can appear
                         localStorage.setItem('fraudXrayFinished', '1');
+                        chrome.storage.local.set({ fraudXrayFinished: '1' });
                         sessionStorage.removeItem('fennecEkataUpdateClicked');
                         chrome.storage.local.get({ fennecFraudAdyen: null }, ({ fennecFraudAdyen }) => {
                             if (fennecFraudAdyen) {
