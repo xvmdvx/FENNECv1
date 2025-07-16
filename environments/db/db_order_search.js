@@ -354,20 +354,26 @@
             renderSummary(total, expCount, fraudCount, stateCounts, statusCounts, dateCounts);
         }
 
+        function injectTableHelper() {
+            if (window.__fennecTableInject) return;
+            const script = document.createElement('script');
+            script.src = chrome.runtime.getURL('environments/db/table_inject.js');
+            document.documentElement.appendChild(script);
+            script.remove();
+        }
+
         function injectCsvOrders(orders) {
             console.log(`[FENNEC] Injecting ${orders.length} orders into table`);
             const tableEl = document.getElementById('tableStatusResults');
-            if (!tableEl || typeof $(tableEl).DataTable !== 'function') {
-                console.warn('[FENNEC] DataTable not found, skipping injection');
-                return;
-            }
-            const table = $(tableEl).DataTable();
+            if (!tableEl) { console.warn('[FENNEC] tableStatusResults not found'); return; }
+            injectTableHelper();
             const existing = new Set();
-            table.rows().every(function() {
-                const d = this.data();
-                const id = d.ordernum || String(d[1] || '').replace(/\D+/g, '');
+            Array.from(tableEl.querySelectorAll('tbody tr')).forEach(tr => {
+                const link = tr.querySelector('a[data-detail-link*="/order/detail/"]') || tr.querySelector('a[href*="/order/detail/"]');
+                const id = link ? (link.dataset.detailLink || link.textContent).replace(/\D+/g, '') : '';
                 if (id) existing.add(String(id));
             });
+            const rows = [];
             orders.forEach(o => {
                 if (existing.has(String(o.id))) return;
                 const expedited = o.expedited ? '<i class="mdi mdi-check-circle" style="color:#3cb81e; font-size:25px; margin-left:20px; margin-top: -4px; display: inline-block"></i>' : '';
@@ -385,15 +391,23 @@
                     `<td>${escapeHtml(o.orderedDate || '')}</td>` +
                     `<td><div class="checkbox checkbox-primary"> <input type="checkbox" class="chk_to_print" id="ord_${o.id}" value="${o.id}"> <label for="ord_${o.id}">&nbsp;</label> </div></td>` +
                     `</tr>`;
-                table.row.add($(rowHtml)[0]);
+                rows.push(rowHtml);
             });
-            table.draw(false);
-            console.log('[FENNEC] Table updated with CSV orders');
-            Array.from(tableEl.querySelectorAll('tbody tr')).forEach(tr => {
-                const cell = tr.querySelector('td:nth-child(11)');
-                const ordered = cell ? cell.textContent.trim() : '';
-                tr.dataset.ordered = ordered;
-            });
+            if (!rows.length) { console.log('[FENNEC] No new CSV orders to inject'); return; }
+
+            function onAdded(e) {
+                if (e.source !== window || !e.data || e.data.type !== 'FENNEC_ROWS_ADDED') return;
+                window.removeEventListener('message', onAdded);
+                Array.from(tableEl.querySelectorAll('tbody tr')).forEach(tr => {
+                    const cell = tr.querySelector('td:nth-child(11)');
+                    const ordered = cell ? cell.textContent.trim() : '';
+                    tr.dataset.ordered = ordered;
+                });
+                console.log('[FENNEC] Table updated with CSV orders');
+            }
+
+            window.addEventListener('message', onAdded);
+            window.postMessage({ type: 'FENNEC_ADD_ROWS', rows }, '*');
         }
 
         function openQueueView() {
