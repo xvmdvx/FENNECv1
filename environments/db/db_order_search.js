@@ -512,6 +512,13 @@
                 highlightMatches();
             }
         });
+
+        chrome.runtime.onMessage.addListener((msg, snd, sendResponse) => {
+            if (msg.action === 'getEmailOrders') {
+                const orders = collectOrders().map(o => ({ orderId: o.id, type: '', status: o.status }));
+                sendResponse({ orders });
+            }
+        });
     });
 })();
 
