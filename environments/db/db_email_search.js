@@ -52,7 +52,12 @@
 
         chrome.runtime.onMessage.addListener((msg, snd, sendResponse) => {
             if (msg.action === 'getEmailOrders') {
-                const sendOrders = () => sendResponse({ orders: collectOrders() });
+                console.log('[Copilot] getEmailOrders request received');
+                const sendOrders = () => {
+                    const orders = collectOrders();
+                    console.log(`[Copilot] Returning ${orders.length} orders`);
+                    sendResponse({ orders });
+                };
                 const tbody = document.querySelector('.search_result tbody');
                 if (tbody && !tbody.querySelector('tr')) {
                     const obs = new MutationObserver(() => {
