@@ -450,9 +450,11 @@
                 console.log('[FENNEC] Injecting CSV orders into search results table');
                 injectCsvOrders(orders);
 
-                const ids = orders.filter(o => /possible fraud/i.test(o.status)).map(o => o.id);
-                console.log(`[FENNEC] Flagging ${ids.length} possible fraud orders`);
-                highlightMatches(ids);
+                const ids = orders.map(o => String(o.id));
+                const flagged = ids.filter(id => fraudSet.has(id));
+                console.log(`[FENNEC] Flagging ${flagged.length} possible fraud orders`);
+                // Highlight all known fraud orders including the new matches
+                highlightMatches(Array.from(fraudSet));
             });
         }
 
