@@ -556,6 +556,7 @@
             if (msg.action === 'getEmailOrders') {
                 const sendOrders = () => {
                     const orders = collectOrders().map(o => ({ orderId: o.id, type: '', status: o.status }));
+                    console.log('[FENNEC (POO)] db_order_search returning', orders.length, 'orders');
                     sendResponse({ orders });
                 };
                 const tbody = document.querySelector('#tableStatusResults tbody');

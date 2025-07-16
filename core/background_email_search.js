@@ -273,9 +273,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === "detectSubscriptions" && message.email && sender.tab) {
+        console.log('[FENNEC (POO)] detectSubscriptions request for', message.email);
         const winId = sender.tab.windowId;
         const encoded = encodeURIComponent(message.email);
         chrome.tabs.query({ windowId: winId }, tabs => {
+            console.log('[FENNEC (POO)] Candidate search tabs:', tabs.map(t => t.url));
             const searchTabs = tabs.filter(t => t.url &&
                 (t.url.includes("/order-tracker/orders/order-search") ||
                  t.url.includes("/db-tools/scan-email-address")));
@@ -285,12 +287,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
                 return;
             }
+            console.log('[FENNEC (POO)] Using tab', searchTab.id, searchTab.url);
             chrome.tabs.update(searchTab.id, { active: true });
+            console.log('[FENNEC (POO)] Sending getEmailOrders to tab', searchTab.id);
             chrome.tabs.sendMessage(searchTab.id, { action: 'getEmailOrders' }, resp => {
                 if (chrome.runtime.lastError || !resp) {
+                    console.warn('[FENNEC (POO)] getEmailOrders failed:', chrome.runtime.lastError ? chrome.runtime.lastError.message : 'no response');
                     sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
                 } else {
+                    console.log('[FENNEC (POO)] getEmailOrders response', resp);
                     const orders = Array.isArray(resp.orders) ? resp.orders : [];
+                    console.log('[FENNEC (POO)] Email orders fetched:', orders.length);
                     const counts = { cxl: 0, pending: 0, shipped: 0, transferred: 0 };
                     orders.forEach(o => {
                         const s = String(o.status || '').toUpperCase();
@@ -300,6 +307,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         else if (/PROCESSING|REVIEW|HOLD/.test(s)) counts.pending++;
                     });
                     counts.total = orders.length;
+                    console.log('[FENNEC (POO)] Status counts:', counts);
                     sendResponse({ orderCount: orders.length, statusCounts: counts, activeSubs: [], ltv: message.ltv });
                 }
             });

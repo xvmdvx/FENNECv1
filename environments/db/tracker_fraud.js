@@ -515,6 +515,7 @@
         // DNA info may take a while to load for very large records.
         // Increase retries so the trial floater still appears.
         function showTrialFloater(retries = 60, force = false) {
+            console.log('[FENNEC (POO)] showTrialFloater', { retries, force });
             const flag = sessionStorage.getItem('fennecShowTrialFloater');
             const overlayExists = trialFloater.exists();
             if ((!flag && !force && !overlayExists) || retries <= 0) return;
@@ -542,6 +543,7 @@
                     floaterRefocusDone = true;
                 }
                 trialFloater.ensure();
+                console.log('[FENNEC (POO)] Trial floater displayed');
                 const overlay = trialFloater.element;
                 const title = trialFloater.header;
                 overlay.innerHTML = html;
@@ -574,6 +576,7 @@
                             email: (order && order.clientEmail) || '',
                             ltv: (order && order.clientLtv) || ''
                         }, resp => {
+                            console.log('[FENNEC (POO)] email search result', resp);
                             if (req !== subDetectSeq) return;
                             subBtn.disabled = false;
                             if (!resp) return;
@@ -703,6 +706,7 @@
                         email: order.clientEmail,
                         ltv: order.clientLtv || ''
                     }, resp => {
+                        console.log('[FENNEC (POO)] email search result', resp);
                         if (req !== subDetectSeq) return;
                         if (!resp) return;
                         if (!dbCol) return;
@@ -722,6 +726,7 @@
                             extraInfo.appendChild(div);
                         };
                         if (resp.statusCounts) {
+                            console.log('[FENNEC (POO)] Email search status counts', resp.statusCounts);
                             const pairs = [];
                             if (parseInt(resp.statusCounts.cxl, 10) > 0) pairs.push(['CXL', resp.statusCounts.cxl]);
                             if (parseInt(resp.statusCounts.pending, 10) > 0) pairs.push(['PENDING', resp.statusCounts.pending]);
