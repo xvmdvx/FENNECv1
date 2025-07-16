@@ -72,6 +72,12 @@
                     statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
                     if (/possible fraud/i.test(o.status)) fraudCount++;
                 }
+                // Count orders flagged as possible fraud even if the status text
+                // does not contain the phrase. highlightMatches() sets the
+                // dataset attribute when an order is known fraud.
+                if (o.row && o.row.dataset.possibleFraud === '1') {
+                    fraudCount++;
+                }
                 if (o.expedited) expCount++;
                 const d = o.orderedDate ? new Date(o.orderedDate) : null;
                 if (d && !isNaN(d)) {
@@ -464,6 +470,11 @@
                 console.log(`[FENNEC] Flagging ${flagged.length} possible fraud orders`);
                 // Highlight all known fraud orders including the new matches
                 highlightMatches(Array.from(fraudSet));
+
+                // Re-enable summary updates now that injection is done
+                skipSummaryUpdate = false;
+                observeTable();
+                updateSummary();
             });
         }
 
