@@ -519,7 +519,9 @@
         // Displays the floating TRIAL SUMMARY once XRAY data is available.
         // Allow a few extra retries in case Kount or Adyen info is delayed.
         // DNA info may take a while to load for very large records.
-        // Increase retries so the trial floater still appears.
+        // Increase retries so the trial floater still appears. Always
+        // display the floater even if some values are missing so the
+        // user sees a LOADING state.
         function showTrialFloater(retries = 60, force = false) {
             console.log('[FENNEC (POO)] showTrialFloater', { retries, force });
             const flag = sessionStorage.getItem('fennecShowTrialFloater');
@@ -528,15 +530,7 @@
             const summary = document.getElementById("fraud-summary-box");
             if (summary) summary.remove();
             chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null }, data => {
-                if ((!data.adyenDnaInfo || !data.adyenDnaInfo.payment) && retries > 0) {
-                    setTimeout(() => showTrialFloater(retries - 1, force), 1000);
-                    return;
-                }
                 const html = buildTrialHtml(data.adyenDnaInfo, data.kountInfo, data.sidebarOrderInfo);
-                if (!html) {
-                    setTimeout(() => showTrialFloater(retries - 1, force), 1000);
-                    return;
-                }
                 sessionStorage.removeItem('fennecShowTrialFloater');
                 if (data.sidebarOrderInfo && data.sidebarOrderInfo.orderId) {
                     localStorage.setItem('fraudXrayCompleted', String(data.sidebarOrderInfo.orderId));
@@ -791,10 +785,12 @@
         }
 
         function buildTrialHtml(dna, kount, order) {
-            if (!dna && !kount && !order) return null;
             const dbLines = [];
             const adyenLines = [];
             const kountLines = [];
+            if (!order) dbLines.push('<div class="trial-line">LOADING...</div>');
+            if (!dna) adyenLines.push('<div class="trial-line">LOADING...</div>');
+            if (!kount) kountLines.push('<div class="trial-line">LOADING...</div>');
             const green = [];
             const red = [];
 
