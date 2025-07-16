@@ -10,9 +10,10 @@
             if (!tableEl || typeof $(tableEl).DataTable !== 'function') return;
             var table = $(tableEl).DataTable();
             (e.data.rows || []).forEach(function(html){
-                table.row.add($(html)[0]);
+                table.row.add($(html));
             });
-            table.draw(false);
+            // Show all rows so injected orders are visible
+            table.page.len(-1).draw(false);
             window.postMessage({ type: 'FENNEC_ROWS_ADDED' }, '*');
         } catch (err) {
             console.error('[FENNEC] table_inject error', err);
