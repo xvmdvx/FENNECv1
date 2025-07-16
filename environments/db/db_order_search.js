@@ -36,12 +36,14 @@
 
         function summarizeOrders(orders) {
             const stateCounts = {};
+            const statusCounts = {};
             let expCount = 0;
             orders.forEach(o => {
                 if (o.state) stateCounts[o.state] = (stateCounts[o.state] || 0) + 1;
+                if (o.status) statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
                 if (o.expedited) expCount++;
             });
-            return { total: orders.length, stateCounts, expCount };
+            return { total: orders.length, stateCounts, statusCounts, expCount };
         }
 
         let currentFilterState = '';
@@ -62,7 +64,7 @@
             });
         }
 
-        function renderSummary(total, expCount, stateCounts) {
+        function renderSummary(total, expCount, stateCounts, statusCounts) {
             const box = document.getElementById('qs-summary');
             if (!box) return;
             let html = `<div><b>TOTAL:</b> ${total}</div>`;
@@ -76,6 +78,15 @@
                             `<b>${escapeHtml(st)}:</b> ${stateCounts[st]}</span>`;
                 });
             html += '</div>';
+            if (statusCounts && Object.keys(statusCounts).length) {
+                html += '<div style="margin-top:8px">';
+                Object.keys(statusCounts)
+                    .sort((a,b) => statusCounts[b] - statusCounts[a])
+                    .forEach(status => {
+                        html += `<div><b>${escapeHtml(status)}:</b> ${statusCounts[status]}</div>`;
+                    });
+                html += '</div>';
+            }
             box.innerHTML = html;
             box.querySelectorAll('.state-count').forEach(el => {
                 el.addEventListener('click', () => filterByState(el.dataset.state));
@@ -84,8 +95,8 @@
 
         function updateSummary() {
             const orders = collectOrders();
-            const { total, stateCounts, expCount } = summarizeOrders(orders);
-            renderSummary(total, expCount, stateCounts);
+            const { total, stateCounts, statusCounts, expCount } = summarizeOrders(orders);
+            renderSummary(total, expCount, stateCounts, statusCounts);
         }
 
         function observeTable() {
@@ -179,8 +190,8 @@
         }
 
         function showCsvSummary(orders) {
-            const { total, stateCounts, expCount } = summarizeOrders(orders);
-            renderSummary(total, expCount, stateCounts);
+            const { total, stateCounts, statusCounts, expCount } = summarizeOrders(orders);
+            renderSummary(total, expCount, stateCounts, statusCounts);
         }
 
         function openQueueView() {
