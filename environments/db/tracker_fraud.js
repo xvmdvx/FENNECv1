@@ -560,6 +560,16 @@
                         const dna = data.adyenDnaInfo;
                         const kount = data.kountInfo;
                         const order = data.sidebarOrderInfo;
+                        const dbCol = overlay.querySelector('.trial-col');
+                        let loadingLine = null;
+                        if (dbCol) {
+                            loadingLine = document.createElement('div');
+                            loadingLine.className = 'trial-line';
+                            loadingLine.textContent = 'Orders: LOADING...';
+                            const raVa = dbCol.querySelector('.ra-va-line');
+                            if (raVa && raVa.nextSibling) dbCol.insertBefore(loadingLine, raVa.nextSibling);
+                            else dbCol.appendChild(loadingLine);
+                        }
                         bg.send('detectSubscriptions', {
                             email: (order && order.clientEmail) || '',
                             ltv: (order && order.clientLtv) || ''
@@ -567,14 +577,18 @@
                             if (req !== subDetectSeq) return;
                             subBtn.disabled = false;
                             if (!resp) return;
-                            const dbCol = overlay.querySelector('.trial-col');
-                            if (!dbCol) return;
-                            const line1 = document.createElement('div');
-                            line1.className = 'trial-line';
-                            line1.textContent = `Orders: ${resp.orderCount}`;
-                            const raVa = dbCol.querySelector('.ra-va-line');
-                            if (raVa && raVa.nextSibling) dbCol.insertBefore(line1, raVa.nextSibling);
-                            else dbCol.appendChild(line1);
+                            const col = overlay.querySelector('.trial-col');
+                            if (!col) return;
+                            if (loadingLine) loadingLine.textContent = `Orders: ${resp.orderCount}`;
+                            else {
+                                const line1 = document.createElement('div');
+                                line1.className = 'trial-line';
+                                line1.textContent = `Orders: ${resp.orderCount}`;
+                                const raVa = col.querySelector('.ra-va-line');
+                                if (raVa && raVa.nextSibling) col.insertBefore(line1, raVa.nextSibling);
+                                else col.appendChild(line1);
+                                loadingLine = line1;
+                            }
                             let line2 = null;
                             if (resp.ltv) {
                                 const ratio = resp.orderCount && parseFloat(resp.ltv) ? (resp.orderCount / parseFloat(resp.ltv)).toFixed(2) : 'N/A';
@@ -682,6 +696,18 @@
                     const dna = data.adyenDnaInfo;
                     const kount = data.kountInfo;
                     const order = data.sidebarOrderInfo;
+                    const cols = overlay.querySelectorAll('.trial-columns .trial-col');
+                    const dbCol = cols && cols[0];
+                    let loadingLine = null;
+                    if (dbCol) {
+                        const extraInfo = dbCol.querySelector('#db-extra-info');
+                        if (extraInfo) {
+                            loadingLine = document.createElement('div');
+                            loadingLine.className = 'trial-line trial-two-col orders-loading';
+                            loadingLine.innerHTML = '<span class="trial-tag">Orders Found:</span><span class="trial-value">LOADING...</span>';
+                            extraInfo.appendChild(loadingLine);
+                        }
+                    }
                     const req = ++subDetectSeq;
                     bg.send('detectSubscriptions', {
                         email: order.clientEmail,
@@ -689,8 +715,6 @@
                     }, resp => {
                         if (req !== subDetectSeq) return;
                         if (!resp) return;
-                        const cols = overlay.querySelectorAll('.trial-columns .trial-col');
-                        const dbCol = cols && cols[0];
                         if (!dbCol) return;
                         const extraInfo = dbCol.querySelector('#db-extra-info');
                         const addLine = html => {
@@ -746,6 +770,8 @@
                                     extraInfo.appendChild(div);
                                 }
                             }
+                        } else if (loadingLine) {
+                            loadingLine.innerHTML = `<span class="trial-tag">Orders Found:</span><span class="trial-value">${resp.orderCount}</span>`;
                         } else {
                             addLine(`<span class="trial-tag">Orders Found:</span><span class="trial-value">${resp.orderCount}</span>`);
                         }
