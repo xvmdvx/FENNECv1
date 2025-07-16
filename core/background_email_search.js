@@ -276,7 +276,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const winId = sender.tab.windowId;
         const encoded = encodeURIComponent(message.email);
         chrome.tabs.query({ windowId: winId }, tabs => {
-            const searchTabs = tabs.filter(t => t.url && t.url.includes("/order-tracker/orders/order-search"));
+            const searchTabs = tabs.filter(t => t.url &&
+                (t.url.includes("/order-tracker/orders/order-search") ||
+                 t.url.includes("/db-tools/scan-email-address")));
             let searchTab = searchTabs.find(t => t.url.includes("fennec_email=" + encoded));
             if (!searchTab) searchTab = searchTabs[0];
             if (!searchTab) {
