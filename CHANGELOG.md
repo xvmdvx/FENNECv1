@@ -23,3 +23,4 @@ All notable changes to this project will be documented in this file.
 - Fixed duplicate "Orders Found" lines in the Trial floater.
 - Fixed Trial floater not showing after XRAY completion.
 - Added CLIENT and COUNTRIES INVOLVED lines to the DB box in the Trial floater.
+- Queue View CSV results now update Order Search summary and apply orange flags with console logs for debugging.

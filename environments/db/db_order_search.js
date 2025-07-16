@@ -13,6 +13,8 @@
         const SIDEBAR_WIDTH = 340;
         const params = new URLSearchParams(location.search);
         const email = params.get('fennec_email');
+        let tableObserver = null;
+        let skipSummaryUpdate = false;
 
         function collectOrders() {
             const rows = document.querySelectorAll('#tableStatusResults tbody tr');
@@ -94,6 +96,7 @@
         }
 
         function updateSummary() {
+            if (skipSummaryUpdate) return;
             const orders = collectOrders();
             const { total, stateCounts, statusCounts, expCount } = summarizeOrders(orders);
             renderSummary(total, expCount, stateCounts, statusCounts);
@@ -102,8 +105,8 @@
         function observeTable() {
             const table = document.querySelector('#tableStatusResults');
             if (!table) return;
-            const obs = new MutationObserver(() => updateSummary());
-            obs.observe(table, { childList: true, subtree: true });
+            tableObserver = new MutationObserver(() => updateSummary());
+            tableObserver.observe(table, { childList: true, subtree: true });
         }
 
         function parseCsvLine(line) {
@@ -128,6 +131,7 @@
         function highlightMatches(ids) {
             const set = ids ? new Set(ids.map(String)) : fraudSet;
             const rows = document.querySelectorAll('#tableStatusResults tbody tr');
+            console.log(`[FENNEC] Applying fraud flags for ${set.size} orders`);
             rows.forEach(r => {
                 const link = r.querySelector('a[data-detail-link*="/order/detail/"]') ||
                              r.querySelector('a[href*="/order/detail/"]');
@@ -148,6 +152,7 @@
                     icon.remove();
                 }
             });
+            console.log('[FENNEC] Fraud flags applied');
         }
 
         function downloadCsvOrders(cb) {
@@ -176,10 +181,13 @@
                         if (id) orders.push({ id, state, expedited, status });
                     });
                 }
+                if (!csv) console.warn('[FENNEC] CSV not captured');
                 cb(orders);
             }
             if (typeof downloadOrderSearch === 'function') {
                 downloadOrderSearch();
+            } else {
+                console.warn('[FENNEC] downloadOrderSearch function not found');
             }
             let attempts = 0;
             (function waitCsv() {
@@ -198,13 +206,22 @@
             const icon = document.querySelector('#copilot-sidebar .copilot-icon');
             const progress = document.getElementById('qs-progress');
             if (progress) {
+                progress.textContent = 'Downloading queue CSV...';
                 progress.style.display = 'block';
             }
+            console.log('[FENNEC] Starting queue scan...');
             if (icon) icon.classList.add('fennec-flash');
             downloadCsvOrders(orders => {
                 if (icon) icon.classList.remove('fennec-flash');
-                if (progress) progress.style.display = 'none';
+                if (progress) {
+                    progress.textContent = '';
+                    progress.style.display = 'none';
+                }
+                console.log(`[FENNEC] CSV downloaded with ${orders.length} orders`);
                 const ids = orders.filter(o => /possible fraud/i.test(o.status)).map(o => o.id);
+                console.log(`[FENNEC] Highlighting ${ids.length} possible fraud orders`);
+                skipSummaryUpdate = true;
+                if (tableObserver) tableObserver.disconnect();
                 highlightMatches(ids);
                 showCsvSummary(orders);
             });
