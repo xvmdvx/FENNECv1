@@ -307,10 +307,14 @@
         }
 
        function injectCsvHook() {
-           const script = document.createElement('script');
-           script.src = chrome.runtime.getURL('environments/db/csv_hook.js');
-           document.documentElement.appendChild(script);
-           script.remove();
+           return new Promise(resolve => {
+               if (window.__fennecCsvHook) { resolve(); return; }
+               const script = document.createElement('script');
+               script.src = chrome.runtime.getURL('environments/db/csv_hook.js');
+               script.onload = () => resolve();
+               document.documentElement.appendChild(script);
+               script.remove();
+           });
        }
 
         function injectDatatablesPatch() {
@@ -326,6 +330,7 @@
 
         function downloadCsvOrders(cb) {
             let csv = null;
+            let timeout = null;
             function finalize() {
                 window.removeEventListener('message', onMsg);
                 const orders = [];
@@ -355,14 +360,15 @@
                 clearTimeout(timeout);
                 finalize();
             }
-            injectCsvHook();
-            window.addEventListener('message', onMsg);
-            if (typeof downloadOrderSearch === 'function') {
-                downloadOrderSearch();
-            } else {
-                console.warn('[FENNEC] downloadOrderSearch function not found');
-            }
-            const timeout = setTimeout(() => finalize(), 30000);
+            injectCsvHook().then(() => {
+                window.addEventListener('message', onMsg);
+                if (typeof downloadOrderSearch === 'function') {
+                    downloadOrderSearch();
+                } else {
+                    console.warn('[FENNEC] downloadOrderSearch function not found');
+                }
+                timeout = setTimeout(() => finalize(), 30000);
+            });
         }
 
         function showCsvSummary(orders) {
