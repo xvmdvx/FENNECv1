@@ -16,6 +16,19 @@
         let tableObserver = null;
         let skipSummaryUpdate = false;
 
+        const STATE_ABBRS = 'AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY'.split(' ');
+        const STATE_NAMES = [
+            'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'
+        ];
+        const STATE_ABBR_MAP = {};
+        STATE_NAMES.forEach((n,i)=>{ STATE_ABBR_MAP[n.toUpperCase()] = STATE_ABBRS[i]; });
+        function toStateAbbr(name) {
+            if (!name) return '';
+            const t = name.trim();
+            if (t.length === 2) return t.toUpperCase();
+            return STATE_ABBR_MAP[t.toUpperCase()] || '';
+        }
+
         function collectOrders() {
             const rows = document.querySelectorAll('#tableStatusResults tbody tr');
             return Array.from(rows).map(r => {
@@ -52,7 +65,8 @@
             const d14 = new Date(today.getTime() + 14 * 86400000);
             const d30 = new Date(today.getTime() + 30 * 86400000);
             orders.forEach(o => {
-                if (o.state) stateCounts[o.state] = (stateCounts[o.state] || 0) + 1;
+                const abbr = toStateAbbr(o.state);
+                if (abbr) stateCounts[abbr] = (stateCounts[abbr] || 0) + 1;
                 if (o.status) statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
                 if (o.expedited) expCount++;
                 const d = o.orderedDate ? new Date(o.orderedDate) : null;
@@ -78,7 +92,7 @@
             const rows = document.querySelectorAll('#tableStatusResults tbody tr');
             rows.forEach(r => {
                 const cell = r.querySelector('td:nth-child(6)');
-                const st = cell ? cell.textContent.trim() : '';
+                const st = toStateAbbr(cell ? cell.textContent.trim() : '');
                 r.style.display = !state || st === state ? '' : 'none';
             });
             const items = document.querySelectorAll('#qs-summary .state-count');
@@ -137,8 +151,7 @@
                             `<b>${escapeHtml(st)}:</b> ${stateCounts[st]}</span>`;
                 });
             html += '</div>';
-            html += '<div style="margin-top:8px"><b>BY DATE</b></div>';
-            html += '<div>';
+            let dateHtml = '';
             [
                 ['today','TODAY'],
                 ['yesterday','YESTERDAY'],
@@ -148,9 +161,12 @@
                 ['in30','+1 MONTH']
             ].forEach(([k,label]) => {
                 const cnt = dateCounts && dateCounts[k] ? dateCounts[k] : 0;
-                html += `<div class="date-count" data-range="${k}" style="cursor:pointer"><b>${label}:</b> ${cnt}</div>`;
+                if (cnt) dateHtml += `<div class="date-count" data-range="${k}" style="cursor:pointer"><b>${label}:</b> ${cnt}</div>`;
             });
-            html += '</div>';
+            if (dateHtml) {
+                html += '<div style="margin-top:8px"><b>BY DATE</b></div>';
+                html += `<div>${dateHtml}</div>`;
+            }
             if (statusCounts && Object.keys(statusCounts).length) {
                 html += '<div style="margin-top:8px">';
                 Object.keys(statusCounts)
@@ -308,7 +324,7 @@
             } else {
                 console.warn('[FENNEC] downloadOrderSearch function not found');
             }
-            const timeout = setTimeout(() => finalize(), 10000);
+            const timeout = setTimeout(() => finalize(), 30000);
         }
 
         function showCsvSummary(orders) {
