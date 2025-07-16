@@ -25,3 +25,4 @@ All notable changes to this project will be documented in this file.
 - Added CLIENT and COUNTRIES INVOLVED lines to the DB box in the Trial floater.
 - Queue View CSV results now update Order Search summary and apply orange flags with console logs for debugging.
 - Fixed QUEUE flow only downloading CSV instead of executing full scan.
+- Restored opening the Fraud Review page and manual CSV button click so the queue view fully refreshes.

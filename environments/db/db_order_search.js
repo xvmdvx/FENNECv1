@@ -364,6 +364,20 @@
             }
             console.log('[FENNEC] Starting queue scan...');
             if (icon) icon.classList.add('fennec-flash');
+
+            // Open the Fraud Review queue immediately so IDs are collected even if
+            // the CSV download fails.
+            bg.openOrReuseTab({ url: 'https://db.incfile.com/order-tracker/orders/fraud?fennec_queue_scan=1', active: false });
+
+            // Trigger the standard CSV download in case the custom request fails.
+            const genBtn = document.getElementById('generateCSV');
+            if (genBtn) {
+                console.log('[FENNEC] Triggering built-in CSV download button');
+                genBtn.click();
+            } else {
+                console.warn('[FENNEC] generateCSV button not found');
+            }
+
             downloadCsvOrders(orders => {
                 if (icon) icon.classList.remove('fennec-flash');
                 if (progress) {
@@ -378,7 +392,6 @@
                 injectCsvOrders(orders);
                 highlightMatches(ids);
                 showCsvSummary(orders);
-                bg.openOrReuseTab({ url: 'https://db.incfile.com/order-tracker/orders/fraud?fennec_queue_scan=1', active: false });
             });
         }
 
