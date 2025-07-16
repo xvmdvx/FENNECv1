@@ -16,12 +16,11 @@
         if (queueScan) collectAllFraudOrders();
         chrome.storage.local.set({ fennecReviewMode: true });
         chrome.storage.sync.set({ fennecReviewMode: true });
-        if (localStorage.getItem('fraudXrayFinished') === '1') {
-            sessionStorage.setItem('fennecShowTrialFloater', '1');
-        }
+        // Only display the trial floater after the XRAY flow is manually
+        // triggered. Avoid restoring it automatically when reloading the
+        // fraud tracker.
         chrome.storage.local.get({ fraudXrayFinished: null }, ({ fraudXrayFinished }) => {
             if (fraudXrayFinished === '1') {
-                sessionStorage.setItem('fennecShowTrialFloater', '1');
                 chrome.storage.local.remove('fraudXrayFinished');
             }
         });
@@ -1295,7 +1294,9 @@ function namesMatch(a, b) {
                 loadDbSummary();
                 loadDnaSummary();
                 loadKountSummary();
-                showTrialFloater(60, true);
+                if (sessionStorage.getItem('fennecShowTrialFloater')) {
+                    showTrialFloater(60, true);
+                }
             }
         });
         const clearBtn = document.getElementById('copilot-clear');
@@ -1319,11 +1320,15 @@ function namesMatch(a, b) {
                 loadKountSummary();
             }
             if (area === 'local' && (changes.adyenDnaInfo || changes.kountInfo)) {
-                showTrialFloater(60, true);
+                if (sessionStorage.getItem('fennecShowTrialFloater') || trialFloater.exists()) {
+                    showTrialFloater(60, true);
+                }
             }
             if (area === 'local' && changes.fraudXrayFinished && changes.fraudXrayFinished.newValue === '1') {
                 chrome.storage.local.remove('fraudXrayFinished');
-                showTrialFloater(60, true);
+                if (sessionStorage.getItem('fennecShowTrialFloater') || trialFloater.exists()) {
+                    showTrialFloater(60, true);
+                }
             }
         });
         window.addEventListener('focus', () => {
@@ -1331,14 +1336,20 @@ function namesMatch(a, b) {
             loadKountSummary();
             if (localStorage.getItem('fraudXrayFinished') === '1') {
                 localStorage.removeItem('fraudXrayFinished');
-                showTrialFloater(60, true);
+                if (sessionStorage.getItem('fennecShowTrialFloater') || trialFloater.exists()) {
+                    showTrialFloater(60, true);
+                }
             } else {
                 chrome.storage.local.get({ fraudXrayFinished: null }, ({ fraudXrayFinished }) => {
                     if (fraudXrayFinished === '1') {
                         chrome.storage.local.remove('fraudXrayFinished');
-                        showTrialFloater(60, true);
+                        if (sessionStorage.getItem('fennecShowTrialFloater') || trialFloater.exists()) {
+                            showTrialFloater(60, true);
+                        }
                     } else {
-                        showTrialFloater(60, true);
+                        if (sessionStorage.getItem('fennecShowTrialFloater') || trialFloater.exists()) {
+                            showTrialFloater(60, true);
+                        }
                     }
                 });
             }
@@ -1348,7 +1359,9 @@ function namesMatch(a, b) {
         window.addEventListener('storage', (e) => {
             if (e.key === 'fraudXrayFinished' && e.newValue === '1') {
                 localStorage.removeItem('fraudXrayFinished');
-                showTrialFloater(60, true);
+                if (sessionStorage.getItem('fennecShowTrialFloater') || trialFloater.exists()) {
+                    showTrialFloater(60, true);
+                }
             }
         });
     });
