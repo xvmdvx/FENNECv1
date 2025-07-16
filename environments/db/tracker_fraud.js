@@ -528,13 +528,9 @@
             const summary = document.getElementById("fraud-summary-box");
             if (summary) summary.remove();
             chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null }, data => {
-                if ((!data.adyenDnaInfo || !data.adyenDnaInfo.payment) && retries > 0) {
-                    setTimeout(() => showTrialFloater(retries - 1, force), 1000);
-                    return;
-                }
                 const html = buildTrialHtml(data.adyenDnaInfo, data.kountInfo, data.sidebarOrderInfo);
                 if (!html) {
-                    setTimeout(() => showTrialFloater(retries - 1, force), 1000);
+                    if (retries > 0) setTimeout(() => showTrialFloater(retries - 1, force), 1000);
                     return;
                 }
                 sessionStorage.removeItem('fennecShowTrialFloater');
@@ -787,14 +783,19 @@
                     };
                     fetchStats();
                 }
+                if ((!data.adyenDnaInfo || !data.kountInfo || !data.sidebarOrderInfo) && retries > 0) {
+                    setTimeout(() => showTrialFloater(retries - 1, true), 1000);
+                }
             });
         }
 
         function buildTrialHtml(dna, kount, order) {
-            if (!dna && !kount && !order) return null;
             const dbLines = [];
             const adyenLines = [];
             const kountLines = [];
+            if (!order) dbLines.push('<div class="trial-line">LOADING...</div>');
+            if (!dna || !dna.payment) adyenLines.push('<div class="trial-line">LOADING...</div>');
+            if (!kount) kountLines.push('<div class="trial-line">LOADING...</div>');
             const green = [];
             const red = [];
 
