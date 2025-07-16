@@ -17,6 +17,8 @@ The extension FENNEC (POO) lives in the `FENNEC/` folder. Key pieces include:
 - `environments/` – Content scripts injected into specific sites:
   - `gmail/gmail_launcher.js` – Gmail interface.
   - `db/db_launcher.js` – Internal order pages.
+  - `db/csv_hook.js` – Captures CSV downloads in Order Search.
+  - `db/table_inject.js` – Injects new rows into the results table using jQuery.
   - `adyen/adyen_launcher.js` – Adyen payment pages.
   - `txsos/tx_sos_launcher.js` – Texas SOS filing site.
   - `usps/usps_launcher.js` – USPS address verification.

@@ -205,7 +205,8 @@
         "fennec_icon.png",
         "bg_holo.mp4",
         "mistral-7b-instruct-v0.1.Q4_K_M.gguf",
-        "environments/db/csv_hook.js"
+        "environments/db/csv_hook.js",
+        "environments/db/table_inject.js"
       ],
       "matches": [
         "<all_urls>"

@@ -29,3 +29,4 @@ All notable changes to this project will be documented in this file.
 - Fixed Order Search count remaining at 0 when DB email search results were available.
 - Fixed Orders Found count staying at 0 when only the legacy DB email search page was open.
 - Fixed Orders Found count not updating when using the newer Order Search page.
+- Fixed CSV order injection failing with "$ is not defined" on Order Search.
