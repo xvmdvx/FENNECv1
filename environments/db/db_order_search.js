@@ -378,15 +378,8 @@
                 injectCsvOrders(orders);
                 highlightMatches(ids);
                 showCsvSummary(orders);
+                bg.openOrReuseTab({ url: 'https://db.incfile.com/order-tracker/orders/fraud?fennec_queue_scan=1', active: false });
             });
-            const genBtn = document.getElementById('generateCSV');
-            if (genBtn) {
-                console.log('[FENNEC] Triggering built-in CSV download button');
-                genBtn.click();
-            } else {
-                console.warn('[FENNEC] generateCSV button not found');
-            }
-            bg.openOrReuseTab({ url: 'https://db.incfile.com/order-tracker/orders/fraud?fennec_queue_scan=1', active: false });
         }
 
         function injectSidebar() {
