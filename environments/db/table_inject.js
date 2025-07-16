@@ -10,7 +10,8 @@
             if (!tableEl || typeof $(tableEl).DataTable !== 'function') return;
             var table = $(tableEl).DataTable();
             (e.data.rows || []).forEach(function(html){
-                table.row.add($(html));
+                var row = $(html)[0];
+                if (row) table.row.add(row);
             });
             // Show all rows so injected orders are visible
             table.page.len(-1).draw(false);
