@@ -702,7 +702,7 @@
                     const cols = overlay.querySelectorAll('.trial-columns .trial-col');
                     const dbCol = cols && cols[0];
                     const req = ++subDetectSeq;
-                    bg.send('detectSubscriptions', {
+                    bg.send('countEmailOrders', {
                         email: order.clientEmail,
                         ltv: order.clientLtv || ''
                     }, resp => {

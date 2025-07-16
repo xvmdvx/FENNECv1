@@ -272,32 +272,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
 
-    if (message.action === "detectSubscriptions" && message.email && sender.tab) {
-        console.log('[FENNEC (POO)] detectSubscriptions request for', message.email);
-        const winId = sender.tab.windowId;
-        const encoded = encodeURIComponent(message.email);
+    function fetchEmailOrders(winId, email, callback) {
+        const encoded = encodeURIComponent(email);
         chrome.tabs.query({ windowId: winId }, tabs => {
-            console.log('[FENNEC (POO)] Candidate search tabs:', tabs.map(t => t.url));
             const searchTabs = tabs.filter(t => t.url &&
-                (t.url.includes("/order-tracker/orders/order-search") ||
-                 t.url.includes("/db-tools/scan-email-address")));
-            let searchTab = searchTabs.find(t => t.url.includes("fennec_email=" + encoded));
+                (t.url.includes('/order-tracker/orders/order-search') ||
+                 t.url.includes('/db-tools/scan-email-address')));
+            let searchTab = searchTabs.find(t => t.url.includes('fennec_email=' + encoded));
             if (!searchTab) searchTab = searchTabs[0];
-            if (!searchTab) {
-                sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
-                return;
-            }
-            console.log('[FENNEC (POO)] Using tab', searchTab.id, searchTab.url);
+            if (!searchTab) { callback(null); return; }
             chrome.tabs.update(searchTab.id, { active: true });
-            console.log('[FENNEC (POO)] Sending getEmailOrders to tab', searchTab.id);
             chrome.tabs.sendMessage(searchTab.id, { action: 'getEmailOrders' }, resp => {
                 if (chrome.runtime.lastError || !resp) {
                     console.warn('[FENNEC (POO)] getEmailOrders failed:', chrome.runtime.lastError ? chrome.runtime.lastError.message : 'no response');
-                    sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
+                    callback(null);
                 } else {
-                    console.log('[FENNEC (POO)] getEmailOrders response', resp);
                     const orders = Array.isArray(resp.orders) ? resp.orders : [];
-                    console.log('[FENNEC (POO)] Email orders fetched:', orders.length);
                     const counts = { cxl: 0, pending: 0, shipped: 0, transferred: 0 };
                     orders.forEach(o => {
                         const s = String(o.status || '').toUpperCase();
@@ -307,10 +297,78 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         else if (/PROCESSING|REVIEW|HOLD/.test(s)) counts.pending++;
                     });
                     counts.total = orders.length;
-                    console.log('[FENNEC (POO)] Status counts:', counts);
-                    sendResponse({ orderCount: orders.length, statusCounts: counts, activeSubs: [], ltv: message.ltv });
+                    callback({ orders, counts });
                 }
             });
+        });
+    }
+
+    function checkOrderSubs(orderId, winId, done) {
+        const url = `https://db.incfile.com/incfile/order/detail/${orderId}?fennec_sub_check=1`;
+        const query = { url: `${url}*` };
+        let attempts = 10;
+        let delay = 1000;
+        let createdTabId = null;
+        const openAndCheck = () => {
+            chrome.tabs.query(query, tabs => {
+                let tab = tabs && tabs[0];
+                const ensureLoaded = () => {
+                    if (!tab || tab.status !== 'complete') {
+                        if (attempts > 0) {
+                            if (!tab && !createdTabId) {
+                                chrome.tabs.create({ url, active: false, windowId: winId }, t => { tab = t; createdTabId = t.id; });
+                            }
+                            setTimeout(() => {
+                                attempts--;
+                                delay = Math.min(delay * 1.5, 10000);
+                                chrome.tabs.query(query, qs => { tab = qs && qs[0]; ensureLoaded(); });
+                            }, delay);
+                        } else {
+                            if (createdTabId) chrome.tabs.remove(createdTabId);
+                            done([]);
+                        }
+                        return;
+                    }
+                    chrome.tabs.sendMessage(tab.id, { action: 'getActiveSubs' }, resp => {
+                        const subs = resp && Array.isArray(resp.subs) ? resp.subs : [];
+                        if (createdTabId) chrome.tabs.remove(createdTabId);
+                        done(subs);
+                    });
+                };
+                ensureLoaded();
+            });
+        };
+        openAndCheck();
+    }
+
+    if (message.action === 'countEmailOrders' && message.email && sender.tab) {
+        const winId = sender.tab.windowId;
+        fetchEmailOrders(winId, message.email, info => {
+            if (!info) {
+                sendResponse({ orderCount: 0, statusCounts: null, ltv: message.ltv });
+                return;
+            }
+            sendResponse({ orderCount: info.orders.length, statusCounts: info.counts, ltv: message.ltv });
+        });
+        return true;
+    }
+
+    if (message.action === 'detectSubscriptions' && message.email && sender.tab) {
+        console.log('[FENNEC (POO)] detectSubscriptions request for', message.email);
+        const winId = sender.tab.windowId;
+        fetchEmailOrders(winId, message.email, info => {
+            if (!info) { sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv }); return; }
+            const ids = info.orders.filter(o => /SHIPPED/i.test(o.status) || /PROCESSING|REVIEW|HOLD/i.test(o.status)).map(o => o.orderId);
+            const active = [];
+            const next = () => {
+                const id = ids.shift();
+                if (!id) {
+                    sendResponse({ orderCount: info.orders.length, statusCounts: info.counts, activeSubs: active, ltv: message.ltv });
+                    return;
+                }
+                checkOrderSubs(id, winId, subs => { if (subs && subs.length) active.push(...subs); next(); });
+            };
+            next();
         });
         return true;
     }
