@@ -714,7 +714,7 @@
                             console.log('[FENNEC (POO)] email search result', resp);
                             if (req !== subDetectSeq) return;
                             if (!resp) return;
-                            if (resp.statusCounts && resp.statusCounts.total === 0 && attempts > 0) {
+                            if (resp.statusCounts && (resp.statusCounts.total === 0 || resp.statusCounts.total >= 100) && attempts > 0) {
                                 setTimeout(() => fetchStats(attempts - 1), 1000);
                                 return;
                             }
