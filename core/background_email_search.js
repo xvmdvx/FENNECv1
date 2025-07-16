@@ -275,50 +275,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "detectSubscriptions" && message.email && sender.tab) {
         const winId = sender.tab.windowId;
         const encoded = encodeURIComponent(message.email);
-        chrome.storage.local.get({ fennecDbSearchTab: null }, data => {
-            const fetchOrders = (tab) => {
-                if (!tab) {
-                    sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
-                    return;
-                }
-                chrome.tabs.update(tab.id, { active: true }, () => {
-                    chrome.tabs.sendMessage(tab.id, { action: 'getEmailOrders' }, resp => {
-                        if (chrome.runtime.lastError || !resp) {
-                            sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
-                        } else {
-                            const orders = Array.isArray(resp.orders) ? resp.orders : [];
-                            const counts = { cxl: 0, pending: 0, shipped: 0, transferred: 0 };
-                            orders.forEach(o => {
-                                const s = String(o.status || '').toUpperCase();
-                                if (/CANCEL/.test(s)) counts.cxl++;
-                                else if (/TRANSFERRED/.test(s)) counts.transferred++;
-                                else if (/SHIPPED/.test(s)) counts.shipped++;
-                                else if (/PROCESSING|REVIEW|HOLD/.test(s)) counts.pending++;
-                            });
-                            counts.total = orders.length;
-                            sendResponse({ orderCount: orders.length, statusCounts: counts, activeSubs: [], ltv: message.ltv });
-                        }
-                    });
-                });
-            };
-
-            if (data.fennecDbSearchTab) {
-                chrome.tabs.get(data.fennecDbSearchTab, tab => {
-                    if (chrome.runtime.lastError || !tab) {
-                        chrome.tabs.query({ windowId: winId }, tabs => {
-                            const found = tabs.find(t => t.url && t.url.includes("/order-tracker/orders/order-search") && t.url.includes("fennec_email=" + encoded));
-                            fetchOrders(found);
-                        });
-                    } else {
-                        fetchOrders(tab);
-                    }
-                });
-            } else {
-                chrome.tabs.query({ windowId: winId }, tabs => {
-                    const searchTab = tabs.find(t => t.url && t.url.includes("/order-tracker/orders/order-search") && t.url.includes("fennec_email=" + encoded));
-                    fetchOrders(searchTab);
-                });
+        chrome.tabs.query({ windowId: winId }, tabs => {
+            const searchTab = tabs.find(t => t.url && t.url.includes("/order-tracker/orders/order-search") && t.url.includes("fennec_email=" + encoded));
+            if (!searchTab) {
+                sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
+                return;
             }
+            chrome.tabs.update(searchTab.id, { active: true });
+            chrome.tabs.sendMessage(searchTab.id, { action: 'getEmailOrders' }, resp => {
+                if (chrome.runtime.lastError || !resp) {
+                    sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
+                } else {
+                    const orders = Array.isArray(resp.orders) ? resp.orders : [];
+                    const counts = { cxl: 0, pending: 0, shipped: 0, transferred: 0 };
+                    orders.forEach(o => {
+                        const s = String(o.status || '').toUpperCase();
+                        if (/CANCEL/.test(s)) counts.cxl++;
+                        else if (/TRANSFERRED/.test(s)) counts.transferred++;
+                        else if (/SHIPPED/.test(s)) counts.shipped++;
+                        else if (/PROCESSING|REVIEW|HOLD/.test(s)) counts.pending++;
+                    });
+                    counts.total = orders.length;
+                    sendResponse({ orderCount: orders.length, statusCounts: counts, activeSubs: [], ltv: message.ltv });
+                }
+            });
         });
         return true;
     }
