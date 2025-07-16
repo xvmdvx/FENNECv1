@@ -314,10 +314,14 @@
        }
 
         function injectDatatablesPatch() {
-            const script = document.createElement('script');
-            script.src = chrome.runtime.getURL('environments/db/datatables_patch.js');
-            document.documentElement.appendChild(script);
-            script.remove();
+            return new Promise(resolve => {
+                if (window.__fennecDtPatch) { resolve(); return; }
+                const script = document.createElement('script');
+                script.src = chrome.runtime.getURL('environments/db/datatables_patch.js');
+                script.onload = () => resolve();
+                document.documentElement.appendChild(script);
+                script.remove();
+            });
         }
 
         function downloadCsvOrders(cb) {
@@ -448,44 +452,44 @@
 
             // Suppress DataTables Ajax error alerts in the page context so the
             // warning dialog doesn't appear when the built-in request fails.
-            injectDatatablesPatch();
-
-            // Trigger the standard CSV download in case the custom request fails.
-            const genBtn = document.getElementById('generateCSV');
-            if (genBtn) {
-                console.log('[FENNEC] Triggering built-in CSV download button');
-                genBtn.click();
-            } else {
-                console.warn('[FENNEC] generateCSV button not found');
-            }
-
-            downloadCsvOrders(orders => {
-                if (icon) icon.classList.remove('fennec-flash');
-                if (progress) {
-                    progress.textContent = '';
-                    progress.style.display = 'none';
+            injectDatatablesPatch().then(() => {
+                // Trigger the standard CSV download in case the custom request fails.
+                const genBtn = document.getElementById('generateCSV');
+                if (genBtn) {
+                    console.log('[FENNEC] Triggering built-in CSV download button');
+                    genBtn.click();
+                } else {
+                    console.warn('[FENNEC] generateCSV button not found');
                 }
-                console.log(`[FENNEC] CSV downloaded with ${orders.length} orders`);
 
-                // Update sidebar summary first using the CSV data
-                showCsvSummary(orders);
+                downloadCsvOrders(orders => {
+                    if (icon) icon.classList.remove('fennec-flash');
+                    if (progress) {
+                        progress.textContent = '';
+                        progress.style.display = 'none';
+                    }
+                    console.log(`[FENNEC] CSV downloaded with ${orders.length} orders`);
 
-                skipSummaryUpdate = true;
-                if (tableObserver) tableObserver.disconnect();
+                    // Update sidebar summary first using the CSV data
+                    showCsvSummary(orders);
 
-                console.log('[FENNEC] Injecting CSV orders into search results table');
-                injectCsvOrders(orders);
+                    skipSummaryUpdate = true;
+                    if (tableObserver) tableObserver.disconnect();
 
-                const ids = orders.map(o => String(o.id));
-                const flagged = ids.filter(id => fraudSet.has(id));
-                console.log(`[FENNEC] Flagging ${flagged.length} possible fraud orders`);
-                // Highlight all known fraud orders including the new matches
-                highlightMatches(Array.from(fraudSet));
+                    console.log('[FENNEC] Injecting CSV orders into search results table');
+                    injectCsvOrders(orders);
 
-                // Re-enable summary updates now that injection is done
-                skipSummaryUpdate = false;
-                observeTable();
-                updateSummary();
+                    const ids = orders.map(o => String(o.id));
+                    const flagged = ids.filter(id => fraudSet.has(id));
+                    console.log(`[FENNEC] Flagging ${flagged.length} possible fraud orders`);
+                    // Highlight all known fraud orders including the new matches
+                    highlightMatches(Array.from(fraudSet));
+
+                    // Re-enable summary updates now that injection is done
+                    skipSummaryUpdate = false;
+                    observeTable();
+                    updateSummary();
+                });
             });
         }
 
