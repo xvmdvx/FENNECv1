@@ -275,12 +275,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "detectSubscriptions" && message.email && sender.tab) {
         const winId = sender.tab.windowId;
         const encoded = encodeURIComponent(message.email);
+        console.log(`[Copilot] detectSubscriptions for ${message.email}`);
         chrome.tabs.query({ windowId: winId }, tabs => {
+            console.log(`[Copilot] Tabs in window: ${tabs.length}`);
             const searchTabs = tabs.filter(t => t.url &&
                 (t.url.includes("/order-tracker/orders/order-search") ||
                  t.url.includes("/db-tools/scan-email-address")));
             let searchTab = searchTabs.find(t => t.url.includes("fennec_email=" + encoded));
             if (!searchTab) searchTab = searchTabs[0];
+            console.log(`[Copilot] Using search tab: ${searchTab ? searchTab.url : 'none'}`);
             if (!searchTab) {
                 sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
                 return;
@@ -288,9 +291,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             chrome.tabs.update(searchTab.id, { active: true });
             chrome.tabs.sendMessage(searchTab.id, { action: 'getEmailOrders' }, resp => {
                 if (chrome.runtime.lastError || !resp) {
+                    console.warn('[Copilot] getEmailOrders failed', chrome.runtime.lastError);
                     sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv });
                 } else {
                     const orders = Array.isArray(resp.orders) ? resp.orders : [];
+                    console.log(`[Copilot] getEmailOrders returned ${orders.length} orders`);
                     const counts = { cxl: 0, pending: 0, shipped: 0, transferred: 0 };
                     orders.forEach(o => {
                         const s = String(o.status || '').toUpperCase();
