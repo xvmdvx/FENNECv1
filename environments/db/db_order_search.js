@@ -313,12 +313,17 @@
 
         function showCsvSummary(orders) {
             const { total, stateCounts, statusCounts, expCount, dateCounts } = summarizeOrders(orders);
+            console.log(`[FENNEC] Rendering summary for ${total} CSV orders`);
             renderSummary(total, expCount, stateCounts, statusCounts, dateCounts);
         }
 
         function injectCsvOrders(orders) {
+            console.log(`[FENNEC] Injecting ${orders.length} orders into table`);
             const tableEl = document.getElementById('tableStatusResults');
-            if (!tableEl || typeof $(tableEl).DataTable !== 'function') return;
+            if (!tableEl || typeof $(tableEl).DataTable !== 'function') {
+                console.warn('[FENNEC] DataTable not found, skipping injection');
+                return;
+            }
             const table = $(tableEl).DataTable();
             const existing = new Set();
             table.rows().every(function() {
@@ -348,6 +353,7 @@
                 table.row.add(row);
             });
             table.draw(false);
+            console.log('[FENNEC] Table updated with CSV orders');
             Array.from(tableEl.querySelectorAll('tbody tr')).forEach(tr => {
                 const cell = tr.querySelector('td:nth-child(11)');
                 const ordered = cell ? cell.textContent.trim() : '';
@@ -385,13 +391,19 @@
                     progress.style.display = 'none';
                 }
                 console.log(`[FENNEC] CSV downloaded with ${orders.length} orders`);
-                const ids = orders.filter(o => /possible fraud/i.test(o.status)).map(o => o.id);
-                console.log(`[FENNEC] Highlighting ${ids.length} possible fraud orders`);
+
+                // Update sidebar summary first using the CSV data
+                showCsvSummary(orders);
+
                 skipSummaryUpdate = true;
                 if (tableObserver) tableObserver.disconnect();
+
+                console.log('[FENNEC] Injecting CSV orders into search results table');
                 injectCsvOrders(orders);
+
+                const ids = orders.filter(o => /possible fraud/i.test(o.status)).map(o => o.id);
+                console.log(`[FENNEC] Flagging ${ids.length} possible fraud orders`);
                 highlightMatches(ids);
-                showCsvSummary(orders);
             });
         }
 
