@@ -26,3 +26,4 @@ All notable changes to this project will be documented in this file.
 - Queue View CSV results now update Order Search summary and apply orange flags with console logs for debugging.
 - Fixed QUEUE flow only downloading CSV instead of executing full scan.
 - Restored opening the Fraud Review page and manual CSV button click so the queue view fully refreshes.
+- Fixed Order Search count remaining at 0 when DB email search results were available.
