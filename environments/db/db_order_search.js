@@ -548,8 +548,34 @@
 
         chrome.runtime.onMessage.addListener((msg, snd, sendResponse) => {
             if (msg.action === 'getEmailOrders') {
-                const orders = collectOrders().map(o => ({ orderId: o.id, type: '', status: o.status }));
-                sendResponse({ orders });
+                const send = () => {
+                    const orders = collectOrders().map(o => ({ orderId: o.id, type: '', status: o.status }));
+                    sendResponse({ orders });
+                };
+                const initial = collectOrders();
+                if (initial.length) {
+                    send();
+                } else {
+                    const tbody = document.querySelector('#tableStatusResults tbody');
+                    if (!tbody) { send(); return; }
+                    let done = false;
+                    const obs = new MutationObserver(() => {
+                        if (!done && collectOrders().length) {
+                            done = true;
+                            obs.disconnect();
+                            send();
+                        }
+                    });
+                    obs.observe(tbody, { childList: true });
+                    setTimeout(() => {
+                        if (!done) {
+                            done = true;
+                            obs.disconnect();
+                            send();
+                        }
+                    }, 10000);
+                    return true;
+                }
             }
         });
     });
