@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<!-- saved from url=(0094)https://db.incfile.com/order-tracker/orders/order-search?fennec_email=rickbouffard%40gmail.com -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="saaOMHZuquuSt1QFZg6iygl7zLMm8t0ETIyf9sCJ">
+    <title>Order Search</title>
+    <link rel="shortcut icon" type="image/png" href="https://db.incfile.com/favicon.png">
+    <link rel="stylesheet" href="./SEARCH_RESULT_EXAMPLE_files/css">
+
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- WEBPACK COMPILED CSS -->
+    <link href="./SEARCH_RESULT_EXAMPLE_files/compiled.css" rel="stylesheet">
+
+    <style>
+        .brand_logo_coverwallet {
+            max-width: 130px !important;
+        }
+
+        .forwarded_orders td {
+            vertical-align: middle !important;
+            width: 200px;
+        }
+
+        .forwarded_orders .box-title {
+            margin-bottom: 0px;
+        }
+
+    </style>
+
+    
+    <script src="./SEARCH_RESULT_EXAMPLE_files/vendor.js"></script>
+            <style type="text/css">
+        table td a {
+            color: #333
+        }
+
+        .hightlight {
+            color: orange !important;
+        }
+
+        .hightlight a {
+            color: orange !important;
+        }
+
+        .warning_red {
+            color: #ff0000;
+        }
+
+        .warning_red a {
+            color: #ff0000
+        }
+
+        .dataTables_length {
+            display: none
+        }
+
+        .tooltip-inner{
+            max-width: 380px !important;
+        }
+
+        .table>tbody>tr>td{vertical-align: middle; position: relative}
+        #tableStatusResults td{font-size: 14px !important;}
+
+        .wrapper-comp{
+            position: absolute;
+            top:12px;
+            left: 0;
+            cursor: pointer;
+            width: auto;
+            white-space: nowrap;
+            padding: 5px;
+            transition: all 0.5s ease-out;
+            display: inline-block;
+            z-index: 99;
+        }
+
+        .wrapper-comp:hover{
+            background: #fff !important;
+            opacity: 1 !important;
+        }
+        .wrapper-comp .btn{display: none}
+        .wrapper-comp .name-inside{
+            margin-top: 5px; margin-left: 5px; margin-right: 30px;
+        }
+
+        #tableStatusResults .checkbox{
+            margin: 0 !important;
+        }
+
+    </style>
+<style id="copilot-db-padding">
+                    #frm-search-order { margin-right: 340px !important; }
+                    .modal-fullscreen { width: calc(100% - 340px); }
+                </style></head>
+
+<body class="fix-header" style="transition: margin-right 0.2s; margin-right: 340px;">
+ <!-- ============================================================== -->
+ <!-- Preloader -->
+ <!-- ============================================================== -->
+ <div class="preloader" style="display: none; z-index: 100;">
+     <svg class="circular" viewBox="25 25 50 50">
+         <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10"></circle>
+     </svg>
+ </div>
+
+ <div id="wrapper">
+     <nav class="navbar navbar-default navbar-static-top m-b-0">
+         <div class="navbar-header">
+             <div class="top-left-part text-center" style="border-right:none">
+                 <!-- Logo -->
+                 <a class="logo" href="https://db.incfile.com/">
+                     <span class="hidden-xs">
+                         <img src="./SEARCH_RESULT_EXAMPLE_files/incfile-no-tagline.svg" alt="home" class="light-logo" style="max-width: 100px;">
+                     </span>
+                 </a>
+             </div>
+
+             <ul class="nav navbar-top-links navbar-right pull-right">
+                 <li>
+                     <div id="frm-search-order" class="app-search hidden-sm hidden-xs m-r-10">
+                         <input type="text" name="search" id="search_field" placeholder="Search for an order" class="form-control text-info">
+                         <a class="btn btn-info" href="javascript:void(0)" id="mainSearching">Go</a>
+                     </div>
+                 </li>
+                 <li class="dropdown logout">
+                     <a class="dropdown-toggle profile-pic" data-toggle="dropdown" href="javascript:void(0)"><b class="hidden-xs">moises d</b><span class="caret"></span> </a>
+                     <ul class="dropdown-menu dropdown-user animated flipInY logout">
+                         <li><a href="https://db.incfile.com/logout"><i class="fa fa-power-off"></i> Logout</a></li>
+                     </ul>
+                 </li>
+                 <!-- /.dropdown -->
+             </ul>
+         </div>
+
+     </nav>
+
+     <div class="navbar-default sidebar" role="navigation">
+    <div class="sidebar-nav">
+        <div class="sidebar-head">
+            <h3>
+                <span class="fa-fw open-close">
+                    <i class="ti-menu hidden-xs"></i>
+                    <i class="ti-close visible-xs"></i>
+                </span>
+                <span class="hide-menu">Navigation</span>
+            </h3>
+        </div>
+
+        <ul class="nav" id="side-menu">
+            
+                            <li>
+                    <a href="javascript:void(0)" class="waves-effect">
+                        <i class="mdi mdi-printer fa-fw" data-icon="v"></i>
+                        <span class="hide-menu"> Printing</span>
+                    </a>
+                    <ul class="nav nav-second-level">
+                                                    <li><a href="https://db.incfile.com/incfile/order/print">Print Orders</a></li>
+                                                                            <li><a href="https://db.incfile.com/orders/print/fedex">Print Fedex Labels</a></li>
+                                                                            <li><a href="https://db.incfile.com/incfile/labels">Print Mailing Labels</a></li>
+                                            </ul>
+                </li>
+            
+            
+            <li>
+                <a href="javascript:void(0)" class="waves-effect active">
+                    <i class="mdi mdi-calendar-clock fa-fw" data-icon="v"></i>
+                    <span class="hide-menu">Orders</span>
+                </a>
+                <ul class="nav nav-second-level in">
+                                            <li><a href="https://db.incfile.com/order-tracker/orders/order-search" class="active">Search</a></li>
+                                                                <li><a href="https://db.incfile.com/order-tracker/orders/fraud">Fraud</a></li>
+                                                                <li><a href="https://db.incfile.com/order-tracker/orders/misc">Parent - Child</a></li>
+                                                                <li><a href="https://db.incfile.com/order-tracker/overdue-order">Tracking</a></li>
+                                                                <li><a href="https://db.incfile.com/incfile/order/resolved">Resolved</a></li>
+                                                                <li><a href="https://db.incfile.com/incfile/finishing-queue">Finishing</a></li>
+                                                                <li><a href="https://db.incfile.com/order-tracker/orders/foreign-ein-monitor">Foreign EIN Monitor</a></li>
+                                        <li><a href="https://db.incfile.com/incfile/companies">Companies</a></li>
+                    <li><a href="https://db.incfile.com/order-tracker/orders/order-queue">Order Queue</a></li>
+                </ul>
+            </li>
+
+            
+                            <li>
+                    <a href="javascript:void(0)" class="waves-effect">
+                        <i class="mdi mdi-lightbulb-outline fa-fw" data-icon="v"></i> <span class="hide-menu">Resources Guide</span>
+                    </a>
+
+                    <ul class="nav nav-second-level scroll_states" style="height: 500px !important; overflow-y: scroll;">
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=AL">Alabama</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=AK">Alaska</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=AZ">Arizona</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=AR">Arkansas</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=CA">California</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=CO">Colorado</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=CT">Connecticut</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=DE">Delaware</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=FL">Florida</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=GA">Georgia</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=HI">Hawaii</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=ID">Idaho</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=IL">Illinois</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=IN">Indiana</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=IA">Iowa</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=KS">Kansas</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=KY">Kentucky</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=LA">Louisiana</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=ME">Maine</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=MD">Maryland</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=MA">Massachusetts</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=MI">Michigan</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=MN">Minnesota</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=MS">Mississippi</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=MO">Missouri</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=MT">Montana</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=NE">Nebraska</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=NV">Nevada</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=NH">New Hampshire</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=NJ">New Jersey</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=NM">New Mexico</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=NY">New York</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=NC">North Carolina</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=ND">North Dakota</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=OH">Ohio</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=OK">Oklahoma</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=OR">Oregon</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=PA">Pennsylvania</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=RI">Rhode Island</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=SC">South Carolina</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=SD">South Dakota</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=TN">Tennessee</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=TX">Texas</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=UT">Utah</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=VT">Vermont</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=VA">Virginia</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=WA">Washington</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=DC">Washington DC</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=WV">West Virginia</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=WI">Wisconsin</a></li>
+                                                    <li><a href="https://db.incfile.com/resources-guide/?state=WY">Wyoming</a></li>
+                                            </ul>
+                </li>
+            
+            
+                            <li>
+                    <a href="javascript:void(0)" class="waves-effect">
+                        <i class="mdi mdi-account-multiple fa-fw" data-icon="v"></i>
+                        <span class="hide-menu"> Administrator</span>
+                    </a>
+                    <ul class="nav nav-second-level">
+                        
+                        
+                                                    <li><a href="https://db.incfile.com/compliance/list">Compliance</a></li>
+                        
+                                                    <li><a href="https://db.incfile.com/ar-tool">Annual Report Questions</a></li>
+                        
+                        
+                        <li><a href="https://db.incfile.com/expedited-fee-refunds/expedited-fee-refunds">Expedited Fee Refunds</a></li>
+
+                        
+                        
+                        
+                        
+                                                                    </ul>
+                </li>
+            
+            
+                            <li>
+                    <a href="javascript:void(0)" class="waves-effect">
+                        <i class="mdi mdi-account-box-outline fa-fw" data-icon="v"></i> <span class="hide-menu">Registered Agent</span>
+                    </a>
+                    <ul class="nav nav-second-level scroll_states">
+                                                    <li><a href="https://db.incfile.com/incfile/registered-agent">Registered Agents</a></li>
+                        
+                        <li><a href="https://db.incfile.com/incfile/registered-agent/subscriptions/renewals">Subscription Renewals</a></li>
+                        <li><a href="https://db.incfile.com/incfile/registered-agent/subscriptions/expire-soon">Service Expire Soon</a></li>
+                        <li><a href="https://db.incfile.com/incfile/orders/reporting/ra-renewals">Monthly Renewals Report</a></li>
+
+                                                                                    <li><a href="https://db.incfile.com/order-tracker/orders/staged-for-resignation">Staged For Resignation</a></li>
+                                                        
+                                                            <li><a href="https://db.incfile.com/admin/mass-resign">Mass Agent Resign</a></li>
+                                                    
+                        <li><a href="https://db.incfile.com/incfile/registered-agent/orders/compliance-company-info">Compliance Company info</a></li>
+                        <li><a href="https://db.incfile.com/incfile/registered-agent/orders/compliance-member-info">Compliance Members info</a></li>
+                    </ul>
+                </li>
+            
+            
+                            <li>
+                    <a href="javascript:void(0)" class="waves-effect">
+                        <i class="mdi mdi-mailbox fa-fw" data-icon="v"></i>
+                        <span class="hide-menu">Virtual Address</span>
+                    </a>
+                    <ul class="nav nav-second-level">
+                                                    <li><a href="https://db.incfile.com/incfile/virtual-address">Virtual Address</a></li>
+                        
+                        
+                        <li><a href="https://db.incfile.com/va-contact-list">Virtual Address Contacts</a></li>
+                        <li><a href="https://db.incfile.com/incfile/virtual-address/compliance-panel/1583">Compliance Panel</a></li>
+                    </ul>
+                </li>
+            
+            
+                            <li>
+                    <a href="javascript:void(0)" class="waves-effect">
+                        <i class="mdi mdi-wrench" data-icon="v"></i>
+                        <span class="hide-menu"> Tools</span>
+                    </a>
+                    <ul class="nav nav-second-level">
+                                                    <li><a href="https://db.incfile.com/transaction/transaction/reason">Transactional Emails</a></li>
+                        
+                        <li><a href="https://db.incfile.com/vendors">Vendors</a></li>
+                        <li><a href="https://db.incfile.com/signature-requests/signature-requests">Signature Requests</a></li>
+
+                        
+                                                    <li><a href="https://db.incfile.com/db-tools/scan-email-address">Generic Email Address</a></li>
+                        
+                        
+                        <li><a href="https://db.incfile.com/training">Training Document</a></li>
+                        <li><a href="https://db.incfile.com/report/gmb/submitted">Google My Business</a></li>
+                        <li><a href="https://db.incfile.com/order-average">Misc Filing Time</a></li>
+                        <li><a href="https://db.incfile.com/forwarded-orders">Forwarded Orders</a></li>
+                        <li><a href="https://db.incfile.com/fedex/upload">FedEx Upload</a></li>
+                        <li><a href="https://db.incfile.com/commercial-clients">Commercial Clients</a></li>
+                        <li><a href="https://db.incfile.com/domain-and-email">Domain and Business Email</a></li>
+                        <li><a href="https://db.incfile.com/developer/feature-flags">Feature Flags</a></li>
+                        <li><a href="https://db.incfile.com/cost/web-reconciliation/upload">Invoice Reconciliation</a></li>
+                        <li><a href="https://db.incfile.com/crons">Automation Crons</a></li>
+                    </ul>
+                </li>
+            
+            
+                            <li>
+                    <a href="javascript:void(0)" class="waves-effect">
+                        <i class="mdi mdi-av-timer fa-fw" data-icon="v"></i>
+                        <span class="hide-menu"> Developers</span>
+                    </a>
+                    <ul class="nav nav-second-level">
+                        <li><a href="https://db.incfile.com/workplace">Workplace tracker</a></li>
+
+                                            </ul>
+                </li>
+            
+            
+                            <li>
+                    <a href="javascript:void(0)" class="waves-effect">
+                        <i class="mdi mdi-cash fa-fw" data-icon="v"></i>
+                        <span class="hide-menu">Transaction</span>
+                    </a>
+                    <ul class="nav nav-second-level">
+                        
+                        
+                                                    <li><a href="https://db.incfile.com/cost/services">Products and Subscriptions</a></li>
+                        
+                                            </ul>
+                </li>
+                    </ul>
+    </div>
+</div>
+
+     <div id="page-wrapper" style="min-height: 873px;">
+         <div class="container-fluid" id="middle-content"><style>
+    .wrapper-comp-2.title-no-wrap {
+        white-space: normal !important;
+    }
+
+    .wrapper-comp-2.title-no-wrap:hover {
+        white-space: nowrap !important;
+    }
+</style>
+
+<div class="row m-t-30">
+    <div class="col-sm-12">
+        <div class="white-box">
+            <h3 class="box-title">Search Results for "rickbouffard@gmail.com"</h3>
+            <div class="table-responsive" id="table_responsive_for_search">
+                <div id="DataTables_Table_0_wrapper" class="dataTables_wrapper no-footer"><table class="table table-hover search_result dataTable no-footer" id="DataTables_Table_0">
+                    <thead>
+                        <tr><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label=": activate to sort column ascending" style="width: 52.691px;"></th><th class="sorting sorting_desc" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-sort="descending" aria-label="Order #: activate to sort column ascending" style="width: 190.052px;">Order #</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Company Name: activate to sort column ascending" style="width: 250px;">Company Name</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Expedited: activate to sort column ascending" style="width: 119.705px;">Expedited</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Status: activate to sort column ascending" style="width: 89.757px;">Status</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Order Type: activate to sort column ascending" style="width: 100px;">Order Type</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="State: activate to sort column ascending" style="width: 79.0972px;">State</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Phone #: activate to sort column ascending" style="width: 80px;">Phone #</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="First Name: activate to sort column ascending" style="width: 125.885px;">First Name</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Last Name: activate to sort column ascending" style="width: 122.847px;">Last Name</th><th class="sorting" tabindex="0" aria-controls="DataTables_Table_0" rowspan="1" colspan="1" aria-label="Email: activate to sort column ascending" style="width: 239.896px;">Email</th></tr>
+                    </thead>
+                    <tbody>
+                                                                                
+                                                                                
+                                                                                
+                                            <tr style="cursor: pointer" class="odd">
+                                <td>
+                                    <a class="btn btn-transparent btn-sm" href="https://db.incfile.com/incfile/order/upload/225071674329" target="_blank" data-toggle="tooltip" data-placement="right" data-trigger="hover" title="" data-original-title="Upload document for &lt;br&gt;RMK TRADEWORKS LLC">
+                                        <i class="ti ti-upload"></i>
+                                    </a>
+                                </td>
+
+                                <td class="sorting_1">
+                                                                        <a href="https://db.incfile.com/redirect-to-dashboard-staff-bypass/2674329" target="_blank" style="margin-right: 1rem;" data-toggle="tooltip" data-original-title="" title="">
+                                       <img src="./SEARCH_RESULT_EXAMPLE_files/dashboard.ico" title="Client Dashboard" width="30" height="30">
+                                    </a>
+                                    <a href="https://db.incfile.com/incfile/order/detail/225071674329" target="_blank" style="color:#2cabe3">
+                                        225071674329
+                                    </a>
+                                </td>
+
+                                <td style="position: relative" width="250">
+
+                                    <div class="wrapper-comp-2 title-no-wrap">
+                                        <span class="name-inside-2 pull-left">RMK TRADEWORKS LLC</span>
+                                        <button data-view-link="https://db.incfile.com/incfile/order/detail/225071674329" class="btn btn-primary btn-sm btn-rounded view_comp_detail-2 pull-right" style="margin-left:5px;width:60px"> View
+                                        </button>
+                                        <button style="width:60px" class="btn btn-danger btn-sm btn-rounded copy-2 pull-right" data-comp-name="RMK TRADEWORKS LLC" data-name-search-link="https://icis.corp.delaware.gov/Ecorp/EntitySearch/NameSearch.aspx">Search
+                                        </button>
+                                    </div>
+
+                                </td>
+
+                                <td>
+                                                                            <i class="mdi mdi-check-circle" style="color:#3cb81e; font-size:20px; margin-left:20px; margin-top: -10px; display: inline-block"></i>
+                                                                    </td>
+                                <td>
+                                    Review
+                                </td>
+                                <td width="100">
+                                    Platinum
+                                </td>
+                                <td>
+                                    DE
+                                </td>
+                                <td width="80">
+                                    503-929-9765
+                                </td>
+                                <td>
+                                    Richard
+                                </td>
+                                <td>
+                                    Bouffard
+                                </td>
+                                <td>
+                                    <strong style="font-weight:600">rickbouffard@gmail.com</strong>
+                                </td>
+                            </tr><tr style="cursor: pointer" class="even">
+                                <td>
+                                    <a class="btn btn-transparent btn-sm" href="https://db.incfile.com/incfile/order/upload/225071674325" target="_blank" data-toggle="tooltip" data-placement="right" data-trigger="hover" title="" data-original-title="Upload document for &lt;br&gt;RMK INDUSTRIES LLC">
+                                        <i class="ti ti-upload"></i>
+                                    </a>
+                                </td>
+
+                                <td class="sorting_1">
+                                                                        <a href="https://db.incfile.com/redirect-to-dashboard-staff-bypass/2674325" target="_blank" style="margin-right: 1rem;" data-toggle="tooltip" data-original-title="" title="">
+                                       <img src="./SEARCH_RESULT_EXAMPLE_files/dashboard.ico" title="Client Dashboard" width="30" height="30">
+                                    </a>
+                                    <a href="https://db.incfile.com/incfile/order/detail/225071674325" target="_blank" style="color:#2cabe3">
+                                        225071674325
+                                    </a>
+                                </td>
+
+                                <td style="position: relative" width="250">
+
+                                    <div class="wrapper-comp-2 title-no-wrap">
+                                        <span class="name-inside-2 pull-left">RMK INDUSTRIES LLC</span>
+                                        <button data-view-link="https://db.incfile.com/incfile/order/detail/225071674325" class="btn btn-primary btn-sm btn-rounded view_comp_detail-2 pull-right" style="margin-left:5px;width:60px"> View
+                                        </button>
+                                        <button style="width:60px" class="btn btn-danger btn-sm btn-rounded copy-2 pull-right" data-comp-name="RMK INDUSTRIES LLC" data-name-search-link="https://icis.corp.delaware.gov/Ecorp/EntitySearch/NameSearch.aspx">Search
+                                        </button>
+                                    </div>
+
+                                </td>
+
+                                <td>
+                                                                            <i class="mdi mdi-check-circle" style="color:#3cb81e; font-size:20px; margin-left:20px; margin-top: -10px; display: inline-block"></i>
+                                                                    </td>
+                                <td>
+                                    Review
+                                </td>
+                                <td width="100">
+                                    Platinum
+                                </td>
+                                <td>
+                                    DE
+                                </td>
+                                <td width="80">
+                                    503-929-9765
+                                </td>
+                                <td>
+                                    Richard
+                                </td>
+                                <td>
+                                    Bouffard
+                                </td>
+                                <td>
+                                    <strong style="font-weight:600">rickbouffard@gmail.com</strong>
+                                </td>
+                            </tr><tr style="cursor: pointer" class="odd">
+                                <td>
+                                    <a class="btn btn-transparent btn-sm" href="https://db.incfile.com/incfile/order/upload/225071674314" target="_blank" data-toggle="tooltip" data-placement="right" data-trigger="hover" title="" data-original-title="Upload document for &lt;br&gt;RMK HOLDINGS LLC">
+                                        <i class="ti ti-upload"></i>
+                                    </a>
+                                </td>
+
+                                <td class="sorting_1">
+                                                                        <a href="https://db.incfile.com/redirect-to-dashboard-staff-bypass/2674314" target="_blank" style="margin-right: 1rem;" data-toggle="tooltip" data-original-title="" title="">
+                                       <img src="./SEARCH_RESULT_EXAMPLE_files/dashboard.ico" title="Client Dashboard" width="30" height="30">
+                                    </a>
+                                    <a href="https://db.incfile.com/incfile/order/detail/225071674314" target="_blank" style="color:#2cabe3">
+                                        225071674314
+                                    </a>
+                                </td>
+
+                                <td style="position: relative" width="250">
+
+                                    <div class="wrapper-comp-2 title-no-wrap">
+                                        <span class="name-inside-2 pull-left">RMK HOLDINGS LLC</span>
+                                        <button data-view-link="https://db.incfile.com/incfile/order/detail/225071674314" class="btn btn-primary btn-sm btn-rounded view_comp_detail-2 pull-right" style="margin-left:5px;width:60px"> View
+                                        </button>
+                                        <button style="width:60px" class="btn btn-danger btn-sm btn-rounded copy-2 pull-right" data-comp-name="RMK HOLDINGS LLC" data-name-search-link="https://icis.corp.delaware.gov/Ecorp/EntitySearch/NameSearch.aspx">Search
+                                        </button>
+                                    </div>
+
+                                </td>
+
+                                <td>
+                                                                            <i class="mdi mdi-check-circle" style="color:#3cb81e; font-size:20px; margin-left:20px; margin-top: -10px; display: inline-block"></i>
+                                                                    </td>
+                                <td>
+                                    Review
+                                </td>
+                                <td width="100">
+                                    Platinum
+                                </td>
+                                <td>
+                                    DE
+                                </td>
+                                <td width="80">
+                                    503-929-9765
+                                </td>
+                                <td>
+                                    Richard
+                                </td>
+                                <td>
+                                    Bouffard
+                                </td>
+                                <td>
+                                    <strong style="font-weight:600">rickbouffard@gmail.com</strong>
+                                </td>
+                            </tr></tbody>
+                </table></div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+     </div>
+
+ </div>
+
+ <script type="text/javascript">
+     (function() {
+         [].slice.call(document.querySelectorAll('.sttabs')).forEach(function(el) {
+             new CBPFWTabs(el);
+         });
+
+     })();
+
+     $.ajaxSetup({
+         headers: {
+             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+         }
+     });
+
+     $.blockUI.defaults.message =
+         "<div class='blockUI-message'><svg class=\"spinner\" width=\"32px\" height=\"32px\" viewBox=\"0 0 66 66\" xmlns=\"http://www.w3.org/2000/svg\">\n" +
+         "<circle class=\"path-out\" fill=\"none\" stroke=\"#ddd\" stroke-width=\"6\" stroke-linecap=\"round\" cx=\"33\" cy=\"33\" r=\"30\"></circle>\n" +
+         "   <circle class=\"path\" fill=\"none\" stroke-width=\"6\" stroke-linecap=\"round\" cx=\"33\" cy=\"33\" r=\"30\"></circle>\n" +
+         "</svg>Processing your information. Please wait...</div>";
+
+     $(document).ajaxStart(function() {
+         $.blockUI();
+     });
+     $(document).ajaxComplete(function() {
+         $.unblockUI();
+     });
+     $(document).ajaxError(function() {
+         $.unblockUI();
+     });
+
+     // Search for an order
+     //Searching at the top
+     timer = null;
+     var container = $('#middle-content');
+
+     function showPreLoader(status) {
+         var preloader = $('.preloader');
+         if (status == 1) {
+             preloader.css('z-index', 100);
+             preloader.fadeIn();
+         } else {
+             preloader.css('z-index', 100);
+             preloader.fadeOut();
+         }
+     }
+
+     /**
+      * Format the 4 date digits of the ordernum in red color
+      */
+     function dbOrdernumFormat(ordernum) {
+         let originalOrdernum = String(ordernum);
+
+         originalOrdernum = originalOrdernum.replace(originalOrdernum.substring(3, 7), '<span style="color:red;"><b>' +
+             originalOrdernum.substring(3, 7) + '</b></span>');
+
+         return originalOrdernum;
+     }
+
+     function ajaxSearch() {
+         $('table.dataTable.fixedHeader-floating').remove();
+         //showPreLoader(1);
+         $.ajax({
+             url: '/',
+             method: 'post',
+             global: true,
+             data: {
+                 search: $('#search_field').val()
+             },
+             success: function(data) {
+                 if (data) {
+                     container.html(data);
+                     //Apply DataTable again for search result
+                     $('.search_result').DataTable({
+                         paging: false,
+                         fixedHeader: true,
+                         pageLength: 1000,
+                         info: false,
+                         searching: false,
+                         "aaSorting": [
+                             [1, 'desc']
+                         ],
+                     });
+                     $('[data-toggle="tooltip"]').tooltip({
+                         html: true
+                     });
+
+                     $(document).on({
+                         mouseenter: function() {
+                             var nameLength = $(this).find('.name-inside-2').outerWidth() + 180;
+                             $(this).addClass('btn-default btn-outline btn-rounded');
+                             $(this).css('width', nameLength + 'px');
+                             $(this).find('.btn').show();
+                         },
+                         mouseleave: function() {
+                             $(this).removeClass('btn-default btn-outline btn-rounded');
+                             $(this).css('width', 'auto');
+                             $(this).find('.btn').hide();
+                         }
+                     }, 'div.wrapper-comp-2');
+
+                     // Copy company name to clipboard
+                     $(document).on('click', 'button.copy-2', function() {
+                         var compname = $(this).data('comp-name');
+                         compname = compname.replace(/_blabla_/gi, "'", compname);
+                         var name_search_link = $(this).data('name-search-link');
+
+                         var $tempInput = $("<input>");
+                         $("body").append($tempInput);
+                         $tempInput.val(compname).select();
+                         document.execCommand("copy");
+                         $tempInput.remove();
+
+                         window.open(name_search_link);
+                     });
+
+                     $(document).on('click', 'button.view_comp_detail-2', function() {
+                         var order_detail_link = $(this).data('view-link');
+                         window.open(order_detail_link);
+                     });
+
+                     showPreLoader(0);
+                 } else {
+                     showPreLoader(0);
+                 }
+             }
+         });
+     }
+
+     function searchOrders(state, type = null, orderType, withoutFiledArticles = null) {
+         let miscMainType = "&main_orderType=" + type;
+         let miscType = "";
+         let status = $('#status').val();
+         sessionStorage.setItem('needToReload', true);
+         if (type != 'main') {
+             miscType = "&misc_orderType=" + orderType;
+         }
+         let mainWithoutFiledArtickes = '';
+         if (withoutFiledArticles) {
+             mainWithoutFiledArtickes = '&main_withoutFiledArticles=true';
+         }
+
+         let newTab = '/order-tracker/orders/order-search?sort=asc&state=' + state + '&status=' + status + miscMainType +
+             miscType + mainWithoutFiledArtickes;
+
+         window.open(newTab);
+
+     }
+
+     function searchOrdersByStatus() {
+         let status = $('#status').val();
+
+         window.location.href = '/forwarded-orders/?status=' + status;
+     }
+
+     $(document).ready(function() {
+         $('#search_field').bind('keypress', function(e) {
+             if (e.keyCode == 13) {
+                 ajaxSearch();
+             }
+         });
+
+         $('#mainSearching').click(function() {
+             ajaxSearch();
+         });
+
+         $('#ra_per_month, #ra_per_state, #ra_per_provider').change(function () {
+             $.blockUI();
+             window.location.href = "https://db.incfile.com/incfile/orders/reporting/ra-renewals/?month=" + $('#ra_per_month').val() + '&entityState=' + $('#ra_per_state').val() + '&provider=' + $('#ra_per_provider').val();
+         });
+     });
+ </script>
+
+     <script src="./SEARCH_RESULT_EXAMPLE_files/moment.min.js"></script>
+    <script src="./SEARCH_RESULT_EXAMPLE_files/es.js"></script>
+    <script src="./SEARCH_RESULT_EXAMPLE_files/datetime-moment.js"></script>
+    <script>
+
+        function getSortColumn(status) {
+            if (status == STATUSES.shipped) {
+                return ORDER_SEARCH_COLUMNS.completionDate;
+            } else{
+                return ORDER_SEARCH_COLUMNS.orderDate;
+            }
+        }
+
+        var searchType = $('#search_type'),
+            statusType = $('#status'),
+            stateType = $('#state'),
+            entityType = $('#entityType'),
+            mainOrderType = $('#main_orderType'),
+            miscOrderType = $('#misc_orderType'),
+            mainType = $('#main_type'),
+            expeditedType = $('#expedited'),
+            businessType = $('#business_type'),
+            cardDigits = $('#card_digits'),
+            tableResults = $('#tableStatusResults');
+
+        var issueType = $('#issue'),
+            missIssue = $('#miss_issue'),
+            orderTypeForIssue = $('#orderType');
+
+        var affiliateId = "" ?? '';
+        var nonCanceledStatus = "" ?? '';
+        var transactionDateRange = "" ?? '';
+        var shareASaleTransactionDateParam = '&transactionDateRange=' + transactionDateRange;
+        var orderedDateRange = "" ?? '';
+        var orderedDateRangeParam = '&orderedDateRange=' + orderedDateRange;
+        var country = "" ?? '';
+        var countryParam = '&country=' + country;
+        var affiliateParam = '&affiliateId=' + affiliateId;
+        var nonCanceledParam = '&non_canceled='+nonCanceledStatus;
+        var maxRecordsToDownload = 4000;
+
+        $(document).ready(function () {
+            $.blockUI.defaults.message = "<div class='blockUI-message'>Processing your information. Please wait...</div>";
+
+            searchType.change(function() {
+                $.blockUI();
+                hideBoxStatusOrBoxIssue();
+                window.location.href = "https://db.incfile.com/order-tracker/orders/order-search?search_type=" + searchType.val();
+            });
+
+            // Missing Data table
+            $('.missing-table').DataTable({
+                paging: false,
+                pagingType: "simple_numbers_no_ellipses",
+                fixedHeader: true,
+                pageLength: 100,
+                info: false,
+                searching: false,
+                bSort: false,
+            });
+
+            $.fn.dataTable.moment( 'MM/DD/YYYY' );
+
+            $('.issue-table').DataTable({
+                paging: false,
+                fixedHeader: true,
+                pageLength: 100,
+                info: false,
+                searching: false,
+                bSort: false,
+                "columnDefs": [
+                    {type: "num-html", targets: 5}
+                ]
+            });
+
+            issueType.val("");
+            missIssue.val("");
+
+            // Set default value
+            let mainOrderTypeValue = "";
+            var statusValue = sessionStorage.getItem('status') ? sessionStorage.getItem('status') : "5",
+                stateValue = sessionStorage.getItem('state') ? sessionStorage.getItem('state') : "",
+                entityTypeValue = sessionStorage.getItem('entityType') ? sessionStorage.getItem('entityType') : '',
+                typeOrderValue = sessionStorage.getItem('mainOrderType') ? sessionStorage.getItem('mainOrderType') : "main",
+                miscOrderTypeValue = sessionStorage.getItem('miscOrderType') ? sessionStorage.getItem('miscOrderType') : "",
+                mainTypeValue = sessionStorage.getItem('mainType') ? sessionStorage.getItem('mainType') : "",
+                expeditedValue = sessionStorage.getItem('expedited') ? sessionStorage.getItem('expedited') : '',
+                businessTypeValue = sessionStorage.getItem('businessType') ? sessionStorage.getItem('businessType') : '',
+                needToReload = sessionStorage.getItem('needToReload') ? sessionStorage.getItem('needToReload') : false;
+
+            if (mainOrderTypeValue) {
+                typeOrderValue = mainOrderTypeValue;
+            }
+
+            if (needToReload) {
+                // Hide/Show filters
+                if (typeOrderValue === 'main') {
+                    miscOrderType.parent().addClass('hide');
+                    miscOrderType.val('');
+                    $('#main_type, #expedited, #business_type, #card_digits').parent().removeClass('hide');
+                } else if (typeOrderValue === 'misc' || typeOrderValue === 'ra_only') {
+                    $('#main_type, #business_type, #card_digits').parent().addClass('hide');
+                    $('#main_type, #business_type, #card_digits').val('');
+                    $('#expedited').parent().removeClass('hide');
+                    miscOrderType.parent().removeClass('hide');
+                } else {
+                    $('#misc_orderType, #main_type, #expedited, #business_type, #card_digits').parent().addClass('hide');
+                    $('#misc_orderType, #main_type, #expedited, #business_type, #card_digits').val('');
+                }
+
+                // Set pre-charged values
+                statusType.val(statusValue);
+                stateType.val(stateValue);
+                entityType.val(entityTypeValue);
+                mainOrderType.val(typeOrderValue);
+                miscOrderType.val(miscOrderTypeValue);
+                expeditedType.val(expeditedValue);
+                businessType.val(businessTypeValue);
+                mainType.val(mainTypeValue);
+
+                renderTableSearchStatus();
+            } else {
+                mainOrderType.val('main');
+                renderTableSearchStatus();
+            }
+
+            $('#generateCSV').click(function (e) {
+                e.preventDefault()
+                downloadOrderSearch();
+            });
+
+
+            $('#status, #state, #entityType, #main_orderType, #misc_orderType, #main_type, #expedited, #business_type')
+                .change(function() {
+                    $('#generateCSV').hide();
+                });
+
+            $('#card_digits').keyup(function () {
+                $('#generateCSV').hide();
+            });
+
+            // On change action : Main Order Type
+            mainOrderType.change(function () {
+                // Hide/Show filters
+                if ($(this).val() === 'main') {
+                    miscOrderType.parent().addClass('hide');
+                    miscOrderType.val('');
+                    $('#main_type, #expedited, #business_type, #card_digits').parent().removeClass('hide');
+                } else if($(this).val() === 'misc' || $(this).val() === 'ra_only') {
+                    $('#main_type, #business_type, #card_digits').parent().addClass('hide');
+                    $('#main_type, #business_type, #card_digits').val('');
+                    $('#expedited').parent().removeClass('hide');
+                    miscOrderType.parent().removeClass('hide');
+                } else {
+                    $('#misc_orderType, #expedited, #main_type, #business_type, #card_digits').parent().addClass('hide');
+                    $('#misc_orderType, #expedited, #main_type, #business_type, #card_digits').val('');
+                }
+            });
+
+            $('#main_orderType, #misc_orderType').change(function () {
+                if ($('#main_orderType').val() === 'misc' && $('#misc_orderType').val() === '73') {
+                    $('#boir_type').parent().removeClass('hide');
+                } else {
+                    $('#boir_type').parent().addClass('hide');
+                    $('#boir_type').val('')
+                }
+            })
+
+            hideBoxStatusOrBoxIssue();
+        });
+
+        $(document).ajaxComplete(function() {
+            $('[data-toggle="tooltip"]').tooltip({html: true});
+
+            $(document).on({
+                mouseenter: function () {
+                    var nameLength = $(this).find('.name-inside').outerWidth() + 180;
+                    $(this).addClass('btn-default btn-outline btn-rounded');
+                    $(this).css('width', nameLength + 'px');
+                    $(this).find('.btn').show();
+                },
+                mouseleave: function () {
+                    $(this).removeClass('btn-default btn-outline btn-rounded');
+                    $(this).css('width', 'auto');
+                    $(this).find('.btn').hide();
+                }
+            }, 'div.wrapper-comp');
+
+            $(document).on('click', '#checkall', function () {
+                var checkboxList = $('input[class=chk_to_print]');
+                checkboxList.prop('checked', this.checked);
+            });
+
+            // Copy company name to clipboard
+            $(document).on('click', 'button.copy', function() {
+                var compname = $(this).data('comp-name');
+                    compname = compname.replace(/_blabla_/gi, "'", compname);
+                var name_search_link = $(this).data('name-search-link');
+
+                var $tempInput =  $("<input>");
+                $("body").append($tempInput);
+                $tempInput.val(compname).select();
+                document.execCommand("copy");
+                $tempInput.remove();
+
+                window.open(name_search_link);
+            });
+
+            $(document).on('click', 'button.view_comp_detail', function() {
+                var order_detail_link = $(this).data('view-link');
+                window.location.href = order_detail_link;
+            });
+
+            //scroll to top page when click on pagination link
+            $(document).on('click', 'a.paginate_button', function () {
+                $("html, body").animate({ scrollTop: null }, "slow");
+            });
+
+            // Go to order detail
+            $(document).off('click', '.goto-orderdetail').on('click', '.goto-orderdetail', function () {
+                var orderLink = $(this).data('detail-link');
+                window.open(orderLink, '_blank');
+            });
+        });
+
+        function handlePrintOrders() {
+            var routePrint = "https://db.incfile.com/incfile/order/print/results";
+            var orderChecked = $('input[class=chk_to_print]:checked').map(function () {
+                return this.value;
+            }).get().join('|');
+
+            if (orderChecked.length) {
+                $('#checkall').prop('checked', false);
+                window.open(routePrint + '?listOrderNums=' + orderChecked);
+            } else {
+                swal('Error', 'Please select at least one order to print.', 'error');
+            }
+        }
+
+        function renderTableSearchStatus() {
+            var sort = "";
+            var dir = sort === 'asc' ? [10, 'asc'] : [11, 'desc'];
+
+            var table = tableResults.DataTable({
+                "serverSide": true,
+                "processing": false,
+                "fixedHeader": true,
+                "searching": false,
+                "pagingType" : "simple_numbers_no_ellipses",
+                "ajax": {
+                    "url": "https://db.incfile.com/order-tracker/api/ajax-load-search-by-status/?status=" + statusType.val() + "&state=" + stateType.val() +
+                        "&main_orderType=" + mainOrderType.val() + '&main_type=' + mainType.val() + "&entityType=" + entityType.val() + "&misc_orderType=" +
+                        miscOrderType.val() + affiliateParam + nonCanceledParam + orderedDateRangeParam + countryParam + shareASaleTransactionDateParam +
+                        "&main_withoutFiledArticles=" + "",
+                    "type": "POST"
+                },
+                "order": [dir],
+                "columns": [
+                    {"data": 'upload_doc_link', orderable: false},
+                    {"data": "ordernum", 'order':'desc'},
+                    {'data': 'compName1'},
+                    {"data": "status"},
+                    {"data": 'memberChange', 'defaultContent':'', visible: false, orderable: true},
+                    {"data": 'expedited', 'defaultContent':'', visible: true, orderable: false},
+                    {"data": 'entityState'},
+                    {'data': 'orderType'},
+                    {'data': 'entityType'},
+                    {'data': 'dateForwarded', 'defaultContent':'', visible: false},
+                    {"data": 'dateOrdered'},
+                    {'data': 'dateUpdated', 'defaultContent':'', orderable: true},
+                    {'data': 'dueDate', 'defaultContent': '', visible: false},
+                    {"data": 'checkbox', orderable: false}
+                ],
+                "aaSorting": [10, sort],//[ 9, "desc" ]
+                "columnDefs": [
+                    {
+                        'targets': [11],
+                        'render': function (data, type, row) {
+                            if ($("#status").val() == 5) {
+                                table.column(11).visible(true, false);
+                                return row.dateUpdated;
+                            } else {
+                                table.column(11).visible(false, false);
+                            }
+                        }
+                    },
+                    {
+                        'targets': [5],
+                        'render': function (data, type, row) {
+                            if($('#main_orderType').val() !== 'ghost') {
+                                table.column(5).visible(true, false);
+                                return row.expedited;
+                            } else{
+                                table.column(5).visible(false, false);
+                            }
+                        }
+                    },
+                    {
+                        'targets': [4],
+                        'render': function (data, type, row) {
+                            if($('#main_orderType').val() === 'ra_only') {
+                                table.column(4).visible(true, false);
+                                return row.memberChange;
+                            } else{
+                                table.column(4).visible(false, false);
+                            }
+                        }
+                    },
+                    {
+                        'targets': [9],
+                        'render': function (data, type, row) {
+                            if($("#status").val() == 3) {
+                                table.column(9).visible(true, false);
+                                return row.dateForwarded;
+                            } else{
+                                table.column(9).visible(false, false);
+                            }
+                        }
+                    },
+                    {
+                        'targets': [12],
+                        'render': function (data, type, row) {
+                            if($("#status").val() == 1 && $("#misc_orderType").val() == 20) {
+                                table.column(12).visible(true, false);
+                                return row.dueDate;
+                            } else{
+                                table.column(12).visible(false, false);
+                            }
+                        }
+                    }/*,
+                    {
+                        'targets': [8],
+                        "render": function(data, type, full, meta){
+                           return data;
+                        }
+                    },*/
+                ]
+            });
+            $('#generateCSV').show();
+        }
+
+        // This function just show or hide dropdowns before and after a window redirect
+        function hideBoxStatusOrBoxIssue() {
+            if (searchType.val() === 'order_status') {
+                $('#box-status').removeClass('hide');
+                $('#box-issue').val('');
+                $('#box-issue').addClass('hide');
+
+            } else if(searchType.val() === 'issue') {
+                $('#box-status').val('');
+                $('#box-status').addClass('hide');
+                $('#box-issue').removeClass('hide');
+            }
+        }
+
+        // Function to download the CSV from backend
+        function downloadOrderSearch() {
+            $('#generateCSV').blur();
+
+            let url = "https://db.incfile.com/order-tracker/api/ajax-download-order-search" + "?status=" + statusType.val() + "&state=" + stateType.val() +
+                    "&entityType=" + entityType.val() + "&main_orderType=" + mainOrderType.val() + "&main_type=" + mainType.val() + "&misc_orderType=" + miscOrderType.val() +
+                    "&expedited=" + expeditedType.val() + "&business_type=" + businessType.val() + "&card_digits=" + cardDigits.val() +
+                    affiliateParam + nonCanceledParam + shareASaleTransactionDateParam + countryParam + orderedDateRangeParam;
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                data: tableResults.DataTable().ajax.params(),
+                success: function(result) {
+                    if (tableResults.dataTable().fnSettings().fnRecordsTotal() > maxRecordsToDownload) {
+                        swal('Warning', 'The limit of records to download is: '+maxRecordsToDownload, 'warning');
+                    }
+
+                    let date = new Date()
+
+                    let day = date.getDate().toString().padStart(2, '0');
+                    let month = (1 + date.getMonth()).toString().padStart(2, '0');
+                    let year = date.getFullYear();
+                    let time = date.getTime();
+
+                    let blob = new Blob([result]);
+                    let a = document.createElement('a');
+
+                    a.href = window.URL.createObjectURL(blob);
+                    a.download = `${year}${month}${day}_order_search_${time}.csv`;
+                    document.body.appendChild(a);
+
+                    a.click();
+
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(a.href);
+                }
+            });
+        }
+
+        function searchOrders() {
+            if (searchType.val() === 'order_status') {
+                tableResults.DataTable()
+                    .ajax.url("https://db.incfile.com/order-tracker/api/ajax-load-search-by-status/?status=" + statusType.val() + "&state=" + stateType.val() +
+                        "&entityType=" + entityType.val() + "&main_orderType=" + mainOrderType.val() + "&main_type=" + mainType.val() + "&misc_orderType=" + miscOrderType.val() +
+                        "&expedited=" + expeditedType.val() + "&business_type=" + businessType.val() + "&card_digits=" + cardDigits.val() +
+                        affiliateParam + nonCanceledParam + shareASaleTransactionDateParam + countryParam + orderedDateRangeParam +
+                        '&boir_type=' + $('#boir_type').val() )
+                    .load();
+            } else {
+                $.blockUI();
+
+                let href = "https://db.incfile.com/order-tracker/orders/order-search?search_type=" + searchType.val() + "&state=" + stateType.val();
+
+                if (searchType.val() == 'issue') {
+                    href += "&issue=" + issueType.val();
+                } else {
+                    href += "&miss_issue=" + missIssue.val() + "&orderType=" + orderTypeForIssue.val();
+                }
+
+                window.location.href = href;
+            }
+            $('#generateCSV').show();
+        }
+
+    </script>
+ 
+
+
+<div id="copilot-sidebar" style="--sb-bg: #212121; --sb-box-bg: #2e2e2e; --sb-font-size: 13px; --sb-font-family: &#39;Inter&#39;, sans-serif;">
+                <div class="copilot-header">
+                    <div class="copilot-title">
+                        <img src="chrome-extension://bcogdhhcfplhhjgfcmokejijecgllcbo/fennec_icon.png" class="copilot-icon" alt="FENNEC (POO)">
+                        <span>FENNEC (POO)</span>
+                    </div>
+                </div>
+                <div class="copilot-body" id="copilot-body-content">
+                    <button id="queue-view-btn" class="copilot-button" style="width:100%;margin-bottom:8px">QUEUE VIEW</button>
+                    <div id="qs-summary" class="white-box" style="margin-bottom:10px"><div><b>TOTAL:</b> <b>100</b></div><div><b>EXPEDITED:</b> <b>66</b></div><div id="fraud-toggle" style="cursor:pointer"><b>POSSIBLE FRAUD:</b> <b>0</b> <i id="fraud-eye" class="ti ti-eye" style="margin-left:4px"></i></div><div style="margin-top:8px"><b>BY STATE</b></div><div style="display:flex;flex-wrap:wrap"><span class="state-count" data-state="FL" style="width:25%;cursor:pointer;display:inline-block"><b>FL:</b> <b>16</b></span><span class="state-count" data-state="WY" style="width:25%;cursor:pointer;display:inline-block"><b>WY:</b> <b>12</b></span><span class="state-count" data-state="TX" style="width:25%;cursor:pointer;display:inline-block"><b>TX:</b> <b>11</b></span><span class="state-count" data-state="CA" style="width:25%;cursor:pointer;display:inline-block"><b>CA:</b> <b>9</b></span><span class="state-count" data-state="MD" style="width:25%;cursor:pointer;display:inline-block"><b>MD:</b> <b>5</b></span><span class="state-count" data-state="IL" style="width:25%;cursor:pointer;display:inline-block"><b>IL:</b> <b>4</b></span><span class="state-count" data-state="GA" style="width:25%;cursor:pointer;display:inline-block"><b>GA:</b> <b>3</b></span><span class="state-count" data-state="NC" style="width:25%;cursor:pointer;display:inline-block"><b>NC:</b> <b>3</b></span><span class="state-count" data-state="MI" style="width:25%;cursor:pointer;display:inline-block"><b>MI:</b> <b>3</b></span><span class="state-count" data-state="OR" style="width:25%;cursor:pointer;display:inline-block"><b>OR:</b> <b>3</b></span><span class="state-count" data-state="NM" style="width:25%;cursor:pointer;display:inline-block"><b>NM:</b> <b>2</b></span><span class="state-count" data-state="OK" style="width:25%;cursor:pointer;display:inline-block"><b>OK:</b> <b>2</b></span><span class="state-count" data-state="CO" style="width:25%;cursor:pointer;display:inline-block"><b>CO:</b> <b>2</b></span><span class="state-count" data-state="OH" style="width:25%;cursor:pointer;display:inline-block"><b>OH:</b> <b>2</b></span><span class="state-count" data-state="MT" style="width:25%;cursor:pointer;display:inline-block"><b>MT:</b> <b>2</b></span><span class="state-count" data-state="DE" style="width:25%;cursor:pointer;display:inline-block"><b>DE:</b> <b>2</b></span><span class="state-count" data-state="AL" style="width:25%;cursor:pointer;display:inline-block"><b>AL:</b> <b>2</b></span><span class="state-count" data-state="NY" style="width:25%;cursor:pointer;display:inline-block"><b>NY:</b> <b>2</b></span><span class="state-count" data-state="NJ" style="width:25%;cursor:pointer;display:inline-block"><b>NJ:</b> <b>2</b></span><span class="state-count" data-state="WI" style="width:25%;cursor:pointer;display:inline-block"><b>WI:</b> <b>2</b></span><span class="state-count" data-state="SC" style="width:25%;cursor:pointer;display:inline-block"><b>SC:</b> <b>1</b></span><span class="state-count" data-state="MA" style="width:25%;cursor:pointer;display:inline-block"><b>MA:</b> <b>1</b></span><span class="state-count" data-state="NE" style="width:25%;cursor:pointer;display:inline-block"><b>NE:</b> <b>1</b></span><span class="state-count" data-state="AR" style="width:25%;cursor:pointer;display:inline-block"><b>AR:</b> <b>1</b></span><span class="state-count" data-state="TN" style="width:25%;cursor:pointer;display:inline-block"><b>TN:</b> <b>1</b></span><span class="state-count" data-state="KS" style="width:25%;cursor:pointer;display:inline-block"><b>KS:</b> <b>1</b></span><span class="state-count" data-state="AZ" style="width:25%;cursor:pointer;display:inline-block"><b>AZ:</b> <b>1</b></span><span class="state-count" data-state="UT" style="width:25%;cursor:pointer;display:inline-block"><b>UT:</b> <b>1</b></span><span class="state-count" data-state="WA" style="width:25%;cursor:pointer;display:inline-block"><b>WA:</b> <b>1</b></span><span class="state-count" data-state="MS" style="width:25%;cursor:pointer;display:inline-block"><b>MS:</b> <b>1</b></span><span class="state-count" data-state="IA" style="width:25%;cursor:pointer;display:inline-block"><b>IA:</b> <b>1</b></span></div><div style="margin-top:8px"><div><b>Review:</b> <b>100</b></div></div></div>
+                    <div id="qs-progress" style="display:none;margin-bottom:10px;color:#ffa500;font-weight:bold"></div>
+                </div></div><div id="tb-tb-ai-sidebar" data-tb-tb-unique-id="0.620837652936" style="all: initial; left: 0; top: 0; position: absolute; z-index: 1000000000; pointer-events: none;"><template shadowrootmode="closed"><style>
+@media print {
+  /* Don't display the sidebar chip when printing */
+  #container.collapsed-class {
+      display: none !important;
+  }
+  /* Don't display the tooltip when printing */
+  #tb-tb-tooltip-iframe  {
+      display: none !important;
+  }
+}
+
+
+#container {
+  /* Revert the pointer-events reset set on the outerContainer */
+  pointer-events: initial;
+  position: absolute;
+  anchor-name: --tb-anchor-container;
+  right: 0;
+  z-index: 999999999;
+  /** https://www.joshwcomeau.com/shadow-palette/ */
+  --shadow-color: 0deg 0% 60%;
+  --shadow-elevation-low:
+    -1px 0px 1.5px hsl(var(--shadow-color) / 0.03),
+    -2px 0.1px 2.9px -0.1px hsl(var(--shadow-color) / 0.26),
+    -4.1px 0.1px 6px -0.2px hsl(var(--shadow-color) / 0.48);
+
+  color: black;
+  font-size: 15px;
+
+  font-family: Arial;
+
+  user-select: none;
+}
+
+#container.expanded-class {
+  top: 0;
+}
+
+.expanded {
+  overflow: hidden;
+  height: 100vh;
+  box-shadow: var(--shadow-elevation-low);
+}
+
+.collapsed {
+  animation: fadeinfull 0.3s forwards;
+}
+
+@keyframes fadeinfull {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.collapsed, .expanded {
+  z-index: 1000000000;
+  display: none;
+}
+
+#container.collapsed-class .collapsed {
+  display: flex;
+}
+
+#container.collapsed-class.chip-closed .collapsed {
+  display: none;
+}
+
+#container.collapsed-class {
+  backdrop-filter: blur(1px);
+}
+
+#container.collapsed-class:has(> #collapsed.hovered-auto) {
+  backdrop-filter: blur(5px);
+}
+
+#container.expanded-class {
+  width: 100%;
+  height: 90% !important;
+  top: 5% !important;
+}
+
+#container.expanded-class .expanded {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  border-bottom-left-radius: 6px;
+  border-top-left-radius: 6px;
+}
+
+.expanded iframe {
+  height: 100%; width: 100%; padding: 0; margin: 0; border: 0;
+}
+
+.icon-container {
+  opacity: 50%;
+  /* Using max-width because we cannot animate width: fit-content
+  https://stackoverflow.com/a/52338132/2181238 */
+  max-width: 28px;
+  padding: 10px;
+  padding-right: 8px;
+  user-select: none;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+
+  display: flex;
+  align-items: center;
+
+  box-shadow: 0 0 #0000, 0 0 #0000, 0 1px 3px 0 rgb(0 0 0 / .1), 0 1px 2px -1px rgb(0 0 0 / .1);
+}
+
+#chip-drag-handle {
+  opacity: 0;
+  width: 0px;
+  color: black;
+  cursor: grab;
+  transition: opacity .2s ease, width .1s ease !important;
+  margin-top: 1px;
+}
+
+.collapsed.hovered #chip-drag-handle {
+  opacity: 1;
+  width: 25px;
+}
+
+/* Otherwise, keyboard shortcut was getting included in page content */
+.keyboard-container {
+  opacity: 0;
+  transition-delay: 0.25s;
+}
+
+.collapsed.hovered .keyboard-container, .collapsed.hovered-auto .keyboard-container {
+  opacity: 1;
+  transition: none;
+}
+
+#chip-drag-handle:active {
+  cursor: grabbing;
+}
+
+.icon-container img {
+  width: 25px;
+  margin-right: 5px;
+}
+
+.collapsed .icon-container, .collapsed .open-blaze-tooltip, .collapsed .close-button {
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.open-blaze-tooltip {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  left: -124px;
+  top: 5px;
+  border-radius: 25px;
+  color: rgb(20, 20, 20);
+  background: rgb(245, 245, 245);
+  padding: 10px;
+  user-select: none;
+}
+
+@keyframes growIn {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.ai-blaze-box {
+  position: absolute;
+  position-anchor: --tb-anchor-container;
+  position-area: top;
+  position-try-fallbacks: flip-block;
+  right: 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  width: 250px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  transform: scale(0.5);
+  animation: growIn 0.1s ease-out forwards;
+  z-index: 10000000000;
+  pointer-events: auto;
+}
+
+.ai-blaze-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 20px;
+  cursor: pointer;
+  color: #999;
+}
+
+.ai-blaze-btn {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 4px;
+  background-color: #00acc0;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  text-transform: uppercase;
+}
+
+.ai-blaze-btn:hover {
+  background-color: #009aae;
+}
+
+.ai-blaze-cancel {
+  background-color: transparent;
+  color: #999;
+}
+
+.ai-blaze-permanent {
+  background-color: transparent;
+  border: 2px solid #00acc0;
+  border-radius: 4px;
+  color: #00acc0;
+}
+
+.ai-blaze-permanent:hover {
+  background-color: #00acc0;
+  color: white;
+}
+
+.ai-blaze-cancel:hover {
+  background-color: #f0f0f0;
+}
+
+.close-button {
+  position: absolute;
+  top: -3px; left: -3px;
+  border-radius: 100%;
+  color: white;
+  background: black;
+  width: 15px;
+  height: 15px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  visibility: hidden;
+  opacity: 0;
+  z-index: 20;
+}
+
+.collapsed.hovered .icon-container, .collapsed.hovered .close-button {
+  opacity: 100%;
+  visibility: visible;
+}
+
+.collapsed.hovered .icon-container, .collapsed.hovered-auto .icon-container {
+  max-width: 250px;
+}
+
+.collapsed.hovered-auto .icon-container {
+  background-color: rgb(255 241 251 / 50%);
+  opacity: 100%;
+}
+
+.collapsed.hovered .icon-container {
+  padding-right: 10px;
+  max-width: 250px;
+  background-color: rgb(255,252,255);
+}
+
+.collapsed[class=hovered-auto] {
+  color: grey;
+}
+
+.collapsed.hovered .open-blaze-tooltip {
+  opacity: 1;
+  pointer-events: initial;
+}
+
+#tb-tb-sidebar {
+  position: relative;
+  z-index: 10;
+}
+
+#close-button {
+  position: absolute;
+  top: -1px;
+  right: -4px;
+  color: grey;
+  cursor: pointer;
+  /* align this button closely with the one in iframe */
+  padding: 19px 17px;
+  font-size: 20px;
+  font-family: Arial;
+  margin: 0;
+}
+
+#sidebar-drag-handle {
+  font-size: 10px;
+  position: absolute;
+  left: 0;
+  top: 20%;
+  display: flex;
+  align-items: center;
+  cursor: ew-resize;
+  justify-content: center;
+  user-select: none;
+
+  background: transparent;
+  color: black;
+  font-size: 10px;
+
+  height: 60%;
+  width: 5px;
+  padding-left: 1px;
+
+  transition: 0.5s ease;
+
+  z-index: 20;
+}
+
+.tb-ai-outline {
+  pointer-events: none;
+  background-color: transparent;
+  position: fixed;
+  top: -8px;
+  left: -9px;
+  width: calc(100% + 18px);
+  height: calc(100% + 16px);
+  filter: blur(8px);
+  animation: tb-ai-border 4s linear infinite;
+  /* for expanding/contracting when emphasized */
+  transition: border-width 0.3s ease, width 0.3s ease, height 0.3s ease;
+}
+
+#tooltip-container {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+#tb-tb-tooltip-iframe {
+  position: absolute;
+  border-width: 0px;
+  transition: opacity 0.1s ease;
+  pointer-events: all;
+  user-select: none;
+  opacity: 0.7;
+}
+
+#tb-tb-tooltip-iframe:hover {
+  opacity: 1;
+}
+
+#tb-tb-tooltip-iframe.activated {
+  opacity: 1;
+}
+
+
+.tb-ai-outline.highlight-subtle {
+  border-width: 15px;
+  border-style: solid;
+  border-color: transparent;
+  border-image-slice: 1;
+  height: calc(100% - 14px);
+  width: calc(100% - 12px);
+}
+
+/* Emphasize the outline */
+.tb-ai-outline.highlight-strong {
+  border-width: 25px !important;
+  border-style: solid;
+  border-color: transparent;
+  border-image-slice: 1;
+  height: calc(100% - 34px) !important;
+  width: calc(100% - 32px) !important;
+}
+
+.tooltip {
+  visibility: hidden;
+  background-color: rgba(97, 97, 97, 0.92);
+  color: rgb(255, 255, 255);
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 0.6875rem;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-weight: 500;
+  text-align: center;
+  position: absolute;
+  z-index: 1000000000;
+  transition: opacity 200ms cubic-bezier(0.4, 0, 0.2, 1), transform 133ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  opacity: 0;
+}
+
+.close-button-tooltip {
+  position: absolute;
+  display: flex;
+  anchor-name: --close-button-tooltip-container;
+}
+
+.close-button-tooltip-text {
+  position: fixed;
+  position-anchor: --close-button-tooltip-container;
+  position-area: top;
+  justify-self: anchor-center;
+  position-try-fallbacks: flip-start;
+  margin-bottom: 9px;
+  margin-right: 5px;
+}
+
+#container:has(.close-button-tooltip:hover) ~ .close-button-tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+@keyframes tb-ai-border {
+  0% { border-image-source: linear-gradient(to bottom right, #FF69B4 0%, #1E90FF 25%, #FFD700 50%, #DA70D6 75%, #FF69B4 100%); }
+  20% { border-image-source: linear-gradient(to bottom right, #FF69B4 0%, #FF69B4 25%, #1E90FF 50%, #FFD700 75%, #DA70D6 100%); }
+  40% { border-image-source: linear-gradient(to bottom right, #DA70D6 0%, #FF69B4 25%, #FF69B4 50%, #1E90FF 75%, #FFD700 100%); }
+  60% { border-image-source: linear-gradient(to bottom right, #FFD700 0%, #DA70D6 25%, #FF69B4 50%, #FF69B4 75%, #1E90FF 100%); }
+  80% { border-image-source: linear-gradient(to bottom right, #1E90FF 0%, #FFD700 25%, #DA70D6 50%, #FF69B4 75%, #FF69B4 100%); }
+  100% { border-image-source: linear-gradient(to bottom right, #FF69B4 0%, #1E90FF 25%, #FFD700 50%, #DA70D6 75%, #FF69B4 100%); }
+}
+
+/* When chip is disabled restore container should not be present without sidebar */
+#container.collapsed-class.chip-closed #restore-container,
+/* Used when sidebar is opened directly and then snippet is inserted */
+#container.collapsed-class #restore-container:not(:has(+ .collapsed))
+{
+  /* Need to put !important here to override the rules on .style attribute */
+  display: none !important;
+}
+
+/* When chip is present but user is not hovering over it */
+#container.collapsed-class #restore-container {
+  opacity: 0.2;
+}
+
+/* When chip is hovered or the icon is hovered */
+#container.collapsed-class #restore-container:hover,
+#container.collapsed-class #restore-container:has(+ .collapsed:is(.hovered, .hovered-auto)) {
+  opacity: 1;
+  transition: 0.3s ease;
+}
+
+/* When disable container is active match the background color of the chip */
+#container:has(.hovered-auto) #restore-container > #restore-icon {
+  background-color: rgb(255 241 251 / 50%);
+}
+
+#restore-container {
+  --restore-container-size: 25px;
+  display: none;
+  cursor: pointer;
+  position: absolute;
+  opacity: 1;
+  background-color: rgb(255, 252, 255);
+  padding: 1px;
+  padding-right: 2px;
+  bottom: calc(-0.5 * var(--restore-container-size));
+  left: calc(-0.5 * var(--restore-container-size));
+  width: var(--restore-container-size);
+  height: var(--restore-container-size);
+  z-index: 20;
+  border-radius: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+  anchor-name: --restore-container;
+}
+
+#restore-icon {
+  width: inherit;
+  height: inherit;
+}
+
+.restore-tooltip {
+  position: fixed;
+  position-anchor: --restore-container;
+  position-area: bottom;
+  justify-self: anchor-center;
+  position-try-fallbacks: flip-block flip-start;
+  margin-top: 9px;
+  margin-right: 5px;
+}
+
+#container:has(#restore-container:hover) + .restore-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+#restore-container:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+</style><div style="position: fixed; right: 0px; top: 0px; height: 100%;"><div id="container" class="collapsed-class" style="bottom: min(-65px + 100vh, 160px);"><div id="restore-container"><div id="restore-icon"><svg focusable="false" viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9m-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8z"></path></svg></div></div><div class="collapsed"><div class="close-button-tooltip"><div class="close-button" role="button"><svg color="white" fill="currentcolor" width="24" height="24" focusable="false" aria-hidden="true" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg></div></div><div class="open-blaze-tooltip">Open AI Blaze</div><div class="icon-container"><div title="Move the AI tab" aria-label="Drag to move the AI tab" id="chip-drag-handle">
+      <svg focusable="false" viewBox="0 0 24 24" style="width: 20px; fill: rgb(0 0 0 / 63%);"><path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2m-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2m0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2"></path></svg>
+      </div><img src="chrome-extension://cebmnlammjhancocbbnfcglifgdpfejc/images/icon_128.png"><div class="keyboard-container" title="Visit chrome://extensions/shortcuts to change this" style="font-size: 85%; margin-left: 6px; white-space: nowrap; color: rgb(85, 85, 85);" data-shortcut=""></div></div></div></div><span class="tooltip restore-tooltip">Restore your last chat from this session</span><span class="tooltip close-button-tooltip-text">Disable AI Blaze tab</span><div></div><div class="tb-ai-outline"></div></div><div id="tooltip-container"></div></template></div><div data-lastpass-root="" style="position: absolute !important; top: 0px !important; left: 0px !important; height: 0px !important; width: 0px !important;"><template shadowrootmode="closed"></template></div></body><text-blaze-app-reference style="display: contents !important;"><template shadowrootmode="closed"><style>
+      div:before {
+        content: attr(data-content);
+      }
+      div {
+        all: initial;
+        position: absolute;
+        border: 0;
+        margin: -1px;
+        padding: 0;
+        width: 0.1px;
+        height: 0.1px;
+        user-select: none;
+        overflow: hidden;
+        font-size: 0px;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        pointer-events: none;
+      }
+      @media print {
+        * {
+          display: none !important;
+        }
+      }
+      </style><div aria-label="text-blaze-integration" role="group" tabindex="-1" data-content="{&quot;extensionEnabled&quot;:true,&quot;ai&quot;:true,&quot;text&quot;:true}" dir="ltr"></div></template></text-blaze-app-reference></html>
