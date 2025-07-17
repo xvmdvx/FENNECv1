@@ -740,7 +740,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     if (chrome.runtime.lastError) {
                         console.error("[Copilot] Error focusing tab:", chrome.runtime.lastError.message);
                     }
-                    chrome.storage.local.set({ fennecReturnTab: null });
+                    if (!message.keep) {
+                        chrome.storage.local.set({ fennecReturnTab: null });
+                    }
                 });
             }
         });
