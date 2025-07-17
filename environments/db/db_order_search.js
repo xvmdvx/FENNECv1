@@ -15,6 +15,15 @@
         const email = params.get('fennec_email');
         let tableObserver = null;
         let skipSummaryUpdate = false;
+        let lastCsvSummary = null;
+        if (sessionStorage.getItem('fennecCsvSummaryActive') === '1') {
+            try {
+                lastCsvSummary = JSON.parse(sessionStorage.getItem('fennecCsvSummary'));
+                if (lastCsvSummary) skipSummaryUpdate = true;
+            } catch (e) {
+                lastCsvSummary = null;
+            }
+        }
         // Highlight IDs from Queue View after rows are inserted
         let pendingHighlightIds = null;
 
@@ -400,6 +409,10 @@
             const { total, stateCounts, statusCounts, expCount, dateCounts, fraudCount } = summarizeOrders(orders);
             console.log(`[FENNEC] Rendering summary for ${total} CSV orders`);
             renderSummary(total, expCount, fraudCount, stateCounts, statusCounts, dateCounts);
+            sessionStorage.setItem('fennecCsvSummaryActive', '1');
+            sessionStorage.setItem('fennecCsvSummary', JSON.stringify({
+                total, stateCounts, statusCounts, expCount, dateCounts, fraudCount
+            }));
         }
 
         function injectTableHelper() {
@@ -480,6 +493,8 @@
                 progress.style.display = 'block';
             }
             console.log('[FENNEC] Starting queue scan...');
+            sessionStorage.removeItem('fennecCsvSummary');
+            sessionStorage.removeItem('fennecCsvSummaryActive');
             if (icon) icon.classList.add('fennec-flash');
 
             // Prevent automatic summary refreshes while the CSV is processed so
@@ -612,6 +627,16 @@
 
         function init() {
             injectSidebar();
+            if (lastCsvSummary) {
+                renderSummary(
+                    lastCsvSummary.total,
+                    lastCsvSummary.expCount,
+                    lastCsvSummary.fraudCount,
+                    lastCsvSummary.stateCounts,
+                    lastCsvSummary.statusCounts,
+                    lastCsvSummary.dateCounts
+                );
+            }
             waitForResults(() => {
                 updateSummary();
                 observeTable();
