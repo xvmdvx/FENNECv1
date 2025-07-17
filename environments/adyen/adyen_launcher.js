@@ -561,7 +561,7 @@ class AdyenLauncher extends Launcher {
                     chrome.storage.local.get({ sidebarOrderInfo: null }, ({ sidebarOrderInfo }) => {
                         const email = sidebarOrderInfo ? sidebarOrderInfo.clientEmail : null;
                         bg.send('focusDbSearch', { email }, () => {
-                            bg.refocusTab();
+                            bg.refocusTab({ keep: true });
                         });
                     });
                 });
