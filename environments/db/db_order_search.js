@@ -509,15 +509,21 @@
                     injectCsvOrders(orders);
 
                     const ids = orders.map(o => String(o.id));
-                    const flagged = ids.filter(id => fraudSet.has(id));
-                    console.log(`[FENNEC] Flagging ${flagged.length} possible fraud orders`);
-                    // Highlight all known fraud orders including the new matches
-                    highlightMatches(Array.from(fraudSet));
+                    const csvFraudIds = orders
+                        .filter(o => /possible fraud/i.test(o.status))
+                        .map(o => String(o.id));
+                    const flagged = ids.filter(id => fraudSet.has(id)).length;
+                    console.log(`[FENNEC] Flagging ${flagged + csvFraudIds.length} possible fraud orders`);
+                    // Highlight known fraud orders plus those marked as POSSIBLE FRAUD in the CSV
+                    const highlightIds = Array.from(new Set([...fraudSet, ...csvFraudIds]));
+                    highlightMatches(highlightIds);
+
+                    // Show the real totals again after all rows are injected
+                    showCsvSummary(orders);
 
                     // Re-enable summary updates now that injection is done
                     skipSummaryUpdate = false;
                     observeTable();
-                    updateSummary();
                 });
             });
         }
