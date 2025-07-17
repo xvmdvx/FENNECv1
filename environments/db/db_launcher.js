@@ -2920,6 +2920,10 @@ function getLastHoldUser() {
                 }
             }
             openKount();
+            bg.openOrReuseTab({
+                url: 'https://db.incfile.com/order-tracker/orders/fraud',
+                active: true
+            });
         }
     }
 

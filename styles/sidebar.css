@@ -1142,19 +1142,22 @@
 
 .trial-action-btn {
     border: 1px solid #ccc;
-    border-radius: 6px;
+    border-radius: 20px;
     padding: 4px 10px;
     background-color: #fff;
     color: #000;
-    font-weight: bold;
+    font-weight: normal;
     cursor: pointer;
+    transition: transform 0.2s;
 }
 
 .trial-btn-cr { background-color: #fff; color: #000; }
 .trial-btn-id { background-color: #fff; color: #000; }
 .trial-btn-release { background-color: #fff; color: #000; }
 
-.trial-action-btn:hover { opacity: 0.9; }
+.trial-action-btn:hover {
+    transform: scale(1.1);
+}
 
 .big-trial-btn {
     font-size: calc(var(--sb-font-size) + 7px);
@@ -1163,8 +1166,13 @@
     opacity: 1;
     background-color: #fff;
     color: #000;
-    font-weight: bold;
+    font-weight: normal;
     border: 1px solid #ccc;
+    border-radius: 20px;
+    transition: transform 0.2s;
+}
+.big-trial-btn:hover {
+    transform: scale(1.1);
 }
 
 #fennec-trial-overlay.trial-header-green { background-color: rgba(46,46,46,0.98); }
