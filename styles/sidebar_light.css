@@ -109,6 +109,9 @@
     display: block;
     width: 100%;
 }
+.fennec-light-mode #fennec-trial-overlay .trial-center {
+    text-align: center;
+}
 .fennec-light-mode #fennec-trial-overlay .trial-order .trial-line.no-highlight {
     background: none;
 }
@@ -174,6 +177,9 @@
 .fennec-light-mode #fennec-trial-overlay .trial-col-wrap {
     flex: 1;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 .fennec-light-mode #fennec-trial-overlay .trial-col-title {
     font-weight: bold;

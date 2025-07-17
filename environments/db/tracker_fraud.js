@@ -732,6 +732,19 @@
                                 div.innerHTML = html;
                                 extraInfo.appendChild(div);
                             };
+                            const addCenter = html => {
+                                if (!extraInfo) return;
+                                const div = document.createElement('div');
+                                div.className = 'trial-line trial-center';
+                                div.innerHTML = html;
+                                extraInfo.appendChild(div);
+                            };
+                            const addSep = () => {
+                                if (!extraInfo) return;
+                                const div = document.createElement('div');
+                                div.className = 'trial-line trial-sep';
+                                extraInfo.appendChild(div);
+                            };
                             const addFour = pairs => {
                                 if (!extraInfo) return;
                                 const div = document.createElement('div');
@@ -751,13 +764,12 @@
                                 }
                                 const goodTotal = resp.statusCounts.total >= resp.statusCounts.cxl * 2;
                                 console.log('[FENNEC (POO)] total orders', resp.statusCounts.total, 'goodTotal', goodTotal);
-                                addLine(`<span class="trial-tag">TOTAL:</span><span class="trial-value">${resp.statusCounts.total} <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span></span>`);
+                                addCenter(`TOTAL: ${resp.statusCounts.total} <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span>`);
+                                addSep();
                                 if (resp.ltv) {
-                                    const per = (parseInt(resp.statusCounts.pending,10) || 0) +
-                                                (parseInt(resp.statusCounts.shipped,10) || 0) +
-                                                (parseInt(resp.statusCounts.transferred,10) || 0);
+                                    const openOrders = (parseInt(resp.statusCounts.total,10) || 0) - (parseInt(resp.statusCounts.cxl,10) || 0);
                                     const ltvNum = parseFloat(resp.ltv) || 0;
-                                    const orderVal = per > 0 ? (ltvNum / per).toFixed(2) : '0';
+                                    const orderVal = ltvNum > 0 ? (openOrders / ltvNum).toFixed(2) : '0';
                                     addFour([['LTV', resp.ltv], ['P/ORDER', orderVal]]);
                                 }
                                 const states = collectStates(order, dna, kount);
@@ -937,16 +949,16 @@ function namesMatch(a, b) {
             }
 
             function emailMatches(email, names = [], company = '') {
-                const norm = t => (t || '').toLowerCase().replace(/[^a-z]+/g, '');
+                const norm = t => (t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
                 const user = norm((email || '').split('@')[0]);
-                if (company) {
-                    const c = norm(company);
-                    if (c && new RegExp(c).test(user)) return true;
-                }
-                return names.some(n => {
-                    const p = norm(n);
-                    return p && new RegExp(p).test(user);
-                });
+                if (!user) return false;
+                const tokens = [];
+                const addTokens = txt => {
+                    norm(txt).split(' ').forEach(w => { if (w.length > 2) tokens.push(w); });
+                };
+                names.forEach(addTokens);
+                addTokens(company);
+                return tokens.some(tok => user.includes(tok));
             }
             function buildCardMatchTag(dbBilling, card) {
                 const db = dbBilling || {};

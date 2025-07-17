@@ -875,6 +875,9 @@
 #fennec-trial-overlay .trial-col-wrap {
     flex: 1;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 #fennec-trial-overlay .trial-col-title {
     font-weight: bold;
@@ -900,6 +903,9 @@
 
 #fennec-trial-overlay .trial-line {
     margin: 4px 0;
+}
+#fennec-trial-overlay .trial-center {
+    text-align: center;
 }
 #fennec-trial-overlay .trial-company-name {
     font-size: calc(var(--sb-font-size) + 12px);
