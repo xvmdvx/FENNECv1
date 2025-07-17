@@ -95,9 +95,8 @@ class KountLauncher extends Launcher {
                         const addressToName = findVal('Address to Name');
                         const residentName = findVal('Resident Name');
                         saveData({ ekata: { ipValid, proxyRisk, addressToName, residentName } });
-                        // Signal XRAY completion so the Trial floater can appear
-                        localStorage.setItem('fraudXrayFinished', '1');
-                        chrome.storage.local.set({ fraudXrayFinished: '1' });
+                        // Do not mark XRAY as finished yet. The Adyen step will
+                        // trigger the Trial floater once all data is collected.
                         sessionStorage.removeItem('fennecEkataUpdateClicked');
                         chrome.storage.local.get({ fennecFraudAdyen: null }, ({ fennecFraudAdyen }) => {
                             if (fennecFraudAdyen) {
