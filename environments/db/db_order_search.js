@@ -647,7 +647,7 @@
                     </div>
                 </div>
                 <div class="copilot-body" id="copilot-body-content">
-                    <button id="queue-view-btn" class="copilot-button" style="width:100%;margin-bottom:8px">QUEUE VIEW</button>
+                    <button id="queue-view-btn" class="copilot-button" style="width:100%;margin-bottom:8px">VIEW ALL</button>
                     <div id="qs-summary" class="white-box" style="margin-bottom:10px"></div>
                     <div id="qs-progress" style="display:none;margin-bottom:10px;color:#ffa500;font-weight:bold"></div>
                 </div>`);
