@@ -560,9 +560,9 @@ class AdyenLauncher extends Launcher {
                     sessionSet({ fraudXrayFinished: '1' });
                     chrome.storage.local.get({ sidebarOrderInfo: null }, ({ sidebarOrderInfo }) => {
                         const email = sidebarOrderInfo ? sidebarOrderInfo.clientEmail : null;
-                        // Let the DB search tab take focus until results are ready
-                        // to avoid losing the reference to the fraud tracker tab.
-                        bg.send('focusDbSearch', { email });
+                        bg.send('focusDbSearch', { email }, () => {
+                            bg.refocusTab();
+                        });
                     });
                 });
             }
