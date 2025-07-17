@@ -7,9 +7,13 @@
         const email = params.get('fennec_email');
         if (!email) return;
         function collectOrders() {
-            const rows = document.querySelectorAll(
+            let rows = document.querySelectorAll(
                 '.search_result tbody tr, #tableStatusResults tbody tr'
             );
+            if (!rows.length) {
+                const table = document.querySelector('table.dataTable');
+                if (table) rows = table.querySelectorAll('tbody tr');
+            }
             return Array.from(rows).map(r => {
                 const link = r.querySelector('a[href*="/order/detail/"]');
                 const id = link ? link.textContent.replace(/\D+/g, '') : '';
@@ -24,7 +28,7 @@
         function getTotalCount() {
             const info = document.querySelector('.dataTables_info');
             if (info) {
-                const m = info.textContent.match(/of\s+(\d+)\s+entries/i);
+                const m = info.textContent.match(/of\s+(\d+)\s+(?:entries|results)/i);
                 if (m) return parseInt(m[1], 10);
             }
             return collectOrders().length;

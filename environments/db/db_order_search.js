@@ -30,8 +30,10 @@
         }
 
         function collectOrders() {
-            const rows = document.querySelectorAll('#tableStatusResults tbody tr');
-            const headerCells = Array.from(document.querySelectorAll('#tableStatusResults thead th'));
+            let table = document.querySelector('#tableStatusResults');
+            if (!table) table = document.querySelector('table.dataTable');
+            const rows = table ? table.querySelectorAll('tbody tr') : [];
+            const headerCells = table ? Array.from(table.querySelectorAll('thead th')) : [];
             const colIndex = { status: -1, state: -1, expedited: -1, ordered: -1 };
             headerCells.forEach((th, idx) => {
                 const txt = th.textContent.trim().toLowerCase();
@@ -67,7 +69,7 @@
         function getTotalCount() {
             const info = document.querySelector('.dataTables_info');
             if (info) {
-                const m = info.textContent.match(/of\s+(\d+)\s+entries/i);
+                const m = info.textContent.match(/of\s+(\d+)\s+(?:entries|results)/i);
                 if (m) return parseInt(m[1], 10);
             }
             return collectOrders().length;
