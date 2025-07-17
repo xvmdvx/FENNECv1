@@ -539,10 +539,11 @@
                     localStorage.setItem('fraudXrayCompleted', '1');
                 }
                 localStorage.setItem('fraudXrayFinished', '1');
-                if (!floaterRefocusDone) {
-                    bg.refocusTab();
-                    floaterRefocusDone = true;
-                }
+                // Always return focus to the original Fraud queue once DNA and
+                // search data are ready so the user sees the trial summary in
+                // the correct tab.
+                bg.refocusTab();
+                floaterRefocusDone = true;
                 trialFloater.ensure();
                 console.log('[FENNEC (POO)] Trial floater displayed');
                 const overlay = trialFloater.element;
