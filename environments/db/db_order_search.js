@@ -145,14 +145,13 @@
                 if (abbr) stateCounts[abbr] = (stateCounts[abbr] || 0) + 1;
                 if (o.status) {
                     statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
-                    if (/possible fraud/i.test(o.status)) fraudCount++;
                 }
-                // Count orders flagged as possible fraud even if the status text
-                // does not contain the phrase. highlightMatches() sets the
-                // dataset attribute when an order is known fraud.
-                if (o.row && o.row.dataset.possibleFraud === '1') {
-                    fraudCount++;
-                }
+                // Determine if the order is flagged as possible fraud.
+                let flagged = false;
+                if (o.status && /possible fraud/i.test(o.status)) flagged = true;
+                if (o.row && o.row.dataset.possibleFraud === '1') flagged = true;
+                if (fraudSet.has(String(o.id))) flagged = true;
+                if (flagged) fraudCount++;
                 if (o.expedited) expCount++;
                 const d = o.orderedDate ? new Date(o.orderedDate) : null;
                 if (d && !isNaN(d)) {
