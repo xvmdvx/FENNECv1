@@ -539,10 +539,13 @@
                     localStorage.setItem('fraudXrayCompleted', '1');
                 }
                 localStorage.setItem('fraudXrayFinished', '1');
-                // Always return focus to the original Fraud queue once DNA and
-                // search data are ready so the user sees the trial summary in
-                // the correct tab.
-                bg.refocusTab();
+                // Always return focus to the Fraud queue once DNA and search
+                // data are ready so the user sees the trial summary in the
+                // correct tab. Clearing the stored return tab prevents focusing
+                // Adyen again when the search tab hasn't reported back yet.
+                chrome.storage.local.set({ fennecReturnTab: null }, () => {
+                    bg.refocusTab();
+                });
                 floaterRefocusDone = true;
                 trialFloater.ensure();
                 console.log('[FENNEC (POO)] Trial floater displayed');
@@ -554,7 +557,9 @@
                     overlay.remove();
                     title.remove();
                     endFraudSession();
-                    bg.refocusTab();
+                    chrome.storage.local.set({ fennecReturnTab: null }, () => {
+                        bg.refocusTab();
+                    });
                 });
                 const subBtn = overlay.querySelector('#sub-detection-btn');
                 if (subBtn) {
@@ -642,7 +647,9 @@
                     title.remove();
                     endFraudSession();
                     showTrialSuccess();
-                    bg.refocusTab();
+                    chrome.storage.local.set({ fennecReturnTab: null }, () => {
+                        bg.refocusTab();
+                    });
                     bg.closeOtherTabs();
                 }
 
@@ -1291,7 +1298,9 @@ function namesMatch(a, b) {
             sessionStorage.removeItem('fennecShowTrialFloater');
             floaterRefocusDone = false;
             showInitialStatus();
-            bg.refocusTab();
+            chrome.storage.local.set({ fennecReturnTab: null }, () => {
+                bg.refocusTab();
+            });
         }
 
         function showInitialStatus() {
