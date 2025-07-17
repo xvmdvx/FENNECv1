@@ -13,3 +13,4 @@ All notable changes to this project will be documented in this file.
   marked as Possible Fraud.
 - Fixed XRAY flow to refocus the Fraud queue once DB email search results are
   loaded instead of returning to the Adyen tab.
+- Fixed CSV totals reverting after Queue View; summary now remains until run again.
