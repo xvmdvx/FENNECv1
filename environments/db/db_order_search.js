@@ -1,7 +1,13 @@
 (function() {
     if (window.top !== window) return;
     const bg = fennecMessenger;
-    chrome.storage.local.get({ extensionEnabled: true, lightMode: false, fennecFraudOrders: [] }, opts => {
+    chrome.storage.local.get({
+        extensionEnabled: true,
+        lightMode: false,
+        fennecFraudOrders: [],
+        fennecCsvSummaryActive: '0',
+        fennecCsvSummary: null
+    }, opts => {
         if (!opts.extensionEnabled) return;
         if (opts.lightMode) {
             document.body.classList.add('fennec-light-mode');
@@ -16,7 +22,18 @@
         let tableObserver = null;
         let skipSummaryUpdate = false;
         let lastCsvSummary = null;
-        if (sessionStorage.getItem('fennecCsvSummaryActive') === '1') {
+        if (opts.fennecCsvSummaryActive === '1' && opts.fennecCsvSummary) {
+            try {
+                lastCsvSummary = JSON.parse(opts.fennecCsvSummary);
+                if (lastCsvSummary) {
+                    skipSummaryUpdate = true;
+                    sessionStorage.setItem('fennecCsvSummaryActive', '1');
+                    sessionStorage.setItem('fennecCsvSummary', JSON.stringify(lastCsvSummary));
+                }
+            } catch (e) {
+                lastCsvSummary = null;
+            }
+        } else if (sessionStorage.getItem('fennecCsvSummaryActive') === '1') {
             try {
                 lastCsvSummary = JSON.parse(sessionStorage.getItem('fennecCsvSummary'));
                 if (lastCsvSummary) skipSummaryUpdate = true;
@@ -412,6 +429,10 @@
             lastCsvSummary = { total, stateCounts, statusCounts, expCount, dateCounts, fraudCount };
             sessionStorage.setItem('fennecCsvSummaryActive', '1');
             sessionStorage.setItem('fennecCsvSummary', JSON.stringify(lastCsvSummary));
+            chrome.storage.local.set({
+                fennecCsvSummaryActive: '1',
+                fennecCsvSummary: JSON.stringify(lastCsvSummary)
+            });
         }
 
         function injectTableHelper() {
@@ -494,6 +515,7 @@
             console.log('[FENNEC] Starting queue scan...');
             sessionStorage.removeItem('fennecCsvSummary');
             sessionStorage.removeItem('fennecCsvSummaryActive');
+            chrome.storage.local.remove(['fennecCsvSummary', 'fennecCsvSummaryActive']);
             lastCsvSummary = null;
             if (icon) icon.classList.add('fennec-flash');
 
