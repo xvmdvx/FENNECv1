@@ -632,8 +632,8 @@
                 );
                 highlightMatches();
                 // Refresh the summary so POSSIBLE FRAUD count includes the
-                // newly saved list once CSV orders have been injected.
-                updateSummary();
+                // newly saved list even when automatic updates are disabled.
+                showCsvSummary(collectOrders());
             }
         });
 
