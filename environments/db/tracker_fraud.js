@@ -544,10 +544,6 @@
                     floaterRefocusDone = true;
                 }
                 trialFloater.ensure();
-                bg.openOrReuseTab({
-                    url: 'https://db.incfile.com/order-tracker/orders/fraud',
-                    active: true
-                });
                 console.log('[FENNEC (POO)] Trial floater displayed');
                 const overlay = trialFloater.element;
                 const title = trialFloater.header;
