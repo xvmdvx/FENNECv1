@@ -1,15 +1,16 @@
 (function(){
     if (window.__fennecDtPatch) return;
     window.__fennecDtPatch = true;
-    function applyPatch() {
+    function setErrMode(){
         var jq = window.jQuery || window.$;
-        if (jq && jq.fn && jq.fn.dataTable) {
+        if (jq && jq.fn && jq.fn.dataTable && jq.fn.dataTable.ext){
             jq.fn.dataTable.ext.errMode = 'none';
+            return true;
         }
+        return false;
     }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', applyPatch);
-    } else {
-        applyPatch();
+    function apply(){
+        if (!setErrMode()) setTimeout(apply, 50);
     }
+    apply();
 })();
