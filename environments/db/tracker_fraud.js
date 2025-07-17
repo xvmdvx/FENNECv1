@@ -1290,6 +1290,7 @@ function namesMatch(a, b) {
             sessionStorage.removeItem('fennecShowTrialFloater');
             floaterRefocusDone = false;
             showInitialStatus();
+            bg.refocusTab();
         }
 
         function showInitialStatus() {
