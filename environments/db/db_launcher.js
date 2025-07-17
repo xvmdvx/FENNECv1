@@ -2911,10 +2911,15 @@ function getLastHoldUser() {
             const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
             sessionSet({ fennecFraudAdyen: adyenUrl });
 
-            const kountLink = document.querySelector('a[href*="kount.net"][href*="workflow/detail"]');
-            if (kountLink) {
-                bg.openOrReuseTab({ url: kountLink.href, active: true });
+            function openKount(retries = 10) {
+                const link = document.querySelector('a[href*="kount.net"][href*="workflow/detail"]');
+                if (link) {
+                    bg.openOrReuseTab({ url: link.href, active: true });
+                } else if (retries > 0) {
+                    setTimeout(() => openKount(retries - 1), 500);
+                }
             }
+            openKount();
         }
     }
 
