@@ -1161,6 +1161,10 @@
     padding: 6px 14px;
     margin-left: 0;
     opacity: 1;
+    background-color: #fff;
+    color: #000;
+    font-weight: bold;
+    border: 1px solid #ccc;
 }
 
 #fennec-trial-overlay.trial-header-green { background-color: rgba(46,46,46,0.98); }
