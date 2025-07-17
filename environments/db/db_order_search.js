@@ -15,6 +15,8 @@
         const email = params.get('fennec_email');
         let tableObserver = null;
         let skipSummaryUpdate = false;
+        // Highlight IDs from Queue View after rows are inserted
+        let pendingHighlightIds = null;
 
         const STATE_ABBRS = 'AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY'.split(' ');
         const STATE_NAMES = [
@@ -458,6 +460,11 @@
                         tr.dataset.ordered = ordered;
                     });
                     console.log('[FENNEC] Table updated with CSV orders');
+                    if (pendingHighlightIds) {
+                        highlightMatches(pendingHighlightIds);
+                        showCsvSummary(collectOrders());
+                        pendingHighlightIds = null;
+                    }
                 }
 
                 window.addEventListener('message', onAdded);
@@ -521,6 +528,7 @@
                     console.log(`[FENNEC] Flagging ${flagged + csvFraudIds.length} possible fraud orders`);
                     // Highlight known fraud orders plus those marked as POSSIBLE FRAUD in the CSV
                     const highlightIds = Array.from(new Set([...fraudSet, ...csvFraudIds]));
+                    pendingHighlightIds = highlightIds;
                     highlightMatches(highlightIds);
 
                     // Show the real totals again after all rows are injected
