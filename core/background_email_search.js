@@ -735,27 +735,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message.action === "dbEmailSearchResults" && sender.tab) {
         chrome.storage.local.get({ fennecDbSearchTab: null, fennecReturnTab: null }, data => {
-            const finalize = () => chrome.storage.local.set({ fennecDbSearchTab: null, fennecReturnTab: null });
-            const focusFraudQueue = (fallbackId) => {
-                chrome.tabs.query({ url: "https://db.incfile.com/order-tracker/orders/fraud*" }, tabs => {
-                    const tab = tabs && tabs[0];
-                    const id = tab ? tab.id : fallbackId;
-                    if (id) {
-                        chrome.tabs.update(id, { active: true }, () => {
-                            if (chrome.runtime.lastError) {
-                                console.error("[Copilot] Error focusing tab:", chrome.runtime.lastError.message);
-                            }
-                            finalize();
-                        });
-                    } else {
-                        finalize();
-                    }
-                });
-            };
             if (data.fennecDbSearchTab === sender.tab.id && data.fennecReturnTab) {
-                focusFraudQueue(data.fennecReturnTab);
-            } else {
-                focusFraudQueue(null);
+                chrome.tabs.update(data.fennecReturnTab, { active: true }, () => {
+                    if (chrome.runtime.lastError) {
+                        console.error("[Copilot] Error focusing tab:", chrome.runtime.lastError.message);
+                    }
+                    chrome.storage.local.set({ fennecDbSearchTab: null, fennecReturnTab: null });
+                });
             }
         });
         return;
