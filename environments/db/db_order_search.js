@@ -742,6 +742,19 @@
                 sendOrders();
             }
         });
+
+        // Persist CSV summary across page reloads so the sidebar does not
+        // revert to the initial state when the order search page refreshes.
+        window.addEventListener('beforeunload', () => {
+            if (csvSummaryActive && lastCsvSummary) {
+                sessionStorage.setItem('fennecCsvSummaryActive', '1');
+                sessionStorage.setItem('fennecCsvSummary', JSON.stringify(lastCsvSummary));
+                chrome.storage.local.set({
+                    fennecCsvSummaryActive: '1',
+                    fennecCsvSummary: JSON.stringify(lastCsvSummary)
+                });
+            }
+        });
     });
 })();
 
