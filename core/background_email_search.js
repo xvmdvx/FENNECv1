@@ -728,9 +728,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === "dbEmailSearchResults" && sender.tab) {
-        chrome.storage.local.get({ fennecDbSearchTab: null }, data => {
-            if (data.fennecDbSearchTab === sender.tab.id) {
-                chrome.storage.local.set({ fennecDbSearchTab: null });
+        chrome.storage.local.get({ fennecDbSearchTab: null, fennecReturnTab: null }, data => {
+            if (data.fennecDbSearchTab === sender.tab.id && data.fennecReturnTab) {
+                chrome.tabs.update(data.fennecReturnTab, { active: true }, () => {
+                    if (chrome.runtime.lastError) {
+                        console.error("[Copilot] Error focusing tab:", chrome.runtime.lastError.message);
+                    }
+                    chrome.storage.local.set({ fennecDbSearchTab: null, fennecReturnTab: null });
+                });
             }
         });
         return;
