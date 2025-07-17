@@ -274,19 +274,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     function fetchEmailOrders(winId, email, callback) {
         console.log('[FENNEC (POO)] fetchEmailOrders', { winId, email });
-        const encoded = encodeURIComponent(email);
+        const encoded = email ? encodeURIComponent(email) : null;
         const queryTabs = () => {
             chrome.tabs.query({ windowId: winId }, tabs => {
                 const searchTabs = tabs.filter(t => t.url &&
                     (t.url.includes('/order-tracker/orders/order-search') ||
                      t.url.includes('/db-tools/scan-email-address')));
                 console.log('[FENNEC (POO)] available search tabs', searchTabs.map(t => t.url));
-                let searchTab = searchTabs.find(t => t.url.includes('fennec_email=' + encoded));
-                if (!searchTab) searchTab = searchTabs[0];
+                let searchTab = null;
+                if (encoded) searchTab = searchTabs.find(t => t.url.includes('fennec_email=' + encoded));
+                if (!searchTab) searchTab = searchTabs.find(t => t.active) || searchTabs[0];
 
                 let createdTabId = null;
                 const startFetch = () => {
                     if (!searchTab) {
+                        if (!encoded) { callback(null); return; }
                         const url = `https://db.incfile.com/order-tracker/orders/order-search?fennec_email=${encoded}`;
                         chrome.tabs.create({ url, active: false, windowId: winId }, t => {
                             searchTab = t;
@@ -373,7 +375,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         openAndCheck();
     }
 
-    if (message.action === 'countEmailOrders' && message.email && sender.tab) {
+    if (message.action === 'countEmailOrders' && sender.tab) {
         const winId = sender.tab.windowId;
         fetchEmailOrders(winId, message.email, info => {
             if (!info) {
