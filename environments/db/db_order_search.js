@@ -668,18 +668,24 @@
 
         function init() {
             injectSidebar();
-            if (lastCsvSummary) {
-                renderSummary(
-                    lastCsvSummary.total,
-                    lastCsvSummary.expCount,
-                    lastCsvSummary.fraudCount,
-                    lastCsvSummary.stateCounts,
-                    lastCsvSummary.statusCounts,
-                    lastCsvSummary.dateCounts
-                );
-            }
             waitForResults(() => {
-                updateSummary();
+                if (lastCsvSummary && csvSummaryActive) {
+                    const orders = collectOrders();
+                    if (orders.length === lastCsvSummary.total) {
+                        showCsvSummary(orders);
+                    } else {
+                        renderSummary(
+                            lastCsvSummary.total,
+                            lastCsvSummary.expCount,
+                            lastCsvSummary.fraudCount,
+                            lastCsvSummary.stateCounts,
+                            lastCsvSummary.statusCounts,
+                            lastCsvSummary.dateCounts
+                        );
+                    }
+                } else {
+                    updateSummary();
+                }
                 observeTable();
                 highlightMatches();
             });
