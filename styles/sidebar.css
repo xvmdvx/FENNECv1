@@ -1160,7 +1160,7 @@
     font-size: calc(var(--sb-font-size) + 7px);
     padding: 6px 14px;
     margin-left: 0;
-    opacity: 0.5;
+    opacity: 1;
 }
 
 #fennec-trial-overlay.trial-header-green { background-color: rgba(46,46,46,0.98); }
