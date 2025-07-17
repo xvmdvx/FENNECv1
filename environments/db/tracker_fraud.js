@@ -677,22 +677,21 @@
                     orderHeader.classList.add(headerCls);
                 }
                 if (bigSpot) {
-                    let srcBtn = relBtn;
+                    let label = 'RELEASE';
                     let selector = '.remove-potential-fraud';
                     if (crossCount > 4) {
-                        srcBtn = crBtn;
+                        label = 'C&R';
                         selector = '.cancel-and-refund-potential-fraud';
                     } else if (crossCount > 0) {
-                        srcBtn = idBtn;
+                        label = 'ID CONFIRM';
                         selector = '.confirm-fraud-potential-fraud';
                     }
-                    if (srcBtn) {
-                        const bigBtn = srcBtn.cloneNode(true);
-                        bigBtn.id = '';
-                        bigBtn.classList.add('big-trial-btn', 'sub-detect-btn');
-                        bigBtn.addEventListener('click', () => handleTrialAction(selector));
-                        bigSpot.appendChild(bigBtn);
-                    }
+                    const bigBtn = document.createElement('button');
+                    bigBtn.textContent = label;
+                    bigBtn.className = 'sub-detect-btn big-trial-btn';
+                    bigBtn.addEventListener('click', () => handleTrialAction(selector));
+                    bigSpot.innerHTML = '';
+                    bigSpot.appendChild(bigBtn);
                 }
                 if (data.sidebarOrderInfo && data.sidebarOrderInfo.clientEmail) {
                     const dna = data.adyenDnaInfo;
