@@ -16,9 +16,9 @@
         let tableObserver = null;
         let skipSummaryUpdate = false;
         let lastCsvSummary = null;
-        if (sessionStorage.getItem('fennecCsvSummaryActive') === '1') {
+        if (localStorage.getItem('fennecCsvSummaryActive') === '1') {
             try {
-                lastCsvSummary = JSON.parse(sessionStorage.getItem('fennecCsvSummary'));
+                lastCsvSummary = JSON.parse(localStorage.getItem('fennecCsvSummary'));
                 if (lastCsvSummary) skipSummaryUpdate = true;
             } catch (e) {
                 lastCsvSummary = null;
@@ -410,8 +410,8 @@
             console.log(`[FENNEC] Rendering summary for ${total} CSV orders`);
             renderSummary(total, expCount, fraudCount, stateCounts, statusCounts, dateCounts);
             lastCsvSummary = { total, stateCounts, statusCounts, expCount, dateCounts, fraudCount };
-            sessionStorage.setItem('fennecCsvSummaryActive', '1');
-            sessionStorage.setItem('fennecCsvSummary', JSON.stringify(lastCsvSummary));
+            localStorage.setItem('fennecCsvSummaryActive', '1');
+            localStorage.setItem('fennecCsvSummary', JSON.stringify(lastCsvSummary));
         }
 
         function injectTableHelper() {
@@ -492,8 +492,8 @@
                 progress.style.display = 'block';
             }
             console.log('[FENNEC] Starting queue scan...');
-            sessionStorage.removeItem('fennecCsvSummary');
-            sessionStorage.removeItem('fennecCsvSummaryActive');
+            localStorage.removeItem('fennecCsvSummary');
+            localStorage.removeItem('fennecCsvSummaryActive');
             lastCsvSummary = null;
             if (icon) icon.classList.add('fennec-flash');
 
