@@ -767,10 +767,11 @@
                                 addCenter(`TOTAL: ${resp.statusCounts.total} <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span>`);
                                 addSep();
                                 if (resp.ltv) {
-                                    const openOrders = (parseInt(resp.statusCounts.total,10) || 0) - (parseInt(resp.statusCounts.cxl,10) || 0);
-                                    const ltvNum = parseFloat(resp.ltv) || 0;
-                                    const orderVal = ltvNum > 0 ? (openOrders / ltvNum).toFixed(2) : '0';
-                                    addFour([['LTV', resp.ltv], ['P/ORDER', orderVal]]);
+                                    const openOrders = (parseInt(resp.statusCounts.total, 10) || 0) -
+                                                        (parseInt(resp.statusCounts.cxl, 10) || 0);
+                                    const ltvNum = parseFloat(String(resp.ltv).replace(/[^0-9.]/g, '')) || 0;
+                                    const ratio = ltvNum > 0 ? `$${(openOrders / ltvNum).toFixed(2)}` : '$0.00';
+                                    addFour([['LTV', resp.ltv], ['P/ORDER', ratio]]);
                                 }
                                 const states = collectStates(order, dna, kount);
                                 const countries = collectCountries(order, dna, kount);

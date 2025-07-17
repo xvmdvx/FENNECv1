@@ -93,7 +93,7 @@
 .fennec-light-mode #fennec-trial-overlay .trial-action {
     flex: 0 0 25%;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     padding: 0 12px;
 }
@@ -132,7 +132,7 @@
 .fennec-light-mode #fennec-trial-overlay .trial-two-col {
     display: grid;
     grid-template-columns: 30% 1fr;
-    align-items: center;
+    align-items: flex-start;
     column-gap: 4px;
 }
 .fennec-light-mode #fennec-trial-overlay .trial-two-col .trial-tag {
@@ -148,7 +148,7 @@
 .fennec-light-mode #fennec-trial-overlay .trial-four-col {
     display: grid;
     grid-template-columns: 30% 1fr 30% 1fr;
-    align-items: center;
+    align-items: flex-start;
     column-gap: 4px;
 }
 .fennec-light-mode #fennec-trial-overlay .trial-four-col .trial-tag {
@@ -425,7 +425,7 @@
     text-align: left;
     margin-bottom: 2px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
 }
 
 .fennec-light-mode .update-value {
