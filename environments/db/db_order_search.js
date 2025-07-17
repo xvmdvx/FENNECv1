@@ -475,6 +475,11 @@
             console.log('[FENNEC] Starting queue scan...');
             if (icon) icon.classList.add('fennec-flash');
 
+            // Prevent automatic summary refreshes while the CSV is processed so
+            // the sidebar doesn't revert to the old totals.
+            skipSummaryUpdate = true;
+            if (tableObserver) tableObserver.disconnect();
+
             // Open the Fraud Review queue immediately so IDs are collected even if
             // the CSV download fails.
             bg.openOrReuseTab({ url: 'https://db.incfile.com/order-tracker/orders/fraud?fennec_queue_scan=1', active: false });
