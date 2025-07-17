@@ -888,7 +888,8 @@
     background-color: rgba(139,0,0,0.99);
 }
 #fennec-trial-overlay .trial-col-wrap {
-    flex: 0 0 calc(33.333% - 8px);
+    flex: 1 1 33.333%;
+    box-sizing: border-box;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -1157,8 +1158,18 @@
 .big-trial-btn {
     font-size: calc(var(--sb-font-size) + 7px);
     padding: 6px 14px;
-    margin-left: 0;
-    opacity: 0.5;
+    margin: 0;
+    border-radius: 20px;
+    transition: transform 0.2s;
+}
+.big-trial-btn:hover {
+    transform: scale(1.1);
+}
+
+#trial-big-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #fennec-trial-overlay.trial-header-green { background-color: rgba(46,46,46,0.98); }

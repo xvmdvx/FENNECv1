@@ -689,7 +689,7 @@
                     if (srcBtn) {
                         const bigBtn = srcBtn.cloneNode(true);
                         bigBtn.id = '';
-                        bigBtn.classList.add('big-trial-btn', 'sub-detect-btn');
+                        bigBtn.className = 'big-trial-btn sub-detect-btn';
                         bigBtn.addEventListener('click', () => handleTrialAction(selector));
                         bigSpot.appendChild(bigBtn);
                     }
