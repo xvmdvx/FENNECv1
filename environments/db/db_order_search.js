@@ -6,7 +6,8 @@
         lightMode: false,
         fennecFraudOrders: [],
         fennecCsvSummaryActive: '0',
-        fennecCsvSummary: null
+        fennecCsvSummary: null,
+        fennecCsvOrders: null
     }, opts => {
         if (!opts.extensionEnabled) return;
         if (opts.lightMode) {
@@ -23,6 +24,7 @@
         let skipSummaryUpdate = false;
         let csvSummaryActive = false;
         let lastCsvSummary = null;
+        let lastCsvOrders = null;
         if (opts.fennecCsvSummaryActive === '1' && opts.fennecCsvSummary) {
             try {
                 lastCsvSummary = JSON.parse(opts.fennecCsvSummary);
@@ -44,6 +46,23 @@
                 }
             } catch (e) {
                 lastCsvSummary = null;
+            }
+        }
+
+        if (opts.fennecCsvOrders) {
+            try {
+                lastCsvOrders = JSON.parse(opts.fennecCsvOrders);
+                if (lastCsvOrders) {
+                    sessionStorage.setItem('fennecCsvOrders', JSON.stringify(lastCsvOrders));
+                }
+            } catch (e) {
+                lastCsvOrders = null;
+            }
+        } else if (sessionStorage.getItem('fennecCsvOrders')) {
+            try {
+                lastCsvOrders = JSON.parse(sessionStorage.getItem('fennecCsvOrders'));
+            } catch (e) {
+                lastCsvOrders = null;
             }
         }
         // Highlight IDs from Queue View after rows are inserted
@@ -533,8 +552,10 @@
             console.log('[FENNEC] Starting queue scan...');
             sessionStorage.removeItem('fennecCsvSummary');
             sessionStorage.removeItem('fennecCsvSummaryActive');
-            chrome.storage.local.remove(['fennecCsvSummary', 'fennecCsvSummaryActive']);
+            sessionStorage.removeItem('fennecCsvOrders');
+            chrome.storage.local.remove(['fennecCsvSummary', 'fennecCsvSummaryActive', 'fennecCsvOrders']);
             lastCsvSummary = null;
+            lastCsvOrders = null;
             csvSummaryActive = false;
             if (icon) icon.classList.add('fennec-flash');
 
@@ -569,6 +590,9 @@
 
                     // Update sidebar summary first using the CSV data
                     showCsvSummary(orders);
+                    lastCsvOrders = orders;
+                    sessionStorage.setItem('fennecCsvOrders', JSON.stringify(orders));
+                    chrome.storage.local.set({ fennecCsvOrders: JSON.stringify(orders) });
 
                     skipSummaryUpdate = true;
                     if (tableObserver) tableObserver.disconnect();
@@ -682,6 +706,14 @@
                 updateSummary();
                 observeTable();
                 highlightMatches();
+                if (csvSummaryActive && lastCsvOrders && lastCsvOrders.length) {
+                    const highlightIds = Array.from(new Set([
+                        ...fraudSet,
+                        ...lastCsvOrders.filter(o => /possible fraud/i.test(o.status)).map(o => String(o.id))
+                    ]));
+                    pendingHighlightIds = highlightIds;
+                    injectCsvOrders(lastCsvOrders);
+                }
             });
             if (email) initEmailSearch();
         }
@@ -753,6 +785,10 @@
                     fennecCsvSummaryActive: '1',
                     fennecCsvSummary: JSON.stringify(lastCsvSummary)
                 });
+                if (lastCsvOrders) {
+                    sessionStorage.setItem('fennecCsvOrders', JSON.stringify(lastCsvOrders));
+                    chrome.storage.local.set({ fennecCsvOrders: JSON.stringify(lastCsvOrders) });
+                }
             }
         });
     });
