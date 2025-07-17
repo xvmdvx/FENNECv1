@@ -678,39 +678,45 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message.action === "focusDbSearch") {
         const encoded = message.email ? encodeURIComponent(message.email) : null;
-        chrome.tabs.query({ windowId: sender.tab.windowId }, tabs => {
-            let tab = null;
-            if (encoded) {
-                tab = tabs.find(t => t.url && t.url.includes("/order-tracker/orders/order-search") && t.url.includes("fennec_email=" + encoded));
-            }
-            if (!tab) {
-                tab = tabs.find(t => t.url && t.url.includes("/order-tracker/orders/order-search"));
-            }
-            if (tab) {
-                chrome.storage.local.set({ fennecDbSearchTab: tab.id }, () => {
-                    chrome.tabs.update(tab.id, { active: true }, () => {
+        chrome.storage.local.get({ fennecReturnTab: null }, data => {
+            chrome.tabs.query({ windowId: sender.tab.windowId }, tabs => {
+                let tab = null;
+                if (encoded) {
+                    tab = tabs.find(t => t.url && t.url.includes("/order-tracker/orders/order-search") && t.url.includes("fennec_email=" + encoded));
+                }
+                if (!tab) {
+                    tab = tabs.find(t => t.url && t.url.includes("/order-tracker/orders/order-search"));
+                }
+                const updates = {};
+                if (!data.fennecReturnTab && sender.tab) {
+                    updates.fennecReturnTab = sender.tab.id;
+                }
+                if (tab) {
+                    updates.fennecDbSearchTab = tab.id;
+                    chrome.storage.local.set(updates, () => {
+                        chrome.tabs.update(tab.id, { active: true }, () => {
+                            if (chrome.runtime.lastError) {
+                                console.error("[Copilot] Error focusing DB search tab:", chrome.runtime.lastError.message);
+                            }
+                            sendResponse({});
+                        });
+                    });
+                } else if (encoded) {
+                    const url = "https://db.incfile.com/order-tracker/orders/order-search?fennec_email=" + encoded;
+                    chrome.tabs.create({ url, active: true, windowId: sender.tab.windowId }, newTab => {
                         if (chrome.runtime.lastError) {
-                            console.error("[Copilot] Error focusing DB search tab:", chrome.runtime.lastError.message);
+                            console.error("[Copilot] Error opening DB search tab:", chrome.runtime.lastError.message);
+                            sendResponse({});
+                            return;
                         }
-                        sendResponse({});
+                        updates.fennecDbSearchTab = newTab.id;
+                        chrome.storage.local.set(updates, () => {
+                            sendResponse({});
+                        });
                     });
-                });
-            } else if (encoded) {
-                const url = "https://db.incfile.com/order-tracker/orders/order-search?fennec_email=" + encoded;
-                chrome.tabs.create({ url, active: true, windowId: sender.tab.windowId }, newTab => {
-                    if (chrome.runtime.lastError) {
-                        console.error("[Copilot] Error opening DB search tab:", chrome.runtime.lastError.message);
-                        sendResponse({});
-                        return;
-                    }
-                    chrome.storage.local.set({ fennecDbSearchTab: newTab.id }, () => {
-                        sendResponse({});
-                    });
-                });
-            } else {
-                chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
-                    if (fennecReturnTab) {
-                        chrome.tabs.update(fennecReturnTab, { active: true }, () => {
+                } else {
+                    if (data.fennecReturnTab) {
+                        chrome.tabs.update(data.fennecReturnTab, { active: true }, () => {
                             if (chrome.runtime.lastError) {
                                 console.error("[Copilot] Error focusing tab:", chrome.runtime.lastError.message);
                             }
@@ -721,8 +727,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     } else {
                         sendResponse({});
                     }
-                });
-            }
+                }
+            });
         });
         return true;
     }
