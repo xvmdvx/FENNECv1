@@ -409,10 +409,9 @@
             const { total, stateCounts, statusCounts, expCount, dateCounts, fraudCount } = summarizeOrders(orders);
             console.log(`[FENNEC] Rendering summary for ${total} CSV orders`);
             renderSummary(total, expCount, fraudCount, stateCounts, statusCounts, dateCounts);
+            lastCsvSummary = { total, stateCounts, statusCounts, expCount, dateCounts, fraudCount };
             sessionStorage.setItem('fennecCsvSummaryActive', '1');
-            sessionStorage.setItem('fennecCsvSummary', JSON.stringify({
-                total, stateCounts, statusCounts, expCount, dateCounts, fraudCount
-            }));
+            sessionStorage.setItem('fennecCsvSummary', JSON.stringify(lastCsvSummary));
         }
 
         function injectTableHelper() {
@@ -495,6 +494,7 @@
             console.log('[FENNEC] Starting queue scan...');
             sessionStorage.removeItem('fennecCsvSummary');
             sessionStorage.removeItem('fennecCsvSummaryActive');
+            lastCsvSummary = null;
             if (icon) icon.classList.add('fennec-flash');
 
             // Prevent automatic summary refreshes while the CSV is processed so
@@ -658,7 +658,23 @@
                 highlightMatches();
                 // Refresh the summary so POSSIBLE FRAUD count includes the
                 // newly saved list even when automatic updates are disabled.
-                showCsvSummary(collectOrders());
+                if (skipSummaryUpdate && lastCsvSummary) {
+                    const orders = collectOrders();
+                    if (orders.length === lastCsvSummary.total) {
+                        showCsvSummary(orders);
+                    } else {
+                        renderSummary(
+                            lastCsvSummary.total,
+                            lastCsvSummary.expCount,
+                            lastCsvSummary.fraudCount,
+                            lastCsvSummary.stateCounts,
+                            lastCsvSummary.statusCounts,
+                            lastCsvSummary.dateCounts
+                        );
+                    }
+                } else {
+                    showCsvSummary(collectOrders());
+                }
             }
         });
 
