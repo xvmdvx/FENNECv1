@@ -102,11 +102,7 @@ class KountLauncher extends Launcher {
                         chrome.storage.local.get({ fennecFraudAdyen: null }, ({ fennecFraudAdyen }) => {
                             if (fennecFraudAdyen) {
                                 chrome.storage.local.remove('fennecFraudAdyen');
-                                bg.openOrReuseTab({ url: fennecFraudAdyen, active: true }, () => {
-                                    bg.refocusTab();
-                                });
-                            } else {
-                                bg.refocusTab();
+                                bg.openOrReuseTab({ url: fennecFraudAdyen, active: true });
                             }
                         });
                     }, 1500);
