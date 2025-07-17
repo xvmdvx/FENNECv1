@@ -95,18 +95,11 @@ class KountLauncher extends Launcher {
                         const addressToName = findVal('Address to Name');
                         const residentName = findVal('Resident Name');
                         saveData({ ekata: { ipValid, proxyRisk, addressToName, residentName } });
-                        // Signal XRAY completion so the Trial floater can appear
-                        localStorage.setItem('fraudXrayFinished', '1');
-                        chrome.storage.local.set({ fraudXrayFinished: '1' });
                         sessionStorage.removeItem('fennecEkataUpdateClicked');
                         chrome.storage.local.get({ fennecFraudAdyen: null }, ({ fennecFraudAdyen }) => {
                             if (fennecFraudAdyen) {
                                 chrome.storage.local.remove('fennecFraudAdyen');
-                                bg.openOrReuseTab({ url: fennecFraudAdyen, active: true }, () => {
-                                    bg.refocusTab();
-                                });
-                            } else {
-                                bg.refocusTab();
+                                bg.openOrReuseTab({ url: fennecFraudAdyen, active: true });
                             }
                         });
                     }, 1500);
