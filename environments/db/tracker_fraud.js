@@ -530,7 +530,7 @@
             if ((!flag && !force && !overlayExists) || retries <= 0) return;
             const summary = document.getElementById("fraud-summary-box");
             if (summary) summary.remove();
-            chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null, fennecFraudAdyen: null }, data => {
+            chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null }, data => {
                 const html = buildTrialHtml(data.adyenDnaInfo, data.kountInfo, data.sidebarOrderInfo);
                 sessionStorage.removeItem('fennecShowTrialFloater');
                 if (data.sidebarOrderInfo && data.sidebarOrderInfo.orderId) {
@@ -539,13 +539,11 @@
                     localStorage.setItem('fraudXrayCompleted', '1');
                 }
                 localStorage.setItem('fraudXrayFinished', '1');
-                // Only refocus the Fraud Review tab if the Adyen step has
-                // already been opened. Otherwise skip so Ekata can continue
-                // directly to Adyen without interruptions.
-                if (!data.fennecFraudAdyen && !floaterRefocusDone) {
-                    bg.refocusTab();
-                    floaterRefocusDone = true;
-                }
+                // Always return focus to the original Fraud queue once DNA and
+                // search data are ready so the user sees the trial summary in
+                // the correct tab.
+                bg.refocusTab();
+                floaterRefocusDone = true;
                 trialFloater.ensure();
                 console.log('[FENNEC (POO)] Trial floater displayed');
                 const overlay = trialFloater.element;
