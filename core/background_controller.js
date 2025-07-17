@@ -112,8 +112,21 @@ class BackgroundController {
 
     refocusTab() {
         chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
-            if (fennecReturnTab) chrome.tabs.update(fennecReturnTab, { active: true });
-            chrome.storage.local.set({ fennecReturnTab: null });
+            if (fennecReturnTab) {
+                chrome.tabs.update(fennecReturnTab, { active: true }, () => {
+                    if (chrome.runtime.lastError) {
+                        console.error('[Copilot] Error focusing tab:', chrome.runtime.lastError.message);
+                    }
+                    chrome.storage.local.set({ fennecReturnTab: null });
+                });
+            } else {
+                chrome.tabs.query({ url: 'https://db.incfile.com/order-tracker/orders/fraud*' }, tabs => {
+                    const tab = tabs && tabs[0];
+                    if (tab) {
+                        chrome.tabs.update(tab.id, { active: true });
+                    }
+                });
+            }
         });
     }
 }
