@@ -531,8 +531,11 @@
                 progress.style.display = 'block';
             }
             console.log('[FENNEC] Starting queue scan...');
-            // Keep the previous summary in storage until the new CSV is processed
-            // so a page refresh doesn't wipe out the displayed totals.
+            sessionStorage.removeItem('fennecCsvSummary');
+            sessionStorage.removeItem('fennecCsvSummaryActive');
+            chrome.storage.local.remove(['fennecCsvSummary', 'fennecCsvSummaryActive']);
+            lastCsvSummary = null;
+            csvSummaryActive = false;
             if (icon) icon.classList.add('fennec-flash');
 
             // Prevent automatic summary refreshes while the CSV is processed so
