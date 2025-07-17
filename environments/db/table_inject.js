@@ -11,7 +11,7 @@
             var table = $(tableEl).DataTable();
             (e.data.rows || []).forEach(function(html){
                 var $row = $(html);
-                if ($row.length) table.row.add($row);
+                if ($row.length) table.row.add($row[0]);
             });
             // Show all rows so injected orders are visible
             table.page.len(-1).draw(false);
