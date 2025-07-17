@@ -6,7 +6,8 @@
         lightMode: false,
         fennecFraudOrders: [],
         fennecCsvSummaryActive: '0',
-        fennecCsvSummary: null
+        fennecCsvSummary: null,
+        fennecCsvOrders: null
     }, opts => {
         if (!opts.extensionEnabled) return;
         if (opts.lightMode) {
@@ -23,6 +24,7 @@
         let skipSummaryUpdate = false;
         let csvSummaryActive = false;
         let lastCsvSummary = null;
+        let lastCsvOrders = null;
         if (opts.fennecCsvSummaryActive === '1' && opts.fennecCsvSummary) {
             try {
                 lastCsvSummary = JSON.parse(opts.fennecCsvSummary);
@@ -44,6 +46,22 @@
                 }
             } catch (e) {
                 lastCsvSummary = null;
+            }
+        }
+        if (opts.fennecCsvOrders) {
+            try {
+                lastCsvOrders = JSON.parse(opts.fennecCsvOrders);
+                if (lastCsvOrders) {
+                    sessionStorage.setItem('fennecCsvOrders', JSON.stringify(lastCsvOrders));
+                }
+            } catch (e) {
+                lastCsvOrders = null;
+            }
+        } else if (sessionStorage.getItem('fennecCsvOrders')) {
+            try {
+                lastCsvOrders = JSON.parse(sessionStorage.getItem('fennecCsvOrders'));
+            } catch (e) {
+                lastCsvOrders = null;
             }
         }
         // Highlight IDs from Queue View after rows are inserted
@@ -443,13 +461,16 @@
             console.log(`[FENNEC] Rendering summary for ${total} CSV orders`);
             renderSummary(total, expCount, fraudCount, stateCounts, statusCounts, dateCounts);
             lastCsvSummary = { total, stateCounts, statusCounts, expCount, dateCounts, fraudCount };
+            lastCsvOrders = orders.slice();
             csvSummaryActive = true;
             skipSummaryUpdate = true;
             sessionStorage.setItem('fennecCsvSummaryActive', '1');
             sessionStorage.setItem('fennecCsvSummary', JSON.stringify(lastCsvSummary));
+            sessionStorage.setItem('fennecCsvOrders', JSON.stringify(lastCsvOrders));
             chrome.storage.local.set({
                 fennecCsvSummaryActive: '1',
-                fennecCsvSummary: JSON.stringify(lastCsvSummary)
+                fennecCsvSummary: JSON.stringify(lastCsvSummary),
+                fennecCsvOrders: JSON.stringify(lastCsvOrders)
             });
         }
 
@@ -533,8 +554,10 @@
             console.log('[FENNEC] Starting queue scan...');
             sessionStorage.removeItem('fennecCsvSummary');
             sessionStorage.removeItem('fennecCsvSummaryActive');
-            chrome.storage.local.remove(['fennecCsvSummary', 'fennecCsvSummaryActive']);
+            sessionStorage.removeItem('fennecCsvOrders');
+            chrome.storage.local.remove(['fennecCsvSummary', 'fennecCsvSummaryActive', 'fennecCsvOrders']);
             lastCsvSummary = null;
+            lastCsvOrders = null;
             csvSummaryActive = false;
             if (icon) icon.classList.add('fennec-flash');
 
@@ -679,9 +702,20 @@
                 );
             }
             waitForResults(() => {
-                updateSummary();
-                observeTable();
-                highlightMatches();
+                if (csvSummaryActive && lastCsvOrders) {
+                    const csvFraudIds = lastCsvOrders
+                        .filter(o => /possible fraud/i.test(o.status))
+                        .map(o => String(o.id));
+                    const highlightIds = Array.from(new Set([...fraudSet, ...csvFraudIds]));
+                    pendingHighlightIds = highlightIds;
+                    injectCsvOrders(lastCsvOrders);
+                    highlightMatches(highlightIds);
+                    showCsvSummary(lastCsvOrders);
+                } else {
+                    updateSummary();
+                    observeTable();
+                    highlightMatches();
+                }
             });
             if (email) initEmailSearch();
         }
@@ -746,12 +780,14 @@
         // Persist CSV summary across page reloads so the sidebar does not
         // revert to the initial state when the order search page refreshes.
         window.addEventListener('beforeunload', () => {
-            if (csvSummaryActive && lastCsvSummary) {
+            if (csvSummaryActive && lastCsvSummary && lastCsvOrders) {
                 sessionStorage.setItem('fennecCsvSummaryActive', '1');
                 sessionStorage.setItem('fennecCsvSummary', JSON.stringify(lastCsvSummary));
+                sessionStorage.setItem('fennecCsvOrders', JSON.stringify(lastCsvOrders));
                 chrome.storage.local.set({
                     fennecCsvSummaryActive: '1',
-                    fennecCsvSummary: JSON.stringify(lastCsvSummary)
+                    fennecCsvSummary: JSON.stringify(lastCsvSummary),
+                    fennecCsvOrders: JSON.stringify(lastCsvOrders)
                 });
             }
         });
