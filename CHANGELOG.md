@@ -9,3 +9,5 @@ All notable changes to this project will be documented in this file.
 - Prevented Fraud Review tab from regaining focus when EKATA finishes during
   XRAY. Now the flow proceeds directly to Adyen without interrupting the
   current tab.
+- Queue View summary now shows totals from the downloaded CSV and flags orders
+  marked as Possible Fraud.
