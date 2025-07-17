@@ -790,17 +790,15 @@
     overflow: hidden;
 }
 #fennec-trial-overlay .trial-info {
-    flex: 0 0 66%;
+    flex: 0 0 75%;
     text-align: center;
-    background: #d3d3d3;
-    padding: 8px;
 }
 #fennec-trial-overlay .trial-action {
-    flex: 0 0 33%;
+    flex: 0 0 25%;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 8px;
+    padding: 0 12px;
 }
 #fennec-trial-overlay .trial-order .trial-line {
     font-size: calc(var(--sb-font-size) + 6px);
@@ -810,7 +808,6 @@
     border-radius: 4px;
     display: block;
     width: 100%;
-    word-break: break-word;
 }
 #fennec-trial-overlay .trial-order .trial-line.no-highlight {
     background: none;
@@ -875,17 +872,8 @@
 #fennec-trial-overlay .trial-order.trial-header-red .trial-col {
     background-color: rgba(139,0,0,0.99);
 }
-#fennec-trial-overlay .trial-order.trial-header-green .trial-action {
-    background-color: rgba(46,204,113,0.99);
-}
-#fennec-trial-overlay .trial-order.trial-header-purple .trial-action {
-    background-color: rgba(128,0,128,0.99);
-}
-#fennec-trial-overlay .trial-order.trial-header-red .trial-action {
-    background-color: rgba(139,0,0,0.99);
-}
 #fennec-trial-overlay .trial-col-wrap {
-    flex: 0 0 33%;
+    flex: 1;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -895,7 +883,6 @@
     font-weight: bold;
     color: #fff;
     margin-bottom: 2px;
-    text-align: center;
 }
 #fennec-trial-overlay .trial-col {
     text-align: center;
@@ -903,7 +890,6 @@
     color: #000;
     padding: 8px;
     border-radius: 8px;
-    word-break: break-word;
 }
 #fennec-trial-overlay .trial-summary {
     display: flex;
@@ -917,7 +903,6 @@
 
 #fennec-trial-overlay .trial-line {
     margin: 4px 0;
-    word-break: break-word;
 }
 #fennec-trial-overlay .trial-center {
     text-align: center;
@@ -1159,11 +1144,6 @@
     padding: 6px 14px;
     margin-left: 0;
     opacity: 0.5;
-    border-radius: 20px;
-    transition: transform 0.2s;
-}
-.big-trial-btn:hover {
-    transform: scale(1.1);
 }
 
 #fennec-trial-overlay.trial-header-green { background-color: rgba(46,46,46,0.98); }
