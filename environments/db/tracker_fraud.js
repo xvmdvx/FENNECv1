@@ -1340,7 +1340,7 @@ function namesMatch(a, b) {
             if (area === 'local' && changes.kountInfo) {
                 loadKountSummary();
             }
-            if (area === 'local' && (changes.adyenDnaInfo || changes.kountInfo)) {
+            if (area === 'local' && changes.adyenDnaInfo) {
                 if (sessionStorage.getItem('fennecShowTrialFloater') || trialFloater.exists()) {
                     showTrialFloater(60, true);
                 }
