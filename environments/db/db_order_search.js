@@ -526,9 +526,9 @@
                     // Show the real totals again after all rows are injected
                     showCsvSummary(orders);
 
-                    // Re-enable summary updates now that injection is done
-                    skipSummaryUpdate = false;
-                    observeTable();
+                    // Keep CSV totals displayed until Queue View runs again
+                    // so automatic updates don't revert the summary
+                    // skipSummaryUpdate remains true and table observer stays disabled
                 });
             });
         }
