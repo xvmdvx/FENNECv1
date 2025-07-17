@@ -14,3 +14,5 @@ All notable changes to this project will be documented in this file.
 - Fixed CSV totals reverting after Queue View; summary now remains until run again.
 - CSV orders and summary now persist across page refreshes so the table does not
   revert to the initial search results until Queue View is executed again.
+- Suppressed the DataTables Ajax warning on DB order search by loading the
+  datatables patch at document start.

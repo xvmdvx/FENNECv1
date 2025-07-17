@@ -109,6 +109,14 @@
       "matches": [
         "https://db.incfile.com/order-tracker/orders/order-search*"
       ],
+      "js": ["environments/db/datatables_patch.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://db.incfile.com/order-tracker/orders/order-search*"
+      ],
       "all_frames": true,
       "js": [
         "core/utils.js",
