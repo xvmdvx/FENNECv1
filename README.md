@@ -262,7 +262,9 @@ ICONS/BUTTONS/FUNCTIONS:
 6. Open ADYEN and navigate to Payment Details, then extract data.
 7. Open ADYEN DNA.
 8. Return to the DB email search tab and wait for results. Once loaded, extract the order counts.
-9. Return to the original fraud tracker tab with the floater fully built and still showing LOADING if any value was missing.
+9. Refocus the original **Fraud tracker** tab
+   (`https://db.incfile.com/order-tracker/orders/fraud`) with the floater fully
+   built and still showing LOADING if any value was missing.
 10. Finish the XRAY session once a decision is made, the floater is manually closed or a new XRAY session begins.
    
 🤖 FILE: Automator that opens and fills the SOS filing process.
