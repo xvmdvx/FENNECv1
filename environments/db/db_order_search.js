@@ -432,7 +432,9 @@
                         const expectedDate = cols[23] || '';
                         const forwardedDate = cols[24] || '';
                         const shippingDate = cols[25] || '';
-                        if (id) orders.push({ id, state, name, expedited, status, orderedDate, expectedDate, forwardedDate, shippingDate });
+                        const orderType = cols[8] || '';
+                        const entityType = cols[9] || '';
+                        if (id) orders.push({ id, state, name, expedited, status, orderedDate, expectedDate, forwardedDate, shippingDate, orderType, entityType });
                     });
                 }
                 if (!csv) console.warn('[FENNEC] CSV not captured');
@@ -482,7 +484,7 @@
             });
         }
 
-        function injectCsvOrders(orders) {
+       function injectCsvOrders(orders) {
             console.log(`[FENNEC] Injecting ${orders.length} orders into table`);
             const tableEl = document.getElementById('tableStatusResults');
             if (!tableEl) { console.warn('[FENNEC] tableStatusResults not found'); return; }
@@ -494,26 +496,30 @@
                     if (id) existing.add(String(id));
                 });
                 const rows = [];
+                function formatId(id) {
+                    const m = String(id).match(/^(\d{3})(\d{4})(\d+)/);
+                    if (m) {
+                        return `${m[1]}<span style="color:#ff7676;"><b>${m[2]}</b></span>${m[3]}`;
+                    }
+                    return escapeHtml(id);
+                }
+
                 orders.forEach(o => {
                     if (existing.has(String(o.id))) return;
                     const expedited = o.expedited ? '<i class="mdi mdi-check-circle" style="color:#3cb81e; font-size:25px; margin-left:20px; margin-top: -4px; display: inline-block"></i>' : '';
-                    const rowHtml = `<tr class="even" data-ordered="${escapeHtml(o.orderedDate || '')}">` +
+                    const rowHtml = `<tr class="even" data-possible-fraud="" data-ordered="${escapeHtml(o.orderedDate || '')}">` +
                         `<td><a class="btn btn-transparent btn-sm" href="https://db.incfile.com/incfile/order/upload/${o.id}" target="_blank" data-toggle="tooltip" data-placement="right" data-trigger="hover" title="" data-original-title="Upload document for&lt;br&gt; ${escapeHtml(o.name || '')}"><i class="ti ti-upload"></i></a></td>` +
                         `<td><a href="https://db.incfile.com/redirect-to-dashboard-staff-bypass/${o.id}" target="_blank" style="margin-right: 1rem;" title="" data-toggle="tooltip" data-original-title="Client Dashboard"><img src="/static/img/dashboard.ico" width="30" height="30" alt=""></a>` +
-                        `<a class="goto-orderdetail" href="javascript:void(0)" data-detail-link="https://db.incfile.com/incfile/order/detail/${o.id}" style="color:#2cabe3">${o.id}</a></td>` +
+                        `<a class="goto-orderdetail" href="javascript:void(0)" data-detail-link="https://db.incfile.com/incfile/order/detail/${o.id}" style="color:#2cabe3">${formatId(o.id)}</a></td>` +
                         `<td><div class="wrapper-comp"><span class="name-inside pull-left">${escapeHtml(o.name || '')}</span>` +
                         `  <button target="_blank" data-view-link="https://db.incfile.com/incfile/order/detail/${o.id}" class="btn btn-primary btn-sm btn-rounded view_comp_detail pull-right" style="margin-left:5px;width:60px">View</button>` +
                         `<button style="width:60px" class="btn btn-danger btn-sm btn-rounded copy pull-right" data-comp-name="${escapeHtml(o.name || '')}" data-name-search-link="https://icis.corp.delaware.gov/Ecorp/EntitySearch/NameSearch.aspx">Search</button></div></td>` +
                         `<td>${escapeHtml(o.status || '')}</td>` +
-                        `<td></td>` +
                         `<td>${expedited}</td>` +
                         `<td>${escapeHtml(o.state || '')}</td>` +
-                        `<td></td>` +
-                        `<td></td>` +
-                        `<td>${escapeHtml(o.forwardedDate || '')}</td>` +
+                        `<td>${escapeHtml(o.orderType || '')}</td>` +
+                        `<td>${escapeHtml(o.entityType || '')}</td>` +
                         `<td>${escapeHtml(o.orderedDate || '')}</td>` +
-                        `<td>${escapeHtml(o.expectedDate || '')}</td>` +
-                        `<td>${escapeHtml(o.shippingDate || '')}</td>` +
                         `<td><div class="checkbox checkbox-primary"> <input type="checkbox" class="chk_to_print" id="ord_${o.id}" value="${o.id}"> <label for="ord_${o.id}">&nbsp;</label> </div></td>` +
                         `</tr>`;
                     rows.push(rowHtml);
@@ -598,7 +604,7 @@
                     if (tableObserver) tableObserver.disconnect();
 
                     console.log('[FENNEC] Injecting CSV orders into search results table');
-                    injectCsvOrders(orders);
+                    setTimeout(() => injectCsvOrders(orders), 0);
 
                     const ids = orders.map(o => String(o.id));
                     const csvFraudIds = orders
