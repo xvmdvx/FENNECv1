@@ -110,12 +110,10 @@ class BackgroundController {
         if (sender.tab) chrome.tabs.remove(sender.tab.id);
     }
 
-    refocusTab(msg = {}) {
+    refocusTab() {
         chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
             if (fennecReturnTab) chrome.tabs.update(fennecReturnTab, { active: true });
-            if (!msg.keep) {
-                chrome.storage.local.set({ fennecReturnTab: null });
-            }
+            chrome.storage.local.set({ fennecReturnTab: null });
         });
     }
 }

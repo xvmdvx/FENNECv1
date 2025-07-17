@@ -103,10 +103,10 @@ class KountLauncher extends Launcher {
                             if (fennecFraudAdyen) {
                                 chrome.storage.local.remove('fennecFraudAdyen');
                                 bg.openOrReuseTab({ url: fennecFraudAdyen, active: true }, () => {
-                                    bg.refocusTab({ keep: true });
+                                    bg.refocusTab();
                                 });
                             } else {
-                                bg.refocusTab({ keep: true });
+                                bg.refocusTab();
                             }
                         });
                     }, 1500);
