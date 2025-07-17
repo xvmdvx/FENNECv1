@@ -608,8 +608,13 @@
         chrome.storage.onChanged.addListener((changes, area) => {
             if (area === 'local' && changes.fennecFraudOrders) {
                 fraudSet.clear();
-                (changes.fennecFraudOrders.newValue || []).forEach(id => fraudSet.add(String(id)));
+                (changes.fennecFraudOrders.newValue || []).forEach(id =>
+                    fraudSet.add(String(id))
+                );
                 highlightMatches();
+                // Refresh the summary so POSSIBLE FRAUD count includes the
+                // newly saved list once CSV orders have been injected.
+                updateSummary();
             }
         });
 
