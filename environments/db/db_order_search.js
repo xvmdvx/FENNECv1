@@ -394,8 +394,15 @@
             });
         }
 
-        function showCsvSummary(orders) {
-            const { total, stateCounts, statusCounts, expCount, dateCounts, fraudCount } = summarizeOrders(orders);
+        function showCsvSummary(orders, highlightIds = []) {
+            const { total, stateCounts, statusCounts, expCount, dateCounts } = summarizeOrders(orders);
+            const set = new Set(highlightIds.map(String));
+            let fraudCount = 0;
+            orders.forEach(o => {
+                if (/possible fraud/i.test(o.status) || set.has(String(o.id))) {
+                    fraudCount++;
+                }
+            });
             console.log(`[FENNEC] Rendering summary for ${total} CSV orders`);
             renderSummary(total, expCount, fraudCount, stateCounts, statusCounts, dateCounts);
         }
@@ -524,7 +531,7 @@
                     highlightMatches(highlightIds);
 
                     // Show the real totals again after all rows are injected
-                    showCsvSummary(orders);
+                    showCsvSummary(orders, highlightIds);
 
                     // Keep CSV totals displayed until Queue View runs again
                     // so automatic updates don't revert the summary
@@ -625,7 +632,12 @@
                 highlightMatches();
                 // Refresh the summary so POSSIBLE FRAUD count includes the
                 // newly saved list once CSV orders have been injected.
-                updateSummary();
+                if (skipSummaryUpdate) {
+                    const orders = collectOrders();
+                    showCsvSummary(orders, Array.from(fraudSet));
+                } else {
+                    updateSummary();
+                }
             }
         });
 
