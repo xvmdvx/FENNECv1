@@ -692,6 +692,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         if (chrome.runtime.lastError) {
                             console.error("[Copilot] Error focusing DB search tab:", chrome.runtime.lastError.message);
                         }
+                        sendResponse({});
                     });
                 });
             } else if (encoded) {
@@ -699,9 +700,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 chrome.tabs.create({ url, active: true, windowId: sender.tab.windowId }, newTab => {
                     if (chrome.runtime.lastError) {
                         console.error("[Copilot] Error opening DB search tab:", chrome.runtime.lastError.message);
+                        sendResponse({});
                         return;
                     }
-                    chrome.storage.local.set({ fennecDbSearchTab: newTab.id });
+                    chrome.storage.local.set({ fennecDbSearchTab: newTab.id }, () => {
+                        sendResponse({});
+                    });
                 });
             } else {
                 chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
@@ -710,13 +714,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                             if (chrome.runtime.lastError) {
                                 console.error("[Copilot] Error focusing tab:", chrome.runtime.lastError.message);
                             }
-                            chrome.storage.local.set({ fennecReturnTab: null });
+                            chrome.storage.local.set({ fennecReturnTab: null }, () => {
+                                sendResponse({});
+                            });
                         });
+                    } else {
+                        sendResponse({});
                     }
                 });
             }
         });
-        return;
+        return true;
     }
 
     if (message.action === "dbEmailSearchResults" && sender.tab) {
