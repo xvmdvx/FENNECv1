@@ -10,6 +10,9 @@
         }
         const SIDEBAR_WIDTH = 340;
         const trialFloater = new TrialFloater();
+        // Opening the fraud tracker manually should reset any pending floater
+        // from previous sessions so the sidebar starts clean.
+        sessionStorage.removeItem('fennecShowTrialFloater');
         let subDetectSeq = 0;
         let floaterRefocusDone = false;
         const queueScan = new URLSearchParams(location.search).get('fennec_queue_scan') === '1';
@@ -66,7 +69,6 @@
                         <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
                     </div>
                     <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
-                    <div id="review-mode-label" class="review-mode-label" style="margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
                 </div>`;
             document.body.appendChild(sidebar);
             chrome.storage.sync.get({
