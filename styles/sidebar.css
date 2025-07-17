@@ -790,11 +790,12 @@
     overflow: hidden;
 }
 #fennec-trial-overlay .trial-info {
-    flex: 0 0 75%;
+    flex: 0 0 66%;
     text-align: center;
+    background: #d3d3d3;
 }
 #fennec-trial-overlay .trial-action {
-    flex: 0 0 25%;
+    flex: 0 0 33%;
     display: flex;
     align-items: flex-start;
     justify-content: center;
@@ -872,8 +873,17 @@
 #fennec-trial-overlay .trial-order.trial-header-red .trial-col {
     background-color: rgba(139,0,0,0.99);
 }
+#fennec-trial-overlay .trial-order.trial-header-green .trial-action {
+    background-color: rgba(46,204,113,0.99);
+}
+#fennec-trial-overlay .trial-order.trial-header-purple .trial-action {
+    background-color: rgba(128,0,128,0.99);
+}
+#fennec-trial-overlay .trial-order.trial-header-red .trial-action {
+    background-color: rgba(139,0,0,0.99);
+}
 #fennec-trial-overlay .trial-col-wrap {
-    flex: 1;
+    flex: 0 0 33%;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -1125,25 +1135,33 @@
 
 .trial-action-btn {
     border: 1px solid #ccc;
-    border-radius: 6px;
+    border-radius: 20px;
     padding: 4px 10px;
     background-color: #fff;
     color: #000;
     font-weight: bold;
     cursor: pointer;
+    transition: transform 0.2s;
 }
 
 .trial-btn-cr { background-color: #fff; color: #000; }
 .trial-btn-id { background-color: #fff; color: #000; }
 .trial-btn-release { background-color: #fff; color: #000; }
 
-.trial-action-btn:hover { opacity: 0.9; }
+.trial-action-btn:hover {
+    opacity: 0.9;
+    transform: scale(1.1);
+}
 
 .big-trial-btn {
     font-size: calc(var(--sb-font-size) + 7px);
     padding: 6px 14px;
     margin-left: 0;
-    opacity: 0.5;
+    border-radius: 20px;
+    transition: transform 0.2s;
+}
+.big-trial-btn:hover {
+    transform: scale(1.1);
 }
 
 #fennec-trial-overlay.trial-header-green { background-color: rgba(46,46,46,0.98); }
