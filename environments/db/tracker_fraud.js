@@ -1217,6 +1217,17 @@ function namesMatch(a, b) {
             }
         }
 
+        function hideIssueBox() {
+            const box = document.getElementById('issue-summary-box');
+            const content = document.getElementById('issue-summary-content');
+            const label = document.getElementById('issue-status-label');
+            if (!box || !content || !label) return;
+            content.innerHTML = 'No issue data yet.';
+            label.textContent = '';
+            label.className = 'issue-status-label';
+            box.style.display = 'none';
+        }
+
         function checkLastIssue(orderId) {
             if (!orderId) return;
             const content = document.getElementById('issue-summary-content');
@@ -1249,7 +1260,7 @@ function namesMatch(a, b) {
                     if (fraud) fraud.innerHTML = '';
                 } else {
                     container.innerHTML = '';
-                    fillIssueBox(null, null);
+                    hideIssueBox();
                     if (fraud) insertFraudSummary();
                 }
             });
@@ -1290,13 +1301,7 @@ function namesMatch(a, b) {
             if (db) db.innerHTML = '';
             if (dna) dna.innerHTML = '';
             if (kount) kount.innerHTML = '';
-            if (issue) {
-                const content = issue.querySelector('#issue-summary-content');
-                const label = issue.querySelector('#issue-status-label');
-                if (content) content.innerHTML = '';
-                if (label) label.textContent = '';
-                issue.style.display = 'none';
-            }
+            if (issue) hideIssueBox();
             if (fraud) insertFraudSummary();
         }
 
