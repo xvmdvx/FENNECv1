@@ -21,12 +21,14 @@
         const email = params.get('fennec_email');
         let tableObserver = null;
         let skipSummaryUpdate = false;
+        let csvSummaryActive = false;
         let lastCsvSummary = null;
         if (opts.fennecCsvSummaryActive === '1' && opts.fennecCsvSummary) {
             try {
                 lastCsvSummary = JSON.parse(opts.fennecCsvSummary);
                 if (lastCsvSummary) {
                     skipSummaryUpdate = true;
+                    csvSummaryActive = true;
                     sessionStorage.setItem('fennecCsvSummaryActive', '1');
                     sessionStorage.setItem('fennecCsvSummary', JSON.stringify(lastCsvSummary));
                 }
@@ -36,7 +38,10 @@
         } else if (sessionStorage.getItem('fennecCsvSummaryActive') === '1') {
             try {
                 lastCsvSummary = JSON.parse(sessionStorage.getItem('fennecCsvSummary'));
-                if (lastCsvSummary) skipSummaryUpdate = true;
+                if (lastCsvSummary) {
+                    skipSummaryUpdate = true;
+                    csvSummaryActive = true;
+                }
             } catch (e) {
                 lastCsvSummary = null;
             }
@@ -261,6 +266,17 @@
         }
 
         function updateSummary() {
+            if (csvSummaryActive && lastCsvSummary) {
+                renderSummary(
+                    lastCsvSummary.total,
+                    lastCsvSummary.expCount,
+                    lastCsvSummary.fraudCount,
+                    lastCsvSummary.stateCounts,
+                    lastCsvSummary.statusCounts,
+                    lastCsvSummary.dateCounts
+                );
+                return;
+            }
             if (skipSummaryUpdate) return;
             const orders = collectOrders();
             const { total, stateCounts, statusCounts, expCount, dateCounts, fraudCount } = summarizeOrders(orders);
@@ -427,6 +443,8 @@
             console.log(`[FENNEC] Rendering summary for ${total} CSV orders`);
             renderSummary(total, expCount, fraudCount, stateCounts, statusCounts, dateCounts);
             lastCsvSummary = { total, stateCounts, statusCounts, expCount, dateCounts, fraudCount };
+            csvSummaryActive = true;
+            skipSummaryUpdate = true;
             sessionStorage.setItem('fennecCsvSummaryActive', '1');
             sessionStorage.setItem('fennecCsvSummary', JSON.stringify(lastCsvSummary));
             chrome.storage.local.set({
@@ -517,6 +535,7 @@
             sessionStorage.removeItem('fennecCsvSummaryActive');
             chrome.storage.local.remove(['fennecCsvSummary', 'fennecCsvSummaryActive']);
             lastCsvSummary = null;
+            csvSummaryActive = false;
             if (icon) icon.classList.add('fennec-flash');
 
             // Prevent automatic summary refreshes while the CSV is processed so
@@ -680,7 +699,7 @@
                 highlightMatches();
                 // Refresh the summary so POSSIBLE FRAUD count includes the
                 // newly saved list even when automatic updates are disabled.
-                if (skipSummaryUpdate && lastCsvSummary) {
+                if (csvSummaryActive && lastCsvSummary) {
                     const orders = collectOrders();
                     if (orders.length === lastCsvSummary.total) {
                         showCsvSummary(orders);
