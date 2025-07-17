@@ -111,6 +111,16 @@
       ],
       "all_frames": true,
       "js": [
+        "environments/db/datatables_patch.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://db.incfile.com/order-tracker/orders/order-search*"
+      ],
+      "all_frames": true,
+      "js": [
         "core/utils.js",
         "core/sidebar.js",
         "core/launcher.js",
