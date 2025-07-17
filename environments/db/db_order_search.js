@@ -532,7 +532,8 @@
                     console.log('[FENNEC] Table updated with CSV orders');
                     if (pendingHighlightIds) {
                         highlightMatches(pendingHighlightIds);
-                        showCsvSummary(collectOrders());
+                        const orders = lastCsvOrders || collectOrders();
+                        showCsvSummary(orders);
                         pendingHighlightIds = null;
                     }
                 }
@@ -732,19 +733,9 @@
                 // Refresh the summary so POSSIBLE FRAUD count includes the
                 // newly saved list even when automatic updates are disabled.
                 if (csvSummaryActive && lastCsvSummary) {
-                    const orders = collectOrders();
-                    if (orders.length === lastCsvSummary.total) {
-                        showCsvSummary(orders);
-                    } else {
-                        renderSummary(
-                            lastCsvSummary.total,
-                            lastCsvSummary.expCount,
-                            lastCsvSummary.fraudCount,
-                            lastCsvSummary.stateCounts,
-                            lastCsvSummary.statusCounts,
-                            lastCsvSummary.dateCounts
-                        );
-                    }
+                    const orders = lastCsvOrders && lastCsvOrders.length ?
+                        lastCsvOrders : collectOrders();
+                    showCsvSummary(orders);
                 } else {
                     showCsvSummary(collectOrders());
                 }
