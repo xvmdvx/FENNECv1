@@ -12,3 +12,5 @@ All notable changes to this project will be documented in this file.
 - Queue View summary now shows totals from the downloaded CSV and flags orders
   marked as Possible Fraud.
 - Fixed CSV totals reverting after Queue View; summary now remains until run again.
+- CSV orders and summary now persist across page refreshes so the table does not
+  revert to the initial search results until Queue View is executed again.
