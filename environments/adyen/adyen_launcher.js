@@ -555,14 +555,12 @@ class AdyenLauncher extends Launcher {
                     const networkTx = extractNetworkTransactions();
                     saveData({ transactions: stats, networkTransactions: networkTx, updated: Date.now() });
                     console.log('[FENNEC (POO) Adyen] DNA stats stored');
-                    // Mark XRAY as finished and refocus DB search
+                    // Mark XRAY as finished and focus DB search
                     localStorage.setItem('fraudXrayFinished', '1');
                     sessionSet({ fraudXrayFinished: '1' });
                     chrome.storage.local.get({ sidebarOrderInfo: null }, ({ sidebarOrderInfo }) => {
                         const email = sidebarOrderInfo ? sidebarOrderInfo.clientEmail : null;
-                        bg.send('focusDbSearch', { email }, () => {
-                            setTimeout(() => bg.refocusTab(), 3000);
-                        });
+                        bg.send('focusDbSearch', { email });
                     });
                 });
             }
