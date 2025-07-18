@@ -19,10 +19,12 @@
                 var $row = $(html);
                 if (!$row.length) return;
                 var cells = $row.children('td');
-                for (var i = cells.length; i < colCount; i++) {
-                    $row.append('<td></td>');
+                var data = [];
+                for (var i = 0; i < colCount; i++) {
+                    var cell = cells[i] ? cells[i].innerHTML : '';
+                    data.push(cell);
                 }
-                table.row.add($row[0]);
+                table.row.add(data);
             });
             // Show all rows so injected orders are visible
             table.page.len(-1).draw(false);
