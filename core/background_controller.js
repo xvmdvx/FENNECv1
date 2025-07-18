@@ -129,6 +129,13 @@ class BackgroundController {
             }
         });
     }
+
+    focusDnaTab() {
+        chrome.tabs.query({ url: '*showOilSplashList.shtml*' }, tabs => {
+            const tab = tabs && tabs[0];
+            if (tab) chrome.tabs.update(tab.id, { active: true });
+        });
+    }
 }
 
 self.BackgroundController = BackgroundController;

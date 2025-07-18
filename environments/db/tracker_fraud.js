@@ -552,6 +552,8 @@
                 const overlay = trialFloater.element;
                 const title = trialFloater.header;
                 overlay.innerHTML = html;
+                const txHeader = overlay.querySelector('.trial-tx-header');
+                if (txHeader) txHeader.addEventListener('click', () => bg.send('focusDnaTab'));
                 const close = overlay.querySelector('.trial-close');
                 if (close) close.addEventListener('click', () => {
                     overlay.remove();
@@ -1100,20 +1102,30 @@ function namesMatch(a, b) {
                     }
                 }
                 adyenLines.push('<div class="trial-line trial-sep"></div>');
-                adyenLines.push('<div class="trial-line" style="text-align:center;font-weight:bold;">TRANSACTIONS</div>');
+                adyenLines.push('<div class="trial-line trial-tx-header" style="text-align:center;font-weight:bold;cursor:pointer;">TRANSACTIONS</div>');
                 const tx = dna.transactions || {};
-                const settled = parseAmount((tx['Settled'] || tx['Authorised / Settled'] || {}).amount);
-                const total = parseAmount((tx['Total'] || tx['Total transactions'] || {}).amount);
-                if (total) {
-                    const pct = Math.round(settled / total * 100);
+                const settledCount = parseInt((tx['Settled'] || tx['Authorised / Settled'] || {}).count || '0', 10);
+                const totalCount = parseInt((tx['Total'] || tx['Total transactions'] || {}).count || '0', 10);
+                const settledAmt = parseAmount((tx['Settled'] || tx['Authorised / Settled'] || {}).amount);
+                const totalAmt = parseAmount((tx['Total'] || tx['Total transactions'] || {}).amount);
+                if (totalCount) {
+                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">ATTEMPTS:</span><span class="trial-value">${totalCount}</span></div>`);
+                    const pct = Math.round(settledCount / totalCount * 100);
                     const ok = pct >= 65;
-                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">SETTLED:</span><span class="trial-value">${pct}% (${settled}/${total}) <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></span></div>`);
+                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">SETTLED:</span><span class="trial-value">${pct}% <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></span></div>`);
+                    const failed = totalCount - settledCount;
+                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">FAILED:</span><span class="trial-value">${failed}</span></div>`);
+                    if (!ok) red.push('<span class="copilot-tag copilot-tag-purple">APPROVED %</span>');
+                } else if (totalAmt) {
+                    const pct = Math.round(settledAmt / totalAmt * 100);
+                    const ok = pct >= 65;
+                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">SETTLED:</span><span class="trial-value">${pct}% <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></span></div>`);
                     if (!ok) red.push('<span class="copilot-tag copilot-tag-purple">APPROVED %</span>');
                 }
                 const cb = parseInt((tx['Chargebacks'] || tx['Chargeback'] || {}).count || '0', 10);
                 const okCb = cb === 0;
                 if (okCb) {
-                    adyenLines.push('<div class="trial-line trial-center"><b>NO PREVIOUS CB\'s</b></div>');
+                    adyenLines.push('<div class="trial-line trial-center"><b>NO PREVIOUS CB\'s <span class="db-adyen-check">✔</span></b></div>');
                 } else {
                     adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CB:</span><span class="trial-value">${cb} <span class="db-adyen-cross">✖</span></span></div>`);
                     red.push('<span class="copilot-tag copilot-tag-purple">CB</span>');
