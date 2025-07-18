@@ -16,3 +16,6 @@ All notable changes to this project will be documented in this file.
   revert to the initial search results until Queue View is executed again.
 - Suppressed the DataTables Ajax warning on DB order search by loading the
   datatables patch at document start.
+- DB Order Search sidebar now displays VIEW ALL, VIEW CURRENT and CLEAR buttons
+  below the summary box. VIEW CURRENT summarizes the visible page while CLEAR
+  resets stored CSV data.
