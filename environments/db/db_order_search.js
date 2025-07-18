@@ -504,37 +504,59 @@
                     const id = link ? (link.dataset.detailLink || link.textContent).replace(/\D+/g, '') : '';
                     if (id) existing.add(String(id));
                 });
+
+                const headers = Array.from(tableEl.querySelectorAll('thead th'));
+                const headerText = headers.map(th => th.textContent.trim().toLowerCase());
+
                 const rows = [];
                 orders.forEach(o => {
                     if (existing.has(String(o.id))) return;
+
                     const expedited = o.expedited ? '<i class="mdi mdi-check-circle" style="color:#3cb81e; font-size:25px; margin-left:20px; margin-top: -4px; display: inline-block"></i>' : '';
                     const searchLink = typeof buildSosUrl === 'function' ?
                         buildSosUrl(o.state, null, 'name') :
                         'https://icis.corp.delaware.gov/Ecorp/EntitySearch/NameSearch.aspx';
+
+                    const cells = headerText.map((txt, idx) => {
+                        if (idx === 0 || txt.includes('upload')) {
+                            return `<td><a class="btn btn-transparent btn-sm" href="https://db.incfile.com/incfile/order/upload/${o.id}" target="_blank" data-toggle="tooltip" data-placement="right" data-trigger="hover" title="" data-original-title="Upload document for&lt;br&gt; ${escapeHtml(o.name || '')}"><i class="ti ti-upload"></i></a></td>`;
+                        } else if (txt.includes('order #')) {
+                            return `<td><a href="https://db.incfile.com/redirect-to-dashboard-staff-bypass/${o.id}" target="_blank" style="margin-right: 1rem;" title="" data-toggle="tooltip" data-original-title="Client Dashboard"><img src="/static/img/dashboard.ico" width="30" height="30" alt=""></a><a class="goto-orderdetail" href="javascript:void(0)" data-detail-link="https://db.incfile.com/incfile/order/detail/${o.id}" style="color:#2cabe3">${formatOrderId(o.id)}</a></td>`;
+                        } else if (txt.includes('company')) {
+                            return `<td><div class="wrapper-comp"><span class="name-inside pull-left">${escapeHtml(o.name || '')}</span>  <button target="_blank" data-view-link="https://db.incfile.com/incfile/order/detail/${o.id}" class="btn btn-primary btn-sm btn-rounded view_comp_detail pull-right" style="margin-left:5px;width:60px">View</button><button style="width:60px" class="btn btn-danger btn-sm btn-rounded copy pull-right" data-comp-name="${escapeHtml(o.name || '')}" data-name-search-link="${escapeHtml(searchLink)}">Search</button></div></td>`;
+                        } else if (txt === 'status') {
+                            return `<td>${escapeHtml(o.status || '')}</td>`;
+                        } else if (txt === 'expedited') {
+                            return `<td>${expedited}</td>`;
+                        } else if (txt === 'state') {
+                            return `<td>${escapeHtml(o.state || '')}</td>`;
+                        } else if (txt.includes('order type')) {
+                            return `<td>${escapeHtml(o.orderType || '')}</td>`;
+                        } else if (txt === 'entity') {
+                            return `<td>${escapeHtml(o.entity || '')}</td>`;
+                        } else if (txt.includes('order date') || txt.includes('ordered')) {
+                            return `<td>${escapeHtml(o.orderedDate || '')}</td>`;
+                        } else if (!txt && idx === headers.length - 1) {
+                            return `<td><div class="checkbox checkbox-primary"> <input type="checkbox" class="chk_to_print" id="ord_${o.id}" value="${o.id}"> <label for="ord_${o.id}">&nbsp;</label> </div></td>`;
+                        }
+                        return '<td></td>';
+                    });
+
                     const rowHtml = `<tr class="even" data-ordered="${escapeHtml(o.orderedDate || '')}">` +
-                        `<td><a class="btn btn-transparent btn-sm" href="https://db.incfile.com/incfile/order/upload/${o.id}" target="_blank" data-toggle="tooltip" data-placement="right" data-trigger="hover" title="" data-original-title="Upload document for&lt;br&gt; ${escapeHtml(o.name || '')}"><i class="ti ti-upload"></i></a></td>` +
-                        `<td><a href="https://db.incfile.com/redirect-to-dashboard-staff-bypass/${o.id}" target="_blank" style="margin-right: 1rem;" title="" data-toggle="tooltip" data-original-title="Client Dashboard"><img src="/static/img/dashboard.ico" width="30" height="30" alt=""></a>` +
-                        `<a class="goto-orderdetail" href="javascript:void(0)" data-detail-link="https://db.incfile.com/incfile/order/detail/${o.id}" style="color:#2cabe3">${formatOrderId(o.id)}</a></td>` +
-                        `<td><div class="wrapper-comp"><span class="name-inside pull-left">${escapeHtml(o.name || '')}</span>` +
-                        `  <button target="_blank" data-view-link="https://db.incfile.com/incfile/order/detail/${o.id}" class="btn btn-primary btn-sm btn-rounded view_comp_detail pull-right" style="margin-left:5px;width:60px">View</button>` +
-                        `<button style="width:60px" class="btn btn-danger btn-sm btn-rounded copy pull-right" data-comp-name="${escapeHtml(o.name || '')}" data-name-search-link="${escapeHtml(searchLink)}">Search</button></div></td>` +
-                        `<td>${escapeHtml(o.status || '')}</td>` +
-                        `<td>${expedited}</td>` +
-                        `<td>${escapeHtml(o.state || '')}</td>` +
-                        `<td>${escapeHtml(o.orderType || '')}</td>` +
-                        `<td>${escapeHtml(o.entity || '')}</td>` +
-                        `<td>${escapeHtml(o.orderedDate || '')}</td>` +
-                        `<td><div class="checkbox checkbox-primary"> <input type="checkbox" class="chk_to_print" id="ord_${o.id}" value="${o.id}"> <label for="ord_${o.id}">&nbsp;</label> </div></td>` +
-                        `</tr>`;
+                        cells.join('') + '</tr>';
                     rows.push(rowHtml);
                 });
                 if (!rows.length) { console.log('[FENNEC] No new CSV orders to inject'); return; }
+
+                const headerTexts = headers.map(th => th.textContent.trim().toLowerCase());
+                const orderedIdx = headerTexts.findIndex(t => t.includes('ordered'));
 
                 function onAdded(e) {
                     if (e.source !== window || !e.data || e.data.type !== 'FENNEC_ROWS_ADDED') return;
                     window.removeEventListener('message', onAdded);
                     Array.from(tableEl.querySelectorAll('tbody tr')).forEach(tr => {
-                        const cell = tr.querySelector('td:nth-child(9)');
+                        const cell = orderedIdx >= 0 ?
+                            tr.querySelector(`td:nth-child(${orderedIdx + 1})`) : null;
                         const ordered = cell ? cell.textContent.trim() : '';
                         tr.dataset.ordered = ordered;
                     });
