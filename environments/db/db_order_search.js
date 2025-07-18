@@ -181,7 +181,7 @@
             const d14 = new Date(today.getTime() + 14 * 86400000);
             const d30 = new Date(today.getTime() + 30 * 86400000);
             rows.forEach(r => {
-                const stateCell = r.querySelector('td:nth-child(6)');
+                const stateCell = r.querySelector('td:nth-child(7)');
                 const st = toStateAbbr(stateCell ? stateCell.textContent.trim() : '');
                 const text = r.dataset.ordered || '';
                 const d = text ? new Date(text) : null;
@@ -519,11 +519,15 @@
                         `  <button target="_blank" data-view-link="https://db.incfile.com/incfile/order/detail/${o.id}" class="btn btn-primary btn-sm btn-rounded view_comp_detail pull-right" style="margin-left:5px;width:60px">View</button>` +
                         `<button style="width:60px" class="btn btn-danger btn-sm btn-rounded copy pull-right" data-comp-name="${escapeHtml(o.name || '')}" data-name-search-link="${escapeHtml(searchLink)}">Search</button></div></td>` +
                         `<td>${escapeHtml(o.status || '')}</td>` +
+                        `<td style="display:none"></td>` +
                         `<td>${expedited}</td>` +
                         `<td>${escapeHtml(o.state || '')}</td>` +
                         `<td>${escapeHtml(o.orderType || '')}</td>` +
                         `<td>${escapeHtml(o.entity || '')}</td>` +
+                        `<td style="display:none"></td>` +
                         `<td>${escapeHtml(o.orderedDate || '')}</td>` +
+                        `<td style="display:none"></td>` +
+                        `<td style="display:none"></td>` +
                         `<td><div class="checkbox checkbox-primary"> <input type="checkbox" class="chk_to_print" id="ord_${o.id}" value="${o.id}"> <label for="ord_${o.id}">&nbsp;</label> </div></td>` +
                         `</tr>`;
                     rows.push(rowHtml);
@@ -534,7 +538,7 @@
                     if (e.source !== window || !e.data || e.data.type !== 'FENNEC_ROWS_ADDED') return;
                     window.removeEventListener('message', onAdded);
                     Array.from(tableEl.querySelectorAll('tbody tr')).forEach(tr => {
-                        const cell = tr.querySelector('td:nth-child(9)');
+                        const cell = tr.querySelector('td:nth-child(11)');
                         const ordered = cell ? cell.textContent.trim() : '';
                         tr.dataset.ordered = ordered;
                     });
