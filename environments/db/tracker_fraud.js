@@ -773,7 +773,7 @@
                                 }
                                 const goodTotal = resp.statusCounts.total >= resp.statusCounts.cxl * 2;
                                 console.log('[FENNEC (POO)] total orders', resp.statusCounts.total, 'goodTotal', goodTotal);
-                                addCenter(`TOTAL: ${resp.statusCounts.total} <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span>`);
+                                addCenter(`TOTAL: <b>${resp.statusCounts.total}</b> <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span>`);
                                 addSep();
                                 if (resp.ltv) {
                                     const openOrders = (parseInt(resp.statusCounts.total, 10) || 0) -
@@ -1113,7 +1113,7 @@ function namesMatch(a, b) {
                 const cb = parseInt((tx['Chargebacks'] || tx['Chargeback'] || {}).count || '0', 10);
                 const okCb = cb === 0;
                 if (okCb) {
-                    adyenLines.push('<div class="trial-line trial-center">NO PREVIOUS CB\'s</div>');
+                    adyenLines.push('<div class="trial-line trial-center"><b>NO PREVIOUS CB\'s</b></div>');
                 } else {
                     adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CB:</span><span class="trial-value">${cb} <span class="db-adyen-cross">✖</span></span></div>`);
                     red.push('<span class="copilot-tag copilot-tag-purple">CB</span>');
@@ -1122,7 +1122,6 @@ function namesMatch(a, b) {
 
             if (kount) {
                 if (kount.ekata && kount.ekata.residentName) {
-                    kountLines.push(`<div class="trial-line trial-name">${escapeHtml(kount.ekata.residentName)} ${iconHtml}</div>`);
                     const otherNames = [];
                     if (order && order.billing && order.billing.cardholder) otherNames.push(order.billing.cardholder);
                     if (order && order.clientName) otherNames.push(order.clientName);
@@ -1130,7 +1129,8 @@ function namesMatch(a, b) {
                     if (order && order.registeredAgent && order.registeredAgent.name) otherNames.push(order.registeredAgent.name);
                     if (adyenName) otherNames.push(adyenName);
                     const match = otherNames.some(n => namesSharePart(kount.ekata.residentName, n));
-                    kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">NAME CHECK:</span><span class="trial-value"><span class="${match ? 'db-adyen-check' : 'db-adyen-cross'}">${match ? '✔' : '✖'}</span></span></div>`);
+                    const kIcon = `<span class="${match ? 'db-adyen-check' : 'db-adyen-cross'}">${match ? '✔' : '✖'}</span>`;
+                    kountLines.push(`<div class="trial-line trial-name">${escapeHtml(kount.ekata.residentName)} ${kIcon}</div>`);
                 }
                 if (kount.ekata && kount.ekata.proxyRisk) {
                     const ok = /^no$/i.test(kount.ekata.proxyRisk);
@@ -1166,7 +1166,7 @@ function namesMatch(a, b) {
                         if (n > 1) lines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">${label}:</span><span class="trial-value">${n}</span></div>`);
                     });
                     if (total === 0 || lines.length === 0) {
-                        kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">NO LINKED ORDERS</span><span class="trial-value"><span class="db-adyen-check">✔</span></span></div>`);
+                        kountLines.push('<div class="trial-line trial-center"><b>NO LINKED ORDERS</b></div>');
                     } else {
                         lines.forEach(html => kountLines.push(html));
                     }

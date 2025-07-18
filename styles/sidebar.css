@@ -749,8 +749,8 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     font-size: var(--sb-font-size);
     text-align: left;
-    width: 1008px;
-    max-width: 1008px;
+    width: 1109px;
+    max-width: 1109px;
 }
 
 #fennec-trial-title {
@@ -758,7 +758,7 @@
     font-weight: bold;
     color: #fff;
     margin: 0 auto 4px;
-    width: 1008px;
+    width: 1109px;
     padding: 8px 0;
     border-radius: 12px;
     font-size: calc(var(--sb-font-size) + 26px) !important;
