@@ -631,6 +631,39 @@
             });
         }
 
+        function openCurrentView() {
+            console.log('[FENNEC] Showing summary for current page');
+            const orders = collectOrders();
+            showCsvSummary(orders);
+            lastCsvOrders = orders;
+            sessionStorage.setItem('fennecCsvOrders', JSON.stringify(orders));
+            chrome.storage.local.set({ fennecCsvOrders: JSON.stringify(orders) });
+            const highlightIds = Array.from(new Set([
+                ...fraudSet,
+                ...orders.filter(o => /possible fraud/i.test(o.status)).map(o => String(o.id))
+            ]));
+            highlightMatches(highlightIds);
+            skipSummaryUpdate = true;
+            if (tableObserver) tableObserver.disconnect();
+        }
+
+        function clearQueueData() {
+            console.log('[FENNEC] Clearing queue summary');
+            sessionStorage.removeItem('fennecCsvSummary');
+            sessionStorage.removeItem('fennecCsvSummaryActive');
+            sessionStorage.removeItem('fennecCsvOrders');
+            chrome.storage.local.remove(['fennecCsvSummary', 'fennecCsvSummaryActive', 'fennecCsvOrders']);
+            lastCsvSummary = null;
+            lastCsvOrders = null;
+            csvSummaryActive = false;
+            skipSummaryUpdate = true;
+            if (tableObserver) tableObserver.disconnect();
+            renderSummary(0, 0, 0, {}, {}, {});
+            highlightMatches();
+            const progress = document.getElementById('qs-progress');
+            if (progress) { progress.textContent = ''; progress.style.display = 'none'; }
+        }
+
         function injectSidebar() {
             if (document.getElementById('copilot-sidebar')) return;
 
@@ -656,8 +689,10 @@
                     </div>
                 </div>
                 <div class="copilot-body" id="copilot-body-content">
-                    <button id="queue-view-btn" class="copilot-button" style="width:100%;margin-bottom:8px">VIEW ALL</button>
                     <div id="qs-summary" class="white-box" style="margin-bottom:10px"></div>
+                    <button id="queue-view-btn" class="copilot-button" style="width:100%;margin-bottom:8px">VIEW ALL</button>
+                    <button id="current-view-btn" class="copilot-button" style="width:100%;margin-bottom:8px">VIEW CURRENT</button>
+                    <button id="queue-clear-btn" class="copilot-button" style="width:100%;margin-bottom:8px">CLEAR</button>
                     <div id="qs-progress" style="display:none;margin-bottom:10px;color:#ffa500;font-weight:bold"></div>
                 </div>`);
             sb.attach();
@@ -669,6 +704,10 @@
             }, o => applySidebarDesign(sb.element, o));
 
             sb.element.querySelector('#queue-view-btn').addEventListener('click', openQueueView);
+            const currentBtn = sb.element.querySelector('#current-view-btn');
+            if (currentBtn) currentBtn.addEventListener('click', openCurrentView);
+            const clearBtn = sb.element.querySelector('#queue-clear-btn');
+            if (clearBtn) clearBtn.addEventListener('click', clearQueueData);
         }
 
         function waitForResults(callback) {
