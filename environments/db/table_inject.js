@@ -27,11 +27,7 @@
                 for (var i = cells.length; i < colCount; i++) {
                     $row.append('<td></td>');
                 }
-                var data = [];
-                $row.children('td').each(function(){
-                    data.push(this.innerHTML);
-                });
-                table.row.add(data);
+                table.row.add($row[0]);
             });
             // Show all rows so injected orders are visible
             table.page.len(-1).draw(false);
