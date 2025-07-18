@@ -22,7 +22,7 @@ class Messenger {
 const messenger = new Messenger();
 self.fennecMessenger = messenger;
 
-['openTab', 'openOrReuseTab', 'openActiveTab', 'openTabs', 'replaceTabs', 'closeOtherTabs', 'refocusTab', 'closeTab'].forEach(name => {
+['openTab', 'openOrReuseTab', 'openActiveTab', 'openTabs', 'replaceTabs', 'closeOtherTabs', 'refocusTab', 'closeTab', 'focusDnaTab'].forEach(name => {
     messenger[name] = function(payload, callback) {
         if (typeof payload === 'string') payload = { url: payload };
         this.send(name, payload, callback);
