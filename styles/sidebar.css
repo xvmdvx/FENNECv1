@@ -832,6 +832,11 @@
 #fennec-trial-overlay .trial-order .trial-btn-line {
     margin-top: 4px;
 }
+#fennec-trial-overlay .trial-order .trial-company-name,
+#fennec-trial-overlay .trial-order .trial-tags,
+#fennec-trial-overlay .trial-order .trial-exp-va {
+    margin: 2px 0;
+}
 #fennec-trial-overlay .trial-two-col {
     display: grid;
     grid-template-columns: 30% 1fr;

@@ -778,29 +778,29 @@
                                 if (resp.ltv) {
                                     const openOrders = (parseInt(resp.statusCounts.total, 10) || 0) -
                                                         (parseInt(resp.statusCounts.cxl, 10) || 0);
-                                    const ltvNum = parseFloat(String(resp.ltv).replace(/[^0-9.]/g, '')) || 0;
-                                    const ratio = ltvNum > 0 ? `$${(openOrders / ltvNum).toFixed(2)}` : '$0.00';
+                                    const ltvNum = Math.round(parseFloat(String(resp.ltv).replace(/[^0-9.]/g, '')) || 0);
+                                    const ratio = openOrders > 0 ? `$${(ltvNum / openOrders).toFixed(2)}` : '$0.00';
                                     addFour([['LTV', resp.ltv], ['P/ORDER', ratio]]);
                                 }
                                 const states = collectStates(order, dna, kount);
                                 const countries = collectCountries(order, dna, kount);
-                                if ((states.length || countries.length) && extraInfo && !extraInfo.querySelector('.trial-countries-line')) {
+                                if ((states.length || countries.length) && extraInfo && !extraInfo.querySelector('.trial-country-state-line')) {
                                     const blank = document.createElement('div');
                                     blank.className = 'trial-line';
                                     blank.innerHTML = '&nbsp;';
                                     extraInfo.appendChild(blank);
-                                    if (states.length) {
-                                        const div = document.createElement('div');
-                                        div.className = 'trial-line trial-two-col';
-                                        div.innerHTML = `<span class="trial-tag">STATES:</span><span class="trial-value">${states.join(', ')}</span>`;
-                                        extraInfo.appendChild(div);
+                                    const div = document.createElement('div');
+                                    if (states.length && countries.length) {
+                                        div.className = 'trial-line trial-four-col trial-country-state-line';
+                                        div.innerHTML = `<span class="trial-tag">COUNTRY:</span><span class="trial-value">${countries.join(', ')}</span><span class="trial-tag">STATE:</span><span class="trial-value">${states.join(', ')}</span>`;
+                                    } else if (countries.length) {
+                                        div.className = 'trial-line trial-two-col trial-country-state-line';
+                                        div.innerHTML = `<span class="trial-tag">COUNTRY:</span><span class="trial-value">${countries.join(', ')}</span>`;
+                                    } else if (states.length) {
+                                        div.className = 'trial-line trial-two-col trial-country-state-line';
+                                        div.innerHTML = `<span class="trial-tag">STATE:</span><span class="trial-value">${states.join(', ')}</span>`;
                                     }
-                                    if (countries.length) {
-                                        const div = document.createElement('div');
-                                        div.className = 'trial-line trial-two-col trial-countries-line';
-                                        div.innerHTML = `<span class="trial-tag">COUNTRIES:</span><span class="trial-value">${countries.join(', ')}</span>`;
-                                        extraInfo.appendChild(div);
-                                    }
+                                    if (div.innerHTML) extraInfo.appendChild(div);
                                 }
                             }
                         });
@@ -896,7 +896,9 @@
                 if (/AUSTRALIA|\bAU\b/.test(t)) return 'AU';
                 const seg = t.split(',').pop().trim();
                 if (seg.length === 2 && !STATE_ABBRS.includes(seg)) return seg;
-                if (seg.length > 2 && /^[A-Z ]+$/.test(seg) && !STATE_ABBRS.includes(seg)) return seg.replace(/\s+/g,' ');
+                if (seg.length > 2 && /^[A-Z ]+$/.test(seg) && !STATE_ABBRS.includes(seg)) {
+                    return seg.replace(/\s+/g, '').slice(0, 2);
+                }
                 return null;
             }
 
@@ -1035,11 +1037,14 @@ function namesMatch(a, b) {
                 dbLines.push(`<div class="trial-line">${btn}</div>`);
                 const states = collectStates(order, dna, kount);
                 const countries = collectCountries(order, dna, kount);
-                if (states.length) {
-                    dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">STATES:</span><span class="trial-value">${states.join(', ')}</span></div>`);
-                }
-                if (countries.length) {
-                    dbLines.push(`<div class="trial-line trial-two-col trial-countries-line"><span class="trial-tag">COUNTRIES:</span><span class="trial-value">${countries.join(', ')}</span></div>`);
+                if (states.length || countries.length) {
+                    if (states.length && countries.length) {
+                        dbLines.push(`<div class="trial-line trial-four-col trial-country-state-line"><span class="trial-tag">COUNTRY:</span><span class="trial-value">${countries.join(', ')}</span><span class="trial-tag">STATE:</span><span class="trial-value">${states.join(', ')}</span></div>`);
+                    } else if (countries.length) {
+                        dbLines.push(`<div class="trial-line trial-two-col trial-country-state-line"><span class="trial-tag">COUNTRY:</span><span class="trial-value">${countries.join(', ')}</span></div>`);
+                    } else {
+                        dbLines.push(`<div class="trial-line trial-two-col trial-country-state-line"><span class="trial-tag">STATE:</span><span class="trial-value">${states.join(', ')}</span></div>`);
+                    }
                 }
                 if (order.billing.cardholder) {
                     const card = order.billing.cardholder;
