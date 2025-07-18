@@ -14,8 +14,7 @@
                 return;
             }
             var table = $(tableEl).DataTable();
-            // Use DataTables API to get the true column count including hidden columns
-            var colCount = table.columns().count();
+            var colCount = $(tableEl).find('thead th').length;
             (e.data.rows || []).forEach(function(html){
                 var $row = $(html);
                 if (!$row.length) return;
