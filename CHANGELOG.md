@@ -19,5 +19,3 @@ All notable changes to this project will be documented in this file.
 - DB Order Search sidebar now displays VIEW ALL, VIEW CURRENT and CLEAR buttons
   below the summary box. VIEW CURRENT summarizes the visible page while CLEAR
   resets stored CSV data.
-- Fixed row injection in Queue View; CSV orders now load without the
-  "_DT_CellIndex" TypeError.
