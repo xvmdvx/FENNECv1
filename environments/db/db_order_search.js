@@ -147,10 +147,7 @@
                     statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
                 }
                 // Determine if the order is flagged as possible fraud.
-                let flagged = false;
-                if (o.status && /possible fraud/i.test(o.status)) flagged = true;
-                if (o.row && o.row.dataset.possibleFraud === '1') flagged = true;
-                if (fraudSet.has(String(o.id))) flagged = true;
+                const flagged = fraudSet.has(String(o.id));
                 if (flagged) fraudCount++;
                 if (o.expedited) expCount++;
                 const d = o.orderedDate ? new Date(o.orderedDate) : null;
@@ -234,9 +231,13 @@
         function renderSummary(total, expCount, fraudCount, stateCounts, statusCounts, dateCounts) {
             const box = document.getElementById('qs-summary');
             if (!box) return;
-            let html = `<div><b>TOTAL:</b> <b>${total}</b></div>`;
-            html += `<div><b>EXPEDITED:</b> <b>${expCount}</b></div>`;
-            html += `<div id="fraud-toggle" style="cursor:pointer"><b>POSSIBLE FRAUD:</b> <b>${fraudCount}</b> <i id="fraud-eye" class="ti ti-eye" style="margin-left:4px"></i></div>`;
+            const row = (label, value, id) => {
+                const idAttr = id ? ` id="${id}"` : '';
+                return `<div${idAttr} style="display:flex"><div style="width:50%;text-align:right;padding-right:6px">${label}</div><div style="width:50%;text-align:left">${value}</div></div>`;
+            };
+            let html = row('<b>TOTAL:</b>', `<b>${total}</b>`);
+            html += row('<b>EXPEDITED:</b>', `<b>${expCount}</b>`);
+            html += row('<b>POSSIBLE FRAUD:</b>', `<b>${fraudCount}</b> <i id="fraud-eye" class="ti ti-eye" style="margin-left:4px"></i>`, 'fraud-toggle');
             html += '<div style="margin-top:8px"><b>BY STATE</b></div>';
             html += '<div style="display:flex;flex-wrap:wrap">';
             Object.keys(stateCounts)
@@ -257,20 +258,11 @@
                 ['in30','+1 MONTH']
             ].forEach(([k,label]) => {
                 const cnt = dateCounts && dateCounts[k] ? dateCounts[k] : 0;
-                if (cnt) dateHtml += `<div class="date-count" data-range="${k}" style="cursor:pointer"><b>${label}:</b> <b>${cnt}</b></div>`;
+                if (cnt) dateHtml += row(`<b>${label}:</b>`, `<b>${cnt}</b>`, null).replace('<div', `<div class="date-count" data-range="${k}"`);
             });
             if (dateHtml) {
                 html += '<div style="margin-top:8px"><b>BY DATE</b></div>';
                 html += `<div>${dateHtml}</div>`;
-            }
-            if (statusCounts && Object.keys(statusCounts).length) {
-                html += '<div style="margin-top:8px">';
-                Object.keys(statusCounts)
-                    .sort((a,b) => statusCounts[b] - statusCounts[a])
-                    .forEach(status => {
-                        html += `<div><b>${escapeHtml(status)}:</b> <b>${statusCounts[status]}</b></div>`;
-                    });
-                html += '</div>';
             }
             box.innerHTML = html;
             box.querySelectorAll('.state-count').forEach(el => {
@@ -633,13 +625,8 @@
                     injectCsvOrders(orders);
 
                     const ids = orders.map(o => String(o.id));
-                    const csvFraudIds = orders
-                        .filter(o => /possible fraud/i.test(o.status))
-                        .map(o => String(o.id));
-                    const flagged = ids.filter(id => fraudSet.has(id)).length;
-                    console.log(`[FENNEC] Flagging ${flagged + csvFraudIds.length} possible fraud orders`);
-                    // Highlight known fraud orders plus those marked as POSSIBLE FRAUD in the CSV
-                    const highlightIds = Array.from(new Set([...fraudSet, ...csvFraudIds]));
+                    const highlightIds = ids.filter(id => fraudSet.has(id));
+                    console.log(`[FENNEC] Flagging ${highlightIds.length} possible fraud orders`);
                     pendingHighlightIds = highlightIds;
                     highlightMatches(highlightIds);
 
@@ -660,10 +647,9 @@
             lastCsvOrders = orders;
             sessionStorage.setItem('fennecCsvOrders', JSON.stringify(orders));
             chrome.storage.local.set({ fennecCsvOrders: JSON.stringify(orders) });
-            const highlightIds = Array.from(new Set([
-                ...fraudSet,
-                ...orders.filter(o => /possible fraud/i.test(o.status)).map(o => String(o.id))
-            ]));
+            const highlightIds = orders
+                .map(o => String(o.id))
+                .filter(id => fraudSet.has(id));
             highlightMatches(highlightIds);
             skipSummaryUpdate = true;
             if (tableObserver) tableObserver.disconnect();
