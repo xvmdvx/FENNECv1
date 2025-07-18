@@ -960,6 +960,18 @@ function namesMatch(a, b) {
                 return a.includes(b) || b.includes(a);
             }
 
+            function namesSharePart(a, b) {
+                a = normName(a); b = normName(b);
+                if (!a || !b) return false;
+                const pa = a.split(' ');
+                const pb = b.split(' ');
+                const firstA = pa[0];
+                const lastA = pa[pa.length - 1];
+                const firstB = pb[0];
+                const lastB = pb[pb.length - 1];
+                return firstA === firstB || firstA === lastB || lastA === firstB || lastA === lastB;
+            }
+
             function emailMatches(email, names = [], company = '') {
                 const norm = t => (t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
                 const user = norm((email || '').split('@')[0]);
@@ -1087,6 +1099,8 @@ function namesMatch(a, b) {
                         pushFlag(tag);
                     }
                 }
+                adyenLines.push('<div class="trial-line trial-sep"></div>');
+                adyenLines.push('<div class="trial-line" style="text-align:center;font-weight:bold;">TRANSACTIONS</div>');
                 const tx = dna.transactions || {};
                 const settled = parseAmount((tx['Settled'] || tx['Authorised / Settled'] || {}).amount);
                 const total = parseAmount((tx['Total'] || tx['Total transactions'] || {}).amount);
@@ -1098,16 +1112,25 @@ function namesMatch(a, b) {
                 }
                 const cb = parseInt((tx['Chargebacks'] || tx['Chargeback'] || {}).count || '0', 10);
                 const okCb = cb === 0;
-                adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CB:</span><span class="trial-value">${cb} <span class="${okCb ? 'db-adyen-check' : 'db-adyen-cross'}">${okCb ? '✔' : '✖'}</span></span></div>`);
-                if (!okCb) red.push('<span class="copilot-tag copilot-tag-purple">CB</span>');
+                if (okCb) {
+                    adyenLines.push('<div class="trial-line trial-center">NO PREVIOUS CB\'s</div>');
+                } else {
+                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CB:</span><span class="trial-value">${cb} <span class="db-adyen-cross">✖</span></span></div>`);
+                    red.push('<span class="copilot-tag copilot-tag-purple">CB</span>');
+                }
             }
 
             if (kount) {
                 if (kount.ekata && kount.ekata.residentName) {
                     kountLines.push(`<div class="trial-line trial-name">${escapeHtml(kount.ekata.residentName)} ${iconHtml}</div>`);
-                }
-                if (kount.ekata && kount.ekata.addressToName) {
-                    kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">ADDRESS NAME:</span><span class="trial-value">${escapeHtml(kount.ekata.addressToName)}</span></div>`);
+                    const otherNames = [];
+                    if (order && order.billing && order.billing.cardholder) otherNames.push(order.billing.cardholder);
+                    if (order && order.clientName) otherNames.push(order.clientName);
+                    if (Array.isArray(order.members)) otherNames.push(...order.members.map(m => m.name));
+                    if (order && order.registeredAgent && order.registeredAgent.name) otherNames.push(order.registeredAgent.name);
+                    if (adyenName) otherNames.push(adyenName);
+                    const match = otherNames.some(n => namesSharePart(kount.ekata.residentName, n));
+                    kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">NAME CHECK:</span><span class="trial-value"><span class="${match ? 'db-adyen-check' : 'db-adyen-cross'}">${match ? '✔' : '✖'}</span></span></div>`);
                 }
                 if (kount.ekata && kount.ekata.proxyRisk) {
                     const ok = /^no$/i.test(kount.ekata.proxyRisk);
@@ -1118,6 +1141,7 @@ function namesMatch(a, b) {
                     const num = parseInt(String(kount.emailAge).replace(/\D+/g, ''), 10) || 0;
                     const ok = num > 1;
                     kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">EMAIL AGE:</span><span class="trial-value">${escapeHtml(kount.emailAge)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></span></div>`);
+                    kountLines.push('<div class="trial-line trial-sep"></div>');
                 }
                 if (Array.isArray(kount.declines)) {
                     const count = kount.declines.length;
