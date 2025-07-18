@@ -8,6 +8,11 @@
             if (!$) return;
             var tableEl = document.getElementById('tableStatusResults');
             if (!tableEl || typeof $(tableEl).DataTable !== 'function') return;
+            if (!$.fn.dataTable || !$.fn.dataTable.isDataTable(tableEl)) {
+                // Retry shortly if DataTable has not finished initializing
+                setTimeout(function(){ window.postMessage(e.data, '*'); }, 100);
+                return;
+            }
             var table = $(tableEl).DataTable();
             var colCount = $(tableEl).find('thead th').length;
             (e.data.rows || []).forEach(function(html){
