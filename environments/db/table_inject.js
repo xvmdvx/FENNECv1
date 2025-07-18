@@ -19,7 +19,7 @@
                 return;
             }
             var table = $(tableEl).DataTable();
-            var colCount = $(tableEl).find('thead th').length;
+            var colCount = table.columns().count();
             (e.data.rows || []).forEach(function(html){
                 var $row = $(html);
                 if (!$row.length) return;
