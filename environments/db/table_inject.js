@@ -10,7 +10,12 @@
             if (!tableEl || typeof $(tableEl).DataTable !== 'function') return;
             if (!$.fn.dataTable || !$.fn.dataTable.isDataTable(tableEl)) {
                 // Retry shortly if DataTable has not finished initializing
-                setTimeout(function(){ window.postMessage(e.data, '*'); }, 100);
+                var tries = e.data.retry || 0;
+                if (tries < 50) {
+                    setTimeout(function(){
+                        window.postMessage(Object.assign({}, e.data, { retry: tries + 1 }), '*');
+                    }, 100);
+                }
                 return;
             }
             var table = $(tableEl).DataTable();
