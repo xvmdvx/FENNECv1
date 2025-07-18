@@ -9,9 +9,15 @@
             var tableEl = document.getElementById('tableStatusResults');
             if (!tableEl || typeof $(tableEl).DataTable !== 'function') return;
             var table = $(tableEl).DataTable();
+            var colCount = $(tableEl).find('thead th').length;
             (e.data.rows || []).forEach(function(html){
                 var $row = $(html);
-                if ($row.length) table.row.add($row[0]);
+                if (!$row.length) return;
+                var cells = $row.children('td');
+                for (var i = cells.length; i < colCount; i++) {
+                    $row.append('<td></td>');
+                }
+                table.row.add($row[0]);
             });
             // Show all rows so injected orders are visible
             table.page.len(-1).draw(false);
