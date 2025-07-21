@@ -737,9 +737,24 @@
             if (input) {
                 input.value = email;
                 input.dispatchEvent(new Event('input', { bubbles: true }));
+
+                // Trigger the search without invoking the <a href="javascript:void(0)">
+                // default handler, which is blocked by the extension's CSP when
+                // executed programmatically.  Dispatching the keypress event
+                // causes the page's jQuery handler to run `ajaxSearch()` safely.
+                input.dispatchEvent(new KeyboardEvent('keypress', {
+                    key: 'Enter',
+                    keyCode: 13,
+                    which: 13,
+                    bubbles: true
+                }));
+            } else {
+                const btn = document.getElementById('mainSearching') || document.querySelector('#mainSearching');
+                // Fallback for very old pages: try clicking the button.  This may
+                // be ignored by modern pages where the event is attached to the
+                // input field instead.
+                if (btn) btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
             }
-            const btn = document.getElementById('mainSearching') || document.querySelector('#mainSearching');
-            if (btn) btn.click();
             waitForResults(() => {
                 const orders = collectOrders().map(o => ({ orderId: o.id, type: '', status: o.status }));
                 const total = getTotalCount();
