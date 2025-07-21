@@ -2018,6 +2018,7 @@ sbObj.build(`
         function runReviewXray() {
             if (searchInProgress) return;
             searchInProgress = true;
+            console.log('[FENNEC (POO)] runReviewXray start');
             showLoadingState();
 
             const context = extractOrderContextFromEmail();
@@ -2061,8 +2062,10 @@ sbObj.build(`
 
             sessionSet(data, () => {
                 if (searchUrl) {
+                    console.log('[FENNEC (POO)] Opening DB email search:', searchUrl);
                     bg.openOrReuseTab({ url: searchUrl, active: false });
                 }
+                console.log('[FENNEC (POO)] Opening DB order:', dbUrl);
                 bg.openOrReuseTab({ url: dbUrl, active: true, refocus: true });
                 setTimeout(() => { searchInProgress = false; }, 1000);
             });
