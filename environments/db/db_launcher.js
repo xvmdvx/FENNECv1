@@ -114,7 +114,9 @@ class DBLauncher extends Launcher {
                 if (typeof initQuickSummary === 'function') initQuickSummary();
                 attachCommonListeners(body);
                 updateReviewDisplay();
-                checkLastIssue(currentId);
+                if (typeof checkLastIssue === 'function') {
+                    checkLastIssue(currentId);
+                }
                 if (miscMode) {
                     setTimeout(autoOpenFamilyTree, 100);
                 }
@@ -1841,7 +1843,9 @@ class DBLauncher extends Launcher {
             attachCommonListeners(body);
             initMistralChat();
             updateReviewDisplay();
-            checkLastIssue(orderInfo.orderId);
+            if (typeof checkLastIssue === 'function') {
+                checkLastIssue(orderInfo.orderId);
+            }
             if (miscMode) {
                 setTimeout(autoOpenFamilyTree, 100);
             }
@@ -2113,6 +2117,7 @@ class DBLauncher extends Launcher {
             fillIssueBox(null, orderId);
         }
     }
+    window.checkLastIssue = checkLastIssue;
 
     function clearSidebar() {
         sessionSet({
