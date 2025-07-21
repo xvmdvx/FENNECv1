@@ -26,6 +26,11 @@ class DBLauncher extends Launcher {
     let devMode = false;
     const diagnoseFloater = new DiagnoseFloater();
     let fraudXray = new URLSearchParams(location.search).get('fraud_xray') === '1';
+    if (!fraudXray && sessionStorage.getItem('fraudXrayPending')) {
+        console.log('[FENNEC (POO)] fraud_xray flag missing after refresh, using pending value');
+        fraudXray = true;
+    }
+    console.log('[FENNEC (POO)] fraudXray flag:', fraudXray);
     if (fraudXray && localStorage.getItem('fraudXrayFinished') === '1') {
         const params = new URLSearchParams(location.search);
         params.delete('fraud_xray');
@@ -2875,6 +2880,7 @@ function getLastHoldUser() {
             return;
         }
         const orderId = getBasicOrderInfo().orderId;
+        console.log('[FENNEC (POO)] runFraudXray start', { orderId });
         sessionSet({ fraudReviewSession: orderId, sidebarFreezeId: orderId });
         const key = 'fennecLtvRefreshed_' + orderId;
         const hadPending = sessionStorage.getItem('fraudXrayPending');
@@ -2882,6 +2888,7 @@ function getLastHoldUser() {
             // Waited for the reload needed to load the correct LTV
             // Remove the flag and continue with the XRAY flow
             sessionStorage.removeItem('fraudXrayPending');
+            console.log('[FENNEC (POO)] Continuing XRAY after refresh');
         }
         // Proceed with XRAY even if the LTV refresh flag is missing to
         // ensure external tabs open reliably after manual page reloads.
@@ -2898,22 +2905,29 @@ function getLastHoldUser() {
         if (!client.email && parts.length) {
             const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
             const gmailUrl = 'https://mail.google.com/mail/u/0/#search/' + query;
+            console.log('[FENNEC (POO)] Opening Gmail search:', gmailUrl);
             bg.openOrReuseTab({ url: gmailUrl, active: true });
         }
         if (client.email) {
             const searchUrl = `https://db.incfile.com/order-tracker/orders/order-search?fennec_email=${encodeURIComponent(client.email)}`;
+            console.log('[FENNEC (POO)] Opening DB email search:', searchUrl);
             bg.openOrReuseTab({ url: searchUrl, active: false });
         }
         if (info.orderId) {
             const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
+            console.log('[FENNEC (POO)] Opening Adyen:', adyenUrl);
             sessionSet({ fennecFraudAdyen: adyenUrl });
 
             function openKount(retries = 20) {
+                console.log('[FENNEC (POO)] Looking for Kount link, attempt', 21 - retries);
                 const link = document.querySelector('a[href*="kount.net"][href*="workflow/detail"]');
                 if (link) {
+                    console.log('[FENNEC (POO)] Opening Kount:', link.href);
                     bg.openOrReuseTab({ url: link.href, active: true });
                 } else if (retries > 0) {
                     setTimeout(() => openKount(retries - 1), 500);
+                } else {
+                    console.warn('[FENNEC (POO)] Kount link not found');
                 }
             }
             openKount();
