@@ -2056,10 +2056,10 @@ sbObj.build(`
             localStorage.removeItem('fraudXrayFinished');
 
             sessionSet(data, () => {
-                const urls = [];
-                if (searchUrl) urls.push(searchUrl);
-                urls.push(dbUrl);
-                bg.replaceTabs({ urls, refocus: true });
+                if (searchUrl) {
+                    bg.openOrReuseTab({ url: searchUrl, active: false });
+                }
+                bg.openOrReuseTab({ url: dbUrl, active: true, refocus: true });
                 setTimeout(() => { searchInProgress = false; }, 1000);
             });
             checkLastIssue(orderId);
