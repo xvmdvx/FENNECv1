@@ -2008,6 +2008,29 @@ sbObj.build(`
         }
 
 
+        function runReviewXray() {
+            const ctx = extractOrderContextFromEmail();
+            let orderId = ctx && ctx.orderNumber;
+            if (!orderId && storedOrderInfo) orderId = storedOrderInfo.orderId;
+            if (!orderId) {
+                alert('No order ID detected.');
+                return;
+            }
+            const dbUrl = `https://db.incfile.com/incfile/order/detail/${orderId}?fraud_xray=1`;
+            localStorage.removeItem('fraudXrayFinished');
+            chrome.storage.local.set({
+                fraudReviewSession: orderId,
+                sidebarFreezeId: orderId,
+                sidebarDb: [],
+                sidebarOrderId: null,
+                sidebarOrderInfo: null,
+                adyenDnaInfo: null,
+                kountInfo: null
+            }, () => {
+                bg.openOrReuseTab({ url: dbUrl, active: true, refocus: true });
+            });
+        }
+
         function setupXrayButton() {
             const button = document.getElementById("btn-xray");
             if (!button || button.dataset.listenerAttached) return;
@@ -2015,7 +2038,7 @@ sbObj.build(`
             button.addEventListener("click", function (e) {
                 e.preventDefault();
                 e.stopPropagation();
-                handleEmailSearchClick(true);
+                runReviewXray();
             });
         }
 
