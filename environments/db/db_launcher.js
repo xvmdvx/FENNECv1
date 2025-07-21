@@ -2881,9 +2881,9 @@ function getLastHoldUser() {
         sessionSet({ fraudReviewSession: orderId, sidebarFreezeId: orderId });
         const key = 'fennecLtvRefreshed_' + orderId;
         if (sessionStorage.getItem('fraudXrayPending')) {
-            // Wait until the page reloads for accurate LTV
+            // Waited for the reload needed to load the correct LTV
+            // Remove the flag and continue with the XRAY flow
             sessionStorage.removeItem('fraudXrayPending');
-            return;
         }
         if (!sessionStorage.getItem(key)) {
             return;
