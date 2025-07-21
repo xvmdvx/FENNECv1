@@ -2008,13 +2008,59 @@ sbObj.build(`
         }
 
 
-        // In Review Mode, XRAY should replicate the automated flow used in the
-        // Fraud tracker: open the order in DB with the `fraud_xray` flag and
-        // trigger related tabs (DB search, Kount, Ekata, Adyen).  The existing
-        // implementation only opened the DB page, so delegate to the regular
-        // SEARCH handler with the `xray` flag enabled.
+        // In Review Mode, XRAY should mirror the flow triggered from the Fraud
+        // tracker.  Open the order in DB with the `fraud_xray` flag, start the
+        // DB email search in the background and let DB's launcher handle the
+        // remaining steps (Kount → Ekata → Adyen → DNA).  The previous
+        // implementation simply delegated to `handleEmailSearchClick(true)`
+        // which only opened the DB page and Gmail search.  Recreate the same
+        // logic used by the tracker instead.
         function runReviewXray() {
-            handleEmailSearchClick(true);
+            if (searchInProgress) return;
+            searchInProgress = true;
+            showLoadingState();
+
+            const context = extractOrderContextFromEmail();
+            currentContext = context;
+            fillOrderSummaryBox(context);
+            loadDbSummary(context && context.orderNumber);
+
+            let orderId = context && context.orderNumber;
+            if (!orderId && storedOrderInfo) orderId = storedOrderInfo.orderId;
+            if (!orderId) {
+                alert("No se pudo detectar el n\u00famero de orden.");
+                searchInProgress = false;
+                return;
+            }
+
+            const email = context && context.email
+                ? context.email
+                : (storedOrderInfo && storedOrderInfo.clientEmail) || null;
+
+            const searchUrl = email
+                ? `https://db.incfile.com/order-tracker/orders/order-search?fennec_email=${encodeURIComponent(email)}`
+                : null;
+            const dbUrl = `https://db.incfile.com/incfile/order/detail/${orderId}?fraud_xray=1`;
+
+            const data = {
+                fennecActiveSession: getFennecSessionId(),
+                fraudReviewSession: orderId,
+                sidebarFreezeId: orderId,
+                sidebarDb: [],
+                sidebarOrderId: null,
+                sidebarOrderInfo: null,
+                adyenDnaInfo: null,
+                kountInfo: null
+            };
+            sessionStorage.setItem('fennecShowTrialFloater', '1');
+            localStorage.removeItem('fraudXrayFinished');
+
+            sessionSet(data, () => {
+                if (searchUrl) bg.openOrReuseTab({ url: searchUrl, active: false });
+                bg.openOrReuseTab({ url: dbUrl, active: true, refocus: true });
+                setTimeout(() => { searchInProgress = false; }, 1000);
+            });
+            checkLastIssue(orderId);
         }
 
         function setupXrayButton() {
