@@ -19,5 +19,5 @@ All notable changes to this project will be documented in this file.
 - DB Order Search sidebar now displays VIEW ALL, VIEW CURRENT and CLEAR buttons
   below the summary box. VIEW CURRENT summarizes the visible page while CLEAR
   resets stored CSV data.
-- Fixed Gmail Review Mode XRAY button to launch the full flow and restore focus
-  to the originating email when completed.
+- Fixed Gmail Review Mode XRAY button to launch the full flow without displaying
+  the trial floater and restores focus to the originating email when completed.
