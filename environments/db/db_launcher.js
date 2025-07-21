@@ -2880,12 +2880,13 @@ function getLastHoldUser() {
         const orderId = getBasicOrderInfo().orderId;
         sessionSet({ fraudReviewSession: orderId, sidebarFreezeId: orderId });
         const key = 'fennecLtvRefreshed_' + orderId;
-        if (sessionStorage.getItem('fraudXrayPending')) {
+        const hadPending = sessionStorage.getItem('fraudXrayPending');
+        if (hadPending) {
             // Waited for the reload needed to load the correct LTV
             // Remove the flag and continue with the XRAY flow
             sessionStorage.removeItem('fraudXrayPending');
         }
-        if (!sessionStorage.getItem(key)) {
+        if (!sessionStorage.getItem(key) && !hadPending) {
             return;
         }
         fraudXray = false;
@@ -2911,7 +2912,7 @@ function getLastHoldUser() {
             const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
             sessionSet({ fennecFraudAdyen: adyenUrl });
 
-            function openKount(retries = 10) {
+            function openKount(retries = 20) {
                 const link = document.querySelector('a[href*="kount.net"][href*="workflow/detail"]');
                 if (link) {
                     bg.openOrReuseTab({ url: link.href, active: true });
