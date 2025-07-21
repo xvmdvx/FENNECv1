@@ -215,6 +215,7 @@
             const billingBox = container.querySelector("#billing-section-box");
             if (!quick || !orderBox) return;
             if (reviewMode) {
+                orderBox.querySelectorAll('[data-review-merged="1"]').forEach(el => el.remove());
                 if (issueBox) {
                     issueBox.style.display = "block";
                     ensureIssueControls();
@@ -1403,7 +1404,14 @@
             const urls = [gmailSearchUrl];
 
             const orderIdFallback = storedOrderInfo && storedOrderInfo.orderId;
-            const orderId = context.orderNumber || (xray ? orderIdFallback : null);
+            let orderId = context.orderNumber || (xray ? orderIdFallback : null);
+            if (xray && !orderId) {
+                const link = document.getElementById('order-link');
+                if (link) {
+                    const digits = link.textContent.replace(/\D/g, '');
+                    if (/^22\d{10}$/.test(digits)) orderId = digits;
+                }
+            }
 
             if (orderId) {
                 let dbOrderUrl = `https://db.incfile.com/incfile/order/detail/${orderId}`;
