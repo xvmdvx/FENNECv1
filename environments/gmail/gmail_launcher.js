@@ -2018,6 +2018,7 @@ sbObj.build(`
             }
             const dbUrl = `https://db.incfile.com/incfile/order/detail/${orderId}?fraud_xray=1`;
             localStorage.removeItem('fraudXrayFinished');
+            localStorage.removeItem('fraudXrayCompleted');
             chrome.storage.local.set({
                 fraudReviewSession: orderId,
                 sidebarFreezeId: orderId,
