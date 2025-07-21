@@ -2008,27 +2008,13 @@ sbObj.build(`
         }
 
 
+        // In Review Mode, XRAY should replicate the automated flow used in the
+        // Fraud tracker: open the order in DB with the `fraud_xray` flag and
+        // trigger related tabs (DB search, Kount, Ekata, Adyen).  The existing
+        // implementation only opened the DB page, so delegate to the regular
+        // SEARCH handler with the `xray` flag enabled.
         function runReviewXray() {
-            const ctx = extractOrderContextFromEmail();
-            let orderId = ctx && ctx.orderNumber;
-            if (!orderId && storedOrderInfo) orderId = storedOrderInfo.orderId;
-            if (!orderId) {
-                alert('No order ID detected.');
-                return;
-            }
-            const dbUrl = `https://db.incfile.com/incfile/order/detail/${orderId}?fraud_xray=1`;
-            localStorage.removeItem('fraudXrayFinished');
-            chrome.storage.local.set({
-                fraudReviewSession: orderId,
-                sidebarFreezeId: orderId,
-                sidebarDb: [],
-                sidebarOrderId: null,
-                sidebarOrderInfo: null,
-                adyenDnaInfo: null,
-                kountInfo: null
-            }, () => {
-                bg.openOrReuseTab({ url: dbUrl, active: true, refocus: true });
-            });
+            handleEmailSearchClick(true);
         }
 
         function setupXrayButton() {

@@ -251,6 +251,8 @@ ICONS/BUTTONS/FUNCTIONS:
    The DB email search page is opened immediately so results load in the background.
    Once DNA completes the search tab is focused to grab the history and then focus returns to the Fraud tracker.
    A KOUNT summary box appears below DNA after the data is extracted.
+   In Gmail Review Mode clicking **XRAY** launches this same sequence and returns
+   to the original email once all data has loaded.
 
 ### Fraud Review XRAY flow
 0. Click the XRAY icon in the fraud tracker list.
