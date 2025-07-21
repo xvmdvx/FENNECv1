@@ -2886,9 +2886,8 @@ function getLastHoldUser() {
             // Remove the flag and continue with the XRAY flow
             sessionStorage.removeItem('fraudXrayPending');
         }
-        if (!sessionStorage.getItem(key) && !hadPending) {
-            return;
-        }
+        // Proceed with XRAY even if the LTV refresh flag is missing to
+        // ensure external tabs open reliably after manual page reloads.
         fraudXray = false;
         const info = getBasicOrderInfo();
         const client = getClientInfo();
