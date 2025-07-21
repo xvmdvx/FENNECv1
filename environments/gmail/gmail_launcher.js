@@ -2042,6 +2042,10 @@ sbObj.build(`
                 : null;
             const dbUrl = `https://db.incfile.com/incfile/order/detail/${orderId}?fraud_xray=1`;
 
+            // Allow rerunning the XRAY flow even if a previous attempt
+            // stored a completion flag for this order.
+            localStorage.removeItem('fraudXrayCompleted');
+
             const data = {
                 fennecActiveSession: getFennecSessionId(),
                 fraudReviewSession: orderId,
