@@ -78,6 +78,13 @@ class BackgroundController {
     replaceTabs(msg, sender) {
         if (!sender.tab) return;
         const winId = sender.tab.windowId;
+        if (msg.refocus) {
+            chrome.storage.local.get({ fennecReturnTab: null }, ({ fennecReturnTab }) => {
+                if (!fennecReturnTab) {
+                    chrome.storage.local.set({ fennecReturnTab: sender.tab.id });
+                }
+            });
+        }
         if (this.replacingWindows.has(winId)) return;
         this.replacingWindows.add(winId);
         chrome.tabs.query({ windowId: winId }, (tabs) => {

@@ -1375,7 +1375,7 @@
             repositionDnaSummary();
         }
 
-        function handleEmailSearchClick(xray = false) {
+        async function handleEmailSearchClick(xray = false) {
             if (searchInProgress) return;
             searchInProgress = true;
             showLoadingState();
@@ -1385,8 +1385,15 @@
             fillOrderSummaryBox(context);
             loadDbSummary(context && context.orderNumber);
 
-            if (!context || !context.email) {
+            if (xray && (!storedOrderInfo || !storedOrderInfo.orderId)) {
+                const data = await new Promise(res => chrome.storage.local.get({ sidebarOrderInfo: null }, res));
+                if (data.sidebarOrderInfo) storedOrderInfo = data.sidebarOrderInfo;
+            }
+
+            const email = context && context.email ? context.email : (xray && storedOrderInfo ? storedOrderInfo.clientEmail : null);
+            if (!email) {
                 alert("No se pudo detectar el correo del cliente.");
+                searchInProgress = false;
                 return;
             }
 
@@ -1395,8 +1402,8 @@
                 queryParts.push(context.orderNumber);
                 queryParts.push(`subject:"${context.orderNumber}"`);
             }
-            if (context.email) queryParts.push(`"${context.email}"`);
-            if (context.name) queryParts.push(`"${context.name}"`);
+            if (email) queryParts.push(`"${email}"`);
+            if (context && context.name) queryParts.push(`"${context.name}"`);
 
             const finalQuery = queryParts.join(" OR ");
             const gmailSearchUrl = `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(finalQuery)}`;
@@ -1420,7 +1427,7 @@
             } else {
                 const dbSearchUrl = "https://db.incfile.com/order-tracker/orders/order-search";
                 urls.push(dbSearchUrl);
-                navigator.clipboard.writeText(context.email).catch(err => console.error("[FENNEC (POO)] Clipboard error:", err));
+                navigator.clipboard.writeText(email).catch(err => console.error("[FENNEC (POO)] Clipboard error:", err));
             }
 
             const data = { fennecActiveSession: getFennecSessionId() };
@@ -1446,7 +1453,7 @@
                 localStorage.removeItem('fraudXrayFinished');
             }
             sessionSet(data, () => {
-                bg.replaceTabs({ urls });
+                bg.replaceTabs({ urls, refocus: xray });
                 setTimeout(() => { searchInProgress = false; }, 1000);
             });
             if (orderId) {
