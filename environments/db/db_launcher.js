@@ -41,12 +41,9 @@ class DBLauncher extends Launcher {
         localStorage.removeItem('fraudXrayCompleted');
     }
     if (fraudXray && xrayDone) {
-        const params = new URLSearchParams(location.search);
-        params.delete('fraud_xray');
-        const newUrl = location.pathname + (params.toString() ? '?' + params.toString() : '');
-        history.replaceState(null, '', newUrl);
+        // Allow the XRAY flow to run again when manually refreshed by
+        // clearing the completion flag without stripping the parameter.
         localStorage.removeItem('fraudXrayCompleted');
-        fraudXray = false;
     }
 
     // Some DB pages do not show the correct LTV value until the order is
