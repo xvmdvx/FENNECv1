@@ -12,15 +12,7 @@ class KountLauncher extends Launcher {
             if (label) label.style.display = reviewMode ? 'block' : 'none';
         }
 
-        function insertDnaAfterCompany() {
-            const dnaBox = document.querySelector('.copilot-dna');
-            const compBox = document.querySelector('#copilot-sidebar .company-box');
-            if (!dnaBox || !compBox) return;
-            const parent = compBox.parentElement;
-            if (dnaBox.parentElement !== parent || dnaBox.previousElementSibling !== compBox) {
-                parent.insertBefore(dnaBox, compBox.nextSibling);
-            }
-        }
+        const insertDnaAfterCompany = window.insertDnaAfterCompany;
 
 
 
@@ -62,6 +54,9 @@ class KountLauncher extends Launcher {
             }, opts => applySidebarDesign(sb.element, opts));
             loadSidebarSnapshot(sb.element, () => {
                 insertDnaAfterCompany();
+                if (typeof applyStandardSectionOrder === 'function') {
+                    applyStandardSectionOrder(sb.element.querySelector('#db-summary-section'));
+                }
                 updateReviewDisplay();
             });
 

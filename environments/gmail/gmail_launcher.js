@@ -808,15 +808,7 @@
             });
         }
 
-        function insertDnaAfterCompany() {
-            const dnaBox = document.querySelector('.copilot-dna');
-            const compBox = document.querySelector('#copilot-sidebar .company-box');
-            if (!dnaBox || !compBox) return;
-            const parent = compBox.parentElement;
-            if (dnaBox.parentElement !== parent || dnaBox.previousElementSibling !== compBox) {
-                parent.insertBefore(dnaBox, compBox.nextSibling);
-            }
-        }
+        const insertDnaAfterCompany = window.insertDnaAfterCompany;
 
         function reorderReviewSections() {
             if (!reviewMode) return;
@@ -824,27 +816,9 @@
             if (!container) return;
             const quick = container.querySelector('#quick-summary');
             if (quick) quick.remove();
-
-            function pairFor(label) {
-                const lbl = Array.from(container.querySelectorAll('.section-label'))
-                    .find(el => el.textContent.trim().toUpperCase() === label);
-                return lbl ? [lbl, lbl.nextElementSibling] : null;
+            if (typeof applyStandardSectionOrder === 'function') {
+                applyStandardSectionOrder(container);
             }
-
-            const order = [
-                pairFor('COMPANY:'),
-                pairFor('BILLING:'),
-                pairFor('CLIENT:'),
-                pairFor('AGENT:'),
-                pairFor('MEMBERS:') || pairFor('DIRECTORS:'),
-                pairFor('SHAREHOLDERS:'),
-                pairFor('OFFICERS:')
-            ].filter(Boolean);
-
-            order.forEach(([lbl, box]) => {
-                container.appendChild(lbl);
-                if (box) container.appendChild(box);
-            });
         }
 
         function repositionDnaSummary() {

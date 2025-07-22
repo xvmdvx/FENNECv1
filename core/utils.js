@@ -44,6 +44,40 @@ function sessionSet(data, cb) {
 }
 window.sessionSet = sessionSet;
 
+function insertDnaAfterCompany() {
+    const dnaBox = document.querySelector('.copilot-dna');
+    const compBox = document.querySelector('#copilot-sidebar .company-box');
+    if (!dnaBox || !compBox) return;
+    const parent = compBox.parentElement;
+    if (dnaBox.parentElement !== parent || dnaBox.previousElementSibling !== compBox) {
+        parent.insertBefore(dnaBox, compBox.nextSibling);
+    }
+}
+window.insertDnaAfterCompany = insertDnaAfterCompany;
+
+function applyStandardSectionOrder(container = document.getElementById('db-summary-section')) {
+    if (!container) return;
+    const pairFor = label => {
+        const lbl = Array.from(container.querySelectorAll('.section-label'))
+            .find(el => el.textContent.trim().toUpperCase() === label);
+        return lbl ? [lbl, lbl.nextElementSibling] : null;
+    };
+    const order = [
+        pairFor('COMPANY:'),
+        pairFor('BILLING:'),
+        pairFor('CLIENT:'),
+        pairFor('AGENT:'),
+        pairFor('MEMBERS:') || pairFor('DIRECTORS:'),
+        pairFor('SHAREHOLDERS:'),
+        pairFor('OFFICERS:')
+    ].filter(Boolean);
+    order.forEach(([lbl, box]) => {
+        container.appendChild(lbl);
+        if (box) container.appendChild(box);
+    });
+}
+window.applyStandardSectionOrder = applyStandardSectionOrder;
+
 function abbreviateOrderType(type) {
     const t = (type || '').toLowerCase();
     if (t.includes('annual report')) return 'AR';
