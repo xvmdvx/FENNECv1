@@ -1315,24 +1315,31 @@ function namesMatch(a, b) {
             });
         }
 
-        function clearSidebar() {
-            chrome.storage.local.set({ sidebarDb: [], sidebarOrderId: null, sidebarOrderInfo: null, adyenDnaInfo: null, sidebarFreezeId: null });
+        function clearSidebar(resetDna = true) {
+            const data = { sidebarDb: [], sidebarOrderId: null, sidebarOrderInfo: null, sidebarFreezeId: null };
+            if (resetDna) data.adyenDnaInfo = null;
+            chrome.storage.local.set(data);
             const db = document.getElementById('db-summary-section');
             const dna = document.getElementById('dna-summary');
             const fraud = document.getElementById('fraud-summary-section');
             const issue = document.getElementById('issue-summary-box');
             if (db) db.innerHTML = '';
-            if (dna) dna.innerHTML = '';
+            if (dna && resetDna) dna.innerHTML = '';
             if (fraud) fraud.innerHTML = '';
-            if (issue) { const content = issue.querySelector('#issue-summary-content'); const label = issue.querySelector('#issue-status-label'); if (content) content.innerHTML = 'No issue data yet.'; if (label) { label.textContent = ''; label.className = 'issue-status-label'; } issue.style.display = 'none'; }
+            if (issue) {
+                const content = issue.querySelector('#issue-summary-content');
+                const label = issue.querySelector('#issue-status-label');
+                if (content) content.innerHTML = 'No issue data yet.';
+                if (label) { label.textContent = ''; label.className = 'issue-status-label'; }
+                issue.style.display = 'none';
+            }
             insertFraudSummary();
         }
 
         function endFraudSession() {
-            clearSidebar();
+            clearSidebar(false);
             chrome.storage.local.set({
-                fraudReviewSession: null,
-                kountInfo: null
+                fraudReviewSession: null
             });
             localStorage.removeItem('fraudXrayCompleted');
             localStorage.removeItem('fraudXrayFinished');
