@@ -124,6 +124,9 @@ class DBLauncher extends Launcher {
                 attachCommonListeners(body);
                 updateReviewDisplay();
                 insertDnaAfterCompany();
+                if (typeof applyStandardSectionOrder === 'function') {
+                    applyStandardSectionOrder(body.querySelector('#db-summary-section'));
+                }
                 if (typeof checkLastIssue === 'function') {
                     checkLastIssue(currentId);
                 }
@@ -1863,6 +1866,9 @@ class DBLauncher extends Launcher {
             if (typeof initQuickSummary === 'function') initQuickSummary();
             attachCommonListeners(body);
             insertDnaAfterCompany();
+            if (typeof applyStandardSectionOrder === 'function') {
+                applyStandardSectionOrder(body.querySelector('#db-summary-section'));
+            }
             initMistralChat();
             updateReviewDisplay();
             if (typeof checkLastIssue === 'function') {
@@ -2095,15 +2101,7 @@ class DBLauncher extends Launcher {
     // Expose for other scripts
     window.loadKountSummary = loadKountSummary;
 
-    function insertDnaAfterCompany() {
-        const dnaBox = document.querySelector('.copilot-dna');
-        const compBox = document.querySelector('#copilot-sidebar .company-box');
-        if (!dnaBox || !compBox) return;
-        const parent = compBox.parentElement;
-        if (dnaBox.parentElement !== parent || dnaBox.previousElementSibling !== compBox) {
-            parent.insertBefore(dnaBox, compBox.nextSibling);
-        }
-    }
+    const insertDnaAfterCompany = window.insertDnaAfterCompany;
 
     function formatIssueText(text) {
         if (!text) return '';

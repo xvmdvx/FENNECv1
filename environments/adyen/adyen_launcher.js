@@ -299,15 +299,7 @@ class AdyenLauncher extends Launcher {
                 return `<div class="section-label">ADYEN'S DNA</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
             }
 
-            function insertDnaAfterCompany() {
-                const dnaBox = document.querySelector('.copilot-dna');
-                const compBox = document.querySelector('#copilot-sidebar .company-box');
-                if (!dnaBox || !compBox) return;
-                const parent = compBox.parentElement;
-                if (dnaBox.parentElement !== parent || dnaBox.previousElementSibling !== compBox) {
-                    parent.insertBefore(dnaBox, compBox.nextSibling);
-                }
-            }
+            const insertDnaAfterCompany = window.insertDnaAfterCompany;
 
             function loadDnaSummary() {
                 const container = document.getElementById('dna-summary');
@@ -320,6 +312,9 @@ class AdyenLauncher extends Launcher {
                         attachCommonListeners(container);
                         if (isDnaPage) storeSidebarSnapshot(document.getElementById('copilot-sidebar'));
                         insertDnaAfterCompany();
+                        if (typeof applyStandardSectionOrder === 'function') {
+                            applyStandardSectionOrder(document.getElementById('db-summary-section'));
+                        }
                     });
                 });
             }
@@ -339,6 +334,9 @@ class AdyenLauncher extends Launcher {
                             qbox.style.maxHeight = 'none';
                         }
                         insertDnaAfterCompany();
+                        if (typeof applyStandardSectionOrder === 'function') {
+                            applyStandardSectionOrder(container);
+                        }
                     } else {
                         container.innerHTML = '';
                         container.style.display = 'none';
@@ -455,7 +453,12 @@ class AdyenLauncher extends Launcher {
                     sidebarBgColor: '#212121',
                     sidebarBoxColor: '#2e2e2e'
                 }, opts => applySidebarDesign(sidebar, opts));
-                loadSidebarSnapshot(sidebar, insertDnaAfterCompany);
+                loadSidebarSnapshot(sidebar, () => {
+                    insertDnaAfterCompany();
+                    if (typeof applyStandardSectionOrder === 'function') {
+                        applyStandardSectionOrder(sidebar.querySelector('#db-summary-section'));
+                    }
+                });
                 document.body.style.marginRight = '340px';
                 const qsToggle = sidebar.querySelector('#qs-toggle');
                 if (qsToggle) {
