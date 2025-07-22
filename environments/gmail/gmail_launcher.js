@@ -1602,17 +1602,6 @@ sbObj.build(`
                 loadDnaSummary();
             loadKountSummary();
             }
-            if (area === 'local' && changes.fraudXrayFinished && changes.fraudXrayFinished.newValue === '1') {
-                chrome.storage.local.remove('fraudXrayFinished');
-                refreshSidebar();
-                const box = document.getElementById('issue-summary-box');
-                if (box) box.style.display = 'block';
-                ensureIssueControls(true);
-                updateDetailVisibility();
-                if (currentContext && currentContext.orderNumber) {
-                    checkLastIssue(currentContext.orderNumber);
-                }
-            }
             if (area === 'local' && changes.sidebarSnapshot && changes.sidebarSnapshot.newValue) {
                 const sb = document.getElementById('copilot-sidebar');
                 if (sb) {
@@ -1701,7 +1690,8 @@ sbObj.build(`
         // and show comment controls once XRAY completes.
         window.addEventListener('focus', () => {
             refreshSidebar();
-            const handleFinish = () => {
+            if (localStorage.getItem('fraudXrayFinished') === '1') {
+                localStorage.removeItem('fraudXrayFinished');
                 const box = document.getElementById('issue-summary-box');
                 if (box) box.style.display = 'block';
                 ensureIssueControls(true);
@@ -1709,17 +1699,6 @@ sbObj.build(`
                 if (currentContext && currentContext.orderNumber) {
                     checkLastIssue(currentContext.orderNumber);
                 }
-            };
-            if (localStorage.getItem('fraudXrayFinished') === '1') {
-                localStorage.removeItem('fraudXrayFinished');
-                handleFinish();
-            } else {
-                chrome.storage.local.get({ fraudXrayFinished: null }, ({ fraudXrayFinished }) => {
-                    if (fraudXrayFinished === '1') {
-                        chrome.storage.local.remove('fraudXrayFinished');
-                        handleFinish();
-                    }
-                });
             }
         });
 
