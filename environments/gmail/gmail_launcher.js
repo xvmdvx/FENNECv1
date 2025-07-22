@@ -867,6 +867,30 @@
             insertDnaAfterCompany();
         }
 
+        function ensureDnaSections() {
+            let dnaBox = document.querySelector('.copilot-dna');
+            if (!dnaBox) {
+                const body = document.querySelector('.copilot-body');
+                if (!body) return;
+                dnaBox = document.createElement('div');
+                dnaBox.className = 'copilot-dna';
+                body.insertBefore(dnaBox, body.firstChild);
+            }
+            if (!document.getElementById('dna-summary')) {
+                const d = document.createElement('div');
+                d.id = 'dna-summary';
+                d.style.marginTop = '16px';
+                dnaBox.appendChild(d);
+            }
+            if (!document.getElementById('kount-summary')) {
+                const k = document.createElement('div');
+                k.id = 'kount-summary';
+                k.style.marginTop = '10px';
+                dnaBox.appendChild(k);
+            }
+            repositionDnaSummary();
+        }
+
         function buildTransactionTable(tx) {
             if (!tx) return "";
             const colors = {
@@ -1328,6 +1352,7 @@
                     return;
                 }
                 if (ctx) fillOrderSummaryBox(ctx);
+                ensureDnaSections();
                 loadDbSummary(orderId);
                 if (orderId) checkLastIssue(orderId);
                 loadDnaSummary();
@@ -1482,6 +1507,7 @@ sbObj.build(`
             `);
             sbObj.attach();
             const sidebar = sbObj.element;
+            ensureDnaSections();
             chrome.storage.sync.get({
                 sidebarFontSize: 13,
                 sidebarFont: "'Inter', sans-serif",
@@ -1575,11 +1601,13 @@ sbObj.build(`
                 loadDbSummary();
             }
             if (area === 'local' && changes.adyenDnaInfo) {
+                ensureDnaSections();
                 loadDnaSummary();
-            loadKountSummary();
+                loadKountSummary();
             }
             if (area === 'local' && changes.fraudXrayFinished && changes.fraudXrayFinished.newValue === '1') {
                 chrome.storage.local.remove('fraudXrayFinished');
+                ensureDnaSections();
                 refreshSidebar();
                 loadDnaSummary();
                 loadKountSummary();
@@ -1596,6 +1624,7 @@ sbObj.build(`
                 if (sb) {
                     sb.innerHTML = changes.sidebarSnapshot.newValue;
                     attachCommonListeners(sb);
+                    ensureDnaSections();
                     repositionDnaSummary();
                     ensureIssueControls(true);
                     setupResolveButton();
@@ -1678,6 +1707,7 @@ sbObj.build(`
         // Ensure DNA summary refreshes when returning from Adyen
         // and show comment controls once XRAY completes.
         window.addEventListener('focus', () => {
+            ensureDnaSections();
             refreshSidebar();
             loadDnaSummary();
             loadKountSummary();
@@ -1707,6 +1737,7 @@ sbObj.build(`
         window.addEventListener('storage', (e) => {
             if (e.key === 'fraudXrayFinished' && e.newValue === '1') {
                 localStorage.removeItem('fraudXrayFinished');
+                ensureDnaSections();
                 refreshSidebar();
                 const box = document.getElementById('issue-summary-box');
                 if (box) box.style.display = 'block';
