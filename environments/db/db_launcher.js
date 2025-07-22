@@ -2932,12 +2932,26 @@ function getLastHoldUser() {
             console.log('[FENNEC (POO)] Opening Adyen:', adyenUrl);
             sessionSet({ fennecFraudAdyen: adyenUrl });
 
-            function openKount(retries = 20) {
-                console.log('[FENNEC (POO)] Looking for Kount link, attempt', 21 - retries);
-                const link = document.querySelector('a[href*="kount.net"][href*="workflow/detail"]');
-                if (link) {
-                    console.log('[FENNEC (POO)] Opening Kount:', link.href);
-                    bg.openOrReuseTab({ url: link.href, active: true });
+            function findKountLink() {
+                const direct = document.querySelector('a[href*="kount.net"][href*="workflow/detail"]');
+                if (direct) return direct.href;
+                for (const frame of document.querySelectorAll('iframe')) {
+                    try {
+                        const doc = frame.contentDocument;
+                        if (!doc) continue;
+                        const a = doc.querySelector('a[href*="kount.net"][href*="workflow/detail"]');
+                        if (a) return a.href;
+                    } catch (e) { /* ignore cross-origin frames */ }
+                }
+                return null;
+            }
+
+            function openKount(retries = 40) {
+                console.log('[FENNEC (POO)] Looking for Kount link, attempt', 41 - retries);
+                const url = findKountLink();
+                if (url) {
+                    console.log('[FENNEC (POO)] Opening Kount:', url);
+                    bg.openOrReuseTab({ url, active: true });
                 } else if (retries > 0) {
                     setTimeout(() => openKount(retries - 1), 500);
                 } else {
