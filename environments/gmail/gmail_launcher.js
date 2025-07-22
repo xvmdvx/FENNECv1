@@ -1341,20 +1341,21 @@
             const ctx = extractOrderContextFromEmail();
             currentContext = ctx;
             chrome.storage.local.get({ sidebarFreezeId: null }, ({ sidebarFreezeId }) => {
-                if (sidebarFreezeId && (!ctx || ctx.orderNumber !== sidebarFreezeId)) {
+                if (ctx && sidebarFreezeId && ctx.orderNumber !== sidebarFreezeId) {
                     sessionSet({ sidebarFreezeId: null, adyenDnaInfo: null });
                 }
+                const orderId = ctx ? ctx.orderNumber : sidebarFreezeId;
+                if (!orderId) {
+                    showInitialStatus();
+                    applyReviewMode();
+                    return;
+                }
+                if (ctx) fillOrderSummaryBox(ctx);
+                loadDbSummary(orderId);
+                if (orderId) checkLastIssue(orderId);
+                loadDnaSummary();
+                loadKountSummary();
             });
-            if (!ctx) {
-                showInitialStatus();
-                applyReviewMode();
-                return;
-            }
-            fillOrderSummaryBox(ctx);
-            loadDbSummary(ctx && ctx.orderNumber);
-            if (ctx && ctx.orderNumber) checkLastIssue(ctx.orderNumber);
-            loadDnaSummary();
-            loadKountSummary();
         }
 
         function clearSidebar() {
