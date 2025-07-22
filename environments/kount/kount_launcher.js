@@ -78,6 +78,11 @@ class KountLauncher extends Launcher {
             }
 
             const path = window.location.pathname;
+            if (path.includes('/workflow/ekata')) {
+                document.title = '[EKATA] ' + document.title;
+            } else {
+                document.title = '[KOUNT] ' + document.title;
+            }
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', injectSidebar);
             } else {

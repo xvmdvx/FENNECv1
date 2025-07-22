@@ -566,6 +566,11 @@ class AdyenLauncher extends Launcher {
             }
 
             const path = window.location.pathname;
+            if (path.includes('showOilSplashList.shtml')) {
+                document.title = '[ADYEN DNA] ' + document.title;
+            } else {
+                document.title = '[ADYEN] ' + document.title;
+            }
             const isDnaPage = path.includes('showOilSplashList.shtml');
             console.log('[FENNEC (POO) Adyen] Path:', path);
             const ready = document.readyState === 'loading' ? 'DOMContentLoaded' : null;
