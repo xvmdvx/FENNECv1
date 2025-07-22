@@ -590,6 +590,8 @@ class DBLauncher extends Launcher {
                             } else {
                                 window.addEventListener('load', trigger, { once: true });
                             }
+                            // Fallback in case the load event was missed
+                            setTimeout(runFraudXray, 1500);
                         }
                     });
                     const qsToggle = sidebar.querySelector('#qs-toggle');
