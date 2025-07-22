@@ -435,6 +435,7 @@ class AdyenLauncher extends Launcher {
                         <button id="copilot-clear-tabs">🗑</button>
                         <button id="copilot-close">✕</button>
                     </div>
+                    <div class="order-summary-header">ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
                     <div class="copilot-body">
                         <div class="copilot-dna">
                             <div id="dna-summary" style="margin-top:16px"></div>
@@ -456,6 +457,27 @@ class AdyenLauncher extends Launcher {
                 }, opts => applySidebarDesign(sidebar, opts));
                 loadSidebarSnapshot(sidebar);
                 document.body.style.marginRight = '340px';
+                const qsToggle = sidebar.querySelector('#qs-toggle');
+                if (qsToggle) {
+                    const initQuickSummary = () => {
+                        const box = sidebar.querySelector('#quick-summary');
+                        if (!box) return;
+                        box.style.maxHeight = '0';
+                        box.classList.add('quick-summary-collapsed');
+                    };
+                    initQuickSummary();
+                    qsToggle.addEventListener('click', () => {
+                        const box = sidebar.querySelector('#quick-summary');
+                        if (!box) return;
+                        if (box.style.maxHeight && box.style.maxHeight !== '0px') {
+                            box.style.maxHeight = '0';
+                            box.classList.add('quick-summary-collapsed');
+                        } else {
+                            box.classList.remove('quick-summary-collapsed');
+                            box.style.maxHeight = box.scrollHeight + 'px';
+                        }
+                    });
+                }
                 const closeBtn = sidebar.querySelector('#copilot-close');
                 if (closeBtn) {
                     closeBtn.onclick = () => {
