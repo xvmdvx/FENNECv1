@@ -546,9 +546,7 @@ class DBLauncher extends Launcher {
                         sidebarBgColor: '#212121',
                         sidebarBoxColor: '#2e2e2e'
                     }, opts => applySidebarDesign(sidebar, opts));
-                    loadSidebarSnapshot(sidebar);
-
-                    updateReviewDisplay();
+                    loadSidebarSnapshot(sidebar, updateReviewDisplay);
                     const closeBtn = sidebar.querySelector('#copilot-close');
                     if (closeBtn) {
                         closeBtn.onclick = () => {

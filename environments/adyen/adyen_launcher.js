@@ -455,7 +455,7 @@ class AdyenLauncher extends Launcher {
                     sidebarBgColor: '#212121',
                     sidebarBoxColor: '#2e2e2e'
                 }, opts => applySidebarDesign(sidebar, opts));
-                loadSidebarSnapshot(sidebar);
+                loadSidebarSnapshot(sidebar, insertDnaAfterCompany);
                 document.body.style.marginRight = '340px';
                 const qsToggle = sidebar.querySelector('#qs-toggle');
                 if (qsToggle) {
