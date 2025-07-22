@@ -22,6 +22,7 @@
             console.log('[FENNEC (POO)] Extension disabled, skipping Gmail launcher.');
             return;
         }
+        document.title = '[GMAIL] ' + document.title;
         if (lightMode) {
             document.body.classList.add('fennec-light-mode');
         } else {
@@ -2047,6 +2048,12 @@ sbObj.build(`
             searchInProgress = true;
             console.log('[FENNEC (POO)] runReviewXray start');
             showLoadingState();
+            if (!reviewMode) {
+                reviewMode = true;
+                chrome.storage.sync.set({ fennecReviewMode: true });
+                sessionSet({ fennecReviewMode: true });
+                applyReviewMode();
+            }
 
             const context = extractOrderContextFromEmail();
             currentContext = context;

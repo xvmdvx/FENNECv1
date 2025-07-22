@@ -26,6 +26,9 @@ class DBLauncher extends Launcher {
     let devMode = false;
     const diagnoseFloater = new DiagnoseFloater();
     let fraudXray = new URLSearchParams(location.search).get('fraud_xray') === '1';
+    if (fraudXray) {
+        document.title = '[DB] ' + document.title;
+    }
     if (!fraudXray && sessionStorage.getItem('fraudXrayPending')) {
         console.log('[FENNEC (POO)] fraud_xray flag missing after refresh, using pending value');
         fraudXray = true;
@@ -470,7 +473,11 @@ class DBLauncher extends Launcher {
             document.body.classList.remove('fennec-light-mode');
         }
 
-        reviewMode = fennecReviewMode;
+        reviewMode = fennecReviewMode || fraudXray;
+        if (fraudXray && !fennecReviewMode) {
+            chrome.storage.local.set({ fennecReviewMode: true });
+            chrome.storage.sync.set({ fennecReviewMode: true });
+        }
         devMode = fennecDevMode;
         try {
         function initSidebar() {
@@ -2898,6 +2905,12 @@ function getLastHoldUser() {
         if (localStorage.getItem('fraudXrayCompleted')) {
             fraudXray = false;
             return;
+        }
+        if (!reviewMode) {
+            reviewMode = true;
+            chrome.storage.local.set({ fennecReviewMode: true });
+            chrome.storage.sync.set({ fennecReviewMode: true });
+            updateReviewDisplay();
         }
         const orderId = getBasicOrderInfo().orderId;
         console.log('[FENNEC (POO)] runFraudXray start', { orderId });
