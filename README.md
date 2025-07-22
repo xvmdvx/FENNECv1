@@ -39,20 +39,16 @@ The user interface is created by the `Sidebar` class while overlay panels (Diagn
 
 ## Features
 
+MODES:
+  FILING: Equivale a la DB SB MAIN, con todas sus funcionalidades + DB SB MISC + DB SB ORDER SEARCH
+  ISSUES: GM SB + FILING + FILING/MISC
+  REVIEW: DB SB REVIEW MODE and ID CONFIRM (GM SB REVIEW MODE and DB SB FRAUD REVIEW PAGE) + SB FRAUD REVIEW PAGE + XRAY ICON INJECTION
+
 SIDEBAR HEADER:
 It remains constant throughout all layouts, unless an IMPORTANT restriction is added.
    Left: Hamburger Icon/Menu. This floater contains QUICK ACTIONS.
    Center: Icon, App name and version in parentheses.
    Right: Icon for clean window action. Close SB button.
-
-PROFILES:
-  FILING: Equivale a la DB SB MAIN, con todas sus funcionalidades.
-  FILING/MISC:  DB SB MISC
-  
-  ISSUES: GM SB + FILING + FILING/MISC
-  
-  FRAUD REVIEW: DB SB REVIEW MODE
-  ID CONFIRM: GM SB REVIEW MODE
 
 MAIN (BUSINESS FORMATION ORDERS: SILVER, GOLD, PLATINUM)
    DB:
@@ -128,13 +124,22 @@ MISC (ALL NON-BUSINESS FORMATION ORDERS)
          - Header with ACTIVE/RESOLVED tag.
          - Issue text.
          
+-------------------------------->
+         
 REVIEW MODE:
 This is a detailed mode for the Revenue Assurance team to assist with the order review step.
 In Review Mode the sidebar stays locked across all tabs until DNA runs on a different order.
 The header shows the hamburger menu and trash icons so quick actions and CLEAR TABS remain available in any environment.
 
+INITIAL STATE (if not opened from a function such as XRAY flow):
+DB - https://db.incfile.com/incfile/order/detail/*
+  Same as FILING
+FRAUD REVIEW PAGE - FRAUD SUMMARY (fraud-summary-box)
+KOUNT - DO NOT INJECT SB if not opened from XRAY
+ADYEN - DO NOT INJECT SB if not opened from XRAY
+
 MAIN:
-   DB:
+   DB, KOUNT, ADYEN:
       HEADER
       Title: ORDER SUMMARY with QUICK SUMMARY icon (quick-summary-toggle) and action. For Misc, FAMILY TREE icon (family-tree-icon).
       1st box: COMPANY summary (company-box)
@@ -160,20 +165,29 @@ MAIN:
       7th box: MEMBERS for LLC or DIRECTORS for CORP, NPROFIT (MEMBERS: or DIRECTORS:)
       8th box: SHAREHOLDERS for CORP, NPROFIT (SHAREHOLDERS:)
       9th box: OFFICERS for CORP, NPROFIT (OFFICERS:)
-     10th box: Issue summary (issue-summary-box)
+     10th box: Issue summary (issue-summary-box) - REVIEW FUNCTIONS (COMMENT & RELEASE)
 
-   ADYEN, KOUNT, EMAIL SEARCH:
-      HEADER
-      1st box: COMPANY summary (company-box)
-      2nd box: ADYEN's DNA summary (copilot-dna)
-      3rd box: KOUNT summary 
-      4th box: BILLING summary (billing-section-box)
-      5th box: CLIENT summary (client-section-box)
-      6th box: AGENT summary (AGENT:)
-      7th box: MEMBERS for LLC or DIRECTORS for CORP, NPROFIT (MEMBERS: or DIRECTORS:)
-      8th box: SHAREHOLDERS for CORP, NPROFIT (SHAREHOLDERS:)
-      9th box: OFFICERS for CORP, NPROFIT (OFFICERS:)
-     10th box: Issue summary (issue-summary-box)
+🩻 XRAY: This function is present in both FRAUD REVIEW and GM SB REVIEW MODE. They differ only in the last steps. Once the Icon in FRAUD REVIEW (copilot-xray) or Button in GM SB REVIEW MODE = ID CONFIRM (btn-xray) is clicked, the following FLOW should be triggered:
+
+1. Open the order in DB - https://db.incfile.com/incfile/order/detail/*
+2. Refresh DB to obtain the correct LTV.
+3. Open DB email search in a background tab so results start loading - https://db.incfile.com/order-tracker/orders/order-search?fennec_email=*
+4. Open KOUNT and extract data - https://awc.kount.net/workflow/detail.html?id=*
+5. Open EKATA and extract data - https://awc.kount.net/workflow/ekata.html?id=*
+6. Open ADYEN and navigate to Payment Details, then extract data - https://ca-live.adyen.com/ca/ca/overview/default.shtml, order number search, result navigation, payment details: https://ca-live.adyen.com/ca/ca/accounts/showTx.shtml?pspReference=*
+7. Open ADYEN DNA - https://ca-live.adyen.com/ca/ca/payments/showOilSplashList.shtml?pspReference=*
+
+For FRAUD REVIEW (XRAY icon)
+8. Activate to the DB email search tab and wait for results. Once loaded or if already loaded, extract the order counts  - https://db.incfile.com/order-tracker/orders/order-search?fennec_email=*
+9. Activate the original fraud tracker tab with the floater fully built and still showing NOT FOUND if any value was missing - https://db.incfile.com/order-tracker/orders/fraud
+10. Finish the XRAY session once a decision is made, the floater is manually closed or a new XRAY session begins. Clear all chrome and local storage from the flow/session.
+
+For ID CONFIRM (XRAY button) 
+8. Activate the original GM, where button is oringially clicked: https://mail.google.com/mail/u/0/#inbox/* or related.
+
+At the end of both flows, all tabs included in the flow must be properly identified, and the SB injected with proper padding in all. The SB once the XRAY is completed should be constructed as desinged in REVIEW MODE.
+
+-------------------------------->
 
 DEV MODE:
 Eexperimental mode where upcoming features are tested before release.
@@ -183,6 +197,10 @@ Eexperimental mode where upcoming features are tested before release.
       [🔄 REFRESH] button appears at the bottom.
 
 ICONS/BUTTONS/FUNCTIONS:
+🗑 CLEAR TABS: Closes all tabs, except the one active, in current window.
+ HAMBURGUER ICON: Contains a QUICK ACTIONS menu:
+ -EMAILS: Clicking opens a GM search with the order number + client email + company name + client name
+ -CANCEL: Clicking opens the current order tab or creates it. 
 
 📧 SEARCH (GM SB & GM SB REVIEW MODE): Opens tabs in background:
    1. Gmail Search with Order Number, Customer Email, Customer Name. 
