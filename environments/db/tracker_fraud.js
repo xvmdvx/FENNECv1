@@ -1295,6 +1295,8 @@ function namesMatch(a, b) {
             });
         }
 
+        const insertDnaAfterCompany = window.insertDnaAfterCompany;
+
         function loadDbSummary() {
             const container = document.getElementById('db-summary-section');
             const fraud = document.getElementById('fraud-summary-section');
@@ -1305,6 +1307,10 @@ function namesMatch(a, b) {
                     attachCommonListeners(container);
                     const qbox = container.querySelector('#quick-summary');
                     if (qbox) { qbox.classList.remove('quick-summary-collapsed'); qbox.style.maxHeight = 'none'; }
+                    insertDnaAfterCompany();
+                    if (typeof applyStandardSectionOrder === 'function') {
+                        applyStandardSectionOrder(container);
+                    }
                     checkLastIssue(sidebarOrderId);
                     if (fraud) fraud.innerHTML = '';
                 } else {
