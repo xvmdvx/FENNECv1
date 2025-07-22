@@ -299,6 +299,16 @@ class AdyenLauncher extends Launcher {
                 return `<div class="section-label">ADYEN'S DNA</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
             }
 
+            function insertDnaAfterCompany() {
+                const dnaBox = document.querySelector('.copilot-dna');
+                const compBox = document.querySelector('#copilot-sidebar .company-box');
+                if (!dnaBox || !compBox) return;
+                const parent = compBox.parentElement;
+                if (dnaBox.parentElement !== parent || dnaBox.previousElementSibling !== compBox) {
+                    parent.insertBefore(dnaBox, compBox.nextSibling);
+                }
+            }
+
             function loadDnaSummary() {
                 const container = document.getElementById('dna-summary');
                 if (!container) return;
@@ -309,6 +319,7 @@ class AdyenLauncher extends Launcher {
                         container.innerHTML = html || '';
                         attachCommonListeners(container);
                         if (isDnaPage) storeSidebarSnapshot(document.getElementById('copilot-sidebar'));
+                        insertDnaAfterCompany();
                     });
                 });
             }
@@ -327,6 +338,7 @@ class AdyenLauncher extends Launcher {
                             qbox.classList.remove('quick-summary-collapsed');
                             qbox.style.maxHeight = 'none';
                         }
+                        insertDnaAfterCompany();
                     } else {
                         container.innerHTML = '';
                         container.style.display = 'none';

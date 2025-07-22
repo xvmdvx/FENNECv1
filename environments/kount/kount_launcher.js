@@ -12,6 +12,16 @@ class KountLauncher extends Launcher {
             if (label) label.style.display = reviewMode ? 'block' : 'none';
         }
 
+        function insertDnaAfterCompany() {
+            const dnaBox = document.querySelector('.copilot-dna');
+            const compBox = document.querySelector('#copilot-sidebar .company-box');
+            if (!dnaBox || !compBox) return;
+            const parent = compBox.parentElement;
+            if (dnaBox.parentElement !== parent || dnaBox.previousElementSibling !== compBox) {
+                parent.insertBefore(dnaBox, compBox.nextSibling);
+            }
+        }
+
 
 
         function injectSidebar() {
@@ -51,6 +61,7 @@ class KountLauncher extends Launcher {
                 sidebarBoxColor: '#2e2e2e'
             }, opts => applySidebarDesign(sb.element, opts));
             loadSidebarSnapshot(sb.element);
+            insertDnaAfterCompany();
             updateReviewDisplay();
 
             const closeBtn = sb.element.querySelector('#copilot-close');

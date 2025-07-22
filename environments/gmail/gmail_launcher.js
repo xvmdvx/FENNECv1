@@ -851,6 +851,16 @@
             });
         }
 
+        function insertDnaAfterCompany() {
+            const dnaBox = document.querySelector('.copilot-dna');
+            const compBox = document.querySelector('#copilot-sidebar .company-box');
+            if (!dnaBox || !compBox) return;
+            const parent = compBox.parentElement;
+            if (dnaBox.parentElement !== parent || dnaBox.previousElementSibling !== compBox) {
+                parent.insertBefore(dnaBox, compBox.nextSibling);
+            }
+        }
+
         function repositionDnaSummary() {
             const dnaBox = document.querySelector('.copilot-dna');
             const summary = document.getElementById('dna-summary');
@@ -868,16 +878,7 @@
             if (kount && summary.nextSibling !== kount) {
                 dnaBox.insertBefore(kount, summary.nextSibling);
             }
-            const actionsRow = document.querySelector('#copilot-sidebar .copilot-actions');
-            if (reviewMode && actionsRow && dnaBox.previousElementSibling !== actionsRow) {
-                actionsRow.parentElement.insertBefore(dnaBox, actionsRow.nextSibling);
-            } else {
-                const compLabel = Array.from(document.querySelectorAll('#copilot-sidebar .section-label'))
-                    .find(el => el.textContent.trim().startsWith('COMPANY'));
-                if (compLabel && dnaBox.nextElementSibling !== compLabel) {
-                    compLabel.parentElement.insertBefore(dnaBox, compLabel);
-                }
-            }
+            insertDnaAfterCompany();
         }
 
         function buildTransactionTable(tx) {
