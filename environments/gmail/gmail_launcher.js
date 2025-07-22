@@ -802,8 +802,8 @@
                 }
 
 
+                reorderReviewSections();
                 repositionDnaSummary();
-
                 updateDetailVisibility();
             });
         }
@@ -816,6 +816,35 @@
             if (dnaBox.parentElement !== parent || dnaBox.previousElementSibling !== compBox) {
                 parent.insertBefore(dnaBox, compBox.nextSibling);
             }
+        }
+
+        function reorderReviewSections() {
+            if (!reviewMode) return;
+            const container = document.getElementById('db-summary-section');
+            if (!container) return;
+            const quick = container.querySelector('#quick-summary');
+            if (quick) quick.remove();
+
+            function pairFor(label) {
+                const lbl = Array.from(container.querySelectorAll('.section-label'))
+                    .find(el => el.textContent.trim().toUpperCase() === label);
+                return lbl ? [lbl, lbl.nextElementSibling] : null;
+            }
+
+            const order = [
+                pairFor('COMPANY:'),
+                pairFor('BILLING:'),
+                pairFor('CLIENT:'),
+                pairFor('AGENT:'),
+                pairFor('MEMBERS:') || pairFor('DIRECTORS:'),
+                pairFor('SHAREHOLDERS:'),
+                pairFor('OFFICERS:')
+            ].filter(Boolean);
+
+            order.forEach(([lbl, box]) => {
+                container.appendChild(lbl);
+                if (box) container.appendChild(box);
+            });
         }
 
         function repositionDnaSummary() {
