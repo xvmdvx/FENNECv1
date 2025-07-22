@@ -867,10 +867,15 @@
             if (kount && summary.nextSibling !== kount) {
                 dnaBox.insertBefore(kount, summary.nextSibling);
             }
-            const compLabel = Array.from(document.querySelectorAll('#copilot-sidebar .section-label'))
-                .find(el => el.textContent.trim().startsWith('COMPANY'));
-            if (compLabel && dnaBox.nextElementSibling !== compLabel) {
-                compLabel.parentElement.insertBefore(dnaBox, compLabel);
+            const actionsRow = document.querySelector('#copilot-sidebar .copilot-actions');
+            if (reviewMode && actionsRow && dnaBox.previousElementSibling !== actionsRow) {
+                actionsRow.parentElement.insertBefore(dnaBox, actionsRow.nextSibling);
+            } else {
+                const compLabel = Array.from(document.querySelectorAll('#copilot-sidebar .section-label'))
+                    .find(el => el.textContent.trim().startsWith('COMPANY'));
+                if (compLabel && dnaBox.nextElementSibling !== compLabel) {
+                    compLabel.parentElement.insertBefore(dnaBox, compLabel);
+                }
             }
         }
 
