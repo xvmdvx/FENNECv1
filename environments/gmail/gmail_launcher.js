@@ -1578,6 +1578,8 @@ sbObj.build(`
             if (area === 'local' && changes.fraudXrayFinished && changes.fraudXrayFinished.newValue === '1') {
                 chrome.storage.local.remove('fraudXrayFinished');
                 refreshSidebar();
+                loadDnaSummary();
+                loadKountSummary();
                 const box = document.getElementById('issue-summary-box');
                 if (box) box.style.display = 'block';
                 ensureIssueControls(true);
@@ -1674,6 +1676,8 @@ sbObj.build(`
         // and show comment controls once XRAY completes.
         window.addEventListener('focus', () => {
             refreshSidebar();
+            loadDnaSummary();
+            loadKountSummary();
             const handleFinish = () => {
                 const box = document.getElementById('issue-summary-box');
                 if (box) box.style.display = 'block';
