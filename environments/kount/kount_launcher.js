@@ -39,7 +39,7 @@ class KountLauncher extends Launcher {
                     <button id="copilot-clear-tabs">🗑</button>
                     <button id="copilot-close">✕</button>
                 </div>
-                <div class="order-summary-header">ORDER SUMMARY</div>
+                <div class="order-summary-header">ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
                 <div class="copilot-body" id="copilot-body-content">
                     <div id="db-summary-section"></div>
                     <div class="copilot-dna">
@@ -63,6 +63,28 @@ class KountLauncher extends Launcher {
             loadSidebarSnapshot(sb.element);
             insertDnaAfterCompany();
             updateReviewDisplay();
+
+            const qsToggle = sb.element.querySelector('#qs-toggle');
+            if (qsToggle) {
+                const initQuickSummary = () => {
+                    const box = sb.element.querySelector('#quick-summary');
+                    if (!box) return;
+                    box.style.maxHeight = '0';
+                    box.classList.add('quick-summary-collapsed');
+                };
+                initQuickSummary();
+                qsToggle.addEventListener('click', () => {
+                    const box = sb.element.querySelector('#quick-summary');
+                    if (!box) return;
+                    if (box.style.maxHeight && box.style.maxHeight !== '0px') {
+                        box.style.maxHeight = '0';
+                        box.classList.add('quick-summary-collapsed');
+                    } else {
+                        box.classList.remove('quick-summary-collapsed');
+                        box.style.maxHeight = box.scrollHeight + 'px';
+                    }
+                });
+            }
 
             const closeBtn = sb.element.querySelector('#copilot-close');
             if (closeBtn) closeBtn.onclick = () => {

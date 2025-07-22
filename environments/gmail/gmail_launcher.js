@@ -216,76 +216,33 @@
             const billingBox = container.querySelector("#billing-section-box");
             if (!quick || !orderBox) return;
             if (reviewMode) {
-                orderBox.querySelectorAll('[data-review-merged="1"]').forEach(el => el.remove());
                 if (issueBox) {
                     issueBox.style.display = "block";
                     ensureIssueControls();
                 }
-                const compLabel = Array.from(container.querySelectorAll(".section-label"))
-                    .find(l => l.textContent.trim().startsWith("COMPANY"));
-                const compBox = compLabel ? compLabel.nextElementSibling : null;
-                if (compBox) {
-                    compBox.dataset.reviewMerged = "1";
-                    const purposeEl = compBox.querySelector('.company-purpose');
-                    if (purposeEl) {
-                        let prev = purposeEl.previousElementSibling;
-                        while (prev) {
-                            const toRemove = prev;
-                            prev = prev.previousElementSibling;
-                            toRemove.remove();
-                        }
-                    }
-                    const last = compBox.lastElementChild;
-                    if (last && !last.textContent.trim()) last.remove();
-                    orderBox.appendChild(compBox);
-                }
-                if (compLabel) compLabel.remove();
-                if (quick) quick.remove();
-                Array.from(container.children).forEach(el => {
-                    if (el !== clientLabel && el !== clientBox && el !== billingLabel && el !== billingBox) el.style.display = "none";
-                });
-                if (clientLabel && clientBox) { clientLabel.style.display = ""; clientBox.style.display = ""; }
-                if (billingLabel && billingBox) { billingLabel.style.display = ""; billingBox.style.display = ""; }
+                if (quick && quick.parentElement !== container) container.prepend(quick);
+                quick.classList.remove("quick-summary-collapsed");
+                quick.style.maxHeight = quick.scrollHeight + "px";
+                showFullDetails();
             } else {
                 if (issueBox) issueBox.style.display = "";
-                orderBox.querySelectorAll('[data-review-merged="1"]').forEach(el => el.remove());
-                if (quick.parentElement !== container) container.prepend(quick);
+                if (quick && quick.parentElement !== container) container.prepend(quick);
                 quick.classList.add("white-box");
                 quick.classList.add("quick-summary-collapsed");
                 quick.style.marginBottom = "10px";
                 quick.style.padding = "12px";
                 quick.style.maxHeight = "0";
                 showFullDetails();
-                if (clientLabel && clientBox) { clientLabel.style.display = "none"; clientBox.style.display = "none"; }
-                if (billingLabel && billingBox) { billingLabel.style.display = "none"; billingBox.style.display = "none"; }
             }
         }
 
         function applyReviewMode() {
-            const header = document.querySelector("#copilot-sidebar .order-summary-header");
-            if (header) header.style.display = reviewMode ? "none" : "";
             const orderBoxEl = document.querySelector("#copilot-sidebar .order-summary-box");
             if (orderBoxEl) orderBoxEl.style.marginTop = reviewMode ? "4px" : "12px";
-            const actionsRow = document.querySelector("#copilot-sidebar .copilot-actions");
-            const xrayBtn = document.getElementById("btn-xray");
-            const openOrder = document.getElementById("btn-open-order");
-            if (reviewMode) {
-                if (openOrder) openOrder.style.display = "none";
-                if (actionsRow && !xrayBtn) {
-                    const xbtn = document.createElement("button");
-                    xbtn.id = "btn-xray";
-                    xbtn.className = "copilot-button";
-                    xbtn.textContent = "🩻 XRAY";
-                    actionsRow.appendChild(xbtn);
-                    setupXrayButton();
-                }
-            } else {
-                if (openOrder) openOrder.style.display = "";
-                if (xrayBtn) xrayBtn.remove();
-            }
             chrome.storage.sync.set({ fennecReviewMode: reviewMode });
             sessionSet({ fennecReviewMode: reviewMode });
             updateDetailVisibility();
+            setupXrayButton();
         }
 
         function extractOrderNumber(text) {
@@ -1304,25 +1261,9 @@
             const issueBox = document.getElementById('issue-summary-box');
             const dnaSummary = document.getElementById('dna-summary');
             const kountSummary = document.getElementById('kount-summary');
-            let actionsRow = document.querySelector('#copilot-sidebar .copilot-actions');
-            if (!actionsRow) {
-                const body = document.querySelector('#copilot-sidebar .copilot-body');
-                actionsRow = document.createElement('div');
-                actionsRow.className = 'copilot-actions';
-                actionsRow.style.justifyContent = 'center';
-                if (body) body.prepend(actionsRow);
-            }
-            let searchBtn = document.getElementById('btn-email-search');
-            if (!searchBtn) {
-                searchBtn = document.createElement('button');
-                searchBtn.id = 'btn-email-search';
-                searchBtn.className = 'copilot-button';
-                searchBtn.textContent = '📧 SEARCH';
-                searchBtn.onclick = () => handleEmailSearchClick();
-                actionsRow.appendChild(searchBtn);
-            } else {
-                actionsRow.appendChild(searchBtn);
-            }
+            const searchBtn = document.getElementById('btn-email-search');
+            if (searchBtn) searchBtn.onclick = () => handleEmailSearchClick();
+            setupXrayButton();
             if (orderContainer) orderContainer.style.display = 'none';
             if (dbBox) dbBox.style.display = 'none';
             if (issueBox) issueBox.style.display = 'none';
@@ -1483,10 +1424,11 @@ sbObj.build(`
                     <button id="copilot-clear-tabs">🗑</button>
                     <button id="copilot-close">✕</button>
                 </div>
+                <div class="order-summary-header">
+                    <button id="btn-xray" class="copilot-button">🩻 XRAY</button>
+                    <button id="btn-email-search" class="copilot-button">📧 SEARCH</button>
+                </div>
                 <div class="copilot-body">
-                    <div class="copilot-actions" style="justify-content:center">
-                        <button id="btn-email-search" class="copilot-button">📧 SEARCH</button>
-                    </div>
                     <div class="copilot-dna">
                         <div id="dna-summary" style="margin-top:16px"></div>
                         <div id="kount-summary" style="margin-top:10px"></div>
