@@ -48,8 +48,10 @@ It remains constant throughout all layouts, unless an IMPORTANT restriction is a
 PROFILES:
   FILING: Equivale a la DB SB MAIN, con todas sus funcionalidades.
   FILING/MISC:  DB SB MISC
+  
   ISSUES: GM SB + FILING + FILING/MISC
-  FRAUD: DB SB REVIEW MODE
+  
+  FRAUD REVIEW: DB SB REVIEW MODE
   ID CONFIRM: GM SB REVIEW MODE
 
 MAIN (BUSINESS FORMATION ORDERS: SILVER, GOLD, PLATINUM)
@@ -125,8 +127,7 @@ MISC (ALL NON-BUSINESS FORMATION ORDERS)
       6th box: Issue summary
          - Header with ACTIVE/RESOLVED tag.
          - Issue text.
-   (Dev Mode) End: [🔄 REFRESH] button centered.
-
+         
 REVIEW MODE:
 This is a detailed mode for the Revenue Assurance team to assist with the order review step.
 In Review Mode the sidebar stays locked across all tabs until DNA runs on a different order.
@@ -134,97 +135,45 @@ The header shows the hamburger menu and trash icons so quick actions and CLEAR T
 
 MAIN:
    DB:
-      Title: "ORDER SUMMARY"
-      1st box: COMPANY summary
-         - Same lines as the DB COMPANY box.
-      2nd box: ADYEN's DNA summary
-         - Line 1: Card holder name.
-         - Line 2: Payment method • last four digits • expiry • funding source.
-         - Line 3: Billing address and issuing bank.
-         - Line 4: CVV, AVS and DB match tags.
-         - Line 5: Fraud scoring.
-         - Line 6: Transaction table with totals.
-      3rd box: KOUNT summary
-         - Email age, device location, VIP declines and Ekata results.
-      4th box: BILLING summary
-         - Line 1: Cardholder name.
-         - Line 2: Card type • last four digits • expiry.
-         - Line 3: AVS result tag.
-         - Line 4: Billing address.
-      5th box: CLIENT summary
-         - Line 1: Client name and ID link.
-         - Line 2: Role tags or NOT LISTED.
-         - Line 3: Email and phone.
-         - Line 4: Companies count and LTV.
-      6th box: AGENT summary
-         - Same lines as the DB AGENT box.
-      7th box: MEMBERS (LLC) or DIRECTORS (CORP, NPROFIT)
-      8th box: SHAREHOLDERS (CORP, NPROFIT)
-      9th box: Officers (CORP, NPROFIT)
-     10th box: Issue summary
-         - Header with ACTIVE/RESOLVED tag and issue text.
-   (Dev Mode) End: [🔄 REFRESH] button centered.
+      HEADER
+      Title: ORDER SUMMARY with QUICK SUMMARY icon (quick-summary-toggle) and action. For Misc, FAMILY TREE icon (family-tree-icon).
+      1st box: COMPANY summary (company-box)
+      2nd box: ADYEN's DNA summary (copilot-dna)
+      3rd box: KOUNT summary 
+      4th box: BILLING summary (billing-section-box)
+      5th box: CLIENT summary (client-section-box)
+      6th box: AGENT summary (AGENT:)
+      7th box: MEMBERS for LLC or DIRECTORS for CORP, NPROFIT (MEMBERS: or DIRECTORS:)
+      8th box: SHAREHOLDERS for CORP, NPROFIT (SHAREHOLDERS:)
+      9th box: OFFICERS for CORP, NPROFIT (OFFICERS:)
+     10th box: Issue summary (issue-summary-box)
+         
    GM:
-      Title: [📧 SEARCH], [🧬 DNA] & [🩻 XRAY] buttons centered.
-      1st box: ADYEN's DNA summary
-      - Same lines as DB ADYEN box.
-      2nd box: KOUNT summary
-         - Email age, device location, VIP declines and Ekata results.
-      3rd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
-         - Same lines as DB COMPANY box.
-      4th box: CLIENT summary
-         - Same lines as DB CLIENT box.
-      5th box: BILLING summary
-         - Same lines as DB BILLING box.
-      6th box: Issue summary
-         - Header with ACTIVE/RESOLVED tag and issue text.
-   (Dev Mode) End: [🔄 REFRESH] button centered.
+      HEADER
+      Title: XRAY (btn-xray) and SEARCH (btn-email-search) buttons
+      1st box: COMPANY summary (company-box)
+      2nd box: ADYEN's DNA summary (copilot-dna)
+      3rd box: KOUNT summary 
+      4th box: BILLING summary (billing-section-box)
+      5th box: CLIENT summary (client-section-box)
+      6th box: AGENT summary (AGENT:)
+      7th box: MEMBERS for LLC or DIRECTORS for CORP, NPROFIT (MEMBERS: or DIRECTORS:)
+      8th box: SHAREHOLDERS for CORP, NPROFIT (SHAREHOLDERS:)
+      9th box: OFFICERS for CORP, NPROFIT (OFFICERS:)
+     10th box: Issue summary (issue-summary-box)
 
-MISC:
-   DB:
-      Title: FAMILY TREE display/collapse button (🌳), "ORDER SUMMARY"
-      1st box: ADYEN's DNA summary (only if DNA or XRAY have been triggered)
-         - Same lines as DB ADYEN box.
-      2nd box: KOUNT summary
-         - Email age, device location, VIP declines and Ekata results.
-      3rd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
-         - Same lines as DB COMPANY box.
-      4th box: CLIENT summary
-         - Same lines as DB CLIENT box.
-      5th box: BILLING summary
-         - Same lines as DB BILLING box.
-      6th box: Issue summary
-         - Header with ACTIVE/RESOLVED tag and issue text.
-      (Dev Mode) End: [🔄 REFRESH] button centered.
-   GM:
-      Title: [📧 SEARCH], [🧬 DNA] & [🩻 XRAY] buttons centered.
-      1st box: ADYEN's DNA summary (only if DNA or XRAY have been triggered)
-         - Same lines as DB ADYEN box.
-      2nd box: KOUNT summary
-         - Email age, device location, VIP declines and Ekata results.
-      3rd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
-         - Same lines as DB COMPANY box.
-      4th box: CLIENT summary
-         - Same lines as DB CLIENT box.
-      5th box: BILLING summary
-         - Same lines as DB BILLING box.
-      6th box: Issue summary
-         - Header with ACTIVE/RESOLVED tag and issue text.
-      (Dev Mode) End: [🔄 REFRESH] button centered.
-   ADYEN:
-      1st box: ADYEN's DNA summary (only if DNA or XRAY have been triggered)
-         - Same lines as DB ADYEN box.
-      2nd box: KOUNT summary
-         - Email age, device location, VIP declines and Ekata results.
-      3rd box: COMPANY summary (with restructured QUICK SUMMARY contained in the same box)
-         - Same lines as DB COMPANY box.
-      4th box: CLIENT summary
-         - Same lines as DB CLIENT box.
-      5th box: BILLING summary
-         - Same lines as DB BILLING box.
-      6th box: Issue summary
-         - Header with ACTIVE/RESOLVED tag and issue text.
-      (Dev Mode) End: [🔄 REFRESH] button centered.
+   ADYEN, KOUNT, EMAIL SEARCH:
+      HEADER
+      1st box: COMPANY summary (company-box)
+      2nd box: ADYEN's DNA summary (copilot-dna)
+      3rd box: KOUNT summary 
+      4th box: BILLING summary (billing-section-box)
+      5th box: CLIENT summary (client-section-box)
+      6th box: AGENT summary (AGENT:)
+      7th box: MEMBERS for LLC or DIRECTORS for CORP, NPROFIT (MEMBERS: or DIRECTORS:)
+      8th box: SHAREHOLDERS for CORP, NPROFIT (SHAREHOLDERS:)
+      9th box: OFFICERS for CORP, NPROFIT (OFFICERS:)
+     10th box: Issue summary (issue-summary-box)
 
 DEV MODE:
 Eexperimental mode where upcoming features are tested before release.
@@ -245,28 +194,26 @@ ICONS/BUTTONS/FUNCTIONS:
 
 🔄 Refresh: Updates sidebar information instantly with information extracted from the active tab.
 
-🩻 XRAY: Runs SEARCH and Opens order payment information in Adyen and extracts relevant information from two tabs:
-   1. Payment Details
-   2. DNA one after the other and opens the Kount workflow page when available.
-   The DB email search page is opened immediately so results load in the background.
-   Once DNA completes the search tab is focused to grab the history and then focus returns to the Fraud tracker.
-   A KOUNT summary box appears below DNA after the data is extracted.
-   In Gmail Review Mode clicking **XRAY** launches this same sequence and returns
-   to the original email once all data has loaded.
+🩻 XRAY: This function is present in both FRAUD REVIEW and GM SB REVIEW MODE. They differ only in the last steps. Once the Icon in FRAUD REVIEW (copilot-xray) or Button in GM SB REVIEW MODE = ID CONFIRM (btn-xray) is clicked, the following FLOW should be triggered:
 
-### Fraud Review XRAY flow
-0. Click the XRAY icon in the fraud tracker list.
-1. Open the order in DB.
+1. Open the order in DB - https://db.incfile.com/incfile/order/detail/*
 2. Refresh DB to obtain the correct LTV.
-3. Open DB email search in a background tab so results start loading.
-4. Open KOUNT and extract data.
-5. Open EKATA and extract data.
-6. Open ADYEN and navigate to Payment Details, then extract data.
-7. Open ADYEN DNA.
-8. Return to the DB email search tab and wait for results. Once loaded, extract the order counts.
-9. Return to the original fraud tracker tab with the floater fully built and still showing LOADING if any value was missing.
-10. Finish the XRAY session once a decision is made, the floater is manually closed or a new XRAY session begins.
-   
+3. Open DB email search in a background tab so results start loading - https://db.incfile.com/order-tracker/orders/order-search?fennec_email=*
+4. Open KOUNT and extract data - https://awc.kount.net/workflow/detail.html?id=*
+5. Open EKATA and extract data - https://awc.kount.net/workflow/ekata.html?id=*
+6. Open ADYEN and navigate to Payment Details, then extract data - https://ca-live.adyen.com/ca/ca/overview/default.shtml, order number search, result navigation, payment details: https://ca-live.adyen.com/ca/ca/accounts/showTx.shtml?pspReference=*
+7. Open ADYEN DNA - https://ca-live.adyen.com/ca/ca/payments/showOilSplashList.shtml?pspReference=*
+
+For FRAUD REVIEW (XRAY icon)
+8. Activate to the DB email search tab and wait for results. Once loaded or if already loaded, extract the order counts  - https://db.incfile.com/order-tracker/orders/order-search?fennec_email=*
+9. Activate the original fraud tracker tab with the floater fully built and still showing NOT FOUND if any value was missing - https://db.incfile.com/order-tracker/orders/fraud
+10. Finish the XRAY session once a decision is made, the floater is manually closed or a new XRAY session begins. Clear all chrome and local storage from the flow/session.
+
+For ID CONFIRM (XRAY button) 
+8. Activate the original GM, where button is oringially clicked: https://mail.google.com/mail/u/0/#inbox/* or related.
+
+At the end of both flows, all tabs included in the flow must be properly identified, and the SB injected with proper padding in all. The SB once the XRAY is completed should be constructed as desinged in REVIEW MODE.
+
 🤖 FILE: Automator that opens and fills the SOS filing process.
 
 GENERAL FEATURES:
