@@ -40,6 +40,12 @@ class DBLauncher extends Launcher {
     }
     let subCheck = new URLSearchParams(location.search).get('fennec_sub_check') === '1';
     const currentId = (location.pathname.match(/(?:detail|storage\/incfile)\/(\d+)/) || [])[1];
+    chrome.storage.local.get({ forceFraudXray: null }, ({ forceFraudXray }) => {
+        if (forceFraudXray && currentId && String(forceFraudXray) === currentId) {
+            fraudXray = true;
+            chrome.storage.local.remove('forceFraudXray');
+        }
+    });
     const xrayDoneId = localStorage.getItem('fraudXrayCompleted');
     const xrayDone = xrayDoneId && currentId && xrayDoneId === currentId;
     if (xrayDoneId && currentId && xrayDoneId !== currentId) {

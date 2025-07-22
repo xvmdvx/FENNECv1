@@ -21,3 +21,5 @@ All notable changes to this project will be documented in this file.
   resets stored CSV data.
 - Fixed Gmail Review Mode XRAY button to launch the full flow without displaying
   the trial floater and restores focus to the originating email when completed.
+- Fixed GM SB XRAY not opening Kount, Ekata and Adyen when the DB completion
+  flag persisted.

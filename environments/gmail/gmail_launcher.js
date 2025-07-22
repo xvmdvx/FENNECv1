@@ -2077,6 +2077,7 @@ sbObj.build(`
             const data = {
                 fennecActiveSession: getFennecSessionId(),
                 fraudReviewSession: orderId,
+                forceFraudXray: orderId,
                 sidebarFreezeId: orderId,
                 sidebarDb: [],
                 sidebarOrderId: null,
