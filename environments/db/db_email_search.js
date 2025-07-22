@@ -1,8 +1,81 @@
 (function() {
     if (window.top !== window) return;
     const bg = fennecMessenger;
-    chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
+    chrome.storage.local.get({ extensionEnabled: true, fennecReviewMode: false }, ({ extensionEnabled, fennecReviewMode }) => {
         if (!extensionEnabled) return;
+        const reviewMode = fennecReviewMode;
+        const SIDEBAR_WIDTH = 340;
+
+        function updateReviewDisplay() {
+            const label = document.getElementById('review-mode-label');
+            if (label) label.style.display = reviewMode ? 'block' : 'none';
+        }
+
+
+
+        function injectSidebar() {
+            if (document.getElementById('copilot-sidebar')) return;
+            document.body.style.transition = 'margin-right 0.2s';
+            document.body.style.marginRight = SIDEBAR_WIDTH + 'px';
+            if (!document.getElementById('copilot-db-padding')) {
+                const style = document.createElement('style');
+                style.id = 'copilot-db-padding';
+                style.textContent = `#frm-search-order { margin-right: ${SIDEBAR_WIDTH}px !important; }`;
+                document.head.appendChild(style);
+            }
+
+            const sb = new Sidebar();
+            sb.build(`
+                <div class="copilot-header">
+                    <span id="qa-toggle" class="quick-actions-toggle">☰</span>
+                    <div class="copilot-title">
+                        <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (POO)" />
+                        <span>FENNEC (POO)</span>
+                    </div>
+                    <button id="copilot-clear-tabs">🗑</button>
+                    <button id="copilot-close">✕</button>
+                </div>
+                <div class="order-summary-header">ORDER SUMMARY</div>
+                <div class="copilot-body" id="copilot-body-content">
+                    <div id="db-summary-section"></div>
+                    <div class="copilot-dna">
+                        <div id="dna-summary" style="margin-top:16px"></div>
+                        <div id="kount-summary" style="margin-top:10px"></div>
+                    </div>
+                    <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
+                        <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
+                        <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
+                    </div>
+                    <div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
+                    <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
+                </div>`);
+            sb.attach();
+            chrome.storage.sync.get({
+                sidebarFontSize: 13,
+                sidebarFont: "'Inter', sans-serif",
+                sidebarBgColor: '#212121',
+                sidebarBoxColor: '#2e2e2e'
+            }, opts => applySidebarDesign(sb.element, opts));
+            loadSidebarSnapshot(sb.element);
+            updateReviewDisplay();
+
+            const closeBtn = sb.element.querySelector('#copilot-close');
+            if (closeBtn) closeBtn.onclick = () => {
+                sb.remove();
+                document.body.style.marginRight = '';
+                const style = document.getElementById('copilot-db-padding');
+                if (style) style.remove();
+            };
+            const clearTabsBtn = sb.element.querySelector('#copilot-clear-tabs');
+            if (clearTabsBtn) clearTabsBtn.onclick = () => bg.closeOtherTabs();
+            const clearSb = sb.element.querySelector('#copilot-clear');
+            if (clearSb) clearSb.onclick = () => {
+                sb.element.querySelector('#db-summary-section').innerHTML = '';
+                sb.element.querySelector('#dna-summary').innerHTML = '';
+                sb.element.querySelector('#kount-summary').innerHTML = '';
+                sessionSet({ sidebarDb: [], adyenDnaInfo: null, kountInfo: null });
+            };
+        }
         const params = new URLSearchParams(location.search);
         const email = params.get('fennec_email');
         if (!email) return;
@@ -65,8 +138,8 @@
             });
         }
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', run);
-        } else run();
+            document.addEventListener('DOMContentLoaded', () => { injectSidebar(); run(); });
+        } else { injectSidebar(); run(); }
 
         chrome.runtime.onMessage.addListener((msg, snd, sendResponse) => {
             if (msg.action === 'getEmailOrders') {
