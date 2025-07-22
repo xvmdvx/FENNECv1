@@ -3,6 +3,7 @@
     const bg = fennecMessenger;
     chrome.storage.local.get({ extensionEnabled: true, fennecReviewMode: false }, ({ extensionEnabled, fennecReviewMode }) => {
         if (!extensionEnabled) return;
+        document.title = '[DB SEARCH] ' + document.title;
         const reviewMode = fennecReviewMode;
         const SIDEBAR_WIDTH = 340;
 

@@ -123,6 +123,7 @@ class DBLauncher extends Launcher {
                 if (typeof initQuickSummary === 'function') initQuickSummary();
                 attachCommonListeners(body);
                 updateReviewDisplay();
+                insertDnaAfterCompany();
                 if (typeof checkLastIssue === 'function') {
                     checkLastIssue(currentId);
                 }
@@ -1863,6 +1864,7 @@ class DBLauncher extends Launcher {
             body.innerHTML = html;
             if (typeof initQuickSummary === 'function') initQuickSummary();
             attachCommonListeners(body);
+            insertDnaAfterCompany();
             initMistralChat();
             updateReviewDisplay();
             if (typeof checkLastIssue === 'function') {
@@ -2051,6 +2053,7 @@ class DBLauncher extends Launcher {
             const html = buildDnaHtml(adyenDnaInfo);
             container.innerHTML = html || '';
             attachCommonListeners(container);
+            insertDnaAfterCompany();
         });
     }
 
@@ -2087,11 +2090,22 @@ class DBLauncher extends Launcher {
             const html = buildKountHtml(kountInfo);
             container.innerHTML = html || '';
             attachCommonListeners(container);
+            insertDnaAfterCompany();
         });
     }
 
     // Expose for other scripts
     window.loadKountSummary = loadKountSummary;
+
+    function insertDnaAfterCompany() {
+        const dnaBox = document.querySelector('.copilot-dna');
+        const compBox = document.querySelector('#copilot-sidebar .company-box');
+        if (!dnaBox || !compBox) return;
+        const parent = compBox.parentElement;
+        if (dnaBox.parentElement !== parent || dnaBox.previousElementSibling !== compBox) {
+            parent.insertBefore(dnaBox, compBox.nextSibling);
+        }
+    }
 
     function formatIssueText(text) {
         if (!text) return '';
