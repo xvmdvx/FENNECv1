@@ -1566,7 +1566,10 @@ sbObj.build(`
         chrome.storage.onChanged.addListener((changes, area) => {
             if (area === 'local' && changes.sidebarSessionId &&
                 changes.sidebarSessionId.newValue !== getFennecSessionId()) {
-                return;
+                const other = Object.keys(changes).filter(k => k !== 'sidebarSessionId');
+                if (!other.length) {
+                    return;
+                }
             }
             if (area === 'local' && changes.sidebarDb && document.getElementById('db-summary-section')) {
                 loadDbSummary();
