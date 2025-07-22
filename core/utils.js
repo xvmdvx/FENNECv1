@@ -63,14 +63,15 @@ function storeSidebarSnapshot(sidebar) {
 }
 window.storeSidebarSnapshot = storeSidebarSnapshot;
 
-function loadSidebarSnapshot(sidebar) {
-    if (!sidebar) return;
+function loadSidebarSnapshot(sidebar, cb) {
+    if (!sidebar) { if (typeof cb === 'function') cb(); return; }
     chrome.storage.local.get({ sidebarSnapshot: null, sidebarSessionId: null },
         ({ sidebarSnapshot, sidebarSessionId }) => {
         if (sidebarSnapshot && sidebarSessionId === getFennecSessionId()) {
             sidebar.innerHTML = sidebarSnapshot;
             attachCommonListeners(sidebar);
         }
+        if (typeof cb === 'function') cb();
     });
 }
 window.loadSidebarSnapshot = loadSidebarSnapshot;

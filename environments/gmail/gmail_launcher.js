@@ -1488,7 +1488,7 @@ sbObj.build(`
                 sidebarBgColor: '#212121',
                 sidebarBoxColor: '#2e2e2e'
             }, opts => applySidebarDesign(sidebar, opts));
-            loadSidebarSnapshot(sidebar);
+            loadSidebarSnapshot(sidebar, repositionDnaSummary);
 
             console.log("[Copilot] Sidebar INYECTADO en Gmail.");
 

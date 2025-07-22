@@ -57,8 +57,7 @@
                 sidebarBgColor: '#212121',
                 sidebarBoxColor: '#2e2e2e'
             }, opts => applySidebarDesign(sb.element, opts));
-            loadSidebarSnapshot(sb.element);
-            updateReviewDisplay();
+            loadSidebarSnapshot(sb.element, updateReviewDisplay);
 
             const closeBtn = sb.element.querySelector('#copilot-close');
             if (closeBtn) closeBtn.onclick = () => {

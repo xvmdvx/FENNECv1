@@ -60,9 +60,10 @@ class KountLauncher extends Launcher {
                 sidebarBgColor: '#212121',
                 sidebarBoxColor: '#2e2e2e'
             }, opts => applySidebarDesign(sb.element, opts));
-            loadSidebarSnapshot(sb.element);
-            insertDnaAfterCompany();
-            updateReviewDisplay();
+            loadSidebarSnapshot(sb.element, () => {
+                insertDnaAfterCompany();
+                updateReviewDisplay();
+            });
 
             const qsToggle = sb.element.querySelector('#qs-toggle');
             if (qsToggle) {
