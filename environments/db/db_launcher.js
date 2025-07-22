@@ -583,7 +583,14 @@ class DBLauncher extends Launcher {
                         }
                         loadDnaSummary();
                         loadKountSummary();
-                        if (fraudXray) setTimeout(runFraudXray, 500);
+                        if (fraudXray) {
+                            const trigger = () => setTimeout(runFraudXray, 500);
+                            if (document.readyState === 'complete') {
+                                trigger();
+                            } else {
+                                window.addEventListener('load', trigger, { once: true });
+                            }
+                        }
                     });
                     const qsToggle = sidebar.querySelector('#qs-toggle');
                     initQuickSummary = () => {
