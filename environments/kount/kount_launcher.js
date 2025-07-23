@@ -8,12 +8,24 @@ class KountLauncher extends Launcher {
             sessionStorage.setItem('fennecSessionId', fennecActiveSession);
         }
         getFennecSessionId();
-        const reviewMode = fennecReviewMode;
+        let reviewMode = fennecReviewMode;
         const SIDEBAR_WIDTH = 340;
 
         function updateReviewDisplay() {
             const label = document.getElementById('review-mode-label');
             if (label) label.style.display = reviewMode ? 'block' : 'none';
+            const cLabel = document.getElementById('client-section-label');
+            const cBox = document.getElementById('client-section-box');
+            if (cLabel && cBox) {
+                cLabel.style.display = reviewMode ? '' : 'none';
+                cBox.style.display = reviewMode ? '' : 'none';
+            }
+            const bLabel = document.getElementById('billing-section-label');
+            const bBox = document.getElementById('billing-section-box');
+            if (bLabel && bBox) {
+                bLabel.style.display = reviewMode ? '' : 'none';
+                bBox.style.display = reviewMode ? '' : 'none';
+            }
         }
 
         const insertDnaAfterCompany = window.insertDnaAfterCompany;
