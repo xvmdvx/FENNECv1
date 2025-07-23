@@ -18,6 +18,146 @@ class KountLauncher extends Launcher {
 
         const insertDnaAfterCompany = window.insertDnaAfterCompany;
 
+        function buildDnaHtml(info) {
+            if (!info || !info.payment) return null;
+            const p = info.payment;
+            const card = p.card || {};
+            const shopper = p.shopper || {};
+            const proc = p.processing || {};
+            const parts = [];
+            if (card['Card holder']) {
+                const holder = `<b>${escapeHtml(card['Card holder'])}</b>`;
+                parts.push(`<div>${holder}</div>`);
+            }
+            const cardLine = [];
+            if (card['Payment method']) cardLine.push(escapeHtml(card['Payment method']));
+            if (card['Card number']) {
+                const digits = card['Card number'].replace(/\D+/g, '').slice(-4);
+                if (digits) cardLine.push(escapeHtml(digits));
+            }
+            if (card['Expiry date']) cardLine.push(escapeHtml(card['Expiry date']));
+            if (card['Funding source']) cardLine.push(escapeHtml(card['Funding source']));
+            if (cardLine.length) parts.push(`<div>${cardLine.join(' \u2022 ')}</div>`);
+            if (shopper['Billing address']) {
+                parts.push(`<div class="dna-address">${renderBillingAddress(shopper['Billing address'])}</div>`);
+                if (card['Issuer name'] || card['Issuer country/region']) {
+                    let bank = (card['Issuer name'] || '').trim();
+                    if (bank.length > 25) bank = bank.slice(0, 22) + '...';
+                    const country = (card['Issuer country/region'] || '').trim();
+                    let countryInit = '';
+                    if (country) {
+                        countryInit = country.split(/\s+/).map(w => w.charAt(0)).join('').toUpperCase();
+                        countryInit = ` (<span class="dna-country"><b>${escapeHtml(countryInit)}</b></span>)`;
+                    }
+                    parts.push(`<div class="dna-issuer">${escapeHtml(bank)}${countryInit}</div>`);
+                }
+            }
+            const cvv = proc['CVC/CVV'];
+            const avs = proc['AVS'];
+            function colorFor(result) {
+                if (result === 'green') return 'copilot-tag-green';
+                if (result === 'purple') return 'copilot-tag-purple';
+                return 'copilot-tag-black';
+            }
+            function formatCvv(text) {
+                const t = (text || '').toLowerCase();
+                if ((/\bmatch(es|ed)?\b/.test(t) || /\(m\)/.test(t)) && !/not\s+match/.test(t)) {
+                    return { label: 'CVV: MATCH', result: 'green' };
+                }
+                if (/not\s+match/.test(t) || /\(n\)/.test(t)) {
+                    return { label: 'CVV: NO MATCH', result: 'purple' };
+                }
+                if (/not provided|not checked|error|not supplied|unknown/.test(t)) {
+                    return { label: 'CVV: UNKNOWN', result: 'black' };
+                }
+                return { label: 'CVV: UNKNOWN', result: 'black' };
+            }
+            function formatAvs(text) {
+                const t = (text || '').toLowerCase();
+                if (/both\s+postal\s+code\s+and\s+address\s+match/.test(t) || /^7\b/.test(t) || t.includes('both match')) {
+                    return { label: 'AVS: MATCH', result: 'green' };
+                }
+                if (/^6\b/.test(t) || (t.includes('postal code matches') && t.includes("address doesn't"))) {
+                    return { label: 'AVS: PARTIAL (STREET✖️)', result: 'purple' };
+                }
+                if (/^1\b/.test(t) || (t.includes('address matches') && t.includes("postal code doesn't"))) {
+                    return { label: 'AVS: PARTIAL (ZIP✖️)', result: 'purple' };
+                }
+                if (/^2\b/.test(t) || t.includes('neither matches') || /\bw\b/.test(t)) {
+                    return { label: 'AVS: NO MATCH', result: 'purple' };
+                }
+                if (/^0\b/.test(t) || /^3\b/.test(t) || /^4\b/.test(t) || /^5\b/.test(t) || t.includes('unavailable') || t.includes('not supported') || t.includes('no avs') || t.includes('unknown')) {
+                    return { label: 'AVS: UNKNOWN', result: 'black' };
+                }
+                return { label: 'AVS: UNKNOWN', result: 'black' };
+            }
+            if (cvv || avs) {
+                const tags = [];
+                if (cvv) {
+                    const { label, result } = formatCvv(cvv);
+                    tags.push(`<span class="copilot-tag ${colorFor(result)}">${escapeHtml(label)}</span>`);
+                }
+                if (avs) {
+                    const { label, result } = formatAvs(avs);
+                    tags.push(`<span class="copilot-tag ${colorFor(result)}">${escapeHtml(label)}</span>`);
+                }
+                if (tags.length) parts.push(`<div>${tags.join(' ')}</div>`);
+            }
+            if (proc['Fraud scoring']) parts.push(`<div><b>Fraud scoring:</b> ${escapeHtml(proc['Fraud scoring'])}</div>`);
+            if (parts.length) {
+                parts.push('<hr style="border:none;border-top:1px solid #555;margin:6px 0"/>');
+            }
+            const txTable = buildTransactionTable(info.transactions || {});
+            if (txTable) parts.push(txTable);
+            if (!parts.length) return null;
+            return `<div class="section-label">ADYEN'S DNA</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
+        }
+
+        function loadDnaSummary() {
+            const container = document.getElementById('dna-summary');
+            if (!container) return;
+            chrome.storage.local.get({ adyenDnaInfo: null }, ({ adyenDnaInfo }) => {
+                const html = buildDnaHtml(adyenDnaInfo);
+                container.innerHTML = html || '';
+                attachCommonListeners(container);
+                insertDnaAfterCompany();
+            });
+        }
+
+        function buildKountHtml(info) {
+            if (!info) return null;
+            const parts = [];
+            if (info.emailAge) parts.push(`<div><b>Email age:</b> ${escapeHtml(info.emailAge)}</div>`);
+            if (info.deviceLocation || info.ip) {
+                const loc = escapeHtml(info.deviceLocation || '');
+                const ip = escapeHtml(info.ip || '');
+                parts.push(`<div><b>Device:</b> ${loc} ${ip}</div>`);
+            }
+            if (Array.isArray(info.declines) && info.declines.length) {
+                parts.push(`<div><b>DECLINE LIST</b><br>${info.declines.map(escapeHtml).join('<br>')}</div>`);
+            }
+            if (info.ekata) {
+                const e = info.ekata;
+                const ipLine = e.ipValid || e.proxyRisk ? `<div><b>IP Valid:</b> ${escapeHtml(e.ipValid || '')} <b>Proxy:</b> ${escapeHtml(e.proxyRisk || '')}</div>` : '';
+                const addrLine = e.addressToName || e.residentName ? `<div><b>Address to Name:</b> ${escapeHtml(e.addressToName || '')}<br><b>Resident Name:</b> ${escapeHtml(e.residentName || '')}</div>` : '';
+                if (ipLine) parts.push(ipLine);
+                if (addrLine) parts.push(addrLine);
+            }
+            if (!parts.length) return null;
+            return `<div class="section-label">KOUNT</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
+        }
+
+        function loadKountSummary() {
+            const container = document.getElementById('kount-summary');
+            if (!container) return;
+            chrome.storage.local.get({ kountInfo: null }, ({ kountInfo }) => {
+                const html = buildKountHtml(kountInfo);
+                container.innerHTML = html || '';
+                attachCommonListeners(container);
+                insertDnaAfterCompany();
+            });
+        }
+
 
 
         function injectSidebar() {
@@ -61,6 +201,8 @@ class KountLauncher extends Launcher {
                 if (typeof applyStandardSectionOrder === 'function') {
                     applyStandardSectionOrder(sb.element.querySelector('#db-summary-section'));
                 }
+                loadDnaSummary();
+                loadKountSummary();
                 updateReviewDisplay();
             });
 
@@ -105,7 +247,9 @@ class KountLauncher extends Launcher {
             function saveData(part) {
                 chrome.storage.local.get({ kountInfo: {} }, ({ kountInfo }) => {
                     const updated = Object.assign({}, kountInfo, part);
-                    chrome.storage.local.set({ kountInfo: updated });
+                    chrome.storage.local.set({ kountInfo: updated }, () => {
+                        loadKountSummary();
+                    });
                     console.log('[FENNEC (POO) Kount] Data saved', part);
                 });
             }
@@ -219,6 +363,11 @@ class KountLauncher extends Launcher {
                     document.addEventListener('DOMContentLoaded', run);
                 } else run();
             }
+
+            chrome.storage.onChanged.addListener((changes, area) => {
+                if (area === 'local' && changes.adyenDnaInfo) loadDnaSummary();
+                if (area === 'local' && changes.kountInfo) loadKountSummary();
+            });
         } catch (e) {
             console.error('[FENNEC (POO) Kount] Launcher error:', e);
         }
