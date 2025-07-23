@@ -125,14 +125,15 @@ class KountLauncher extends Launcher {
             return `<div class="section-label">ADYEN'S DNA</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
         }
 
-        function loadDnaSummary() {
+        function loadDnaSummary(cb) {
             const container = document.getElementById('dna-summary');
-            if (!container) return;
+            if (!container) { if (typeof cb === 'function') cb(); return; }
             chrome.storage.local.get({ adyenDnaInfo: null }, ({ adyenDnaInfo }) => {
                 const html = buildDnaHtml(adyenDnaInfo);
                 container.innerHTML = html || '';
                 attachCommonListeners(container);
                 insertDnaAfterCompany();
+                if (typeof cb === 'function') cb();
             });
         }
 
@@ -159,20 +160,21 @@ class KountLauncher extends Launcher {
             return `<div class="section-label">KOUNT</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
         }
 
-        function loadKountSummary() {
+        function loadKountSummary(cb) {
             const container = document.getElementById('kount-summary');
-            if (!container) return;
+            if (!container) { if (typeof cb === 'function') cb(); return; }
             chrome.storage.local.get({ kountInfo: null }, ({ kountInfo }) => {
                 const html = buildKountHtml(kountInfo);
                 container.innerHTML = html || '';
                 attachCommonListeners(container);
                 insertDnaAfterCompany();
+                if (typeof cb === 'function') cb();
             });
         }
 
-        function loadDbSummary() {
+        function loadDbSummary(cb) {
             const container = document.getElementById('db-summary-section');
-            if (!container) return;
+            if (!container) { if (typeof cb === 'function') cb(); return; }
             chrome.storage.local.get({ sidebarDb: [], sidebarOrderId: null }, ({ sidebarDb }) => {
                 if (Array.isArray(sidebarDb) && sidebarDb.length) {
                     container.innerHTML = sidebarDb.join('');
@@ -191,6 +193,7 @@ class KountLauncher extends Launcher {
                     container.innerHTML = '';
                     container.style.display = 'none';
                 }
+                if (typeof cb === 'function') cb();
             });
         }
 
@@ -237,10 +240,11 @@ class KountLauncher extends Launcher {
                 if (typeof applyStandardSectionOrder === 'function') {
                     applyStandardSectionOrder(sb.element.querySelector('#db-summary-section'));
                 }
-                loadDbSummary();
-                loadDnaSummary();
-                loadKountSummary();
-                updateReviewDisplay();
+                loadDbSummary(() => {
+                    loadDnaSummary(() => {
+                        loadKountSummary(updateReviewDisplay);
+                    });
+                });
             });
 
             const qsToggle = sb.element.querySelector('#qs-toggle');
