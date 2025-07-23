@@ -466,7 +466,21 @@ class AdyenLauncher extends Launcher {
             function injectSidebar() {
                 if (document.getElementById('copilot-sidebar')) return;
                 const sbObj = new Sidebar();
-                sbObj.build(buildStandardSidebarHTML());
+                sbObj.build(`
+                    ${buildSidebarHeader()}
+                    <div class="order-summary-header"><span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span> ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
+                    <div class="copilot-body">
+                        <div class="copilot-dna">
+                            <div id="dna-summary" style="margin-top:16px"></div>
+                            <div id="kount-summary" style="margin-top:10px"></div>
+                        </div>
+                        <div id="db-summary-section"></div>
+                        <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
+                            <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
+                            <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
+                        </div>
+                        <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
+                    </div>`);
                 sbObj.attach();
                 const sidebar = sbObj.element;
                 chrome.storage.sync.get({
