@@ -2,8 +2,12 @@ class KountLauncher extends Launcher {
     init() {
     if (window.top !== window) return;
     const bg = fennecMessenger;
-    chrome.storage.local.get({ extensionEnabled: true, fennecReviewMode: false }, ({ extensionEnabled, fennecReviewMode }) => {
+    chrome.storage.local.get({ extensionEnabled: true, fennecReviewMode: false, fennecActiveSession: null }, ({ extensionEnabled, fennecReviewMode, fennecActiveSession }) => {
         if (!extensionEnabled) return;
+        if (fennecActiveSession) {
+            sessionStorage.setItem('fennecSessionId', fennecActiveSession);
+        }
+        getFennecSessionId();
         const reviewMode = fennecReviewMode;
         const SIDEBAR_WIDTH = 340;
 
