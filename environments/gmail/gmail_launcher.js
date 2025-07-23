@@ -1334,9 +1334,10 @@
             if (kountSummary) kountSummary.innerHTML = '';
             console.log('[Copilot] cleared ADYEN DNA/KOUNT summaries');
             ensureDnaSections();
-            loadDnaSummary();
-            loadKountSummary();
-            repositionDnaSummary();
+            if (dnaWatchInterval) {
+                clearInterval(dnaWatchInterval);
+                dnaWatchInterval = null;
+            }
         }
 
         function refreshSidebar() {
@@ -1507,10 +1508,6 @@ sbObj.build(`
 
             // Start with empty layout showing only action buttons.
             showInitialStatus();
-            loadDnaSummary();
-            loadKountSummary();
-            repositionDnaSummary();
-            startDnaWatch();
             // Details load after the user interacts with SEARCH or when
             // opened automatically with context.
 
