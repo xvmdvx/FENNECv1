@@ -794,13 +794,8 @@
                     attachCommonListeners(container);
                     const qbox = container.querySelector('#quick-summary');
                     if (qbox) {
-                        qbox.style.maxHeight = '0';
-                        qbox.classList.add('quick-summary-collapsed');
-                    }
-                    const ftIcon = document.getElementById('family-tree-icon');
-                    if (ftIcon) {
-                        const type = (sidebarOrderInfo && sidebarOrderInfo.type) || '';
-                        ftIcon.style.display = /formation/i.test(type) ? 'none' : 'inline';
+                        qbox.classList.remove('quick-summary-collapsed');
+                        qbox.style.maxHeight = 'none';
                     }
                     storedOrderInfo = sidebarOrderInfo;
                     fillOrderSummaryBox(currentContext);
@@ -808,8 +803,6 @@
                     container.innerHTML = '';
                     container.style.display = 'none';
                     storedOrderInfo = null;
-                    const ftIcon = document.getElementById('family-tree-icon');
-                    if (ftIcon) ftIcon.style.display = 'none';
                 }
 
 
@@ -1456,10 +1449,8 @@
 sbObj.build(`
                 ${buildSidebarHeader()}
                 <div class="order-summary-header">
-                    <span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span>
                     <button id="btn-xray" class="copilot-button">🩻 XRAY</button>
                     <button id="btn-email-search" class="copilot-button">📧 SEARCH</button>
-                    <span id="qs-toggle" class="quick-summary-toggle">⚡</span>
                 </div>
                 <div class="copilot-body">
                     <div class="copilot-dna">
@@ -1494,27 +1485,6 @@ sbObj.build(`
                 sidebarBoxColor: '#2e2e2e'
             }, opts => applySidebarDesign(sidebar, opts));
             loadSidebarSnapshot(sidebar, repositionDnaSummary);
-            const qsToggle = sidebar.querySelector('#qs-toggle');
-            const initQuickSummary = () => {
-                const box = sidebar.querySelector('#quick-summary');
-                if (!box) return;
-                box.style.maxHeight = '0';
-                box.classList.add('quick-summary-collapsed');
-            };
-            initQuickSummary();
-            if (qsToggle) {
-                qsToggle.addEventListener('click', () => {
-                    const box = sidebar.querySelector('#quick-summary');
-                    if (!box) return;
-                    if (box.style.maxHeight && box.style.maxHeight !== '0px') {
-                        box.style.maxHeight = '0';
-                        box.classList.add('quick-summary-collapsed');
-                    } else {
-                        box.classList.remove('quick-summary-collapsed');
-                        box.style.maxHeight = box.scrollHeight + 'px';
-                    }
-                });
-            }
 
             console.log("[Copilot] Sidebar INYECTADO en Gmail.");
 
