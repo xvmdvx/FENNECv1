@@ -465,7 +465,23 @@ class AdyenLauncher extends Launcher {
 
             function injectSidebar() {
                 if (document.getElementById('copilot-sidebar')) return;
-                const sidebar = injectStandardSidebar({ width: 340 });
+                const sbObj = new Sidebar();
+                sbObj.build(buildStandardSidebarHTML());
+                sbObj.attach();
+                const sidebar = sbObj.element;
+                chrome.storage.sync.get({
+                    sidebarFontSize: 13,
+                    sidebarFont: "'Inter', sans-serif",
+                    sidebarBgColor: '#212121',
+                    sidebarBoxColor: '#2e2e2e'
+                }, opts => applySidebarDesign(sidebar, opts));
+                loadSidebarSnapshot(sidebar, () => {
+                    insertDnaAfterCompany();
+                    if (typeof applyStandardSectionOrder === 'function') {
+                        applyStandardSectionOrder(sidebar.querySelector('#db-summary-section'));
+                    }
+                });
+                document.body.style.marginRight = '340px';
                 const qsToggle = sidebar.querySelector('#qs-toggle');
                 if (qsToggle) {
                     const initQuickSummary = () => {
@@ -489,10 +505,15 @@ class AdyenLauncher extends Launcher {
                 }
                 const closeBtn = sidebar.querySelector('#copilot-close');
                 if (closeBtn) {
-                    const orig = closeBtn.onclick;
                     closeBtn.onclick = () => {
-                        if (typeof orig === 'function') orig();
+                        sidebar.remove();
                         document.body.style.marginRight = '';
+                    };
+                }
+                const clearTabsBtn = sidebar.querySelector('#copilot-clear-tabs');
+                if (clearTabsBtn) {
+                    clearTabsBtn.onclick = () => {
+                        bg.closeOtherTabs();
                     };
                 }
                 const clearSb = sidebar.querySelector('#copilot-clear');
