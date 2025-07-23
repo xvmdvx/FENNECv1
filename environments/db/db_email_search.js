@@ -138,7 +138,6 @@
                 const sendOrders = () => {
                     const orders = collectOrders();
                     const total = getTotalCount();
-                    console.log('[FENNEC (POO)] db_email_search returning', orders.length, 'orders');
                     sendResponse({ orders, total });
                 };
                 const tbody = document.querySelector(

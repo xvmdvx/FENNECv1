@@ -516,7 +516,6 @@
         // display the floater even if some values are missing so the
         // user sees a LOADING state.
         function showTrialFloater(retries = 60, force = false) {
-            console.log('[FENNEC (POO)] showTrialFloater', { retries, force });
             const flag = sessionStorage.getItem('fennecShowTrialFloater');
             const overlayExists = trialFloater.exists();
             if ((!flag && !force && !overlayExists) || retries <= 0) return;
@@ -540,7 +539,6 @@
                 });
                 floaterRefocusDone = true;
                 trialFloater.ensure();
-                console.log('[FENNEC (POO)] Trial floater displayed');
                 const overlay = trialFloater.element;
                 const title = trialFloater.header;
                 overlay.innerHTML = html;
@@ -577,7 +575,6 @@
                             email: (order && order.clientEmail) || '',
                             ltv: (order && order.clientLtv) || ''
                         }, resp => {
-                            console.log('[FENNEC (POO)] email search result', resp);
                             if (req !== subDetectSeq) return;
                             subBtn.disabled = false;
                             if (!resp) return;
@@ -705,16 +702,10 @@
                     const dbCol = cols && cols[0];
                     const fetchStats = (attempts = 8) => {
                         const req = ++subDetectSeq;
-                        console.log('[FENNEC (POO)] requesting email order count', {
-                            email: order.clientEmail,
-                            ltv: order.clientLtv,
-                            attempts
-                        });
                         bg.send('countEmailOrders', {
                             email: order.clientEmail,
                             ltv: order.clientLtv || ''
                         }, resp => {
-                            console.log('[FENNEC (POO)] email search result', resp);
                             if (req !== subDetectSeq) return;
                             if (!resp) {
                                 if (attempts > 0) {
@@ -756,7 +747,6 @@
                                 extraInfo.appendChild(div);
                             };
                             if (resp.statusCounts) {
-                                console.log('[FENNEC (POO)] Email search status counts', resp.statusCounts);
                                 const pairs = [];
                                 if (parseInt(resp.statusCounts.cxl, 10) > 0) pairs.push(['CXL', resp.statusCounts.cxl]);
                                 if (parseInt(resp.statusCounts.pending, 10) > 0) pairs.push(['PENDING', resp.statusCounts.pending]);
@@ -766,7 +756,6 @@
                                     addFour(pairs.slice(i, i + 2));
                                 }
                                 const goodTotal = resp.statusCounts.total >= resp.statusCounts.cxl * 2;
-                                console.log('[FENNEC (POO)] total orders', resp.statusCounts.total, 'goodTotal', goodTotal);
                                 addCenter(`TOTAL: <b>${resp.statusCounts.total}</b> <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span>`);
                                 addSep();
                                 if (resp.ltv) {

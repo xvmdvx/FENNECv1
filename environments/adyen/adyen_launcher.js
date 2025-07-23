@@ -46,7 +46,6 @@ class AdyenLauncher extends Launcher {
             }
 
             function fillAndSubmit() {
-                console.log('[FENNEC (POO) Adyen] Filling search form for order', order);
                 waitForElement('.header-search__input, input[name="query"]').then(input => {
                     try {
                         if (!input) return;
@@ -68,7 +67,6 @@ class AdyenLauncher extends Launcher {
                 waitForElement('a[href*="showTx.shtml?pspReference="]').then(link => {
                     try {
                         if (link) {
-                            console.log('[FENNEC (POO) Adyen] Opening most recent transaction');
                             link.click();
                         }
                     } catch (err) {
@@ -81,7 +79,6 @@ class AdyenLauncher extends Launcher {
                 chrome.storage.local.get({ adyenDnaInfo: {} }, ({ adyenDnaInfo }) => {
                     const updated = Object.assign({}, adyenDnaInfo, part);
                     sessionSet({ adyenDnaInfo: updated });
-                    console.log('[FENNEC (POO) Adyen] Data saved', part);
                 });
             }
 
@@ -558,7 +555,6 @@ class AdyenLauncher extends Launcher {
             }
 
             function handlePaymentPage() {
-                console.log('[FENNEC (POO) Adyen] Extracting payment page details');
                 const card = extractSection('Card details') || {};
                 if (card['Card number']) {
                     card['Card number'] = card['Card number']
@@ -574,7 +570,6 @@ class AdyenLauncher extends Launcher {
                 waitForElement('a[href*="showOilSplashList.shtml"]').then(link => {
                     try {
                         if (link) {
-                            console.log('[FENNEC (POO) Adyen] Opening DNA tab');
                             window.open(link.href, '_blank');
                             sessionStorage.removeItem('fennec_order');
                         }
@@ -585,7 +580,6 @@ class AdyenLauncher extends Launcher {
             }
 
             function handleDnaPage() {
-                console.log('[FENNEC (POO) Adyen] Extracting DNA page stats');
                 // Large DNA pages can take a while to render all stats,
                 // so allow a longer wait time before giving up.
                 waitForElement('.data-breakdown .item', 30000).then(() => {
@@ -625,7 +619,6 @@ class AdyenLauncher extends Launcher {
 
                     const networkTx = extractNetworkTransactions();
                     saveData({ transactions: stats, networkTransactions: networkTx, updated: Date.now() });
-                    console.log('[FENNEC (POO) Adyen] DNA stats stored');
                     // Mark XRAY as finished and focus DB search
                     localStorage.setItem('fraudXrayFinished', '1');
                     sessionSet({ fraudXrayFinished: '1' });
@@ -643,7 +636,6 @@ class AdyenLauncher extends Launcher {
                 document.title = '[ADYEN] ' + document.title;
             }
             const isDnaPage = path.includes('showOilSplashList.shtml');
-            console.log('[FENNEC (POO) Adyen] Path:', path);
             const ready = document.readyState === 'loading' ? 'DOMContentLoaded' : null;
             if (ready) {
                 document.addEventListener('DOMContentLoaded', injectSidebar);
