@@ -24,3 +24,4 @@ All notable changes to this project will be documented in this file.
 - Fixed GM SB XRAY not opening Kount, Ekata and Adyen when the DB completion
   flag persisted.
 - Fixed Gmail sidebar not showing Adyen DNA after XRAY finished due to session ID filter.
+- Fixed Kount sidebar lacking styles in XRAY flow; now loads sidebar CSS.
