@@ -5,7 +5,7 @@
     const bg = fennecMessenger;
     // Clear the closed flag on reload and wipe session data on unload so
     // old details don't persist when returning to Gmail.
-    window.addEventListener('beforeunload', () => {
+    function cleanupSidebarSession() {
         sessionStorage.removeItem("fennecSidebarClosed");
         sessionSet({
             sidebarDb: [],
@@ -21,7 +21,10 @@
         });
         sessionStorage.removeItem('fennecShowTrialFloater');
         localStorage.removeItem('fraudXrayFinished');
-    });
+    }
+
+    window.addEventListener('beforeunload', cleanupSidebarSession);
+    window.addEventListener('pagehide', cleanupSidebarSession);
     chrome.runtime.onMessage.addListener((msg) => {
         if (msg.action === 'fennecToggle') {
             window.location.reload();

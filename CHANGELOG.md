@@ -29,3 +29,4 @@ All notable changes to this project will be documented in this file.
 - Quick Actions EMAILS option now opens a Gmail search instead of the DB email search.
 - Fixed Review Mode sidebar not clearing after closing the email tab; session data now resets when leaving Gmail.
 - Fixed Gmail sidebar leaving Kount info after closing the email; storage now fully resets.
+- Fixed Gmail Review Mode showing old issue data when returning to Inbox or opening a new email; session storage now clears on pagehide.
