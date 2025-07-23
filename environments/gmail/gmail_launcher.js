@@ -1335,6 +1335,9 @@
             }
             if (dnaSummary) dnaSummary.innerHTML = '';
             if (kountSummary) kountSummary.innerHTML = '';
+            ensureDnaSections();
+            loadDnaSummary();
+            loadKountSummary();
             repositionDnaSummary();
         }
 
