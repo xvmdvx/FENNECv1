@@ -507,13 +507,34 @@ class DBLauncher extends Launcher {
                 (function injectSidebar() {
                     if (document.getElementById('copilot-sidebar')) return;
                     const sbObj = new Sidebar();
-                    sbObj.build(buildStandardSidebarHTML({ devMode, bodyId: 'copilot-body-content' }));
+                    sbObj.build(`
+                        ${buildSidebarHeader()}
+                        <div class="order-summary-header"><span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span> ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
+                        <div class="copilot-body" id="copilot-body-content">
+                            <div class="copilot-dna">
+                                <div id="dna-summary" style="margin-top:16px"></div>
+                                <div id="kount-summary" style="margin-top:10px"></div>
+                            </div>
+                            <div style="text-align:center; color:#888; margin-top:20px;">Cargando resumen...</div>
+                            <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
+                                <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
+                                <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
+                            </div>
+                            ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
+                            <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
+                            ${devMode ? `
+                            <div id="mistral-chat" class="mistral-box">
+                                <div id="mistral-log" class="mistral-log"></div>
+                                <div class="mistral-input-row">
+                                    <input id="mistral-input" type="text" placeholder="Ask Mistral..." />
+                                    <button id="mistral-send" class="copilot-button">Send</button>
+                                </div>
+                            </div>` : ``}
+                            <div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
+                        </div>
+                    `);
                     sbObj.attach();
                     const sidebar = sbObj.element;
-                    const dbSec = sidebar.querySelector('#db-summary-section');
-                    if (dbSec) {
-                        dbSec.innerHTML = '<div style="text-align:center; color:#888; margin-top:20px">Cargando resumen...</div>';
-                    }
                     chrome.storage.sync.get({
                         sidebarFontSize: 13,
                         sidebarFont: "'Inter', sans-serif",
