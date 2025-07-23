@@ -41,6 +41,7 @@
                 let storedOrderInfo = null;
                 let droppedFiles = [];
                 let searchInProgress = false;
+                let dnaPollInterval = null;
             const updateFloater = new UpdateFloater();
 
             function dedupeFiles(list) {
@@ -1104,6 +1105,37 @@
             });
         }
 
+        function pollDnaAndKount() {
+            chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null },
+                ({ adyenDnaInfo, kountInfo }) => {
+                if (adyenDnaInfo) {
+                    ensureDnaSections();
+                    loadDnaSummary();
+                }
+                if (kountInfo) {
+                    ensureDnaSections();
+                    loadKountSummary();
+                }
+                if (adyenDnaInfo && kountInfo && dnaPollInterval) {
+                    clearInterval(dnaPollInterval);
+                    dnaPollInterval = null;
+                }
+            });
+        }
+
+        function startDnaPolling() {
+            if (dnaPollInterval) clearInterval(dnaPollInterval);
+            let attempts = 0;
+            pollDnaAndKount();
+            dnaPollInterval = setInterval(() => {
+                pollDnaAndKount();
+                if (++attempts >= 60) {
+                    clearInterval(dnaPollInterval);
+                    dnaPollInterval = null;
+                }
+            }, 1000);
+        }
+
         function formatIssueText(text) {
             if (!text) return '';
             const norm = text.toLowerCase().replace(/\s+/g, ' ').trim();
@@ -2086,6 +2118,7 @@ sbObj.build(`
                 bg.openOrReuseTab({ url: dbUrl, active: true, refocus: true });
                 setTimeout(() => { searchInProgress = false; }, 1000);
             });
+            startDnaPolling();
             checkLastIssue(orderId);
         }
 
