@@ -2052,6 +2052,10 @@ sbObj.build(`
             searchInProgress = true;
             console.log('[FENNEC (POO)] runReviewXray start');
             showLoadingState();
+            ensureDnaSections();
+            loadDnaSummary();
+            loadKountSummary();
+            repositionDnaSummary();
             if (!reviewMode) {
                 reviewMode = true;
                 chrome.storage.sync.set({ fennecReviewMode: true });
