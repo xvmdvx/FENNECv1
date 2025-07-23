@@ -1111,8 +1111,8 @@
             if (dnaWatchInterval) clearInterval(dnaWatchInterval);
             dnaWatchInterval = setInterval(() => {
                 chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null }, data => {
-                    const hasDna = !!(data.adyenDnaInfo);
-                    const hasKount = !!(data.kountInfo);
+                    const hasDna = data.adyenDnaInfo && data.adyenDnaInfo.payment;
+                    const hasKount = data.kountInfo && (data.kountInfo.emailAge || data.kountInfo.deviceLocation || data.kountInfo.ip || data.kountInfo.ekata);
                     if (hasDna || hasKount) {
                         ensureDnaSections();
                         loadDnaSummary();
@@ -1715,11 +1715,13 @@ sbObj.build(`
             if (localStorage.getItem('fraudXrayFinished') === '1') {
                 localStorage.removeItem('fraudXrayFinished');
                 handleFinish();
+                startDnaWatch();
             } else {
                 chrome.storage.local.get({ fraudXrayFinished: null }, ({ fraudXrayFinished }) => {
                     if (fraudXrayFinished === '1') {
                         chrome.storage.local.remove('fraudXrayFinished');
                         handleFinish();
+                        startDnaWatch();
                     }
                 });
             }
@@ -1733,6 +1735,7 @@ sbObj.build(`
                 refreshSidebar();
                 loadDnaSummary();
                 loadKountSummary();
+                startDnaWatch();
                 const box = document.getElementById('issue-summary-box');
                 if (box) box.style.display = 'block';
                 ensureIssueControls(true);
