@@ -12,9 +12,15 @@
             sidebarOrderId: null,
             sidebarOrderInfo: null,
             adyenDnaInfo: null,
+            kountInfo: null,
             sidebarFreezeId: null,
+            fraudReviewSession: null,
+            forceFraudXray: null,
+            fennecFraudAdyen: null,
             sidebarSnapshot: null
         });
+        sessionStorage.removeItem('fennecShowTrialFloater');
+        localStorage.removeItem('fraudXrayFinished');
     });
     chrome.runtime.onMessage.addListener((msg) => {
         if (msg.action === 'fennecToggle') {
@@ -1379,7 +1385,11 @@
                 sidebarOrderId: null,
                 sidebarOrderInfo: null,
                 adyenDnaInfo: null,
+                kountInfo: null,
                 sidebarFreezeId: null,
+                fraudReviewSession: null,
+                forceFraudXray: null,
+                fennecFraudAdyen: null,
                 sidebarSnapshot: null
             });
             showInitialStatus();
