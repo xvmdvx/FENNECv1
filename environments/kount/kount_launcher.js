@@ -207,22 +207,7 @@ class KountLauncher extends Launcher {
 
         function injectSidebar() {
             if (document.getElementById('copilot-sidebar')) return;
-            document.body.style.transition = 'margin-right 0.2s';
-            document.body.style.marginRight = SIDEBAR_WIDTH + 'px';
-            const sb = new Sidebar();
-            sb.build(buildStandardSidebarHTML({ bodyId: 'copilot-body-content' }));
-            sb.attach();
-            chrome.storage.sync.get({
-                sidebarFontSize: 13,
-                sidebarFont: "'Inter', sans-serif",
-                sidebarBgColor: '#212121',
-                sidebarBoxColor: '#2e2e2e'
-            }, opts => applySidebarDesign(sb.element, opts));
-            loadSidebarSnapshot(sb.element, () => {
-                insertDnaAfterCompany();
-                if (typeof applyStandardSectionOrder === 'function') {
-                    applyStandardSectionOrder(sb.element.querySelector('#db-summary-section'));
-                }
+            const sidebar = injectStandardSidebar({ width: SIDEBAR_WIDTH, bodyId: 'copilot-body-content' }, () => {
                 loadDbSummary(() => {
                     loadDnaSummary(() => {
                         loadKountSummary(updateReviewDisplay);
@@ -230,17 +215,17 @@ class KountLauncher extends Launcher {
                 });
             });
 
-            const qsToggle = sb.element.querySelector('#qs-toggle');
+            const qsToggle = sidebar.querySelector('#qs-toggle');
             if (qsToggle) {
                 const initQuickSummary = () => {
-                    const box = sb.element.querySelector('#quick-summary');
+                    const box = sidebar.querySelector('#quick-summary');
                     if (!box) return;
                     box.style.maxHeight = '0';
                     box.classList.add('quick-summary-collapsed');
                 };
                 initQuickSummary();
                 qsToggle.addEventListener('click', () => {
-                    const box = sb.element.querySelector('#quick-summary');
+                    const box = sidebar.querySelector('#quick-summary');
                     if (!box) return;
                     if (box.style.maxHeight && box.style.maxHeight !== '0px') {
                         box.style.maxHeight = '0';
@@ -252,18 +237,21 @@ class KountLauncher extends Launcher {
                 });
             }
 
-            const closeBtn = sb.element.querySelector('#copilot-close');
-            if (closeBtn) closeBtn.onclick = () => {
-                sb.remove();
-                document.body.style.marginRight = '';
-            };
-            const clearTabsBtn = sb.element.querySelector('#copilot-clear-tabs');
+            const closeBtn = sidebar.querySelector('#copilot-close');
+            if (closeBtn) {
+                const orig = closeBtn.onclick;
+                closeBtn.onclick = () => {
+                    if (typeof orig === 'function') orig();
+                    document.body.style.marginRight = '';
+                };
+            }
+            const clearTabsBtn = sidebar.querySelector('#copilot-clear-tabs');
             if (clearTabsBtn) clearTabsBtn.onclick = () => bg.closeOtherTabs();
-            const clearSb = sb.element.querySelector('#copilot-clear');
+            const clearSb = sidebar.querySelector('#copilot-clear');
             if (clearSb) clearSb.onclick = () => {
-                sb.element.querySelector('#db-summary-section').innerHTML = '';
-                sb.element.querySelector('#dna-summary').innerHTML = '';
-                sb.element.querySelector('#kount-summary').innerHTML = '';
+                sidebar.querySelector('#db-summary-section').innerHTML = '';
+                sidebar.querySelector('#dna-summary').innerHTML = '';
+                sidebar.querySelector('#kount-summary').innerHTML = '';
                 sessionSet({ sidebarDb: [], adyenDnaInfo: null, kountInfo: null });
             };
         }

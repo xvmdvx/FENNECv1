@@ -506,38 +506,25 @@ class DBLauncher extends Launcher {
 
                 (function injectSidebar() {
                     if (document.getElementById('copilot-sidebar')) return;
-                    const sbObj = new Sidebar();
-                    sbObj.build(buildStandardSidebarHTML({ devMode, bodyId: 'copilot-body-content' }));
-                    sbObj.attach();
-                    const sidebar = sbObj.element;
+                    const sidebar = injectStandardSidebar({
+                        width: SIDEBAR_WIDTH,
+                        devMode,
+                        bodyId: 'copilot-body-content'
+                    });
                     const dbSec = sidebar.querySelector('#db-summary-section');
                     if (dbSec) {
                         dbSec.innerHTML = '<div style="text-align:center; color:#888; margin-top:20px">Cargando resumen...</div>';
                     }
-                    chrome.storage.sync.get({
-                        sidebarFontSize: 13,
-                        sidebarFont: "'Inter', sans-serif",
-                        sidebarBgColor: '#212121',
-                        sidebarBoxColor: '#2e2e2e'
-                    }, opts => applySidebarDesign(sidebar, opts));
-                    loadSidebarSnapshot(sidebar, updateReviewDisplay);
                     const closeBtn = sidebar.querySelector('#copilot-close');
                     if (closeBtn) {
+                        const orig = closeBtn.onclick;
                         closeBtn.onclick = () => {
-                            sidebar.remove();
-                            document.body.style.marginRight = '';
+                            if (typeof orig === 'function') orig();
                             const style = document.getElementById('copilot-db-padding');
                             if (style) style.remove();
                             sessionStorage.setItem("fennecSidebarClosed", "true");
                             console.log("[FENNEC (POO)] Sidebar cerrado manualmente en DB.");
                             showFloatingIcon();
-                        };
-                    }
-
-                    const clearBtn = sidebar.querySelector('#copilot-clear-tabs');
-                    if (clearBtn) {
-                        clearBtn.onclick = () => {
-                            bg.closeOtherTabs();
                         };
                     }
                     const clearSb = sidebar.querySelector('#copilot-clear');
