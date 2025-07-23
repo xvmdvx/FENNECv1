@@ -30,13 +30,17 @@
         }
         try {
             const SIDEBAR_WIDTH = parseInt(sidebarWidth, 10) || 340;
-            getFennecSessionId();
-            let reviewMode = sessionStorage.getItem('fennecReviewMode');
-            reviewMode = reviewMode === null ? fennecReviewMode : reviewMode === 'true';
-            let currentContext = null;
-            let storedOrderInfo = null;
-            let droppedFiles = [];
-            let searchInProgress = false;
+            chrome.storage.local.get({ fennecActiveSession: null }, ({ fennecActiveSession }) => {
+                if (fennecActiveSession) {
+                    sessionStorage.setItem('fennecSessionId', fennecActiveSession);
+                }
+                getFennecSessionId();
+                let reviewMode = sessionStorage.getItem('fennecReviewMode');
+                reviewMode = reviewMode === null ? fennecReviewMode : reviewMode === 'true';
+                let currentContext = null;
+                let storedOrderInfo = null;
+                let droppedFiles = [];
+                let searchInProgress = false;
             const updateFloater = new UpdateFloater();
 
             function dedupeFiles(list) {
@@ -2102,6 +2106,7 @@ sbObj.build(`
             });
         }
 
+        }); // end fennecActiveSession get
 
     } catch (e) {
         console.error("[Copilot] ERROR en Gmail Launcher:", e);
