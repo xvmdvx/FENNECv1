@@ -1355,10 +1355,15 @@
             }
         }
 
-        function refreshSidebar() {
+       function refreshSidebar() {
             const ctx = extractOrderContextFromEmail();
             currentContext = ctx;
             chrome.storage.local.get({ sidebarFreezeId: null }, ({ sidebarFreezeId }) => {
+                const prevId = sidebarFreezeId || (storedOrderInfo && storedOrderInfo.orderId);
+                if (ctx && prevId && ctx.orderNumber !== prevId) {
+                    clearSidebar();
+                    return;
+                }
                 if (ctx && sidebarFreezeId && ctx.orderNumber !== sidebarFreezeId) {
                     sessionSet({ sidebarFreezeId: null, adyenDnaInfo: null });
                 }
@@ -1392,6 +1397,7 @@
                 fennecFraudAdyen: null,
                 sidebarSnapshot: null
             });
+            localStorage.removeItem('fraudXrayFinished');
             showInitialStatus();
             applyReviewMode();
             loadDnaSummary();
