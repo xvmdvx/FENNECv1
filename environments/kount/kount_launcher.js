@@ -158,6 +158,30 @@ class KountLauncher extends Launcher {
             });
         }
 
+        function loadDbSummary() {
+            const container = document.getElementById('db-summary-section');
+            if (!container) return;
+            chrome.storage.local.get({ sidebarDb: [], sidebarOrderId: null }, ({ sidebarDb }) => {
+                if (Array.isArray(sidebarDb) && sidebarDb.length) {
+                    container.innerHTML = sidebarDb.join('');
+                    container.style.display = 'block';
+                    attachCommonListeners(container);
+                    const qbox = container.querySelector('#quick-summary');
+                    if (qbox) {
+                        qbox.classList.remove('quick-summary-collapsed');
+                        qbox.style.maxHeight = 'none';
+                    }
+                    insertDnaAfterCompany();
+                    if (typeof applyStandardSectionOrder === 'function') {
+                        applyStandardSectionOrder(container);
+                    }
+                } else {
+                    container.innerHTML = '';
+                    container.style.display = 'none';
+                }
+            });
+        }
+
 
 
         function injectSidebar() {
@@ -201,6 +225,7 @@ class KountLauncher extends Launcher {
                 if (typeof applyStandardSectionOrder === 'function') {
                     applyStandardSectionOrder(sb.element.querySelector('#db-summary-section'));
                 }
+                loadDbSummary();
                 loadDnaSummary();
                 loadKountSummary();
                 updateReviewDisplay();
@@ -365,8 +390,20 @@ class KountLauncher extends Launcher {
             }
 
             chrome.storage.onChanged.addListener((changes, area) => {
+                if (area === 'local' && changes.sidebarSessionId &&
+                    changes.sidebarSessionId.newValue !== getFennecSessionId()) {
+                    return;
+                }
+                if (area === 'local' && changes.sidebarDb) loadDbSummary();
                 if (area === 'local' && changes.adyenDnaInfo) loadDnaSummary();
                 if (area === 'local' && changes.kountInfo) loadKountSummary();
+                if (area === 'local' && changes.sidebarSnapshot && changes.sidebarSnapshot.newValue) {
+                    const sb = document.getElementById('copilot-sidebar');
+                    if (sb) {
+                        sb.innerHTML = changes.sidebarSnapshot.newValue;
+                        attachCommonListeners(sb);
+                    }
+                }
             });
         } catch (e) {
             console.error('[FENNEC (POO) Kount] Launcher error:', e);
