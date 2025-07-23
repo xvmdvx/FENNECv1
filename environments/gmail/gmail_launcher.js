@@ -22,6 +22,19 @@
             return;
         }
         document.title = '[GM] ' + document.title;
+        function maintainTitle(prefix) {
+            const t = `[${prefix}] `;
+            const titleEl = document.querySelector('title');
+            if (!titleEl) return;
+            const apply = () => {
+                if (!document.title.startsWith(t)) {
+                    document.title = t + document.title.replace(/^\[[^\]]+\]\s*/, '');
+                }
+            };
+            new MutationObserver(apply).observe(titleEl, { childList: true });
+            apply();
+        }
+        maintainTitle('GM');
         if (lightMode) {
             document.body.classList.add('fennec-light-mode');
         } else {
@@ -1583,6 +1596,7 @@ sbObj.build(`
                 refreshSidebar();
                 loadDnaSummary();
                 loadKountSummary();
+                startDnaWatch();
                 const box = document.getElementById('issue-summary-box');
                 if (box) box.style.display = 'block';
                 ensureIssueControls(true);
