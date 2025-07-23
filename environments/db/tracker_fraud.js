@@ -47,15 +47,7 @@
             const sidebar = document.createElement('div');
             sidebar.id = 'copilot-sidebar';
             sidebar.innerHTML = `
-                <div class="copilot-header">
-                    <span id="qa-toggle" class="quick-actions-toggle">☰</span>
-                    <div class="copilot-title">
-                        <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (POO)" />
-                        <span>FENNEC (POO)</span>
-                    </div>
-                    <button id="copilot-clear-tabs">🗑</button>
-                    <button id="copilot-close">✕</button>
-                </div>
+                ${buildSidebarHeader()}
                 <div class="order-summary-header">ORDER SUMMARY</div>
                 <div class="copilot-body" id="copilot-body-content">
                     <div id="db-summary-section"></div>
