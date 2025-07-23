@@ -182,12 +182,8 @@ class KountLauncher extends Launcher {
                     attachCommonListeners(container);
                     const qbox = container.querySelector('#quick-summary');
                     if (qbox) {
-                        qbox.style.maxHeight = '0';
-                        qbox.classList.add('quick-summary-collapsed');
-                    }
-                    const ftIcon = document.getElementById('family-tree-icon');
-                    if (ftIcon) {
-                        ftIcon.style.display = container.querySelector('#family-tree-orders') ? 'inline' : 'none';
+                        qbox.classList.remove('quick-summary-collapsed');
+                        qbox.style.maxHeight = 'none';
                     }
                     insertDnaAfterCompany();
                     if (typeof applyStandardSectionOrder === 'function') {
@@ -196,8 +192,6 @@ class KountLauncher extends Launcher {
                 } else {
                     container.innerHTML = '';
                     container.style.display = 'none';
-                    const ftIcon = document.getElementById('family-tree-icon');
-                    if (ftIcon) ftIcon.style.display = 'none';
                 }
                 if (typeof cb === 'function') cb();
             });
@@ -212,7 +206,7 @@ class KountLauncher extends Launcher {
             const sb = new Sidebar();
             sb.build(`
                 ${buildSidebarHeader()}
-                <div class="order-summary-header"><span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span> ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
+                <div class="order-summary-header">ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
                 <div class="copilot-body" id="copilot-body-content">
                     <div id="db-summary-section"></div>
                     <div class="copilot-dna">
