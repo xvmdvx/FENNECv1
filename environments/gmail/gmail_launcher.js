@@ -822,7 +822,6 @@
         const insertDnaAfterCompany = window.insertDnaAfterCompany;
 
         function reorderReviewSections() {
-            if (!reviewMode) return;
             const container = document.getElementById('db-summary-section');
             if (!container) return;
             const quick = container.querySelector('#quick-summary');
@@ -1453,37 +1452,7 @@
             if (document.getElementById('copilot-sidebar')) return;
 
             const sbObj = new Sidebar();
-sbObj.build(`
-                ${buildSidebarHeader()}
-                <div class="order-summary-header">
-                    <span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span>
-                    <button id="btn-xray" class="copilot-button">🩻 XRAY</button>
-                    <button id="btn-email-search" class="copilot-button">📧 SEARCH</button>
-                    <span id="qs-toggle" class="quick-summary-toggle">⚡</span>
-                </div>
-                <div class="copilot-body">
-                    <div class="copilot-dna">
-                        <div id="dna-summary" style="margin-top:16px"></div>
-                        <div id="kount-summary" style="margin-top:10px"></div>
-                    </div>
-                    <div class="order-summary-box">
-                        <div id="order-summary-content" style="color:#ccc; font-size:13px;">
-                            No order data yet.
-                        </div>
-                    </div>
-                    <div id="db-summary-section"></div>
-                    <hr style="border:none;border-top:1px solid #555;margin:6px 0"/>
-                    <div class="issue-summary-box" id="issue-summary-box" style="margin-top:10px;">
-                        <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
-                        <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
-                        <textarea id="issue-comment-input" class="quick-resolve-comment" placeholder="Comment..."></textarea>
-                        <button id="issue-resolve-btn" class="copilot-button" style="margin-top:4px;">${reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE'}</button>
-                        <button id="update-info-btn" class="copilot-button" style="margin-top:4px;">UPDATE</button>
-                    </div>
-                    ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
-                    <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
-                </div>
-            `);
+            sbObj.build(buildStandardSidebarHTML({ includeOrderBox: true, devMode, includeXray: true, includeSearch: true }));
             sbObj.attach();
             const sidebar = sbObj.element;
             ensureDnaSections();

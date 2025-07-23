@@ -42,6 +42,45 @@ function buildSidebarHeader() {
 }
 window.buildSidebarHeader = buildSidebarHeader;
 
+function buildStandardSidebarHTML(opts = {}) {
+    const {
+        devMode = false,
+        includeOrderBox = false,
+        bodyId = '',
+        includeXray = false,
+        includeSearch = false
+    } = opts;
+    const bodyAttr = bodyId ? ` id="${bodyId}"` : '';
+    const orderBox = includeOrderBox ? `
+            <div class="order-summary-box">
+                <div id="order-summary-content" style="color:#ccc; font-size:13px;">No order data yet.</div>
+            </div>` : '';
+    const refreshBtn = devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : '';
+    const extraBtns = [
+        includeXray ? '<button id="btn-xray" class="copilot-button">🩻 XRAY</button>' : '',
+        includeSearch ? '<button id="btn-email-search" class="copilot-button">📧 SEARCH</button>' : ''
+    ].join('');
+    return `
+        ${buildSidebarHeader()}
+        <div class="order-summary-header"><span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span>${extraBtns} <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
+        <div class="copilot-body"${bodyAttr}>
+            <div class="copilot-dna">
+                <div id="dna-summary" style="margin-top:16px"></div>
+                <div id="kount-summary" style="margin-top:10px"></div>
+            </div>
+            ${orderBox}
+            <div id="db-summary-section"></div>
+            <hr style="border:none;border-top:1px solid #555;margin:6px 0"/>
+            <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
+                <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
+                <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
+            </div>
+            ${refreshBtn}
+            <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
+        </div>`;
+}
+window.buildStandardSidebarHTML = buildStandardSidebarHTML;
+
 function getFennecSessionId() {
     let id = sessionStorage.getItem('fennecSessionId');
     if (!id) {
