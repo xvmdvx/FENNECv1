@@ -602,7 +602,7 @@ class DBLauncher extends Launcher {
                     initQuickSummary = () => {
                         const box = sidebar.querySelector('#quick-summary');
                         if (!box) return;
-                        box.style.maxHeight = '0';
+                        box.style.maxHeight = '0px';
                         box.classList.add('quick-summary-collapsed');
                     };
                     initQuickSummary();
@@ -610,8 +610,8 @@ class DBLauncher extends Launcher {
                         qsToggle.addEventListener('click', () => {
                             const box = sidebar.querySelector('#quick-summary');
                             if (!box) return;
-                            if (box.style.maxHeight && box.style.maxHeight !== '0px') {
-                                box.style.maxHeight = '0';
+                            if (box.style.maxHeight && parseInt(box.style.maxHeight) > 0) {
+                                box.style.maxHeight = '0px';
                                 box.classList.add('quick-summary-collapsed');
                             } else {
                                 box.classList.remove('quick-summary-collapsed');
@@ -2616,7 +2616,7 @@ class DBLauncher extends Launcher {
         const candidates = Array.from(
             tab.querySelectorAll("label, div, p, li, span, td, strong")
         );
-        const parentEl = candidates.find(el => /parent order/i.test(getText(el)));
+        const parentEl = candidates.find(el => /parent.*order/i.test(getText(el)));
         if (!parentEl) {
             return null;
         }
