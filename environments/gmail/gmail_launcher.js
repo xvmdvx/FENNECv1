@@ -1713,6 +1713,8 @@ sbObj.build(`
                 localStorage.removeItem('fraudXrayFinished');
                 ensureDnaSections();
                 refreshSidebar();
+                loadDnaSummary();
+                loadKountSummary();
                 const box = document.getElementById('issue-summary-box');
                 if (box) box.style.display = 'block';
                 ensureIssueControls(true);
