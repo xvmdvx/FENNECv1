@@ -3,9 +3,18 @@
 (function persistentSidebar() {
     if (window.top !== window) return;
     const bg = fennecMessenger;
-    // Clear the closed flag on full reloads so the sidebar returns
+    // Clear the closed flag on reload and wipe session data on unload so
+    // old details don't persist when returning to Gmail.
     window.addEventListener('beforeunload', () => {
         sessionStorage.removeItem("fennecSidebarClosed");
+        sessionSet({
+            sidebarDb: [],
+            sidebarOrderId: null,
+            sidebarOrderInfo: null,
+            adyenDnaInfo: null,
+            sidebarFreezeId: null,
+            sidebarSnapshot: null
+        });
     });
     chrome.runtime.onMessage.addListener((msg) => {
         if (msg.action === 'fennecToggle') {
@@ -1562,7 +1571,7 @@ sbObj.build(`
                     if (hasEmail) {
                         refreshSidebar();
                     } else {
-                        showInitialStatus();
+                        clearSidebar();
                     }
                 }
             }
