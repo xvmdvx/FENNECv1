@@ -319,6 +319,40 @@ class AdyenLauncher extends Launcher {
                 });
             }
 
+            function buildKountHtml(info) {
+                if (!info) return null;
+                const parts = [];
+                if (info.emailAge) parts.push(`<div><b>Email age:</b> ${escapeHtml(info.emailAge)}</div>`);
+                if (info.deviceLocation || info.ip) {
+                    const loc = escapeHtml(info.deviceLocation || '');
+                    const ip = escapeHtml(info.ip || '');
+                    parts.push(`<div><b>Device:</b> ${loc} ${ip}</div>`);
+                }
+                if (Array.isArray(info.declines) && info.declines.length) {
+                    parts.push(`<div><b>DECLINE LIST</b><br>${info.declines.map(escapeHtml).join('<br>')}</div>`);
+                }
+                if (info.ekata) {
+                    const e = info.ekata;
+                    const ipLine = e.ipValid || e.proxyRisk ? `<div><b>IP Valid:</b> ${escapeHtml(e.ipValid || '')} <b>Proxy:</b> ${escapeHtml(e.proxyRisk || '')}</div>` : '';
+                    const addrLine = e.addressToName || e.residentName ? `<div><b>Address to Name:</b> ${escapeHtml(e.addressToName || '')}<br><b>Resident Name:</b> ${escapeHtml(e.residentName || '')}</div>` : '';
+                    if (ipLine) parts.push(ipLine);
+                    if (addrLine) parts.push(addrLine);
+                }
+                if (!parts.length) return null;
+                return `<div class="section-label">KOUNT</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
+            }
+
+            function loadKountSummary() {
+                const container = document.getElementById('kount-summary');
+                if (!container) return;
+                chrome.storage.local.get({ kountInfo: null }, ({ kountInfo }) => {
+                    const html = buildKountHtml(kountInfo);
+                    container.innerHTML = html || '';
+                    attachCommonListeners(container);
+                    insertDnaAfterCompany();
+                });
+            }
+
             function loadDbSummary() {
                 const container = document.getElementById('db-summary-section');
                 if (!container) return;
@@ -437,6 +471,7 @@ class AdyenLauncher extends Launcher {
                     <div class="copilot-body">
                         <div class="copilot-dna">
                             <div id="dna-summary" style="margin-top:16px"></div>
+                            <div id="kount-summary" style="margin-top:10px"></div>
                         </div>
                         <div id="db-summary-section"></div>
                         <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
@@ -499,6 +534,7 @@ class AdyenLauncher extends Launcher {
                 if (order) {
                     loadDbSummary();
                     loadDnaSummary();
+                    loadKountSummary();
                     checkLastIssue(order);
                 } else {
                     showInitialStatus();
@@ -659,6 +695,7 @@ class AdyenLauncher extends Launcher {
                 }
                 if (area === 'local' && changes.sidebarDb) loadDbSummary();
                 if (area === 'local' && changes.adyenDnaInfo) loadDnaSummary();
+                if (area === 'local' && changes.kountInfo) loadKountSummary();
                 if (area === 'local' && changes.sidebarSnapshot && changes.sidebarSnapshot.newValue) {
                     const sb = document.getElementById('copilot-sidebar');
                     if (sb) {
