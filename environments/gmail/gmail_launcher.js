@@ -641,11 +641,6 @@
 
                 const finalName = senderName || fallbackName || null;
 
-                // Log para depurar
-                console.log("[Copilot] Order:", orderNumber);
-                console.log("[Copilot] Email (remitente):", senderEmail);
-                console.log("[Copilot] Name (prioridad remitente):", finalName);
-
                 return {
                     orderNumber,
                     email: senderEmail,
@@ -703,10 +698,6 @@
                 });
             }
             attachCommonListeners(summaryBox);
-            console.log("[FENNEC (POO)] Order Summary rellenado:", context);
-            if (context?.details) {
-                console.log("[FENNEC (POO)] Detalles de la orden:", context.details);
-            }
         }
 
         function fillIntelBox(context) {
@@ -1074,17 +1065,10 @@
             ensureDnaSections();
             const container = document.getElementById('dna-summary');
             if (!container) return;
-            console.log('[Copilot] Loading DNA summary');
             try {
                 chrome.storage.local.get({ adyenDnaInfo: null }, ({ adyenDnaInfo }) => {
                     const html = buildDnaHtml(adyenDnaInfo);
-                    if (html) {
-                        console.log('[Copilot] DNA data found');
-                        container.innerHTML = html;
-                    } else {
-                        console.log('[Copilot] No DNA data available');
-                        container.innerHTML = '';
-                    }
+                    container.innerHTML = html || '';
                     attachCommonListeners(container);
                     repositionDnaSummary();
                     ensureIssueControls();
@@ -1172,7 +1156,6 @@
             }
             bg.send('checkLastIssue', { orderId }, (resp) => {
                 if (chrome.runtime.lastError) {
-                    console.warn("[Copilot] Issue check failed:", chrome.runtime.lastError.message);
                     fillIssueBox(null, orderId);
                     return;
                 }
@@ -1433,7 +1416,7 @@
             } else {
                 const dbSearchUrl = "https://db.incfile.com/order-tracker/orders/order-search";
                 urls.push(dbSearchUrl);
-                navigator.clipboard.writeText(email).catch(err => console.error("[FENNEC (POO)] Clipboard error:", err));
+                navigator.clipboard.writeText(email).catch(() => {});
             }
 
             const data = { fennecActiveSession: getFennecSessionId() };
@@ -1579,7 +1562,6 @@ sbObj.build(`
         observer.observe(document.body, { childList: true, subtree: true });
 
         setInterval(injectSidebarIfMissing, 1200);
-        console.log("[Copilot] Intervalo de chequeo de sidebar lanzado (Gmail).");
 
         chrome.storage.onChanged.addListener((changes, area) => {
             if (area === 'local' && changes.sidebarSessionId &&
@@ -1843,7 +1825,6 @@ sbObj.build(`
                     }
                 }
             } catch (err) {
-                console.warn('[Copilot] PDF conversion failed:', err);
                 pdf.addPage();
             }
             const pdfData = await pdf.saveAsBase64({ dataUri: true });
@@ -2053,7 +2034,6 @@ sbObj.build(`
         function runReviewXray() {
             if (searchInProgress) return;
             searchInProgress = true;
-            console.log('[FENNEC (POO)] runReviewXray start');
             showLoadingState();
             ensureDnaSections();
             loadDnaSummary();
@@ -2106,10 +2086,8 @@ sbObj.build(`
 
             sessionSet(data, () => {
                 if (searchUrl) {
-                    console.log('[FENNEC (POO)] Opening DB email search:', searchUrl);
                     bg.openOrReuseTab({ url: searchUrl, active: false });
                 }
-                console.log('[FENNEC (POO)] Opening DB order:', dbUrl);
                 bg.openOrReuseTab({ url: dbUrl, active: true, refocus: true });
                 setTimeout(() => { searchInProgress = false; }, 1000);
             });

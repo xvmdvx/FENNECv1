@@ -280,10 +280,8 @@ class KountLauncher extends Launcher {
             function saveData(part) {
                 chrome.storage.local.get({ kountInfo: {} }, ({ kountInfo }) => {
                     const updated = Object.assign({}, kountInfo, part);
-                    chrome.storage.local.set({ kountInfo: updated }, () => {
-                        loadKountSummary();
-                    });
-                    console.log('[FENNEC (POO) Kount] Data saved', part);
+                    sessionSet({ kountInfo: updated });
+                    loadKountSummary();
                 });
             }
 

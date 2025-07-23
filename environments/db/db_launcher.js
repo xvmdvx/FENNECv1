@@ -30,10 +30,8 @@ class DBLauncher extends Launcher {
         document.title = '[DB] ' + document.title;
     }
     if (!fraudXray && sessionStorage.getItem('fraudXrayPending')) {
-        console.log('[FENNEC (POO)] fraud_xray flag missing after refresh, using pending value');
         fraudXray = true;
     }
-    console.log('[FENNEC (POO)] fraudXray flag:', fraudXray);
     if (fraudXray && localStorage.getItem('fraudXrayFinished') === '1') {
         const params = new URLSearchParams(location.search);
         params.delete('fraud_xray');
@@ -73,7 +71,6 @@ class DBLauncher extends Launcher {
         sessionStorage.setItem(key, '1');
         sessionStorage.setItem('fraudXrayPending', '1');
         window.addEventListener('load', () => {
-            console.log('[FENNEC (POO)] Auto-refreshing order page to load LTV');
             setTimeout(() => location.reload(), 300);
         }, { once: true });
     })();
@@ -2246,7 +2243,6 @@ class DBLauncher extends Launcher {
     }
 
     function startCancelProcedure() {
-        console.log('[FENNEC (POO)] Starting cancel procedure');
         const btn = Array.from(document.querySelectorAll('a'))
             .find(a => /mark resolved/i.test(a.textContent));
         if (btn) {
@@ -2450,17 +2446,14 @@ class DBLauncher extends Launcher {
             const q = input.value.trim();
             if (!q) return;
             results.textContent = "Loading...";
-            console.log("[FENNEC (POO)] CODA search query:", q);
             fetch("https://coda.io/apis/v1/docs/QJWsDF3UZ6/search?q=" + encodeURIComponent(q), {
                 headers: { "Authorization": "Bearer 758d99dd-34d0-43a5-8896-595785019945" }
             })
                 .then(r => {
-                    console.log("[FENNEC (POO)] CODA search status:", r.status);
                     const status = r.status;
                     return r.json().catch(() => ({})).then(data => ({ status, data }));
                 })
                 .then(({ status, data }) => {
-                    console.log("[FENNEC (POO)] CODA search response:", data);
                     if (status !== 200) {
                         const msg = data && data.message ? data.message : "API request failed";
                         results.textContent = `Error ${status}: ${msg}`;
@@ -2616,10 +2609,8 @@ class DBLauncher extends Launcher {
     }
 
     function getParentOrderId() {
-        console.log("[FENNEC (POO)] Scanning for parent order in #vcomp");
         const tab = document.querySelector('#vcomp') || document.querySelector('#vcompany');
         if (!tab) {
-            console.log("[FENNEC (POO)] #vcomp tab not found");
             return null;
         }
         const candidates = Array.from(
@@ -2627,31 +2618,21 @@ class DBLauncher extends Launcher {
         );
         const parentEl = candidates.find(el => /parent order/i.test(getText(el)));
         if (!parentEl) {
-            console.log("[FENNEC (POO)] Parent order element not found; scanned:");
-            candidates.forEach(el => {
-                const txt = getText(el).trim();
-                if (txt) console.log("- " + el.tagName + ": " + txt);
-            });
             return null;
         }
-        console.log("[FENNEC (POO)] Parent order element text:", getText(parentEl).trim());
         let anchor = parentEl.querySelector('a[href*="/order/detail/"]');
         if (!anchor && parentEl.nextElementSibling) {
             anchor = parentEl.nextElementSibling.querySelector('a[href*="/order/detail/"]');
         }
         if (anchor) {
-            console.log("[FENNEC (POO)] Found parent order link", anchor.href);
             const m = anchor.href.match(/detail\/(\d+)/);
             if (m) {
-                console.log("[FENNEC (POO)] Extracted ID from href:", m[1]);
                 return m[1];
             }
             const textId = anchor.textContent.replace(/\D/g, '');
             if (textId) {
-                console.log("[FENNEC (POO)] Extracted ID from link text:", textId);
                 return textId;
             }
-            console.log("[FENNEC (POO)] No numeric ID in parent link");
         }
         let digits = parentEl.textContent.replace(/\D/g, "");
         if (!digits) {
@@ -2672,16 +2653,13 @@ class DBLauncher extends Launcher {
                 }
             }
             if (valEl) {
-                console.log("[FENNEC (POO)] Checked sibling text:", getText(valEl).trim());
                 digits = valEl.textContent.replace(/\D/g, "");
             }
         }
-        if (digits) console.log("[FENNEC (POO)] Extracted ID from text:", digits);
-        else {
-            console.log("[FENNEC (POO)] No digits found in parent element text or siblings");
-            console.log("[FENNEC (POO)] Parent text scanned:", getText(parentEl).trim());
+        if (!digits) {
+            return null;
         }
-        return digits || null;
+        return digits;
     }
 
     function getClientInfo() {
@@ -2911,7 +2889,6 @@ function getLastHoldUser() {
             updateReviewDisplay();
         }
         const orderId = getBasicOrderInfo().orderId;
-        console.log('[FENNEC (POO)] runFraudXray start', { orderId });
         sessionSet({ fraudReviewSession: orderId, sidebarFreezeId: orderId });
         const key = 'fennecLtvRefreshed_' + orderId;
         const hadPending = sessionStorage.getItem('fraudXrayPending');
@@ -2919,7 +2896,6 @@ function getLastHoldUser() {
             // Waited for the reload needed to load the correct LTV
             // Remove the flag and continue with the XRAY flow
             sessionStorage.removeItem('fraudXrayPending');
-            console.log('[FENNEC (POO)] Continuing XRAY after refresh');
         }
         // Proceed with XRAY even if the LTV refresh flag is missing to
         // ensure external tabs open reliably after manual page reloads.
@@ -2936,17 +2912,14 @@ function getLastHoldUser() {
         if (!client.email && parts.length) {
             const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
             const gmailUrl = 'https://mail.google.com/mail/u/0/#search/' + query;
-            console.log('[FENNEC (POO)] Opening Gmail search:', gmailUrl);
             bg.openOrReuseTab({ url: gmailUrl, active: true });
         }
         if (client.email) {
             const searchUrl = `https://db.incfile.com/order-tracker/orders/order-search?fennec_email=${encodeURIComponent(client.email)}`;
-            console.log('[FENNEC (POO)] Opening DB email search:', searchUrl);
             bg.openOrReuseTab({ url: searchUrl, active: false });
         }
         if (info.orderId) {
             const adyenUrl = `https://ca-live.adyen.com/ca/ca/overview/default.shtml?fennec_order=${info.orderId}`;
-            console.log('[FENNEC (POO)] Opening Adyen:', adyenUrl);
             sessionSet({ fennecFraudAdyen: adyenUrl });
 
             function findKountLink() {
@@ -2964,15 +2937,11 @@ function getLastHoldUser() {
             }
 
             function openKount(retries = 40) {
-                console.log('[FENNEC (POO)] Looking for Kount link, attempt', 41 - retries);
                 const url = findKountLink();
                 if (url) {
-                    console.log('[FENNEC (POO)] Opening Kount:', url);
                     bg.openOrReuseTab({ url, active: true });
                 } else if (retries > 0) {
                     setTimeout(() => openKount(retries - 1), 500);
-                } else {
-                    console.warn('[FENNEC (POO)] Kount link not found');
                 }
             }
             openKount();
