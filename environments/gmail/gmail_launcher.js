@@ -1447,15 +1447,7 @@
 
             const sbObj = new Sidebar();
 sbObj.build(`
-                <div class="copilot-header">
-                    <span id="qa-toggle" class="quick-actions-toggle">☰</span>
-                    <div class="copilot-title">
-                        <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (POO)" />
-                        <span>FENNEC (POO)</span>
-                    </div>
-                    <button id="copilot-clear-tabs">🗑</button>
-                    <button id="copilot-close">✕</button>
-                </div>
+                ${buildSidebarHeader()}
                 <div class="order-summary-header">
                     <button id="btn-xray" class="copilot-button">🩻 XRAY</button>
                     <button id="btn-email-search" class="copilot-button">📧 SEARCH</button>

@@ -508,15 +508,7 @@ class DBLauncher extends Launcher {
                     if (document.getElementById('copilot-sidebar')) return;
                     const sbObj = new Sidebar();
                     sbObj.build(`
-                        <div class="copilot-header">
-                            <span id="qa-toggle" class="quick-actions-toggle">☰</span>
-                            <div class="copilot-title">
-                                <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (POO)" />
-                                <span>FENNEC (POO)</span>
-                            </div>
-                            <button id="copilot-clear-tabs">🗑</button>
-                            <button id="copilot-close">✕</button>
-                        </div>
+                        ${buildSidebarHeader()}
                         <div class="order-summary-header"><span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span> ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
                         <div class="copilot-body" id="copilot-body-content">
                             <div class="copilot-dna">
@@ -688,11 +680,7 @@ class DBLauncher extends Launcher {
                             }
                             if (client.email) parts.push(`"${client.email}"`);
                             if (client.name) parts.push(`"${client.name}"`);
-                            if (parts.length && client.email) {
-                                const base = 'https://db.incfile.com/order-tracker/orders/order-search';
-                                const url = base + '?fennec_email=' + encodeURIComponent(client.email);
-                                bg.openActiveTab({ url });
-                            } else if (parts.length) {
+                            if (parts.length) {
                                 const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
                                 const url = 'https://mail.google.com/mail/u/0/#search/' + query;
                                 bg.openActiveTab({ url });

@@ -690,12 +690,7 @@
 
             const sb = new Sidebar();
             sb.build(`
-                <div class="copilot-header">
-                    <div class="copilot-title">
-                        <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (POO)" />
-                        <span>FENNEC (POO)</span>
-                    </div>
-                </div>
+                ${buildSidebarHeader()}
                 <div class="copilot-body" id="copilot-body-content">
                     <div id="qs-summary" class="white-box" style="margin-bottom:10px"></div>
                     <button id="queue-view-btn" class="copilot-button" style="width:100%;margin-bottom:8px">VIEW ALL</button>
