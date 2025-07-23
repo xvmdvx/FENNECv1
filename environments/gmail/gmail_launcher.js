@@ -19,10 +19,9 @@
         chrome.storage.local.get({ extensionEnabled: true, lightMode: false, fennecDevMode: false }, ({ extensionEnabled, lightMode, fennecDevMode: localDev }) => {
         const devMode = localDev || fennecDevMode;
         if (!extensionEnabled) {
-            console.log('[FENNEC (POO)] Extension disabled, skipping Gmail launcher.');
             return;
         }
-        document.title = '[GMAIL] ' + document.title;
+        document.title = '[GM] ' + document.title;
         if (lightMode) {
             document.body.classList.add('fennec-light-mode');
         } else {
@@ -158,7 +157,6 @@
             });
 
             if (mainPanels.length === 0) {
-                console.warn("[Copilot] No se encontró panel central grande. Usando body como fallback.");
                 mainPanels.push(document.body);
             }
 
@@ -627,7 +625,6 @@
                 });
 
                 if (!fullText.trim()) {
-                    console.warn("[Copilot] .a3s no tiene texto visible.");
                     return null;
                 }
 
@@ -650,7 +647,6 @@
                     rawText: fullText
                 };
             } catch (err) {
-                console.warn("[Copilot] Error extrayendo contexto:", err);
                 return null;
             }
         }
@@ -1069,13 +1065,14 @@
                 chrome.storage.local.get({ adyenDnaInfo: null }, ({ adyenDnaInfo }) => {
                     const html = buildDnaHtml(adyenDnaInfo);
                     container.innerHTML = html || '';
+                    console.log('[Copilot] ADYEN DNA summary', html ? 'loaded' : 'not found');
                     attachCommonListeners(container);
                     repositionDnaSummary();
                     ensureIssueControls();
                     setupResolveButton();
                 });
             } catch (err) {
-                console.warn('[Copilot] loadDnaSummary failed:', err);
+                console.warn('[Copilot] failed to load ADYEN DNA summary:', err);
             }
         }
 
@@ -1086,6 +1083,7 @@
             chrome.storage.local.get({ kountInfo: null }, ({ kountInfo }) => {
                 const html = buildKountHtml(kountInfo);
                 container.innerHTML = html || '';
+                console.log('[Copilot] KOUNT summary', html ? 'loaded' : 'not found');
                 attachCommonListeners(container);
             });
         }
@@ -1093,6 +1091,7 @@
         let dnaWatchInterval = null;
         function startDnaWatch() {
             if (dnaWatchInterval) clearInterval(dnaWatchInterval);
+            console.log('[Copilot] waiting for ADYEN DNA/KOUNT data...');
             dnaWatchInterval = setInterval(() => {
                 chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null }, data => {
                     const hasDna = data.adyenDnaInfo && data.adyenDnaInfo.payment;
@@ -1104,6 +1103,7 @@
                         repositionDnaSummary();
                         clearInterval(dnaWatchInterval);
                         dnaWatchInterval = null;
+                        console.log('[Copilot] ADYEN DNA/KOUNT data loaded');
                     }
                 });
             }, 1000);
@@ -1241,6 +1241,7 @@
                 if (summary) summary.innerHTML = '';
                 const kount = dnaBox.querySelector('#kount-summary');
                 if (kount) kount.innerHTML = '';
+                console.log('[Copilot] cleared ADYEN DNA/KOUNT summaries');
                 // Do not clear stored DNA/Kount info so summaries reappear when available
                 repositionDnaSummary();
                 startDnaWatch();
@@ -1318,6 +1319,7 @@
             }
             if (dnaSummary) dnaSummary.innerHTML = '';
             if (kountSummary) kountSummary.innerHTML = '';
+            console.log('[Copilot] cleared ADYEN DNA/KOUNT summaries');
             ensureDnaSections();
             loadDnaSummary();
             loadKountSummary();
@@ -1490,8 +1492,6 @@ sbObj.build(`
             }, opts => applySidebarDesign(sidebar, opts));
             loadSidebarSnapshot(sidebar, repositionDnaSummary);
 
-            console.log("[Copilot] Sidebar INYECTADO en Gmail.");
-
             // Start with empty layout showing only action buttons.
             showInitialStatus();
             loadDnaSummary();
@@ -1508,7 +1508,6 @@ sbObj.build(`
                 mainPanels.forEach(el => el.style.marginRight = '');
                 sessionStorage.setItem("fennecSidebarClosed", "true");
                 showFloatingIcon();
-                console.log("[Copilot] Sidebar cerrado manualmente en Gmail.");
             };
 
             const clearBtn = document.getElementById('copilot-clear-tabs');
@@ -1535,7 +1534,6 @@ sbObj.build(`
         function injectSidebarIfMissing() {
             if (sessionStorage.getItem("fennecSidebarClosed") === "true") { ensureFloatingIcon(); return; }
             if (!document.getElementById('copilot-sidebar')) {
-                console.log("[Copilot] Sidebar no encontrado, inyectando en Gmail...");
                 const mainPanels = applyPaddingToMainPanels();
                 injectSidebar(mainPanels);
                 showInitialStatus();
