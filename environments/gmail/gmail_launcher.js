@@ -1198,20 +1198,6 @@
             repositionDnaSummary();
         }
 
-        function showKountLoading() {
-            const dnaBox = document.querySelector('.copilot-dna');
-            if (!dnaBox) return;
-            let kount = dnaBox.querySelector('#kount-summary');
-            if (!kount) {
-                kount = document.createElement('div');
-                kount.id = 'kount-summary';
-                kount.style.marginTop = '10px';
-                dnaBox.appendChild(kount);
-            }
-            kount.innerHTML = `<img src="${chrome.runtime.getURL('fennec_icon.png')}" class="loading-fennec"/>`;
-            repositionDnaSummary();
-        }
-
         function showLoadingState() {
             currentContext = null;
             storedOrderInfo = null;
@@ -2067,8 +2053,6 @@ sbObj.build(`
             console.log('[FENNEC (POO)] runReviewXray start');
             showLoadingState();
             ensureDnaSections();
-            showDnaLoading();
-            showKountLoading();
             loadDnaSummary();
             loadKountSummary();
             repositionDnaSummary();
