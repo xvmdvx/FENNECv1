@@ -1104,6 +1104,25 @@
             });
         }
 
+        let dnaWatchInterval = null;
+        function startDnaWatch() {
+            if (dnaWatchInterval) clearInterval(dnaWatchInterval);
+            dnaWatchInterval = setInterval(() => {
+                chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null }, data => {
+                    const hasDna = !!(data.adyenDnaInfo);
+                    const hasKount = !!(data.kountInfo);
+                    if (hasDna || hasKount) {
+                        ensureDnaSections();
+                        loadDnaSummary();
+                        loadKountSummary();
+                        repositionDnaSummary();
+                        clearInterval(dnaWatchInterval);
+                        dnaWatchInterval = null;
+                    }
+                });
+            }, 1000);
+        }
+
         function formatIssueText(text) {
             if (!text) return '';
             const norm = text.toLowerCase().replace(/\s+/g, ' ').trim();
@@ -1239,6 +1258,7 @@
                 if (kount) kount.innerHTML = '';
                 sessionSet({ adyenDnaInfo: null, kountInfo: null });
                 repositionDnaSummary();
+                startDnaWatch();
             }
         if (issueLabel) {
             issueLabel.textContent = '';
@@ -1493,6 +1513,7 @@ sbObj.build(`
             loadDnaSummary();
             loadKountSummary();
             repositionDnaSummary();
+            startDnaWatch();
             // Details load after the user interacts with SEARCH or when
             // opened automatically with context.
 
@@ -2086,6 +2107,7 @@ sbObj.build(`
                 bg.openOrReuseTab({ url: dbUrl, active: true, refocus: true });
                 setTimeout(() => { searchInProgress = false; }, 1000);
             });
+            startDnaWatch();
             checkLastIssue(orderId);
         }
 
