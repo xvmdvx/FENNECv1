@@ -1071,6 +1071,7 @@
         }
 
         function loadDnaSummary() {
+            ensureDnaSections();
             const container = document.getElementById('dna-summary');
             if (!container) return;
             console.log('[Copilot] Loading DNA summary');
@@ -1095,6 +1096,7 @@
         }
 
         function loadKountSummary() {
+            ensureDnaSections();
             const container = document.getElementById('kount-summary');
             if (!container) return;
             chrome.storage.local.get({ kountInfo: null }, ({ kountInfo }) => {
@@ -1192,7 +1194,7 @@
             const afterBtn = xrayBtn || dnaBtn;
             if (afterBtn) dnaBox.insertBefore(summary, afterBtn.nextSibling); else dnaBox.appendChild(summary);
             summary.innerHTML = `<img src="${chrome.runtime.getURL('fennec_icon.png')}" class="loading-fennec"/>`;
-            sessionSet({ adyenDnaInfo: null });
+            // Keep any previously stored DNA data until new info arrives
             repositionDnaSummary();
         }
 
@@ -1256,7 +1258,7 @@
                 if (summary) summary.innerHTML = '';
                 const kount = dnaBox.querySelector('#kount-summary');
                 if (kount) kount.innerHTML = '';
-                sessionSet({ adyenDnaInfo: null, kountInfo: null });
+                // Do not clear stored DNA/Kount info so summaries reappear when available
                 repositionDnaSummary();
                 startDnaWatch();
             }
@@ -1436,8 +1438,6 @@
                 Object.assign(data, {
                     fraudReviewSession: null,
                     sidebarFreezeId: null,
-                    adyenDnaInfo: null,
-                    kountInfo: null,
                     fennecFraudAdyen: null
                 });
             } else if (orderId) {
@@ -1446,9 +1446,7 @@
                     sidebarFreezeId: orderId,
                     sidebarDb: [],
                     sidebarOrderId: null,
-                    sidebarOrderInfo: null,
-                    adyenDnaInfo: null,
-                    kountInfo: null
+                    sidebarOrderInfo: null
                 });
                 sessionStorage.setItem('fennecShowTrialFloater', '1');
                 localStorage.removeItem('fraudXrayFinished');
@@ -2091,9 +2089,7 @@ sbObj.build(`
                 sidebarFreezeId: orderId,
                 sidebarDb: [],
                 sidebarOrderId: null,
-                sidebarOrderInfo: null,
-                adyenDnaInfo: null,
-                kountInfo: null
+                sidebarOrderInfo: null
             };
             sessionStorage.setItem('fennecShowTrialFloater', '1');
             localStorage.removeItem('fraudXrayFinished');
