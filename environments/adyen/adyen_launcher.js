@@ -301,9 +301,9 @@ class AdyenLauncher extends Launcher {
 
             const insertDnaAfterCompany = window.insertDnaAfterCompany;
 
-            function loadDnaSummary() {
+            function loadDnaSummary(cb) {
                 const container = document.getElementById('dna-summary');
-                if (!container) return;
+                if (!container) { if (typeof cb === 'function') cb(); return; }
                 chrome.storage.local.get({ adyenDnaInfo: null }, ({ adyenDnaInfo }) => {
                     chrome.storage.local.get({ sidebarOrderInfo: null }, ({ sidebarOrderInfo }) => {
                         if (adyenDnaInfo) adyenDnaInfo.dbBilling = sidebarOrderInfo ? sidebarOrderInfo.billing : null;
@@ -315,6 +315,7 @@ class AdyenLauncher extends Launcher {
                         if (typeof applyStandardSectionOrder === 'function') {
                             applyStandardSectionOrder(document.getElementById('db-summary-section'));
                         }
+                        if (typeof cb === 'function') cb();
                     });
                 });
             }
@@ -342,20 +343,21 @@ class AdyenLauncher extends Launcher {
                 return `<div class="section-label">KOUNT</div><div class="white-box" style="margin-bottom:10px">${parts.join('')}</div>`;
             }
 
-            function loadKountSummary() {
+            function loadKountSummary(cb) {
                 const container = document.getElementById('kount-summary');
-                if (!container) return;
+                if (!container) { if (typeof cb === 'function') cb(); return; }
                 chrome.storage.local.get({ kountInfo: null }, ({ kountInfo }) => {
                     const html = buildKountHtml(kountInfo);
                     container.innerHTML = html || '';
                     attachCommonListeners(container);
                     insertDnaAfterCompany();
+                    if (typeof cb === 'function') cb();
                 });
             }
 
-            function loadDbSummary() {
+            function loadDbSummary(cb) {
                 const container = document.getElementById('db-summary-section');
-                if (!container) return;
+                if (!container) { if (typeof cb === 'function') cb(); return; }
                 chrome.storage.local.get({ sidebarDb: [], sidebarOrderId: null }, ({ sidebarDb, sidebarOrderId }) => {
                     if (Array.isArray(sidebarDb) && sidebarDb.length) {
                         container.innerHTML = sidebarDb.join('');
@@ -375,6 +377,7 @@ class AdyenLauncher extends Launcher {
                         container.innerHTML = '';
                         container.style.display = 'none';
                     }
+                    if (typeof cb === 'function') cb();
                 });
             }
 
@@ -532,10 +535,13 @@ class AdyenLauncher extends Launcher {
                 const clearSb = sidebar.querySelector('#copilot-clear');
                 if (clearSb) clearSb.onclick = clearSidebar;
                 if (order) {
-                    loadDbSummary();
-                    loadDnaSummary();
-                    loadKountSummary();
-                    checkLastIssue(order);
+                    loadDbSummary(() => {
+                        loadDnaSummary(() => {
+                            loadKountSummary(() => {
+                                checkLastIssue(order);
+                            });
+                        });
+                    });
                 } else {
                     showInitialStatus();
                 }
