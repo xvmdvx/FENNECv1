@@ -184,7 +184,7 @@ For FRAUD REVIEW (XRAY icon)
 
 For ID CONFIRM (XRAY button) 
 8. Activate the original GM, where button is originally clicked:
-   https://mail.google.com/mail/?authuser=efile1234@incfile.com#inbox/* or related.
+   https://mail.google.com/mail/u/efile1234@incfile.com/#inbox/* or related.
 
 At the end of both flows, all tabs included in the flow must be properly identified, and the SB injected with proper padding in all. The SB once the XRAY is completed should be constructed as desinged in REVIEW MODE.
 
@@ -230,7 +230,7 @@ For FRAUD REVIEW (XRAY icon)
 
 For ID CONFIRM (XRAY button) 
 8. Activate the original GM, where button is originally clicked:
-   https://mail.google.com/mail/?authuser=efile1234@incfile.com#inbox/* or related.
+   https://mail.google.com/mail/u/efile1234@incfile.com/#inbox/* or related.
 
 At the end of both flows, all tabs included in the flow must be properly identified, and the SB injected with proper padding in all. The SB once the XRAY is completed should be constructed as desinged in REVIEW MODE.
 
