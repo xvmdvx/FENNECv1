@@ -65,6 +65,27 @@
             apply();
         }
         maintainTitle('GM');
+
+        function ensureDelegatedAccount() {
+            const target = 'efile1234@incfile.com';
+            const meta = document.querySelector('meta[name="og-profile-acct"]');
+            if (meta && meta.content === target) return;
+            const btn = document.querySelector('a[aria-label*="Google Account"], a[aria-label*="Cuenta de Google"]');
+            if (!btn) return;
+            btn.click();
+            const trySelect = () => {
+                const els = Array.from(document.querySelectorAll('a, [role="menuitem"]'));
+                const el = els.find(e => (e.textContent || '').includes(target));
+                if (el) { el.click(); return true; }
+                return false;
+            };
+            if (trySelect()) return;
+            const obs = new MutationObserver(() => { if (trySelect()) obs.disconnect(); });
+            obs.observe(document.body, { childList: true, subtree: true });
+            setTimeout(() => obs.disconnect(), 5000);
+        }
+
+        ensureDelegatedAccount();
         if (lightMode) {
             document.body.classList.add('fennec-light-mode');
         } else {
