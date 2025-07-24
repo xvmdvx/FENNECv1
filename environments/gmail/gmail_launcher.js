@@ -249,13 +249,15 @@
             const billingBox = container.querySelector("#billing-section-box");
             if (!quick || !orderBox) return;
             const hasOrder = orderBox && orderBox.style.display !== 'none';
-            if (reviewMode && hasOrder) {
-                if (issueBox) {
-                    issueBox.style.display = "block";
+            if (issueBox) {
+                if (hasOrder && reviewMode) {
+                    issueBox.style.display = 'block';
                     ensureIssueControls();
+                } else if (hasOrder) {
+                    issueBox.style.display = '';
+                } else {
+                    issueBox.style.display = 'none';
                 }
-            } else if (issueBox) {
-                issueBox.style.display = "";
             }
             if (quick && quick.parentElement !== container) container.prepend(quick);
             if (reviewMode) {
