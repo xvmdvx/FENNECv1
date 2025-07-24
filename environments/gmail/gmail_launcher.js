@@ -242,13 +242,16 @@
             if (!container) return;
             const quick = container.querySelector("#quick-summary");
             const orderBox = document.querySelector(".order-summary-box");
+            const orderContent = document.getElementById("order-summary-content");
             const issueBox = document.getElementById("issue-summary-box");
             const clientLabel = container.querySelector("#client-section-label");
             const clientBox = container.querySelector("#client-section-box");
             const billingLabel = container.querySelector("#billing-section-label");
             const billingBox = container.querySelector("#billing-section-box");
             if (!quick || !orderBox) return;
-            const hasOrder = orderBox && orderBox.style.display !== 'none';
+            const hasOrder = orderBox &&
+                orderBox.style.display !== 'none' &&
+                orderContent && orderContent.textContent.trim() !== '';
             if (issueBox) {
                 if (hasOrder && reviewMode) {
                     issueBox.style.display = 'block';
