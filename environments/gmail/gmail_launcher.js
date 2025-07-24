@@ -73,34 +73,58 @@
                 return meta && meta.content === target;
             };
             if (checkActive()) return Promise.resolve(false);
-            const btn = document.querySelector('a[aria-label*="Google Account"], a[aria-label*="Cuenta de Google"]');
-            if (!btn) return Promise.resolve(false);
-            btn.click();
-            const trySelect = () => {
+
+            const findBtn = () =>
+                document.querySelector(
+                    'a[aria-label*="Google Account"], a[aria-label*="Cuenta de Google"], ' +
+                    'div[aria-label*="Google Account"], div[aria-label*="Cuenta de Google"]'
+                );
+            const findDelegate = () => {
                 const els = Array.from(document.querySelectorAll('a, [role="menuitem"]'));
-                const el = els.find(e => (e.textContent || '').includes(target));
-                if (el) { el.click(); return true; }
-                return false;
+                return els.find(e => (e.textContent || '').includes(target));
             };
+
             return new Promise(resolve => {
-                if (trySelect()) {
+                const ensureSelected = () => {
                     const wait = setInterval(() => {
                         if (checkActive()) { clearInterval(wait); resolve(true); }
                     }, 100);
                     setTimeout(() => { clearInterval(wait); resolve(checkActive()); }, 5000);
-                    return;
-                }
-                const obs = new MutationObserver(() => {
-                    if (trySelect()) {
-                        obs.disconnect();
-                        const wait = setInterval(() => {
-                            if (checkActive()) { clearInterval(wait); resolve(true); }
-                        }, 100);
-                        setTimeout(() => { clearInterval(wait); resolve(checkActive()); }, 5000);
+                };
+
+                const selectAccount = () => {
+                    const el = findDelegate();
+                    if (el) {
+                        el.click();
+                        ensureSelected();
+                        return true;
                     }
-                });
-                obs.observe(document.body, { childList: true, subtree: true });
-                setTimeout(() => { obs.disconnect(); resolve(false); }, 5000);
+                    return false;
+                };
+
+                const openMenu = () => {
+                    const btn = findBtn();
+                    if (btn) {
+                        btn.click();
+                        if (!selectAccount()) {
+                            const menuObs = new MutationObserver(() => {
+                                if (selectAccount()) menuObs.disconnect();
+                            });
+                            menuObs.observe(document.body, { childList: true, subtree: true });
+                            setTimeout(() => { menuObs.disconnect(); resolve(false); }, 5000);
+                        }
+                        return true;
+                    }
+                    return false;
+                };
+
+                if (!openMenu()) {
+                    const btnObs = new MutationObserver(() => {
+                        if (openMenu()) btnObs.disconnect();
+                    });
+                    btnObs.observe(document.body, { childList: true, subtree: true });
+                    setTimeout(() => { btnObs.disconnect(); resolve(false); }, 5000);
+                }
             });
         }
 
