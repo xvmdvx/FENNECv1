@@ -7,7 +7,7 @@
     // old details don't persist when returning to Gmail.
     function cleanupSidebarSession() {
         sessionStorage.removeItem("fennecSidebarClosed");
-        sessionSet({
+        const data = {
             sidebarDb: [],
             sidebarOrderId: null,
             sidebarOrderInfo: null,
@@ -18,16 +18,21 @@
             forceFraudXray: null,
             fennecFraudAdyen: null,
             sidebarSnapshot: null
-        });
+        };
+        sessionSet(data);
         sessionStorage.removeItem('fennecShowTrialFloater');
         localStorage.removeItem('fraudXrayFinished');
-        chrome.storage.local.remove([
+        chrome.storage.local.remove(Object.keys(data).concat([
             'fennecPendingComment',
             'fennecPendingUpload',
             'fennecUpdateRequest',
             'fennecQuickResolveDone',
             'fennecUploadDone'
-        ]);
+        ]));
+    }
+
+    if (window.location.hash.startsWith('#inbox')) {
+        cleanupSidebarSession();
     }
 
     window.addEventListener('beforeunload', cleanupSidebarSession);
