@@ -66,13 +66,14 @@
         }
         maintainTitle('GM');
 
-        function ensureDelegatedAccount() {
+        function ensureDelegatedAccount(tries = 0) {
             const target = 'efile1234@incfile.com';
             const checkActive = () => {
                 const meta = document.querySelector('meta[name="og-profile-acct"]');
                 return meta && meta.content === target;
             };
-            if (checkActive()) return Promise.resolve(false);
+            if (checkActive()) return Promise.resolve(true);
+            if (tries > 2) return Promise.resolve(false);
 
             const findBtn = () =>
                 document.querySelector(
@@ -80,6 +81,8 @@
                     'div[aria-label*="Google Account"], div[aria-label*="Cuenta de Google"]'
                 );
             const findDelegate = () => {
+                const direct = document.querySelector(`[data-email="${target}"]`);
+                if (direct) return direct;
                 const els = Array.from(document.querySelectorAll('a, [role="menuitem"]'));
                 return els.find(e => (e.textContent || '').includes(target));
             };
@@ -89,7 +92,11 @@
                     const wait = setInterval(() => {
                         if (checkActive()) { clearInterval(wait); resolve(true); }
                     }, 100);
-                    setTimeout(() => { clearInterval(wait); resolve(checkActive()); }, 5000);
+                    setTimeout(() => {
+                        clearInterval(wait);
+                        if (checkActive()) resolve(true);
+                        else ensureDelegatedAccount(tries + 1).then(resolve);
+                    }, 5000);
                 };
 
                 const selectAccount = () => {
@@ -111,7 +118,11 @@
                                 if (selectAccount()) menuObs.disconnect();
                             });
                             menuObs.observe(document.body, { childList: true, subtree: true });
-                            setTimeout(() => { menuObs.disconnect(); resolve(false); }, 5000);
+                            setTimeout(() => {
+                                menuObs.disconnect();
+                                if (checkActive()) resolve(true);
+                                else ensureDelegatedAccount(tries + 1).then(resolve);
+                            }, 5000);
                         }
                         return true;
                     }
@@ -123,7 +134,11 @@
                         if (openMenu()) btnObs.disconnect();
                     });
                     btnObs.observe(document.body, { childList: true, subtree: true });
-                    setTimeout(() => { btnObs.disconnect(); resolve(false); }, 5000);
+                    setTimeout(() => {
+                        btnObs.disconnect();
+                        if (checkActive()) resolve(true);
+                        else ensureDelegatedAccount(tries + 1).then(resolve);
+                    }, 5000);
                 }
             });
         }
@@ -154,7 +169,7 @@
             }
 
             chrome.storage.local.get({ fennecPendingSearch: null }, ({ fennecPendingSearch }) => {
-                if (fennecPendingSearch) {
+                if (fennecPendingSearch && switched) {
                     chrome.storage.local.remove('fennecPendingSearch');
                     runSearch(fennecPendingSearch);
                 }
