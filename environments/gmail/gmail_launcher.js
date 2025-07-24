@@ -1467,7 +1467,7 @@
 
             const finalQuery = queryParts.join(" OR ");
             const gmailSearchUrl =
-                `https://mail.google.com/mail/?authuser=efile1234@incfile.com#search/${encodeURIComponent(finalQuery)}`;
+                `https://mail.google.com/mail/u/efile1234@incfile.com/#search/${encodeURIComponent(finalQuery)}`;
 
             const urls = [gmailSearchUrl];
 

@@ -680,7 +680,7 @@ class DBLauncher extends Launcher {
                             if (parts.length) {
                                 const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
                                 const url =
-                                    'https://mail.google.com/mail/?authuser=efile1234@incfile.com#search/' +
+                                    'https://mail.google.com/mail/u/efile1234@incfile.com/#search/' +
                                     query;
                                 bg.openActiveTab({ url });
                             }
@@ -2914,7 +2914,7 @@ function getLastHoldUser() {
         if (!client.email && parts.length) {
             const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
             const gmailUrl =
-                'https://mail.google.com/mail/?authuser=efile1234@incfile.com#search/' +
+                'https://mail.google.com/mail/u/efile1234@incfile.com/#search/' +
                 query;
             bg.openOrReuseTab({ url: gmailUrl, active: true });
         }
