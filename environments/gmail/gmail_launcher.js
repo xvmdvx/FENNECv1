@@ -21,6 +21,13 @@
         });
         sessionStorage.removeItem('fennecShowTrialFloater');
         localStorage.removeItem('fraudXrayFinished');
+        chrome.storage.local.remove([
+            'fennecPendingComment',
+            'fennecPendingUpload',
+            'fennecUpdateRequest',
+            'fennecQuickResolveDone',
+            'fennecUploadDone'
+        ]);
     }
 
     window.addEventListener('beforeunload', cleanupSidebarSession);
@@ -1409,6 +1416,13 @@
                 sidebarSnapshot: null
             });
             localStorage.removeItem('fraudXrayFinished');
+            chrome.storage.local.remove([
+                'fennecPendingComment',
+                'fennecPendingUpload',
+                'fennecUpdateRequest',
+                'fennecQuickResolveDone',
+                'fennecUploadDone'
+            ]);
             showInitialStatus();
             applyReviewMode();
             loadDnaSummary();
