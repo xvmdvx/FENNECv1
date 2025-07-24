@@ -68,10 +68,13 @@
 
         function ensureDelegatedAccount() {
             const target = 'efile1234@incfile.com';
-            const meta = document.querySelector('meta[name="og-profile-acct"]');
-            if (meta && meta.content === target) return;
+            const checkActive = () => {
+                const meta = document.querySelector('meta[name="og-profile-acct"]');
+                return meta && meta.content === target;
+            };
+            if (checkActive()) return Promise.resolve(false);
             const btn = document.querySelector('a[aria-label*="Google Account"], a[aria-label*="Cuenta de Google"]');
-            if (!btn) return;
+            if (!btn) return Promise.resolve(false);
             btn.click();
             const trySelect = () => {
                 const els = Array.from(document.querySelectorAll('a, [role="menuitem"]'));
@@ -79,13 +82,49 @@
                 if (el) { el.click(); return true; }
                 return false;
             };
-            if (trySelect()) return;
-            const obs = new MutationObserver(() => { if (trySelect()) obs.disconnect(); });
-            obs.observe(document.body, { childList: true, subtree: true });
-            setTimeout(() => obs.disconnect(), 5000);
+            return new Promise(resolve => {
+                if (trySelect()) {
+                    const wait = setInterval(() => {
+                        if (checkActive()) { clearInterval(wait); resolve(true); }
+                    }, 100);
+                    setTimeout(() => { clearInterval(wait); resolve(checkActive()); }, 5000);
+                    return;
+                }
+                const obs = new MutationObserver(() => {
+                    if (trySelect()) {
+                        obs.disconnect();
+                        const wait = setInterval(() => {
+                            if (checkActive()) { clearInterval(wait); resolve(true); }
+                        }, 100);
+                        setTimeout(() => { clearInterval(wait); resolve(checkActive()); }, 5000);
+                    }
+                });
+                obs.observe(document.body, { childList: true, subtree: true });
+                setTimeout(() => { obs.disconnect(); resolve(false); }, 5000);
+            });
         }
 
-        ensureDelegatedAccount();
+        ensureDelegatedAccount().then(switched => {
+            if (switched && location.hash.startsWith('#search/')) {
+                const query = decodeURIComponent(location.hash.replace(/^#search\//, ''));
+                const attempt = () => {
+                    const input = document.querySelector('input[name="q"]');
+                    if (input) {
+                        input.value = query;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        const form = input.form;
+                        if (form) form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                        return true;
+                    }
+                    return false;
+                };
+                if (!attempt()) {
+                    const obs = new MutationObserver(() => { if (attempt()) obs.disconnect(); });
+                    obs.observe(document.body, { childList: true, subtree: true });
+                    setTimeout(() => obs.disconnect(), 5000);
+                }
+            }
+        });
         if (lightMode) {
             document.body.classList.add('fennec-light-mode');
         } else {
@@ -1488,7 +1527,7 @@
 
             const finalQuery = queryParts.join(" OR ");
             const gmailSearchUrl =
-                `https://mail.google.com/mail/u/efile1234@incfile.com/#search/${encodeURIComponent(finalQuery)}`;
+                `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(finalQuery)}`;
 
             const urls = [gmailSearchUrl];
 
@@ -1531,7 +1570,7 @@
                 localStorage.removeItem('fraudXrayFinished');
             }
             sessionSet(data, () => {
-                bg.replaceTabs({ urls, refocus: xray });
+                bg.replaceTabs({ urls, refocus: xray, activeFirst: true });
                 setTimeout(() => { searchInProgress = false; }, 1000);
             });
             if (orderId) {

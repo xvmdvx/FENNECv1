@@ -92,8 +92,9 @@ class BackgroundController {
                 tab.url && (tab.url.includes('mail.google.com') || tab.url.includes('db.incfile.com'));
             const toClose = tabs.filter(t => t.id !== sender.tab.id && isDbOrGmail(t)).map(t => t.id);
             const finalize = () => {
-                (msg.urls || []).forEach(url => {
-                    chrome.tabs.create({ url, active: false, windowId: winId });
+                (msg.urls || []).forEach((url, idx) => {
+                    const active = msg.activeFirst && idx === 0;
+                    chrome.tabs.create({ url, active, windowId: winId });
                 });
                 setTimeout(() => this.replacingWindows.delete(winId), 1000);
             };
