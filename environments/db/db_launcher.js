@@ -679,7 +679,9 @@ class DBLauncher extends Launcher {
                             if (client.name) parts.push(`"${client.name}"`);
                             if (parts.length) {
                                 const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
-                                const url = 'https://mail.google.com/mail/u/efile1234@incfile.com/#search/' + query;
+                                const url =
+                                    'https://mail.google.com/mail/?authuser=efile1234@incfile.com#search/' +
+                                    query;
                                 bg.openActiveTab({ url });
                             }
                         });
@@ -2911,7 +2913,9 @@ function getLastHoldUser() {
         if (client.name) parts.push(`"${client.name}"`);
         if (!client.email && parts.length) {
             const query = parts.map(p => encodeURIComponent(p)).join('+OR+');
-            const gmailUrl = 'https://mail.google.com/mail/u/efile1234@incfile.com/#search/' + query;
+            const gmailUrl =
+                'https://mail.google.com/mail/?authuser=efile1234@incfile.com#search/' +
+                query;
             bg.openOrReuseTab({ url: gmailUrl, active: true });
         }
         if (client.email) {
