@@ -1466,7 +1466,7 @@
             if (context && context.name) queryParts.push(`"${context.name}"`);
 
             const finalQuery = queryParts.join(" OR ");
-            const gmailSearchUrl = `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(finalQuery)}`;
+            const gmailSearchUrl = `https://mail.google.com/mail/u/efile1234@incfile.com/#search/${encodeURIComponent(finalQuery)}`;
 
             const urls = [gmailSearchUrl];
 
