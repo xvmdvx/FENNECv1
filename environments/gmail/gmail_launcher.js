@@ -248,18 +248,21 @@
             const billingLabel = container.querySelector("#billing-section-label");
             const billingBox = container.querySelector("#billing-section-box");
             if (!quick || !orderBox) return;
-            if (reviewMode) {
+            const hasOrder = orderBox && orderBox.style.display !== 'none';
+            if (reviewMode && hasOrder) {
                 if (issueBox) {
                     issueBox.style.display = "block";
                     ensureIssueControls();
                 }
-                if (quick && quick.parentElement !== container) container.prepend(quick);
+            } else if (issueBox) {
+                issueBox.style.display = "";
+            }
+            if (quick && quick.parentElement !== container) container.prepend(quick);
+            if (reviewMode) {
                 quick.classList.remove("quick-summary-collapsed");
                 quick.style.maxHeight = quick.scrollHeight + "px";
                 showFullDetails();
             } else {
-                if (issueBox) issueBox.style.display = "";
-                if (quick && quick.parentElement !== container) container.prepend(quick);
                 quick.classList.add("white-box");
                 quick.classList.add("quick-summary-collapsed");
                 quick.style.marginBottom = "10px";
