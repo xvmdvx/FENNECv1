@@ -30,3 +30,4 @@ All notable changes to this project will be documented in this file.
 - Fixed Review Mode sidebar not clearing after closing the email tab; session data now resets when leaving Gmail.
 - Fixed Gmail sidebar leaving Kount info after closing the email; storage now fully resets.
 - Fixed Gmail Review Mode showing old issue data when returning to Inbox or opening a new email; session storage now clears on pagehide.
+- Fixed Gmail inbox not clearing stored order issues; the sidebar now resets when loading `#inbox`.
