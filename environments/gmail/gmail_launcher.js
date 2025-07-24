@@ -129,8 +129,7 @@
         }
 
         ensureDelegatedAccount().then(switched => {
-            if (switched && location.hash.startsWith('#search/')) {
-                const query = decodeURIComponent(location.hash.replace(/^#search\//, ''));
+            function runSearch(query) {
                 const attempt = () => {
                     const input = document.querySelector('input[name="q"]');
                     if (input) {
@@ -146,6 +145,43 @@
                     const obs = new MutationObserver(() => { if (attempt()) obs.disconnect(); });
                     obs.observe(document.body, { childList: true, subtree: true });
                     setTimeout(() => obs.disconnect(), 5000);
+                }
+            }
+
+            if (switched && location.hash.startsWith('#search/')) {
+                const q = decodeURIComponent(location.hash.replace(/^#search\//, ''));
+                runSearch(q);
+            }
+
+            chrome.storage.local.get({ fennecPendingSearch: null }, ({ fennecPendingSearch }) => {
+                if (fennecPendingSearch) {
+                    chrome.storage.local.remove('fennecPendingSearch');
+                    runSearch(fennecPendingSearch);
+                }
+            });
+        });
+
+        chrome.storage.onChanged.addListener((changes, area) => {
+            if (area === 'local' && changes.fennecPendingSearch) {
+                const q = changes.fennecPendingSearch.newValue;
+                chrome.storage.local.remove('fennecPendingSearch');
+                if (q) {
+                    const run = () => {
+                        const input = document.querySelector('input[name="q"]');
+                        if (input) {
+                            input.value = q;
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                            const form = input.form;
+                            if (form) form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                            return true;
+                        }
+                        return false;
+                    };
+                    if (!run()) {
+                        const obs = new MutationObserver(() => { if (run()) obs.disconnect(); });
+                        obs.observe(document.body, { childList: true, subtree: true });
+                        setTimeout(() => obs.disconnect(), 5000);
+                    }
                 }
             }
         });
@@ -1550,10 +1586,9 @@
             if (context && context.name) queryParts.push(`"${context.name}"`);
 
             const finalQuery = queryParts.join(" OR ");
-            const gmailSearchUrl =
-                `https://mail.google.com/mail/u/0/#search/${encodeURIComponent(finalQuery)}`;
+            const gmailUrl = 'https://mail.google.com/mail/u/0/#inbox';
 
-            const urls = [gmailSearchUrl];
+            const urls = [gmailUrl];
 
             const orderIdFallback = storedOrderInfo && storedOrderInfo.orderId;
             let orderId = context.orderNumber || (xray ? orderIdFallback : null);
@@ -1575,7 +1610,7 @@
                 navigator.clipboard.writeText(email).catch(() => {});
             }
 
-            const data = { fennecActiveSession: getFennecSessionId() };
+            const data = { fennecActiveSession: getFennecSessionId(), fennecPendingSearch: finalQuery };
             if (!xray) {
                 Object.assign(data, {
                     fraudReviewSession: null,
