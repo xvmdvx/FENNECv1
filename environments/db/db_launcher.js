@@ -2923,13 +2923,16 @@ function getLastHoldUser() {
     function loadIntStorage(orderId) {
         const box = document.getElementById('int-storage-box');
         if (!box || !orderId) return;
+        console.log('[FENNEC (POO)] Requesting INT STORAGE for', orderId);
         box.innerHTML = '<div style="text-align:center;color:#aaa">Loading...</div>';
         bg.send('fetchIntStorage', { orderId }, resp => {
             const files = resp && Array.isArray(resp.files) ? resp.files : null;
             if (!files) {
+                console.warn('[FENNEC (POO)] INT STORAGE load failed', resp);
                 box.innerHTML = '<div style="text-align:center;color:#aaa">Failed to load</div>';
                 return;
             }
+            console.log('[FENNEC (POO)] INT STORAGE loaded', files.length);
             const list = files.map(file =>
                 `<div class="int-row" style="display:flex;justify-content:space-between;align-items:center;margin:4px 0;">` +
                 `<div style="flex:1;word-break:break-all"><b>${escapeHtml(file.name)}</b></div>` +
