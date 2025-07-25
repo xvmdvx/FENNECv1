@@ -1503,7 +1503,11 @@
         async function handleEmailSearchClick(xray = false) {
             if (searchInProgress) return;
             searchInProgress = true;
-            showLoadingState();
+            if (xray || !reviewMode) {
+                showLoadingState();
+            } else {
+                ensureIssueControls(true);
+            }
 
             const context = extractOrderContextFromEmail();
             currentContext = context;
