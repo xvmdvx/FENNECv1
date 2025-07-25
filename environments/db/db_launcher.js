@@ -1775,6 +1775,14 @@ class DBLauncher extends Launcher {
             }
         }
 
+        const intSection = `
+            <div class="section-label">INT STORAGE:</div>
+            <div id="int-storage-box" class="white-box" style="margin-bottom:10px">
+                <div style="text-align:center;color:#aaa">Loading...</div>
+            </div>`;
+        html += intSection;
+        dbSections.push(intSection);
+
         if (reviewMode) {
             const grab = label => {
                 const idx = dbSections.findIndex(s => s.includes(label));
@@ -1859,6 +1867,7 @@ class DBLauncher extends Launcher {
             if (typeof checkLastIssue === 'function') {
                 checkLastIssue(orderInfo.orderId);
             }
+            loadIntStorage(orderInfo.orderId);
             if (miscMode) {
                 setTimeout(autoOpenFamilyTree, 100);
             }
@@ -2876,6 +2885,116 @@ function getLastHoldUser() {
     window.openKbWindow = openKbWindow;
     window.startFileAlong = startFileAlong;
     window.currentOrderTypeText = currentOrderTypeText;
+
+    function loadIntStorage(orderId) {
+        const box = document.getElementById('int-storage-box');
+        if (!box || !orderId) return;
+        box.innerHTML = '<div style="text-align:center;color:#aaa">Loading...</div>';
+        fetch(`/storage/incfile/${orderId}`, { credentials: 'include' })
+            .then(r => r.text())
+            .then(html => {
+                const doc = new DOMParser().parseFromString(html, 'text/html');
+                const header = Array.from(doc.querySelectorAll('h3.box-title'))
+                    .find(h => /uploaded list/i.test(h.textContent));
+                let rows = [];
+                if (header) {
+                    const table = header.parentElement.querySelector('table');
+                    if (table) rows = Array.from(table.querySelectorAll('tbody tr'));
+                }
+                const list = rows.map(row => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length < 4) return '';
+                    const name = cells[0].textContent.trim();
+                    const date = cells[2].textContent.trim();
+                    const btn = row.querySelector('button');
+                    let url = '';
+                    if (btn) {
+                        const m = btn.getAttribute('onclick').match(/'(https?:[^']+)'/);
+                        if (m) url = m[1];
+                    }
+                    return `<div class="int-row" style="display:flex;justify-content:space-between;align-items:center;margin:4px 0;">` +
+                        `<div style="flex:1;word-break:break-all"><b>${escapeHtml(name)}</b></div>` +
+                        `<div style="flex-shrink:0;font-size:11px;color:#aaa;margin:0 8px">${escapeHtml(date)}</div>` +
+                        `<button class="copilot-button int-open" data-url="${escapeHtml(url)}">OPEN</button>` +
+                        `</div>`;
+                }).filter(Boolean).join('');
+                const filesHtml = list || '<div style="text-align:center;color:#aaa">No files</div>';
+                const uploadHtml = `
+                    <div id="int-upload-drop" style="border:1px dashed #666;padding:6px;margin-top:6px;text-align:center;cursor:pointer;">Drop files or click</div>
+                    <input id="int-upload-input" type="file" multiple style="display:none" />
+                    <div id="int-upload-list"></div>
+                    <button id="int-upload-btn" class="copilot-button" style="display:none;margin-top:6px">UPLOAD</button>`;
+                box.innerHTML = filesHtml + uploadHtml;
+                box.querySelectorAll('.int-open').forEach(b => {
+                    b.addEventListener('click', () => { const u = b.dataset.url; if (u) window.open(u, '_blank'); });
+                });
+                setupIntUpload(orderId);
+            })
+            .catch(err => {
+                console.warn('[FENNEC (POO)] Int storage fetch failed:', err);
+                box.innerHTML = '<div style="text-align:center;color:#aaa">Failed to load</div>';
+            });
+    }
+
+    function setupIntUpload(orderId) {
+        const drop = document.getElementById('int-upload-drop');
+        const input = document.getElementById('int-upload-input');
+        const list = document.getElementById('int-upload-list');
+        const btn = document.getElementById('int-upload-btn');
+        if (!drop || !input || !list || !btn) return;
+        let files = [];
+        const refresh = () => {
+            list.innerHTML = '';
+            files.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'dropped-file-row';
+                const icon = document.createElement('div');
+                icon.className = 'dropped-file-icon';
+                icon.textContent = `📎 ${item.file.name}`;
+                const nameInput = document.createElement('input');
+                nameInput.className = 'dropped-file-name';
+                nameInput.placeholder = '[CHANGE NAME]';
+                if (item.name !== item.file.name) nameInput.value = item.name;
+                nameInput.addEventListener('input', e => {
+                    item.name = e.target.value.trim() || item.file.name;
+                });
+                row.appendChild(icon);
+                row.appendChild(nameInput);
+                list.appendChild(row);
+            });
+            btn.style.display = files.length ? 'block' : 'none';
+        };
+        const handleFiles = newFiles => {
+            files.push(...Array.from(newFiles).map(f => ({ file: f, name: f.name })));
+            refresh();
+        };
+        drop.addEventListener('click', () => input.click());
+        drop.addEventListener('dragover', e => { e.preventDefault(); drop.style.background='#333'; });
+        drop.addEventListener('dragleave', () => { drop.style.background=''; });
+        drop.addEventListener('drop', e => {
+            e.preventDefault();
+            drop.style.background='';
+            handleFiles(e.dataTransfer.files || []);
+        });
+        input.addEventListener('change', () => { handleFiles(input.files); input.value=''; });
+        btn.addEventListener('click', () => {
+            if (!files.length) return;
+            btn.disabled = true;
+            const token = document.querySelector('meta[name="csrf-token"]');
+            const csrf = token ? token.getAttribute('content') : '';
+            const queue = files.slice();
+            const uploadNext = () => {
+                if (!queue.length) { btn.disabled = false; files = []; refresh(); loadIntStorage(orderId); return; }
+                const item = queue.shift();
+                const form = new FormData();
+                form.append('file', item.file, item.name);
+                fetch(`/storage/incfile/${orderId}/create`, { method:'POST', body: form, headers:{ 'X-CSRF-TOKEN': csrf }, credentials:'include' })
+                    .then(() => uploadNext())
+                    .catch(err => { console.warn('[FENNEC (POO)] Upload failed:', err); uploadNext(); });
+            };
+            uploadNext();
+        });
+    }
 
     function runFraudXray() {
         if (!fraudXray) return;
