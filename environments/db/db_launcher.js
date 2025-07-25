@@ -20,7 +20,6 @@ class DBLauncher extends Launcher {
     let reinstatementMode = false;
     let miscMode = false;
     let autoFamilyTreeDone = false;
-    let intStorageOpenedFor = null;
     let noStore = new URLSearchParams(location.search).get('fennec_no_store') === '1';
     // Tracks whether Review Mode is active across DB pages
     let reviewMode = false;
@@ -396,6 +395,16 @@ class DBLauncher extends Launcher {
             } catch (err) {
                 console.warn('[FENNEC (POO)] Error extracting subscriptions:', err);
                 sendResponse({ subs: [] });
+            }
+            return true;
+        }
+        if (msg.action === 'getIntStorageList') {
+            try {
+                const files = getIntStorageFiles();
+                sendResponse({ files });
+            } catch (err) {
+                console.warn('[FENNEC (POO)] Error extracting INT STORAGE files:', err);
+                sendResponse({ files: null });
             }
             return true;
         }
@@ -2582,6 +2591,29 @@ class DBLauncher extends Launcher {
         }).filter(Boolean);
     }
 
+    function getIntStorageFiles() {
+        const header = Array.from(document.querySelectorAll('h3.box-title'))
+            .find(h => /uploaded list/i.test(h.textContent));
+        let rows = [];
+        if (header) {
+            const table = header.parentElement.querySelector('table');
+            if (table) rows = Array.from(table.querySelectorAll('tbody tr'));
+        }
+        return rows.map(row => {
+            const cells = row.querySelectorAll('td');
+            if (cells.length < 4) return null;
+            const name = cells[0].textContent.trim();
+            const date = cells[2].textContent.trim();
+            const btn = row.querySelector('button');
+            let url = '';
+            if (btn) {
+                const m = btn.getAttribute('onclick').match(/'(https?:[^']+)'/);
+                if (m) url = m[1];
+            }
+            return { name, date, url };
+        }).filter(Boolean);
+    }
+
     function getBasicOrderInfo() {
         const m = location.pathname.match(/(?:detail|storage\/incfile)\/(\d+)/);
         const orderId = m ? m[1] : '';
@@ -2891,58 +2923,31 @@ function getLastHoldUser() {
     function loadIntStorage(orderId) {
         const box = document.getElementById('int-storage-box');
         if (!box || !orderId) return;
-        if (intStorageOpenedFor !== orderId) {
-            intStorageOpenedFor = orderId;
-            bg.openOrReuseTab({
-                url: `${location.origin}/storage/incfile/${orderId}`,
-                active: false
-            });
-        }
         box.innerHTML = '<div style="text-align:center;color:#aaa">Loading...</div>';
-        fetch(`/storage/incfile/${orderId}`, { credentials: 'include' })
-            .then(r => r.text())
-            .then(html => {
-                const doc = new DOMParser().parseFromString(html, 'text/html');
-                const header = Array.from(doc.querySelectorAll('h3.box-title'))
-                    .find(h => /uploaded list/i.test(h.textContent));
-                let rows = [];
-                if (header) {
-                    const table = header.parentElement.querySelector('table');
-                    if (table) rows = Array.from(table.querySelectorAll('tbody tr'));
-                }
-                const list = rows.map(row => {
-                    const cells = row.querySelectorAll('td');
-                    if (cells.length < 4) return '';
-                    const name = cells[0].textContent.trim();
-                    const date = cells[2].textContent.trim();
-                    const btn = row.querySelector('button');
-                    let url = '';
-                    if (btn) {
-                        const m = btn.getAttribute('onclick').match(/'(https?:[^']+)'/);
-                        if (m) url = m[1];
-                    }
-                    return `<div class="int-row" style="display:flex;justify-content:space-between;align-items:center;margin:4px 0;">` +
-                        `<div style="flex:1;word-break:break-all"><b>${escapeHtml(name)}</b></div>` +
-                        `<div style="flex-shrink:0;font-size:11px;color:#aaa;margin:0 8px">${escapeHtml(date)}</div>` +
-                        `<button class="copilot-button int-open" data-url="${escapeHtml(url)}">OPEN</button>` +
-                        `</div>`;
-                }).filter(Boolean).join('');
-                const filesHtml = list || '<div style="text-align:center;color:#aaa">No files</div>';
-                const uploadHtml = `
-                    <div id="int-upload-drop" style="border:1px dashed #666;padding:6px;margin-top:6px;text-align:center;cursor:pointer;">Drop files or click</div>
-                    <input id="int-upload-input" type="file" multiple style="display:none" />
-                    <div id="int-upload-list"></div>
-                    <button id="int-upload-btn" class="copilot-button" style="display:none;margin-top:6px">UPLOAD</button>`;
-                box.innerHTML = filesHtml + uploadHtml;
-                box.querySelectorAll('.int-open').forEach(b => {
-                    b.addEventListener('click', () => { const u = b.dataset.url; if (u) window.open(u, '_blank'); });
-                });
-                setupIntUpload(orderId);
-            })
-            .catch(err => {
-                console.warn('[FENNEC (POO)] Int storage fetch failed:', err);
+        bg.send('fetchIntStorage', { orderId }, resp => {
+            const files = resp && Array.isArray(resp.files) ? resp.files : null;
+            if (!files) {
                 box.innerHTML = '<div style="text-align:center;color:#aaa">Failed to load</div>';
+                return;
+            }
+            const list = files.map(file =>
+                `<div class="int-row" style="display:flex;justify-content:space-between;align-items:center;margin:4px 0;">` +
+                `<div style="flex:1;word-break:break-all"><b>${escapeHtml(file.name)}</b></div>` +
+                `<div style="flex-shrink:0;font-size:11px;color:#aaa;margin:0 8px">${escapeHtml(file.date)}</div>` +
+                `<button class="copilot-button int-open" data-url="${escapeHtml(file.url)}">OPEN</button>` +
+                `</div>`).join('');
+            const filesHtml = list || '<div style="text-align:center;color:#aaa">No files</div>';
+            const uploadHtml = `
+                <div id="int-upload-drop" style="border:1px dashed #666;padding:6px;margin-top:6px;text-align:center;cursor:pointer;">Drop files or click</div>
+                <input id="int-upload-input" type="file" multiple style="display:none" />
+                <div id="int-upload-list"></div>
+                <button id="int-upload-btn" class="copilot-button" style="display:none;margin-top:6px">UPLOAD</button>`;
+            box.innerHTML = filesHtml + uploadHtml;
+            box.querySelectorAll('.int-open').forEach(b => {
+                b.addEventListener('click', () => { const u = b.dataset.url; if (u) window.open(u, '_blank'); });
             });
+            setupIntUpload(orderId);
+        });
     }
 
     function setupIntUpload(orderId) {

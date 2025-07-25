@@ -272,6 +272,68 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
 
+    if (message.action === "fetchIntStorage" && message.orderId) {
+        const orderId = message.orderId;
+        let base = "https://db.incfile.com";
+        if (sender && sender.tab && sender.tab.url) {
+            try {
+                const url = new URL(sender.tab.url);
+                if (url.hostname.endsWith("incfile.com")) {
+                    base = url.origin;
+                }
+            } catch (err) {
+                console.warn("[Copilot] Invalid sender URL", sender.tab.url);
+            }
+        }
+        const url = `${base}/storage/incfile/${orderId}`;
+        const query = { url: `${url}*` };
+        let attempts = 15;
+        let delay = 1000;
+        let createdTabId = null;
+
+        const openAndFetch = () => {
+            chrome.tabs.query(query, (tabs) => {
+                let tab = tabs && tabs[0];
+                const ensureLoaded = () => {
+                    if (!tab || tab.status !== "complete") {
+                        if (attempts > 0) {
+                            if (!tab) {
+                                chrome.tabs.create({ url, active: false, windowId: sender.tab ? sender.tab.windowId : undefined }, t => {
+                                    tab = t;
+                                    createdTabId = t.id;
+                                });
+                            }
+                            setTimeout(() => {
+                                attempts--;
+                                delay = Math.min(delay * 1.5, 10000);
+                                chrome.tabs.query(query, qs => { tab = qs && qs[0]; ensureLoaded(); });
+                            }, delay);
+                        } else {
+                            console.warn(`[Copilot] INT STORAGE fetch timed out for ${orderId}`);
+                            sendResponse({ files: null });
+                            if (createdTabId) chrome.tabs.remove(createdTabId);
+                        }
+                        return;
+                    }
+                    chrome.tabs.sendMessage(tab.id, { action: "getIntStorageList" }, resp => {
+                        if (chrome.runtime.lastError) {
+                            console.warn("[Copilot] INT STORAGE extraction error:", chrome.runtime.lastError.message);
+                            sendResponse({ files: null });
+                            if (createdTabId) chrome.tabs.remove(createdTabId);
+                            return;
+                        }
+                        sendResponse(resp);
+                        if (createdTabId) chrome.tabs.remove(createdTabId);
+                    });
+                };
+                ensureLoaded();
+            });
+        };
+
+        openAndFetch();
+        return true;
+    }
+
     function fetchEmailOrders(winId, email, callback) {
         console.log('[FENNEC (POO)] fetchEmailOrders', { winId, email });
         const encoded = email ? encodeURIComponent(email) : null;

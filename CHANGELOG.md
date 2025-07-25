@@ -38,3 +38,4 @@ All notable changes to this project will be documented in this file.
 - Fixed Gmail Review Mode sidebar disappearing after using EMAIL SEARCH; summaries now remain while the email is open.
 - Fixed Gmail Review Mode SEARCH button clearing the sidebar while waiting for KOUNT or ADYEN data; existing summaries now persist.
 - Fixed DB sidebar INT STORAGE box showing "Loading..." indefinitely by opening the storage page in the background and loading the uploaded files.
+- Internal Storage box now loads documents by opening the page in a background tab, similar to the FAMILY TREE feature.
