@@ -1524,7 +1524,7 @@
             if (context && context.name) queryParts.push(`"${context.name}"`);
 
             const finalQuery = queryParts.join(" OR ");
-            const gmailUrl = 'https://mail.google.com/mail/u/0/d/AEoRXRS-1rlHJJ9ccYFKXonj8J8QRaNchYXo4jF2J8qg1SZLt0AF/#inbox';
+            const gmailUrl = `https://mail.google.com/mail/u/1/#search/${encodeURIComponent(finalQuery)}`;
 
             const urls = [gmailUrl];
 
@@ -1548,7 +1548,7 @@
                 navigator.clipboard.writeText(email).catch(() => {});
             }
 
-            const data = { fennecActiveSession: getFennecSessionId(), fennecPendingSearch: finalQuery };
+            const data = { fennecActiveSession: getFennecSessionId() };
             if (!xray) {
                 Object.assign(data, {
                     fraudReviewSession: null,
