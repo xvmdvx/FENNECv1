@@ -1245,8 +1245,12 @@
                 label.textContent = info.active ? 'ACTIVE' : 'RESOLVED';
                 label.className = 'issue-status-label ' + (info.active ? 'issue-status-active' : 'issue-status-resolved');
                 if (btn) {
-                    const activeLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
-                    if (!reviewMode || !droppedFiles.length) {
+                    if (reviewMode && droppedFiles.length) {
+                        btn.textContent = allFilesPdf(droppedFiles)
+                            ? 'UPLOAD'
+                            : 'CONVERT & UPLOAD';
+                    } else {
+                        const activeLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
                         btn.textContent = info.active ? activeLabel : 'COMMENT';
                     }
                 }
@@ -1255,7 +1259,15 @@
                 content.innerHTML = `NO ISSUE DETECTED FROM ORDER: ${link}`;
                 label.textContent = '';
                 label.className = 'issue-status-label';
-                if (btn && (!reviewMode || !droppedFiles.length)) btn.textContent = 'COMMENT';
+                if (btn) {
+                    if (reviewMode && droppedFiles.length) {
+                        btn.textContent = allFilesPdf(droppedFiles)
+                            ? 'UPLOAD'
+                            : 'CONVERT & UPLOAD';
+                    } else if (!reviewMode || !droppedFiles.length) {
+                        btn.textContent = 'COMMENT';
+                    }
+                }
             }
             updateResolveButtonLabel();
         }
