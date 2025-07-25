@@ -216,6 +216,23 @@
     font-size: 12px;
 }
 
+.dropped-file-row {
+    display: flex;
+    align-items: center;
+    margin: 4px;
+}
+
+.dropped-file-name {
+    flex: 1;
+    margin-left: 4px;
+    padding: 2px;
+    font-size: 12px;
+    border: 1px solid #888;
+    border-radius: 4px;
+    background: #fff;
+    color: #000;
+}
+
 
 /* Ensure DB sidebar sections remain readable */
 #copilot-sidebar .white-box {

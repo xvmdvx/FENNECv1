@@ -146,8 +146,9 @@
             function dedupeFiles(list) {
                 const seen = new Set();
                 return list.filter(f => {
-                    if (seen.has(f.name)) return false;
-                    seen.add(f.name);
+                    const name = (f.file || f).name;
+                    if (seen.has(name)) return false;
+                    seen.add(name);
                     return true;
                 });
             }
@@ -1776,6 +1777,7 @@ sbObj.build(`
                 }
             }
             if (area === 'local' && changes.fennecUploadDone) {
+                const info = changes.fennecUploadDone.newValue || {};
                 chrome.storage.local.remove('fennecUploadDone');
                 const box = document.getElementById('issue-summary-box');
                 if (box) {
@@ -1787,7 +1789,12 @@ sbObj.build(`
                         msg.style.color = '#0a0';
                         box.appendChild(msg);
                     }
-                    msg.textContent = 'Document converted and uploaded.';
+                    let text = info.converted ? 'Document converted' : 'Document';
+                    if (info.origName && info.origName !== info.fileName) {
+                        text += ` renamed to ${info.fileName}`;
+                    }
+                    text += ' and uploaded.';
+                    msg.textContent = text;
                     msg.style.display = 'block';
                     setTimeout(() => { if (msg) msg.style.display = 'none'; }, 3000);
                     const btn = document.getElementById('issue-resolve-btn');
@@ -1880,17 +1887,27 @@ sbObj.build(`
                 commentInput.parentNode.insertBefore(list, commentInput.nextSibling);
             }
             list.innerHTML = '';
-            droppedFiles.forEach(f => {
+            droppedFiles.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'dropped-file-row';
                 const icon = document.createElement('div');
                 icon.className = 'dropped-file-icon quick-resolve-file-icon';
-                icon.textContent = `📎 ${f.name}`;
-                list.appendChild(icon);
+                icon.textContent = `📎 ${item.file.name}`;
+                const input = document.createElement('input');
+                input.className = 'dropped-file-name';
+                input.value = item.name;
+                input.addEventListener('input', e => item.name = e.target.value);
+                row.appendChild(icon);
+                row.appendChild(input);
+                list.appendChild(row);
             });
         }
 
         function allFilesPdf(files) {
-            return files.every(f =>
-                f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
+            return files.every(f => {
+                const file = f.file || f;
+                return file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+            });
         }
 
         function updateResolveButtonLabel() {
@@ -1913,17 +1930,20 @@ sbObj.build(`
             });
         }
 
-        async function convertFileToPdf(file) {
+        async function convertFileToPdf(item) {
+            const file = item.file || item;
+            const desired = item.name || file.name;
             const { PDFDocument, StandardFonts } = window.PDFLib || {};
             const arrayBuf = await file.arrayBuffer();
             if (file.type === 'application/pdf') {
                 const data = await fileToDataURL(file);
-                return { fileName: file.name, fileData: data };
+                return { fileName: desired, fileData: data, origName: file.name, converted: false };
             }
             if (!PDFDocument) {
                 const data = await fileToDataURL(file);
-                const name = file.name.replace(/\.[^/.]+$/, '') + '.pdf';
-                return { fileName: name, fileData: data };
+                let name = desired;
+                if (!/\.pdf$/i.test(name)) name = name.replace(/\.[^/.]+$/, '') + '.pdf';
+                return { fileName: name, fileData: data, origName: file.name, converted: true };
             }
             const pdf = await PDFDocument.create();
             try {
@@ -1950,8 +1970,9 @@ sbObj.build(`
                 pdf.addPage();
             }
             const pdfData = await pdf.saveAsBase64({ dataUri: true });
-            const name = file.name.replace(/\.[^/.]+$/, '') + '.pdf';
-            return { fileName: name, fileData: pdfData };
+            let name = desired;
+            if (!/\.pdf$/i.test(name)) name = name.replace(/\.[^/.]+$/, '') + '.pdf';
+            return { fileName: name, fileData: pdfData, origName: file.name, converted: true };
         }
 
         function setupResolveButton() {
@@ -1965,7 +1986,7 @@ sbObj.build(`
                 e.stopPropagation();
                 const files = Array.from(e.dataTransfer.files || []);
                 if (files.length) {
-                    droppedFiles.push(...files);
+                    droppedFiles.push(...files.map(f => ({ file: f, name: f.name })));
                     droppedFiles = dedupeFiles(droppedFiles);
                     updateDroppedIcons();
                     updateResolveButtonLabel();
