@@ -1944,12 +1944,14 @@ sbObj.build(`
         function updateResolveButtonLabel() {
             const btn = document.getElementById('issue-resolve-btn');
             if (!btn) return;
-            if (droppedFiles.length) {
-                btn.textContent = allFilesPdf(droppedFiles) ?
-                    'UPLOAD' : 'CONVERT & UPLOAD';
+            if (reviewMode && droppedFiles.length) {
+                btn.textContent = allFilesPdf(droppedFiles)
+                    ? 'UPLOAD'
+                    : 'CONVERT & UPLOAD';
             } else {
-                btn.textContent = reviewMode ?
-                    'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
+                btn.textContent = reviewMode
+                    ? 'COMMENT & RELEASE'
+                    : 'COMMENT & RESOLVE';
             }
         }
 
