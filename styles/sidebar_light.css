@@ -393,15 +393,17 @@
     color: #0a0;
 }
 
+
 .fennec-light-mode .dropped-file-row {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     margin: 4px;
 }
 
 .fennec-light-mode .dropped-file-name {
-    flex: 1;
-    margin-left: 4px;
+    width: calc(100% - 8px);
+    margin: 2px 0 0 0;
     padding: 2px;
     font-size: 12px;
     border: 1px solid #777;
@@ -415,7 +417,10 @@
     opacity: 1;
 }
 
-
+.fennec-light-mode .quick-resolve-comment.disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
 .fennec-light-mode #fennec-trial-overlay .name-match {
     margin-left: 4px;
 }

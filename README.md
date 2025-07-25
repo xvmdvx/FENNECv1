@@ -88,7 +88,7 @@ MAIN (BUSINESS FORMATION ORDERS: SILVER, GOLD, PLATINUM)
          - Header with ACTIVE/RESOLVED tag.
          - Issue text.
          - Comment input and **COMMENT & RESOLVE** button.
-      - Multiple document uploads are supported. Each file becomes a PDF and the button label switches to **UPDATE**.
+      - Multiple document uploads are supported. The COMMENT button shows **UPLOAD** when all files are PDFs or **CONVERT & UPLOAD** if any need conversion. Each file offers a [CHANGE NAME] field below its name and the comment box is disabled while uploading.
       Quick resolve field under Issue summary
       Reuses any open DB tab for comments and resolves the issue only if active
       The comment box disappears after submission showing your comment and a
