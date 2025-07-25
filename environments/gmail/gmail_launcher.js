@@ -1672,6 +1672,7 @@ sbObj.build(`
 
         // Observador para reaplicar el padding y detectar si hay correo abierto
         let lastEmailOpen = null;
+        let clearTimer = null;
         const observer = new MutationObserver(() => {
             const sidebar = document.getElementById('copilot-sidebar');
             if (sidebar) {
@@ -1680,9 +1681,22 @@ sbObj.build(`
                 if (hasEmail !== lastEmailOpen) {
                     lastEmailOpen = hasEmail;
                     if (hasEmail) {
+                        if (clearTimer) {
+                            clearTimeout(clearTimer);
+                            clearTimer = null;
+                        }
                         refreshSidebar();
                     } else {
-                        clearSidebar();
+                        if (clearTimer) clearTimeout(clearTimer);
+                        clearTimer = setTimeout(() => {
+                            clearTimer = null;
+                            if (!isEmailOpen()) {
+                                clearSidebar();
+                            } else {
+                                lastEmailOpen = true;
+                                refreshSidebar();
+                            }
+                        }, 400);
                     }
                 }
             }
