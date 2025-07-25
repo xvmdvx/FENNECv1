@@ -32,3 +32,4 @@ All notable changes to this project will be documented in this file.
 - Fixed Gmail Review Mode showing old issue data when returning to Inbox or opening a new email; session storage now clears on pagehide.
 - Fixed Gmail inbox not clearing stored order issues; the sidebar now resets when loading `#inbox`.
 - Gmail email search now switches to the delegated account automatically before submitting the query.
+- Fixed Gmail EMAIL SEARCH button leaving focus on search results and failing to build the sidebar summaries.
