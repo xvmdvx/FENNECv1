@@ -680,7 +680,7 @@ class DBLauncher extends Launcher {
                             if (parts.length) {
                                 const query = parts.join(' OR ');
                                 sessionSet({ fennecPendingSearch: query }, () => {
-                                    const url = 'https://mail.google.com/mail/u/0/#inbox';
+                                    const url = 'https://mail.google.com/mail/u/0/d/AEoRXRS-1rlHJJ9ccYFKXonj8J8QRaNchYXo4jF2J8qg1SZLt0AF/#inbox';
                                     bg.openActiveTab({ url });
                                 });
                             }
@@ -2914,7 +2914,7 @@ function getLastHoldUser() {
         if (!client.email && parts.length) {
             const query = parts.join(' OR ');
             sessionSet({ fennecPendingSearch: query }, () => {
-                const gmailUrl = 'https://mail.google.com/mail/u/0/#inbox';
+                const gmailUrl = 'https://mail.google.com/mail/u/0/d/AEoRXRS-1rlHJJ9ccYFKXonj8J8QRaNchYXo4jF2J8qg1SZLt0AF/#inbox';
                 bg.openOrReuseTab({ url: gmailUrl, active: true });
             });
         }
