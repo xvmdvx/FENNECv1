@@ -1227,10 +1227,11 @@ class DBLauncher extends Launcher {
             {name: 'avs', label: 'avs'}
         ]);
 
-        const physicalBox = Array.from(document.querySelectorAll('#vcomp .form-body h4, #vcomp .form-body h3'))
-            .find(h => getText(h).toLowerCase().includes('physical'));
-        const mailingBox = Array.from(document.querySelectorAll('#vcomp .form-body h4, #vcomp .form-body h3'))
-            .find(h => getText(h).toLowerCase().includes('mailing'));
+        const headers = Array.from(
+            document.querySelectorAll('#vcomp .form-body h2, #vcomp .form-body h3, #vcomp .form-body h4, #vcomp .form-body h5')
+        );
+        const physicalBox = headers.find(h => /physical|principal/i.test(getText(h)));
+        const mailingBox = headers.find(h => /mailing/i.test(getText(h)));
 
         const physicalRaw = physicalBox ?
             extractSingleElement(physicalBox.closest('.white-box') || physicalBox.parentElement, [
