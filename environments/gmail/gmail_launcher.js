@@ -896,10 +896,12 @@
                     }
                     storedOrderInfo = sidebarOrderInfo;
                     fillOrderSummaryBox(currentContext);
-                } else {
+                } else if (container.innerHTML.trim() === '') {
                     container.innerHTML = '';
                     container.style.display = 'none';
                     storedOrderInfo = null;
+                } else {
+                    // keep previously loaded info until new data arrives
                 }
 
 
