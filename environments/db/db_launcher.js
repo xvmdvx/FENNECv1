@@ -20,6 +20,7 @@ class DBLauncher extends Launcher {
     let reinstatementMode = false;
     let miscMode = false;
     let autoFamilyTreeDone = false;
+    let intStorageOpenedFor = null;
     let noStore = new URLSearchParams(location.search).get('fennec_no_store') === '1';
     // Tracks whether Review Mode is active across DB pages
     let reviewMode = false;
@@ -2889,6 +2890,13 @@ function getLastHoldUser() {
     function loadIntStorage(orderId) {
         const box = document.getElementById('int-storage-box');
         if (!box || !orderId) return;
+        if (intStorageOpenedFor !== orderId) {
+            intStorageOpenedFor = orderId;
+            bg.openOrReuseTab({
+                url: `${location.origin}/storage/incfile/${orderId}`,
+                active: false
+            });
+        }
         box.innerHTML = '<div style="text-align:center;color:#aaa">Loading...</div>';
         fetch(`/storage/incfile/${orderId}`, { credentials: 'include' })
             .then(r => r.text())
