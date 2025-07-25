@@ -66,115 +66,38 @@
         }
         maintainTitle('GM');
 
-        function ensureDelegatedAccount(tries = 0) {
-            const target = 'efile1234@incfile.com';
-            const checkActive = () => {
-                const meta = document.querySelector('meta[name="og-profile-acct"]');
-                return meta && meta.content === target;
-            };
-            if (checkActive()) return Promise.resolve(true);
-            if (tries > 2) return Promise.resolve(false);
-
-            const findBtn = () =>
-                document.querySelector(
-                    'a[aria-label*="Google Account"], a[aria-label*="Cuenta de Google"], ' +
-                    'div[aria-label*="Google Account"], div[aria-label*="Cuenta de Google"]'
-                );
-            const findDelegate = () => {
-                const direct = document.querySelector(`[data-email="${target}"]`);
-                if (direct) return direct;
-                const els = Array.from(document.querySelectorAll('a, [role="menuitem"]'));
-                return els.find(e => (e.textContent || '').includes(target));
-            };
-
-            return new Promise(resolve => {
-                const ensureSelected = () => {
-                    const wait = setInterval(() => {
-                        if (checkActive()) { clearInterval(wait); resolve(true); }
-                    }, 100);
-                    setTimeout(() => {
-                        clearInterval(wait);
-                        if (checkActive()) resolve(true);
-                        else ensureDelegatedAccount(tries + 1).then(resolve);
-                    }, 5000);
-                };
-
-                const selectAccount = () => {
-                    const el = findDelegate();
-                    if (el) {
-                        el.click();
-                        ensureSelected();
-                        return true;
-                    }
-                    return false;
-                };
-
-                const openMenu = () => {
-                    const btn = findBtn();
-                    if (btn) {
-                        btn.click();
-                        if (!selectAccount()) {
-                            const menuObs = new MutationObserver(() => {
-                                if (selectAccount()) menuObs.disconnect();
-                            });
-                            menuObs.observe(document.body, { childList: true, subtree: true });
-                            setTimeout(() => {
-                                menuObs.disconnect();
-                                if (checkActive()) resolve(true);
-                                else ensureDelegatedAccount(tries + 1).then(resolve);
-                            }, 5000);
-                        }
-                        return true;
-                    }
-                    return false;
-                };
-
-                if (!openMenu()) {
-                    const btnObs = new MutationObserver(() => {
-                        if (openMenu()) btnObs.disconnect();
-                    });
-                    btnObs.observe(document.body, { childList: true, subtree: true });
-                    setTimeout(() => {
-                        btnObs.disconnect();
-                        if (checkActive()) resolve(true);
-                        else ensureDelegatedAccount(tries + 1).then(resolve);
-                    }, 5000);
+        function runSearch(query) {
+            const attempt = () => {
+                const input = document.querySelector('input[name="q"]');
+                if (input) {
+                    input.value = query;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    const form = input.form;
+                    if (form) form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                    return true;
                 }
-            });
+                return false;
+            };
+            if (!attempt()) {
+                const obs = new MutationObserver(() => { if (attempt()) obs.disconnect(); });
+                obs.observe(document.body, { childList: true, subtree: true });
+                setTimeout(() => obs.disconnect(), 5000);
+            }
         }
 
-        ensureDelegatedAccount().then(switched => {
-            function runSearch(query) {
-                const attempt = () => {
-                    const input = document.querySelector('input[name="q"]');
-                    if (input) {
-                        input.value = query;
-                        input.dispatchEvent(new Event('input', { bubbles: true }));
-                        const form = input.form;
-                        if (form) form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-                        return true;
-                    }
-                    return false;
-                };
-                if (!attempt()) {
-                    const obs = new MutationObserver(() => { if (attempt()) obs.disconnect(); });
-                    obs.observe(document.body, { childList: true, subtree: true });
-                    setTimeout(() => obs.disconnect(), 5000);
-                }
-            }
-
-            if (switched && location.hash.startsWith('#search/')) {
+        {
+            if (location.hash.startsWith('#search/')) {
                 const q = decodeURIComponent(location.hash.replace(/^#search\//, ''));
                 runSearch(q);
             }
 
             chrome.storage.local.get({ fennecPendingSearch: null }, ({ fennecPendingSearch }) => {
-                if (fennecPendingSearch && switched) {
+                if (fennecPendingSearch) {
                     chrome.storage.local.remove('fennecPendingSearch');
                     runSearch(fennecPendingSearch);
                 }
             });
-        });
+        }
 
         chrome.storage.onChanged.addListener((changes, area) => {
             if (area === 'local' && changes.fennecPendingSearch) {
@@ -1601,7 +1524,7 @@
             if (context && context.name) queryParts.push(`"${context.name}"`);
 
             const finalQuery = queryParts.join(" OR ");
-            const gmailUrl = 'https://mail.google.com/mail/u/0/#inbox';
+            const gmailUrl = 'https://mail.google.com/mail/u/0/d/AEoRXRS-1rlHJJ9ccYFKXonj8J8QRaNchYXo4jF2J8qg1SZLt0AF/#inbox';
 
             const urls = [gmailUrl];
 
