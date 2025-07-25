@@ -286,51 +286,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
         }
         const url = `${base}/storage/incfile/${orderId}`;
-        const query = { url: `${url}*` };
-        let attempts = 15;
-        let delay = 1000;
-        let createdTabId = null;
-
-        const openAndFetch = () => {
-            chrome.tabs.query(query, (tabs) => {
-                let tab = tabs && tabs[0];
-                const ensureLoaded = () => {
-                    if (!tab || tab.status !== "complete") {
-                        if (attempts > 0) {
-                            if (!tab) {
-                                chrome.tabs.create({ url, active: false, windowId: sender.tab ? sender.tab.windowId : undefined }, t => {
-                                    tab = t;
-                                    createdTabId = t.id;
-                                });
-                            }
-                            setTimeout(() => {
-                                attempts--;
-                                delay = Math.min(delay * 1.5, 10000);
-                                chrome.tabs.query(query, qs => { tab = qs && qs[0]; ensureLoaded(); });
-                            }, delay);
-                        } else {
-                            console.warn(`[Copilot] INT STORAGE fetch timed out for ${orderId}`);
-                            sendResponse({ files: null });
-                            if (createdTabId) chrome.tabs.remove(createdTabId);
-                        }
-                        return;
+        fennecBackground.openOrReuseTab({
+            url,
+            active: false,
+            windowId: sender.tab ? sender.tab.windowId : undefined
+        });
+        fetch(url, { credentials: "include" })
+            .then(r => r.text())
+            .then(html => {
+                const doc = new DOMParser().parseFromString(html, "text/html");
+                const header = Array.from(doc.querySelectorAll("h3.box-title"))
+                    .find(h => /uploaded list/i.test(h.textContent));
+                let rows = [];
+                if (header) {
+                    const table = header.parentElement.querySelector("table");
+                    if (table) rows = Array.from(table.querySelectorAll("tbody tr"));
+                }
+                const files = rows.map(row => {
+                    const cells = row.querySelectorAll("td");
+                    if (cells.length < 4) return null;
+                    const name = cells[0].textContent.trim();
+                    const date = cells[2].textContent.trim();
+                    const btn = row.querySelector("button");
+                    let fileUrl = "";
+                    if (btn) {
+                        const m = btn.getAttribute("onclick").match(/'(https?:[^']+)'/);
+                        if (m) fileUrl = m[1];
                     }
-                    chrome.tabs.sendMessage(tab.id, { action: "getIntStorageList" }, resp => {
-                        if (chrome.runtime.lastError) {
-                            console.warn("[Copilot] INT STORAGE extraction error:", chrome.runtime.lastError.message);
-                            sendResponse({ files: null });
-                            if (createdTabId) chrome.tabs.remove(createdTabId);
-                            return;
-                        }
-                        sendResponse(resp);
-                        if (createdTabId) chrome.tabs.remove(createdTabId);
-                    });
-                };
-                ensureLoaded();
+                    return { name, date, url: fileUrl };
+                }).filter(Boolean);
+                sendResponse({ files });
+            })
+            .catch(err => {
+                console.warn("[Copilot] INT STORAGE extraction error:", err);
+                sendResponse({ files: null });
             });
-        };
-
-        openAndFetch();
         return true;
     }
 
