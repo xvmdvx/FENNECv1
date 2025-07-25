@@ -1255,6 +1255,7 @@
                 label.className = 'issue-status-label';
                 if (btn) btn.textContent = 'COMMENT';
             }
+            updateResolveButtonLabel();
         }
 
         function checkLastIssue(orderId) {
