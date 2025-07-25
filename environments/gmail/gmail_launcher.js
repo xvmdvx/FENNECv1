@@ -1246,14 +1246,16 @@
                 label.className = 'issue-status-label ' + (info.active ? 'issue-status-active' : 'issue-status-resolved');
                 if (btn) {
                     const activeLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
-                    btn.textContent = info.active ? activeLabel : 'COMMENT';
+                    if (!reviewMode || !droppedFiles.length) {
+                        btn.textContent = info.active ? activeLabel : 'COMMENT';
+                    }
                 }
             } else {
                 const link = orderId ? `<a href="https://db.incfile.com/incfile/order/detail/${orderId}" target="_blank">${orderId}</a>` : '';
                 content.innerHTML = `NO ISSUE DETECTED FROM ORDER: ${link}`;
                 label.textContent = '';
                 label.className = 'issue-status-label';
-                if (btn) btn.textContent = 'COMMENT';
+                if (btn && (!reviewMode || !droppedFiles.length)) btn.textContent = 'COMMENT';
             }
             updateResolveButtonLabel();
         }
