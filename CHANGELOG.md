@@ -37,3 +37,4 @@ All notable changes to this project will be documented in this file.
 - Issue box uploads disable the comment field; each file shows a rename field below its name and the action button reads **UPLOAD** or **CONVERT & UPLOAD** depending on file types.
 - Fixed Gmail Review Mode sidebar disappearing after using EMAIL SEARCH; summaries now remain while the email is open.
 - Fixed Gmail Review Mode SEARCH button clearing the sidebar while waiting for KOUNT or ADYEN data; existing summaries now persist.
+- Fixed DB sidebar INT STORAGE box showing "Loading..." indefinitely by opening the storage page in the background and loading the uploaded files.
