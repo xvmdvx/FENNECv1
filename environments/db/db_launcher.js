@@ -2921,11 +2921,16 @@ function getLastHoldUser() {
     window.currentOrderTypeText = currentOrderTypeText;
 
     function loadIntStorage(orderId) {
-        const box = document.getElementById('int-storage-box');
-        if (!box || !orderId) return;
+        if (!orderId) return;
+        const setLoading = () => {
+            const bx = document.getElementById('int-storage-box');
+            if (bx) bx.innerHTML = '<div style="text-align:center;color:#aaa">Loading...</div>';
+        };
+        setLoading();
         console.log('[FENNEC (POO)] Requesting INT STORAGE for', orderId);
-        box.innerHTML = '<div style="text-align:center;color:#aaa">Loading...</div>';
         bg.send('fetchIntStorage', { orderId }, resp => {
+            const box = document.getElementById('int-storage-box');
+            if (!box) return;
             const files = resp && Array.isArray(resp.files) ? resp.files : null;
             if (!files) {
                 console.warn('[FENNEC (POO)] INT STORAGE load failed', resp);
