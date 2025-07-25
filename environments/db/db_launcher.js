@@ -679,10 +679,8 @@ class DBLauncher extends Launcher {
                             if (client.name) parts.push(`"${client.name}"`);
                             if (parts.length) {
                                 const query = parts.join(' OR ');
-                                sessionSet({ fennecPendingSearch: query }, () => {
-                                    const url = 'https://mail.google.com/mail/u/0/d/AEoRXRS-1rlHJJ9ccYFKXonj8J8QRaNchYXo4jF2J8qg1SZLt0AF/#inbox';
-                                    bg.openActiveTab({ url });
-                                });
+                                const url = `https://mail.google.com/mail/u/1/#search/${encodeURIComponent(query)}`;
+                                bg.openActiveTab({ url });
                             }
                         });
 
@@ -2913,10 +2911,8 @@ function getLastHoldUser() {
         if (client.name) parts.push(`"${client.name}"`);
         if (!client.email && parts.length) {
             const query = parts.join(' OR ');
-            sessionSet({ fennecPendingSearch: query }, () => {
-                const gmailUrl = 'https://mail.google.com/mail/u/0/d/AEoRXRS-1rlHJJ9ccYFKXonj8J8QRaNchYXo4jF2J8qg1SZLt0AF/#inbox';
-                bg.openOrReuseTab({ url: gmailUrl, active: true });
-            });
+            const gmailUrl = `https://mail.google.com/mail/u/1/#search/${encodeURIComponent(query)}`;
+            bg.openOrReuseTab({ url: gmailUrl, active: true });
         }
         if (client.email) {
             const searchUrl = `https://db.incfile.com/order-tracker/orders/order-search?fennec_email=${encodeURIComponent(client.email)}`;
