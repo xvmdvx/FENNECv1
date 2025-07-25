@@ -2349,7 +2349,8 @@ class DBLauncher extends Launcher {
         chrome.storage.local.remove('fennecPendingUpload');
         const token = document.querySelector('meta[name="csrf-token"]');
         const csrf = token ? token.getAttribute('content') : '';
-        const files = Array.isArray(data.files) ? data.files : [{ fileName: data.fileName, fileData: data.fileData }];
+        const files = Array.isArray(data.files) ? data.files
+            : [{ fileName: data.fileName, fileData: data.fileData, origName: data.origName, converted: data.converted }];
         const uploadNext = () => {
             if (!files.length) {
                 if (data.comment || data.release) {
@@ -2368,7 +2369,7 @@ class DBLauncher extends Launcher {
                     credentials: 'include'
                 });
             }).then(() => {
-                sessionSet({ fennecUploadDone: { time: Date.now() } }, uploadNext);
+                sessionSet({ fennecUploadDone: { time: Date.now(), fileName: file.fileName, origName: file.origName, converted: !!file.converted } }, uploadNext);
             }).catch(err => { console.warn('[FENNEC (POO)] Upload failed:', err); uploadNext(); });
         };
         uploadNext();

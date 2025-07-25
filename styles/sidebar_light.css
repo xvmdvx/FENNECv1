@@ -393,6 +393,23 @@
     color: #0a0;
 }
 
+.fennec-light-mode .dropped-file-row {
+    display: flex;
+    align-items: center;
+    margin: 4px;
+}
+
+.fennec-light-mode .dropped-file-name {
+    flex: 1;
+    margin-left: 4px;
+    padding: 2px;
+    font-size: 12px;
+    border: 1px solid #777;
+    border-radius: 4px;
+    background: #fff;
+    color: #000;
+}
+
 
 .fennec-light-mode #fennec-trial-overlay .name-match {
     margin-left: 4px;
