@@ -33,3 +33,5 @@ All notable changes to this project will be documented in this file.
 - Fixed Gmail inbox not clearing stored order issues; the sidebar now resets when loading `#inbox`.
 - Gmail email search now switches to the delegated account automatically before submitting the query.
 - Fixed Gmail EMAIL SEARCH button leaving focus on search results and failing to build the sidebar summaries.
+- Gmail EMAIL SEARCH now keeps the current email open so the sidebar remains visible until the message is closed.
+- Issue box uploads disable the comment field; each file shows a rename field below its name and the action button reads **UPLOAD** or **CONVERT & UPLOAD** depending on file types.

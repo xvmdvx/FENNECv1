@@ -1325,6 +1325,8 @@
                 droppedFiles = [];
                 const list = document.getElementById('dropped-file-list');
                 if (list) list.remove();
+                input.disabled = false;
+                input.classList.remove('disabled');
                 updateResolveButtonLabel();
                 let btn = document.getElementById('issue-resolve-btn');
                 const btnLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
@@ -1380,6 +1382,8 @@
                 droppedFiles = [];
                 const list = document.getElementById('dropped-file-list');
                 if (list) list.remove();
+                input.disabled = false;
+                input.classList.remove('disabled');
                 updateResolveButtonLabel();
             }
             let btn = document.getElementById('issue-resolve-btn');
@@ -1568,7 +1572,9 @@
                 localStorage.removeItem('fraudXrayFinished');
             }
             sessionSet(data, () => {
-                bg.replaceTabs({ urls, refocus: true, activeFirst: false });
+                urls.forEach(url => {
+                    bg.openOrReuseTab({ url, active: false });
+                });
                 setTimeout(() => { searchInProgress = false; }, 1000);
             });
             if (orderId) {
@@ -1802,6 +1808,11 @@ sbObj.build(`
                     droppedFiles = [];
                     const list = document.getElementById('dropped-file-list');
                     if (list) list.remove();
+                    const commentInput = document.getElementById('issue-comment-input');
+                    if (commentInput) {
+                        commentInput.disabled = false;
+                        commentInput.classList.remove('disabled');
+                    }
                     updateResolveButtonLabel();
                 }
             }
@@ -1904,6 +1915,9 @@ sbObj.build(`
                 row.appendChild(input);
                 list.appendChild(row);
             });
+            commentInput.disabled = droppedFiles.length > 0;
+            commentInput.classList.toggle('disabled', droppedFiles.length > 0);
+            updateResolveButtonLabel();
         }
 
         function allFilesPdf(files) {
@@ -2029,6 +2043,8 @@ sbObj.build(`
                             droppedFiles = [];
                             const list = document.getElementById('dropped-file-list');
                             if (list) list.remove();
+                            commentInput.disabled = false;
+                            commentInput.classList.remove('disabled');
                             updateResolveButtonLabel();
                         });
                     });
