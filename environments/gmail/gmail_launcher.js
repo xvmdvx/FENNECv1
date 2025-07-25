@@ -1327,7 +1327,6 @@
                 if (list) list.remove();
                 input.disabled = false;
                 input.classList.remove('disabled');
-                updateResolveButtonLabel();
                 let btn = document.getElementById('issue-resolve-btn');
                 const btnLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
                 if (!btn) {
@@ -1340,6 +1339,7 @@
                 } else {
                     btn.textContent = btnLabel;
                 }
+                updateResolveButtonLabel();
                 const updBtn = document.getElementById('update-info-btn');
                 if (updBtn) issueBox.appendChild(updBtn);
                 if (issueContent) issueContent.innerHTML = icon;
@@ -1672,20 +1672,28 @@ sbObj.build(`
 
         // Observador para reaplicar el padding y detectar si hay correo abierto
         let lastEmailOpen = null;
+        let clearTimer = null;
         const observer = new MutationObserver(() => {
             const sidebar = document.getElementById('copilot-sidebar');
-            if (sidebar) {
-                applyPaddingToMainPanels();
-                const hasEmail = isEmailOpen();
-                if (hasEmail !== lastEmailOpen) {
-                    lastEmailOpen = hasEmail;
-                    if (hasEmail) {
-                        refreshSidebar();
-                    } else {
-                        clearSidebar();
-                    }
+            if (!sidebar) return;
+            applyPaddingToMainPanels();
+            const hasEmail = isEmailOpen();
+            if (hasEmail) {
+                if (clearTimer) { clearTimeout(clearTimer); clearTimer = null; }
+                if (lastEmailOpen !== true) {
+                    lastEmailOpen = true;
+                    refreshSidebar();
                 }
+                return;
             }
+            if (lastEmailOpen === false) return;
+            if (clearTimer) clearTimeout(clearTimer);
+            clearTimer = setTimeout(() => {
+                if (!isEmailOpen()) {
+                    lastEmailOpen = false;
+                    clearSidebar();
+                }
+            }, 500);
         });
         observer.observe(document.body, { childList: true, subtree: true });
 
