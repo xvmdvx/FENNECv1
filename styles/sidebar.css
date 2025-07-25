@@ -233,6 +233,11 @@
     color: #000;
 }
 
+.dropped-file-name::placeholder {
+    color: #888;
+    opacity: 1;
+}
+
 
 /* Ensure DB sidebar sections remain readable */
 #copilot-sidebar .white-box {

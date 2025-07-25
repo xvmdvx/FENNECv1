@@ -410,6 +410,11 @@
     color: #000;
 }
 
+.fennec-light-mode .dropped-file-name::placeholder {
+    color: #777;
+    opacity: 1;
+}
+
 
 .fennec-light-mode #fennec-trial-overlay .name-match {
     margin-left: 4px;

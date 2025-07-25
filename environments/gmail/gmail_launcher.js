@@ -1568,7 +1568,7 @@
                 localStorage.removeItem('fraudXrayFinished');
             }
             sessionSet(data, () => {
-                bg.replaceTabs({ urls, refocus: xray, activeFirst: true });
+                bg.replaceTabs({ urls, refocus: true, activeFirst: false });
                 setTimeout(() => { searchInProgress = false; }, 1000);
             });
             if (orderId) {
@@ -1895,8 +1895,11 @@ sbObj.build(`
                 icon.textContent = `📎 ${item.file.name}`;
                 const input = document.createElement('input');
                 input.className = 'dropped-file-name';
-                input.value = item.name;
-                input.addEventListener('input', e => item.name = e.target.value);
+                input.placeholder = '[CHANGE NAME]';
+                if (item.name !== item.file.name) input.value = item.name;
+                input.addEventListener('input', e => {
+                    item.name = e.target.value.trim() || item.file.name;
+                });
                 row.appendChild(icon);
                 row.appendChild(input);
                 list.appendChild(row);
