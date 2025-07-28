@@ -4,10 +4,39 @@ class AdyenLauncher extends Launcher {
     init() {
     if (window.top !== window) return;
     const bg = fennecMessenger;
-    chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
+    
+    // Check if extension is enabled and get review mode status
+    chrome.storage.local.get({ extensionEnabled: true, fennecReviewMode: false }, ({ extensionEnabled, fennecReviewMode }) => {
         if (!extensionEnabled) {
             console.log('[FENNEC (POO)] Extension disabled, skipping Adyen launcher.');
             return;
+        }
+
+        // Check if this is a flow-triggered open or manual open
+        const params = new URLSearchParams(window.location.search);
+        const orderParam = params.get('fennec_order');
+        const isFlowTriggered = orderParam && fennecReviewMode;
+        const isManualOpen = !orderParam;
+        
+        // If not in review mode and not manually opened, don't initialize
+        if (!fennecReviewMode && !isManualOpen) {
+            console.log('[FENNEC (POO)] Adyen opened outside review mode and not manually opened, skipping initialization.');
+            return;
+        }
+        
+        // If manually opened in review mode, don't inject sidebar (just open tab)
+        if (isManualOpen && fennecReviewMode) {
+            console.log('[FENNEC (POO)] Adyen manually opened in review mode, tab only (no sidebar).');
+            return;
+        }
+        
+        // If flow-triggered, check if flow is already completed
+        if (isFlowTriggered) {
+            const flowKey = `fennecAdyenFlowCompleted_${orderParam}`;
+            if (localStorage.getItem(flowKey)) {
+                console.log('[FENNEC (POO)] Adyen flow already completed, skipping initialization.');
+                return;
+            }
         }
 
         chrome.storage.local.get({ fennecActiveSession: null }, ({ fennecActiveSession }) => {
@@ -18,8 +47,6 @@ class AdyenLauncher extends Launcher {
         });
 
         try {
-            const params = new URLSearchParams(window.location.search);
-            const orderParam = params.get('fennec_order');
             if (orderParam) {
                 sessionStorage.setItem('fennec_order', orderParam);
             }
@@ -79,6 +106,14 @@ class AdyenLauncher extends Launcher {
                 chrome.storage.local.get({ adyenDnaInfo: {} }, ({ adyenDnaInfo }) => {
                     const updated = Object.assign({}, adyenDnaInfo, part);
                     sessionSet({ adyenDnaInfo: updated });
+                    
+                    // Mark ADYEN flow as completed if this is a flow-triggered session
+                    const order = sessionStorage.getItem('fennec_order');
+                    if (order) {
+                        const flowKey = `fennecAdyenFlowCompleted_${order}`;
+                        localStorage.setItem(flowKey, '1');
+                        console.log('[FENNEC (POO)] ADYEN flow completed for order:', order);
+                    }
                 });
             }
 
@@ -530,7 +565,7 @@ class AdyenLauncher extends Launcher {
                                 checkLastIssue(order);
                             });
                         });
-                    });
+                    }
                 } else {
                     showInitialStatus();
                 }
@@ -622,6 +657,17 @@ class AdyenLauncher extends Launcher {
                     // Mark XRAY as finished and focus DB search
                     localStorage.setItem('fraudXrayFinished', '1');
                     sessionSet({ fraudXrayFinished: '1' });
+                    
+                    // Mark ADYEN and KOUNT flows as completed
+                    const order = sessionStorage.getItem('fennec_order');
+                    if (order) {
+                        const adyenFlowKey = `fennecAdyenFlowCompleted_${order}`;
+                        const kountFlowKey = `fennecKountFlowCompleted_${order}`;
+                        localStorage.setItem(adyenFlowKey, '1');
+                        localStorage.setItem(kountFlowKey, '1');
+                        console.log('[FENNEC (POO)] Fraud XRAY flow completed for order:', order);
+                    }
+                    
                     chrome.storage.local.get({ sidebarOrderInfo: null }, ({ sidebarOrderInfo }) => {
                         const email = sidebarOrderInfo ? sidebarOrderInfo.clientEmail : null;
                         bg.send('focusDbSearch', { email });

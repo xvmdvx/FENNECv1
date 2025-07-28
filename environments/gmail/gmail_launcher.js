@@ -1610,14 +1610,14 @@
 sbObj.build(`
                 ${buildSidebarHeader()}
                 <div class="order-summary-header">
-                    <button id="btn-xray" class="copilot-button">🩻 XRAY</button>
+                    ${reviewMode ? `<button id="btn-xray" class="copilot-button">🩻 XRAY</button>` : ''}
                     <button id="btn-email-search" class="copilot-button">📧 SEARCH</button>
                 </div>
                 <div class="copilot-body">
-                    <div class="copilot-dna">
+                    ${reviewMode ? `<div class="copilot-dna">
                         <div id="dna-summary" style="margin-top:16px"></div>
                         <div id="kount-summary" style="margin-top:10px"></div>
-                    </div>
+                    </div>` : ''}
                     <div class="order-summary-box">
                         <div id="order-summary-content" style="color:#ccc; font-size:13px;">
                             No order data yet.
@@ -1678,8 +1678,10 @@ sbObj.build(`
             setupResolveButton();
             setupUpdateButton();
             applyReviewMode();
-            loadDnaSummary();
-            loadKountSummary();
+            if (reviewMode) {
+                loadDnaSummary();
+                loadKountSummary();
+            }
         }
 
         function injectSidebarIfMissing() {

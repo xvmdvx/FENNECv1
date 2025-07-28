@@ -45,9 +45,45 @@ function saveState() {
 
 function resetExtension() {
     if (!confirm("Reset all FENNEC (POO) data and reload?")) return;
+    
+    // Clear all storage types
     chrome.storage.local.clear(() => {
         chrome.storage.sync.clear(() => {
-            chrome.runtime.reload();
+            // Send reset message to background script
+            chrome.runtime.sendMessage({ action: 'reset' }, () => {
+                // Clear session storage and local storage for all tabs
+                const urls = [
+                    "https://mail.google.com/*",
+                    "https://*.incfile.com/incfile/order/detail/*",
+                    "https://*.incfile.com/storage/incfile/*",
+                    "https://db.incfile.com/order-tracker/orders/fraud*",
+                    "https://tools.usps.com/*",
+                    "https://*.adyen.com/*",
+                    "https://*.kount.com/*"
+                ];
+                
+                chrome.tabs.query({ url: urls }, tabs => {
+                    // Clear storage and reload each tab
+                    tabs.forEach(tab => {
+                        chrome.tabs.sendMessage(
+                            tab.id,
+                            { 
+                                action: "fennecReset",
+                                clearStorage: true
+                            },
+                            () => {
+                                // Always reload the tab to ensure fresh state
+                                chrome.tabs.reload(tab.id, { bypassCache: true });
+                            }
+                        );
+                    });
+                    
+                    // Reload the extension after clearing storage
+                    setTimeout(() => {
+                        chrome.runtime.reload();
+                    }, 1000); // Small delay to ensure tabs are reloading
+                });
+            });
         });
     });
 }

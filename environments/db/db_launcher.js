@@ -41,6 +41,7 @@ class DBLauncher extends Launcher {
     }
     let subCheck = new URLSearchParams(location.search).get('fennec_sub_check') === '1';
     const currentId = (location.pathname.match(/(?:detail|storage\/incfile)\/(\d+)/) || [])[1];
+    
     chrome.storage.local.get({ forceFraudXray: null }, ({ forceFraudXray }) => {
         if (forceFraudXray && currentId && String(forceFraudXray) === currentId) {
             fraudXray = true;
@@ -135,6 +136,7 @@ class DBLauncher extends Launcher {
             }
         });
     }
+    
     // Map of US states to their SOS business search pages (name and ID)
     const SOS_URLS = {
         "Alabama": {
@@ -471,6 +473,22 @@ class DBLauncher extends Launcher {
             bLabel.style.display = reviewMode ? '' : 'none';
             bBox.style.display = reviewMode ? '' : 'none';
         }
+        
+        // Handle DNA/Kount content for storage pages when switching REVIEW MODE
+        const isStorage = /\/storage\/incfile\//.test(location.pathname);
+        if (isStorage) {
+            const body = document.getElementById('copilot-body-content');
+            if (body) {
+                const dnaSection = body.querySelector('.copilot-dna');
+                if (!reviewMode && dnaSection) {
+                    // Remove DNA/Kount section when switching to REVIEW MODE OFF
+                    dnaSection.remove();
+                } else if (reviewMode && !dnaSection) {
+                    // Reload content with DNA/Kount when switching to REVIEW MODE ON
+                    loadStoredSummary();
+                }
+            }
+        }
     }
 
     chrome.storage.local.get({ extensionEnabled: true, lightMode: false, fennecReviewMode: false, fennecDevMode: false }, ({ extensionEnabled, lightMode, fennecReviewMode, fennecDevMode }) => {
@@ -490,6 +508,100 @@ class DBLauncher extends Launcher {
             chrome.storage.sync.set({ fennecReviewMode: true });
         }
         devMode = fennecDevMode;
+        
+        // Check if this is a manually opened INTERNAL STORAGE page
+        const isStorage = /\/storage\/incfile\//.test(location.pathname);
+        if (isStorage && currentId) {
+            // This is a storage page, check if we have order information available
+            console.log('[FENNEC (POO)] Detected INTERNAL STORAGE page for order:', currentId);
+            
+            // Check if order information is available from previous order page visit
+            function checkAndLoadOrderInfoForStorage() {
+                chrome.storage.local.get({ sidebarOrderId: null, sidebarDb: [] }, ({ sidebarOrderId, sidebarDb }) => {
+                    // Only show order info if we have data from a previous order page visit
+                    if (sidebarOrderId && sidebarDb && sidebarDb.length > 0) {
+                        console.log('[FENNEC (POO)] Order information available, loading sidebar for storage page');
+                        
+                        // Set the order ID in session storage for consistency
+                        sessionStorage.setItem('fennec_order', sidebarOrderId);
+                        
+                        // Initialize sidebar with existing data
+                        setTimeout(() => {
+                            if (typeof initSidebar === 'function') {
+                                initSidebar();
+                                
+                                // For storage pages, ensure we only show basic order layout when REVIEW MODE is off
+                                if (!reviewMode) {
+                                    const body = document.getElementById('copilot-body-content');
+                                    if (body) {
+                                        // Clear any existing DNA/Kount content first
+                                        const dnaSection = body.querySelector('.copilot-dna');
+                                        if (dnaSection) {
+                                            dnaSection.remove();
+                                        }
+                                        
+                                        // Load basic order information without DNA/Kount sections
+                                        const currentId = getBasicOrderInfo().orderId;
+                                        chrome.storage.local.get({ sidebarDb: [], sidebarOrderId: null }, ({ sidebarDb, sidebarOrderId }) => {
+                                            if (Array.isArray(sidebarDb) && sidebarDb.length && sidebarOrderId && sidebarOrderId === currentId) {
+                                                // Filter out DNA/Kount sections for storage pages when REVIEW MODE is off
+                                                const filteredContent = sidebarDb.filter(section => 
+                                                    !section.includes('copilot-dna') && 
+                                                    !section.includes('dna-summary') && 
+                                                    !section.includes('kount-summary') &&
+                                                    !section.includes('ADYEN') &&
+                                                    !section.includes('KOUNT')
+                                                );
+                                                body.innerHTML = filteredContent.join('');
+                                                if (typeof initQuickSummary === 'function') initQuickSummary();
+                                                attachCommonListeners(body);
+                                                updateReviewDisplay();
+                                                insertDnaAfterCompany();
+                                                if (typeof applyStandardSectionOrder === 'function') {
+                                                    applyStandardSectionOrder(body.querySelector('#db-summary-section'));
+                                                }
+                                                if (typeof checkLastIssue === 'function') {
+                                                    checkLastIssue(currentId);
+                                                }
+                                                if (miscMode) {
+                                                    setTimeout(autoOpenFamilyTree, 100);
+                                                }
+                                            } else {
+                                                body.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:40px">No DB data.</div>';
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    // When REVIEW MODE is ON, show full order information including DNA/Kount
+                                    loadStoredSummary();
+                                }
+                            }
+                        }, 500);
+                    } else {
+                        console.log('[FENNEC (POO)] No order information available for storage page');
+                        
+                        // Show "NO ORDER INFO AVAILABLE" message
+                        setTimeout(() => {
+                            if (typeof initSidebar === 'function') {
+                                initSidebar();
+                                const body = document.getElementById('copilot-body-content');
+                                if (body) {
+                                    body.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:40px">NO ORDER INFO AVAILABLE</div>';
+                                }
+                            }
+                        }, 500);
+                    }
+                });
+            }
+            
+            // Wait for DOM to be ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', checkAndLoadOrderInfoForStorage);
+            } else {
+                checkAndLoadOrderInfoForStorage();
+            }
+        }
+        
         try {
         function initSidebar() {
             if (sessionStorage.getItem("fennecSidebarClosed") === "true") { showFloatingIcon(); return; }
@@ -518,10 +630,10 @@ class DBLauncher extends Launcher {
                         ${buildSidebarHeader()}
                         <div class="order-summary-header"><span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span> ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
                         <div class="copilot-body" id="copilot-body-content">
-                            <div class="copilot-dna">
+                            ${reviewMode ? `<div class="copilot-dna">
                                 <div id="dna-summary" style="margin-top:16px"></div>
                                 <div id="kount-summary" style="margin-top:10px"></div>
-                            </div>
+                            </div>` : ''}
                             <div style="text-align:center; color:#888; margin-top:20px;">Cargando resumen...</div>
                             <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
                                 <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
@@ -595,8 +707,10 @@ class DBLauncher extends Launcher {
                                 extractAndShowFormationData();
                             }
                         }
-                        loadDnaSummary();
-                        loadKountSummary();
+                        if (reviewMode) {
+                            loadDnaSummary();
+                            loadKountSummary();
+                        }
                         if (fraudXray) {
                             const trigger = () => setTimeout(runFraudXray, 500);
                             if (document.readyState === 'complete') {
@@ -778,6 +892,26 @@ class DBLauncher extends Launcher {
         return true;
     }
 
+    function formatAddressForUSPS(addr) {
+        if (!isValidField(addr)) return '';
+        
+        // Clean the address string
+        let cleanAddr = addr.trim();
+        
+        // Remove country codes like "US" at the end
+        cleanAddr = cleanAddr.replace(/,\s*US\s*$/i, '');
+        cleanAddr = cleanAddr.replace(/,\s*USA\s*$/i, '');
+        cleanAddr = cleanAddr.replace(/,\s*United States\s*$/i, '');
+        
+        // Remove any extra commas and normalize spacing
+        cleanAddr = cleanAddr.replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
+        
+        // Remove trailing commas
+        cleanAddr = cleanAddr.replace(/,\s*$/, '');
+        
+        return cleanAddr;
+    }
+
     function renderAddress(addr, isVA = false) {
         if (!isValidField(addr)) return '';
         const parts = addr.split(/,\s*/);
@@ -797,7 +931,11 @@ class DBLauncher extends Launcher {
         if (secondLine) lines.push(secondLine);
         if (rest) lines.push(rest);
         const display = lines.map(escapeHtml).join('<br>');
-        const escFull = escapeHtml(addr);
+        
+        // Use the cleaned address for USPS links
+        const uspsAddr = formatAddressForUSPS(addr);
+        const escFull = escapeHtml(uspsAddr);
+        
         const extra = isVA
             ? ` <span class="copilot-tag copilot-tag-green">VA</span>`
             : `<span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span><span class="copilot-copy-icon" data-copy="${escFull}" title="Copy">⧉</span>`;
@@ -828,7 +966,11 @@ class DBLauncher extends Launcher {
         if (line2) displayLines.push(escapeHtml(line2));
         if (!displayLines.length) return '';
         const full = [line1, line2].filter(Boolean).join(', ');
-        const escFull = escapeHtml(full);
+        
+        // Use the cleaned address for USPS links
+        const uspsAddr = formatAddressForUSPS(full);
+        const escFull = escapeHtml(uspsAddr);
+        
         return `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${escFull}">${displayLines.join('<br>')}</a><span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span><span class="copilot-copy-icon" data-copy="${escFull}" title="Copy">⧉</span></span>`;
     }
 
@@ -959,22 +1101,63 @@ class DBLauncher extends Launcher {
 
         const parts = [];
 
+        // Handle street address
         const line1 = isValid(obj.street1) ? obj.street1
                     : isValid(obj.street) ? obj.street
                     : obj.address;
         if (isValid(line1)) parts.push(line1.trim());
         if (isValid(obj.street2)) parts.push(obj.street2.trim());
 
+        // Handle city, state, zip, country
         if (obj.cityStateZipCountry && isValid(obj.cityStateZipCountry)) {
+            // If we have cityStateZipCountry, use it as is
             parts.push(obj.cityStateZipCountry.trim());
+        } else if (obj.cityStateZip && isValid(obj.cityStateZip)) {
+            // If we have cityStateZip, use it as is
+            parts.push(obj.cityStateZip.trim());
         } else {
-            if (isValid(obj.cityStateZip)) parts.push(obj.cityStateZip.trim());
+            // Build from individual components if available
+            const cityStateZipParts = [];
+            if (isValid(obj.city)) cityStateZipParts.push(obj.city.trim());
+            if (isValid(obj.state)) cityStateZipParts.push(obj.state.trim());
+            if (isValid(obj.zip)) cityStateZipParts.push(obj.zip.trim());
+            
+            if (cityStateZipParts.length > 0) {
+                parts.push(cityStateZipParts.join(', '));
+            }
+            
             if (isValid(obj.country) && (!obj.cityStateZip || !obj.cityStateZip.includes(obj.country))) {
                 parts.push(obj.country.trim());
             }
         }
 
-        return parts.join(', ');
+        // Clean up the final address string for better USPS parsing
+        let address = parts.join(', ');
+        
+        // Remove any extra commas and normalize spacing
+        address = address.replace(/,\s*,/g, ',').replace(/\s+/g, ' ').trim();
+        
+        // Ensure proper format for USPS: "Street, City, State ZIP"
+        // Try to format city, state, zip more consistently
+        const addressParts = address.split(',');
+        if (addressParts.length >= 3) {
+            const streetPart = addressParts[0].trim();
+            const cityPart = addressParts[1].trim();
+            const stateZipPart = addressParts.slice(2).join(',').trim();
+            
+            // Try to separate state and ZIP if they're together
+            const stateZipMatch = stateZipPart.match(/^([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/i);
+            if (stateZipMatch) {
+                const state = stateZipMatch[1];
+                const zip = stateZipMatch[2];
+                address = `${streetPart}, ${cityPart}, ${state} ${zip}`;
+            } else {
+                // Keep original format if we can't parse it
+                address = `${streetPart}, ${cityPart}, ${stateZipPart}`;
+            }
+        }
+        
+        return address;
     }
 
     function extractSingleElement(root, fields) {
@@ -1620,7 +1803,7 @@ class DBLauncher extends Launcher {
             
             // Always show both addresses when they exist, regardless of whether they're the same
             if (phys && mail) {
-                // Show both addresses separately
+                // Show both addresses separately with clean USPS links
                 addrHtml += `<div><b>Physical:</b> ${renderAddress(phys, isVAAddress(phys))}</div>`;
                 addrHtml += `<div><b>Mailing:</b> ${renderAddress(mail, isVAAddress(mail))}</div>`;
             } else if (phys) {
@@ -1833,7 +2016,9 @@ class DBLauncher extends Launcher {
             html = `<div style="text-align:center; color:#aaa; margin-top:40px">No se encontró información relevante de la orden.</div>`;
         }
         if (devMode) {
-            html += `<div class="copilot-footer"><button id="filing-xray" class="copilot-button">🤖 FILE</button></div>`;
+            if (reviewMode) {
+                html += `<div class="copilot-footer"><button id="filing-xray" class="copilot-button">🤖 FILE</button></div>`;
+            }
             html += `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>`;
             html += `
             <div id="mistral-chat" class="mistral-box">
@@ -2608,18 +2793,75 @@ class DBLauncher extends Launcher {
             const table = header.parentElement.querySelector('table');
             if (table) rows = Array.from(table.querySelectorAll('tbody tr'));
         }
+        console.log('[FENNEC (POO)] Found INT STORAGE rows:', rows.length);
+        
         return rows.map(row => {
             const cells = row.querySelectorAll('td');
             if (cells.length < 4) return null;
             const name = cells[0].textContent.trim();
-            const date = cells[2].textContent.trim();
+            const uploadedBy = cells[1].textContent.trim();
+            const dateText = cells[2].textContent.trim();
             const btn = row.querySelector('button');
             let url = '';
             if (btn) {
                 const m = btn.getAttribute('onclick').match(/'(https?:[^']+)'/);
                 if (m) url = m[1];
             }
-            return { name, date, url };
+            
+            console.log('[FENNEC (POO)] Raw extracted data:', { name, uploadedBy, dateText, url });
+            
+            // Parse the date properly
+            let date = null;
+            if (dateText) {
+                console.log('[FENNEC (POO)] Processing date text:', dateText);
+                
+                // Handle format like "03/03/2025 16:51:32 pm"
+                const dateMatch = dateText.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+(am|pm)/i);
+                if (dateMatch) {
+                    const [, month, day, year, hour, minute, second, ampm] = dateMatch;
+                    let hour24 = parseInt(hour);
+                    
+                    // Handle 12-hour format conversion (only convert if hour is 1-12)
+                    if (ampm.toLowerCase() === 'pm' && hour24 < 12) hour24 += 12;
+                    if (ampm.toLowerCase() === 'am' && hour24 === 12) hour24 = 0;
+                    
+                    // Create ISO date string
+                    date = `${year}-${month}-${day}T${hour24.toString().padStart(2, '0')}:${minute}:${second}`;
+                    console.log('[FENNEC (POO)] Parsed date from regex:', date);
+                } else {
+                    console.log('[FENNEC (POO)] Date regex did not match, trying alternative parsing');
+                    
+                    // Try alternative format: "MM/DD/YYYY HH:MM:SS am/pm"
+                    const altMatch = dateText.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})\s+(am|pm)/i);
+                    if (altMatch) {
+                        const [, month, day, year, hour, minute, second, ampm] = altMatch;
+                        let hour24 = parseInt(hour);
+                        
+                        // Handle 12-hour format conversion (only convert if hour is 1-12)
+                        if (ampm.toLowerCase() === 'pm' && hour24 < 12) hour24 += 12;
+                        if (ampm.toLowerCase() === 'am' && hour24 === 12) hour24 = 0;
+                        
+                        // Create ISO date string
+                        date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour24.toString().padStart(2, '0')}:${minute}:${second}`;
+                        console.log('[FENNEC (POO)] Parsed date from alternative regex:', date);
+                    } else {
+                        // Try to parse as regular date
+                        const parsedDate = new Date(dateText);
+                        if (!isNaN(parsedDate.getTime())) {
+                            date = parsedDate.toISOString();
+                            console.log('[FENNEC (POO)] Parsed date from Date constructor:', date);
+                        } else {
+                            console.log('[FENNEC (POO)] Failed to parse date:', dateText);
+                        }
+                    }
+                }
+            } else {
+                console.log('[FENNEC (POO)] No date text found');
+            }
+            
+            const result = { name, uploadedBy, date, url };
+            console.log('[FENNEC (POO)] Final result:', result);
+            return result;
         }).filter(Boolean);
     }
 
@@ -2949,22 +3191,50 @@ function getLastHoldUser() {
             }
             console.log('[FENNEC (POO)] INT STORAGE loaded', files.length);
             const list = files.map((file, idx) => {
+                // Debug logging for date processing
+                console.log('[FENNEC (POO)] Processing file:', { 
+                    name: file.name, 
+                    uploadedBy: file.uploadedBy, 
+                    date: file.date,
+                    url: file.url 
+                });
+                
                 // Truncate name to 24 chars, show ellipsis if longer
                 let shortName = file.name.length > 24 ? file.name.slice(0, 21) + '...' : file.name;
-                // Only show first 2 lines (wrap, ellipsis)
+                // Show file name on one row, uploader on second row
                 const nameDiv = `<div class="int-doc-name" title="${escapeHtml(file.name)}">${escapeHtml(shortName)}</div>`;
-                // Format date as MM/DD/YY and time below
-                let dateObj = new Date(file.date);
-                let mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-                let dd = String(dateObj.getDate()).padStart(2, '0');
-                let yy = String(dateObj.getFullYear()).slice(-2);
-                let time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                let dateDiv = `<div class="int-doc-date">${mm}/${dd}/${yy}<br><span class="int-doc-time">${time}</span></div>`;
+                const uploaderDiv = `<div class="int-doc-uploader">${escapeHtml(file.uploadedBy || 'Unknown')}</div>`;
+                
+                // Format date as MM/DD/YY and time below, with proper error handling
+                let dateDiv = '';
+                if (file.date) {
+                    console.log('[FENNEC (POO)] Processing date:', file.date);
+                    let dateObj = new Date(file.date);
+                    console.log('[FENNEC (POO)] Date object:', dateObj, 'Valid:', !isNaN(dateObj.getTime()));
+                    if (!isNaN(dateObj.getTime())) {
+                        // Valid date
+                        let mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                        let dd = String(dateObj.getDate()).padStart(2, '0');
+                        let yy = String(dateObj.getFullYear()).slice(-2);
+                        let time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        console.log('[FENNEC (POO)] Formatted date:', `${mm}/${dd}/${yy} ${time}`);
+                        dateDiv = `<div class="int-doc-date">${mm}/${dd}/${yy}<br><span class="int-doc-time">${time}</span></div>`;
+                    } else {
+                        // Invalid date
+                        console.log('[FENNEC (POO)] Invalid date, showing placeholder');
+                        dateDiv = `<div class="int-doc-date">--/--/--<br><span class="int-doc-time">--:--</span></div>`;
+                    }
+                } else {
+                    // No date provided
+                    console.log('[FENNEC (POO)] No date provided, showing placeholder');
+                    dateDiv = `<div class="int-doc-date">--/--/--<br><span class="int-doc-time">--:--</span></div>`;
+                }
+                
                 // Clip icon for remove
                 const clip = `<span class="int-doc-clip" data-idx="${idx}" title="Remove">📎</span>`;
                 // OPEN button, 20% smaller
                 const openBtn = `<button class="copilot-button int-open" style="font-size:11px;padding:5px 8px;" data-url="${escapeHtml(file.url)}">OPEN</button>`;
-                return `<div class="int-row" style="display:flex;align-items:center;gap:8px;margin:4px 0;">${clip}${nameDiv}${dateDiv}${openBtn}</div>`;
+                return `<div class="int-row" style="display:flex;align-items:center;gap:8px;margin:4px 0;">${clip}<div class="int-doc-info">${nameDiv}${uploaderDiv}</div>${dateDiv}${openBtn}</div>`;
             }).join('');
             const filesHtml = list || '<div style="text-align:center;color:#aaa">No files</div>';
             const uploadHtml = `
@@ -3176,15 +3446,22 @@ chrome.storage.onChanged.addListener((changes, area) => {
         const currentId = getBasicOrderInfo().orderId;
         chrome.storage.local.get({ sidebarOrderId: null }, ({ sidebarOrderId }) => {
             if (sidebarOrderId === currentId) {
-                loadStoredSummary();
+                const isStorage = /\/storage\/incfile\//.test(location.pathname);
+                if (isStorage && !reviewMode) {
+                    // For storage pages with REVIEW MODE off, don't load stored summary
+                    // as it might contain DNA/Kount content
+                    console.log('[FENNEC (POO)] Storage page with REVIEW MODE off - skipping stored summary load');
+                } else {
+                    loadStoredSummary();
+                }
                 updateReviewDisplay();
             }
         });
     }
-    if (area === 'local' && changes.adyenDnaInfo) {
+    if (area === 'local' && changes.adyenDnaInfo && reviewMode) {
         loadDnaSummary();
     }
-    if (area === 'local' && changes.kountInfo) {
+    if (area === 'local' && changes.kountInfo && reviewMode) {
         loadKountSummary();
     }
     if (area === 'local' && changes.sidebarSnapshot && changes.sidebarSnapshot.newValue) {
@@ -3198,8 +3475,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 // Refresh DNA summary when returning from Adyen
 window.addEventListener('focus', () => {
-    loadDnaSummary();
-    loadKountSummary();
+    if (reviewMode) {
+        loadDnaSummary();
+        loadKountSummary();
+    }
 });
     }
 }

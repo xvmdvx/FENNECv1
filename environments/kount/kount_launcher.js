@@ -2,8 +2,38 @@ class KountLauncher extends Launcher {
     init() {
     if (window.top !== window) return;
     const bg = fennecMessenger;
+    
+    // Check if extension is enabled and get review mode status
     chrome.storage.local.get({ extensionEnabled: true, fennecReviewMode: false, fennecActiveSession: null }, ({ extensionEnabled, fennecReviewMode, fennecActiveSession }) => {
         if (!extensionEnabled) return;
+        
+        // Check if this is a flow-triggered open or manual open
+        const params = new URLSearchParams(window.location.search);
+        const orderParam = params.get('fennec_order');
+        const isFlowTriggered = orderParam && fennecReviewMode;
+        const isManualOpen = !orderParam;
+        
+        // If not in review mode and not manually opened, don't initialize
+        if (!fennecReviewMode && !isManualOpen) {
+            console.log('[FENNEC (POO)] Kount opened outside review mode and not manually opened, skipping initialization.');
+            return;
+        }
+        
+        // If manually opened in review mode, don't inject sidebar (just open tab)
+        if (isManualOpen && fennecReviewMode) {
+            console.log('[FENNEC (POO)] Kount manually opened in review mode, tab only (no sidebar).');
+            return;
+        }
+        
+        // If flow-triggered, check if flow is already completed
+        if (isFlowTriggered) {
+            const flowKey = `fennecKountFlowCompleted_${orderParam}`;
+            if (localStorage.getItem(flowKey)) {
+                console.log('[FENNEC (POO)] Kount flow already completed, skipping initialization.');
+                return;
+            }
+        }
+        
         if (fennecActiveSession) {
             sessionStorage.setItem('fennecSessionId', fennecActiveSession);
         }
@@ -281,7 +311,14 @@ class KountLauncher extends Launcher {
                 chrome.storage.local.get({ kountInfo: {} }, ({ kountInfo }) => {
                     const updated = Object.assign({}, kountInfo, part);
                     sessionSet({ kountInfo: updated });
-                    loadKountSummary();
+                    
+                    // Mark KOUNT flow as completed if this is a flow-triggered session
+                    const order = sessionStorage.getItem('fennec_order');
+                    if (order) {
+                        const flowKey = `fennecKountFlowCompleted_${order}`;
+                        localStorage.setItem(flowKey, '1');
+                        console.log('[FENNEC (POO)] KOUNT flow completed for order:', order);
+                    }
                 });
             }
 

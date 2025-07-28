@@ -52,6 +52,32 @@ function getFennecSessionId() {
 }
 window.getFennecSessionId = getFennecSessionId;
 
+// Handle reset messages from popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'fennecReset' && message.clearStorage) {
+        console.log('[FENNEC (POO)] Clearing all storage for reset...');
+        
+        // Clear session storage
+        sessionStorage.clear();
+        
+        // Clear local storage
+        localStorage.clear();
+        
+        // Clear any FENNEC-related items specifically
+        const fennecKeys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.includes('fennec')) {
+                fennecKeys.push(key);
+            }
+        }
+        fennecKeys.forEach(key => localStorage.removeItem(key));
+        
+        console.log('[FENNEC (POO)] Storage cleared successfully');
+        sendResponse({ success: true });
+    }
+});
+
 function sessionSet(data, cb) {
     const obj = Object.assign({}, data, { sidebarSessionId: getFennecSessionId() });
     chrome.storage.local.set(obj, cb);

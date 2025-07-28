@@ -22,7 +22,18 @@ class UspsLauncher extends Launcher {
             const result = { line1: '', line2: '', city: '', state: '', zip: '' };
             if (!str) return result;
 
-            const parts = str.split(',').map(p => p.trim()).filter(Boolean);
+            // Clean the input string
+            let cleanStr = str.trim();
+            
+            // Remove any potential labels like "Physical:" or "Mailing:" that might have been included
+            cleanStr = cleanStr.replace(/^(physical|mailing|principal):\s*/i, '');
+            
+            // Remove any country codes that might still be present
+            cleanStr = cleanStr.replace(/,\s*(US|USA|United States)\s*$/i, '');
+            
+            console.log('[FENNEC USPS] Cleaned address string:', cleanStr);
+            
+            const parts = cleanStr.split(',').map(p => p.trim()).filter(Boolean);
 
             if (parts.length) {
                 result.line1 = parts.shift();
@@ -31,62 +42,100 @@ class UspsLauncher extends Launcher {
                 result.line2 = parts.shift();
             }
 
-            const cityStateZip = parts.join(', ');
-            const m = cityStateZip.match(/^(.*?)[,\s]+([A-Z]{2})\s+(\d{5}(?:-\d{4})?)/i);
-            if (m) {
-                result.city = m[1];
-                result.state = m[2];
-                result.zip = m[3];
-            } else {
-                const tokens = cityStateZip.split(/\s+/);
-                if (tokens.length >= 3) {
-                    result.city = tokens.slice(0, -2).join(' ');
-                    result.state = tokens[tokens.length - 2];
-                    result.zip = tokens[tokens.length - 1];
-                } else if (tokens.length === 2) {
-                    result.city = tokens[0];
-                    result.state = tokens[1];
-                } else if (tokens.length === 1) {
-                    result.city = tokens[0];
-                }
+            // Handle the remaining parts (city, state, zip)
+            const remaining = parts.join(', ');
+            console.log('[FENNEC USPS] Remaining parts for parsing:', remaining);
+            
+            // First, try to extract ZIP code from the end
+            const zipMatch = remaining.match(/(\d{5}(?:-\d{4})?)\s*$/);
+            let zipCode = '';
+            let remainingWithoutZip = remaining;
+            
+            if (zipMatch) {
+                zipCode = zipMatch[1];
+                remainingWithoutZip = remaining.replace(zipMatch[0], '').trim();
+                console.log('[FENNEC USPS] Extracted ZIP:', zipCode);
+                console.log('[FENNEC USPS] Remaining without ZIP:', remainingWithoutZip);
             }
-
+            
+            // Now try to extract state from the remaining parts
+            const stateMatch = remainingWithoutZip.match(/([A-Z]{2})\s*$/i);
+            let stateCode = '';
+            let cityPart = remainingWithoutZip;
+            
+            if (stateMatch) {
+                stateCode = stateMatch[1].toUpperCase();
+                cityPart = remainingWithoutZip.replace(stateMatch[0], '').trim();
+                console.log('[FENNEC USPS] Extracted State:', stateCode);
+                console.log('[FENNEC USPS] City part:', cityPart);
+            }
+            
+            // Clean up city part (remove trailing commas)
+            cityPart = cityPart.replace(/,\s*$/, '').trim();
+            
+            // Set the results
+            result.city = cityPart;
+            result.state = stateCode;
+            result.zip = zipCode;
+            
+            console.log('[FENNEC USPS] Final parsed result:', result);
+            
             return result;
         }
 
         function fillAndSubmit() {
             try {
                 const parsed = parseAddress(addr);
+                
+                // Debug logging
+                console.log('[FENNEC USPS] Original address:', addr);
+                console.log('[FENNEC USPS] Parsed address:', parsed);
 
                 const addressInput = document.querySelector('#tAddress');
                 if (addressInput) {
                     addressInput.focus();
                     addressInput.value = parsed.line1;
+                    console.log('[FENNEC USPS] Set address line 1:', parsed.line1);
+                } else {
+                    console.warn('[FENNEC USPS] Address input not found');
                 }
 
                 const address2Input = document.querySelector('#tAddress2');
                 if (address2Input && parsed.line2) {
                     address2Input.value = parsed.line2;
+                    console.log('[FENNEC USPS] Set address line 2:', parsed.line2);
                 }
 
                 const cityInput = document.querySelector('#tCity');
                 if (cityInput && parsed.city) {
                     cityInput.value = parsed.city;
+                    console.log('[FENNEC USPS] Set city:', parsed.city);
+                } else {
+                    console.warn('[FENNEC USPS] City input not found or no city parsed');
                 }
 
                 const stateSelect = document.querySelector('#tState');
                 if (stateSelect && parsed.state) {
                     stateSelect.value = parsed.state.toUpperCase();
+                    console.log('[FENNEC USPS] Set state:', parsed.state.toUpperCase());
+                } else {
+                    console.warn('[FENNEC USPS] State select not found or no state parsed');
                 }
 
                 const zipInput = document.querySelector('#tZip-byaddress');
                 if (zipInput && parsed.zip) {
                     zipInput.value = parsed.zip;
+                    console.log('[FENNEC USPS] Set ZIP:', parsed.zip);
+                } else {
+                    console.warn('[FENNEC USPS] ZIP input not found or no ZIP parsed');
                 }
 
                 const findBtn = document.querySelector('#zip-by-address');
                 if (findBtn) {
+                    console.log('[FENNEC USPS] Clicking Find button');
                     findBtn.click();
+                } else {
+                    console.warn('[FENNEC USPS] Find button not found');
                 }
             } catch (err) {
                 console.error('[FENNEC (POO) USPS] Error filling form:', err);

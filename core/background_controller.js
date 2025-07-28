@@ -144,6 +144,20 @@ class BackgroundController {
             if (tab) chrome.tabs.update(tab.id, { active: true });
         });
     }
+
+    reset(msg, sender, sendResponse) {
+        console.log('[FENNEC (POO)] Background reset triggered');
+        
+        // Clear background storage
+        this.pendingUrls.clear();
+        this.replacingWindows.clear();
+        
+        // Clear any background-specific storage
+        chrome.storage.local.remove(['fennecReturnTab'], () => {
+            console.log('[FENNEC (POO)] Background storage cleared');
+            sendResponse({ success: true });
+        });
+    }
 }
 
 self.BackgroundController = BackgroundController;

@@ -1255,19 +1255,25 @@
   gap: 8px;
   margin: 4px 0;
 }
-.int-doc-name {
+.int-doc-info {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.int-doc-name {
   font-weight: bold;
   max-width: 120px;
   overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  white-space: normal;
   text-overflow: ellipsis;
-  word-break: break-all;
+  white-space: nowrap;
   color: #fff;
   font-size: 13px;
+}
+.int-doc-uploader {
+  font-size: 11px;
+  color: #aaa;
+  font-style: italic;
 }
 .int-doc-date {
   flex-shrink: 0;
@@ -1284,9 +1290,8 @@
 .int-doc-clip {
   cursor: pointer;
   font-size: 16px;
-  color: #888;
-  margin-right: 4px;
-  transition: color 0.15s;
+  color: #ccc;
+  transition: color 0.2s ease;
 }
 .int-doc-clip.int-doc-x {
   color: #000;
@@ -1295,16 +1300,10 @@
   color: #000;
 }
 .int-open {
-  font-size: 11px !important;
-  padding: 5px 8px !important;
-  min-width: 48px;
-  height: 24px;
+  font-size: 11px;
+  padding: 5px 8px;
 }
 #int-upload-btn {
-  display: block;
-  margin: 10px auto 0 auto;
-}
-.dropped-file-name {
-  color: #000 !important;
+  margin: 0 auto;
 }
 
