@@ -1238,6 +1238,7 @@
             const label = document.getElementById('issue-status-label');
             ensureIssueControls();
             const btn = document.getElementById('issue-resolve-btn');
+            const commentInput = document.getElementById('issue-comment-input');
             if (!box || !content || !label) return;
             box.style.display = 'block';
             if (info && info.text) {
@@ -1245,13 +1246,11 @@
                 label.textContent = info.active ? 'ACTIVE' : 'RESOLVED';
                 label.className = 'issue-status-label ' + (info.active ? 'issue-status-active' : 'issue-status-resolved');
                 if (btn) {
-                    if (reviewMode && droppedFiles.length) {
-                        btn.textContent = allFilesPdf(droppedFiles)
-                            ? 'UPLOAD'
-                            : 'CONVERT & UPLOAD';
+                    // Set initial button state based on issue status
+                    if (info.active) {
+                        btn.textContent = 'COMMENT & RESOLVE';
                     } else {
-                        const activeLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
-                        btn.textContent = info.active ? activeLabel : 'COMMENT';
+                        btn.textContent = 'COMMENT';
                     }
                 }
             } else {
@@ -1260,15 +1259,16 @@
                 label.textContent = '';
                 label.className = 'issue-status-label';
                 if (btn) {
-                    if (reviewMode && droppedFiles.length) {
-                        btn.textContent = allFilesPdf(droppedFiles)
-                            ? 'UPLOAD'
-                            : 'CONVERT & UPLOAD';
-                    } else if (!reviewMode || !droppedFiles.length) {
-                        btn.textContent = 'COMMENT';
-                    }
+                    btn.textContent = 'COMMENT';
                 }
             }
+            
+            // Gray out comment input when docs are dropped
+            if (commentInput) {
+                commentInput.disabled = droppedFiles.length > 0;
+                commentInput.classList.toggle('disabled', droppedFiles.length > 0);
+            }
+            
             updateResolveButtonLabel();
         }
 
@@ -1959,14 +1959,41 @@ sbObj.build(`
         function updateResolveButtonLabel() {
             const btn = document.getElementById('issue-resolve-btn');
             if (!btn) return;
-            if (reviewMode && droppedFiles.length) {
-                btn.textContent = allFilesPdf(droppedFiles)
-                    ? 'UPLOAD'
-                    : 'CONVERT & UPLOAD';
+            
+            // Don't apply this logic in REVIEW MODE
+            if (reviewMode) {
+                if (droppedFiles.length) {
+                    btn.textContent = allFilesPdf(droppedFiles)
+                        ? 'UPLOAD'
+                        : 'CONVERT & UPLOAD';
+                } else {
+                    btn.textContent = 'COMMENT & RELEASE';
+                }
+                return;
+            }
+            
+            // Get issue status from the label
+            const label = document.getElementById('issue-status-label');
+            const isActive = label && label.textContent === 'ACTIVE';
+            const isResolved = label && label.textContent === 'RESOLVED';
+            
+            if (droppedFiles.length) {
+                // When docs are dropped, show UPLOAD or RENAME & UPLOAD
+                const hasRenamedFiles = droppedFiles.some(f => f.name !== f.file.name);
+                if (hasRenamedFiles) {
+                    btn.textContent = allFilesPdf(droppedFiles) ? 'RENAME & UPLOAD' : 'CONVERT & UPLOAD';
+                } else {
+                    btn.textContent = allFilesPdf(droppedFiles) ? 'UPLOAD' : 'CONVERT & UPLOAD';
+                }
             } else {
-                btn.textContent = reviewMode
-                    ? 'COMMENT & RELEASE'
-                    : 'COMMENT & RESOLVE';
+                // Initial states based on issue status
+                if (isActive) {
+                    btn.textContent = 'COMMENT & RESOLVE';
+                } else if (isResolved) {
+                    btn.textContent = 'COMMENT';
+                } else {
+                    btn.textContent = 'COMMENT';
+                }
             }
         }
 

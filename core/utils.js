@@ -254,7 +254,8 @@ function attachCommonListeners(rootEl) {
                 });
 
                 const pStatusClass =
-                    /shipped|review|processing/i.test(parent.status) ? 'copilot-tag copilot-tag-green' :
+                    /shipped/i.test(parent.status) ? 'copilot-tag copilot-tag-green' :
+                    /review|processing/i.test(parent.status) ? 'copilot-tag copilot-tag-yellow' :
                     /canceled/i.test(parent.status) ? 'copilot-tag copilot-tag-red' :
                     /hold/i.test(parent.status) ? 'copilot-tag copilot-tag-purple' : 'copilot-tag';
                 html += `<div class="section-label">PARENT</div>`;
@@ -268,7 +269,8 @@ function attachCommonListeners(rootEl) {
                 html += `<div class="section-label">CHILD</div>`;
                 html += resp.childOrders.map(o => {
                     const cls =
-                        /shipped|review|processing/i.test(o.status) ? 'copilot-tag copilot-tag-green' :
+                        /shipped/i.test(o.status) ? 'copilot-tag copilot-tag-green' :
+                        /review|processing/i.test(o.status) ? 'copilot-tag copilot-tag-yellow' :
                         /canceled/i.test(o.status) ? 'copilot-tag copilot-tag-red' :
                         /hold/i.test(o.status) ? 'copilot-tag copilot-tag-purple' : 'copilot-tag';
                     return `

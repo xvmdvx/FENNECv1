@@ -1617,20 +1617,23 @@ class DBLauncher extends Launcher {
             let addrHtml = '';
             const phys = company.physicalAddress;
             const mail = company.mailingAddress;
-            if (phys && mail && normalizeAddr(phys) === normalizeAddr(mail)) {
-                addrHtml += `<div>${renderAddress(phys, isVAAddress(phys))}<br>` +
-                            `<span class="copilot-tag">Physical</span> <span class="copilot-tag">Mailing</span></div>`;
-            } else {
-                if (phys) {
-                    addrHtml += `<div><b>Physical:</b> ${renderAddress(phys, isVAAddress(phys))}</div>`;
-                }
-                if (mail) {
-                    addrHtml += `<div><b>Mailing:</b> ${renderAddress(mail, isVAAddress(mail))}</div>`;
-                }
-            }
-            if (!addrHtml) {
+            
+            // Always show both addresses when they exist, regardless of whether they're the same
+            if (phys && mail) {
+                // Show both addresses separately
+                addrHtml += `<div><b>Physical:</b> ${renderAddress(phys, isVAAddress(phys))}</div>`;
+                addrHtml += `<div><b>Mailing:</b> ${renderAddress(mail, isVAAddress(mail))}</div>`;
+            } else if (phys) {
+                // Only physical address exists
+                addrHtml += `<div><b>Physical:</b> ${renderAddress(phys, isVAAddress(phys))}</div>`;
+            } else if (mail) {
+                // Only mailing address exists
+                addrHtml += `<div><b>Mailing:</b> ${renderAddress(mail, isVAAddress(mail))}</div>`;
+            } else if (company.address) {
+                // Fallback to general company address
                 addrHtml = `<div>${renderAddress(company.address, isVAAddress(company.address))}</div>`;
             }
+            
             const companyLines = [];
             const highlight = [];
             let nameText = escapeHtml(company.name);
@@ -1793,6 +1796,12 @@ class DBLauncher extends Launcher {
             </div>`;
         html += intSection;
         dbSections.push(intSection);
+        // Add new box for MAIN and MISC orders
+        if (currentOrderTypeText && (/main/i.test(currentOrderTypeText) || /misc/i.test(currentOrderTypeText))) {
+            const mainMiscBox = `<div class="white-box" style="margin-bottom:10px;text-align:center;"><b>New Box for ${/main/i.test(currentOrderTypeText) ? 'MAIN' : 'MISC'} Order</b></div>`;
+            html += mainMiscBox;
+            dbSections.push(mainMiscBox);
+        }
 
         if (reviewMode) {
             const grab = label => {
@@ -2794,7 +2803,8 @@ class DBLauncher extends Launcher {
             const card = document.createElement('div');
             card.className = 'diag-card';
             const cls =
-                /shipped|review|processing/i.test(r.order.status) ? 'copilot-tag copilot-tag-green' :
+                /shipped/i.test(r.order.status) ? 'copilot-tag copilot-tag-green' :
+                /review|processing/i.test(r.order.status) ? 'copilot-tag copilot-tag-yellow' :
                 /canceled/i.test(r.order.status) ? 'copilot-tag copilot-tag-red' :
                 /hold/i.test(r.order.status) ? 'copilot-tag copilot-tag-purple' : 'copilot-tag';
 
@@ -2938,21 +2948,45 @@ function getLastHoldUser() {
                 return;
             }
             console.log('[FENNEC (POO)] INT STORAGE loaded', files.length);
-            const list = files.map(file =>
-                `<div class="int-row" style="display:flex;justify-content:space-between;align-items:center;margin:4px 0;">` +
-                `<div style="flex:1;word-break:break-all"><b>${escapeHtml(file.name)}</b></div>` +
-                `<div style="flex-shrink:0;font-size:11px;color:#aaa;margin:0 8px">${escapeHtml(file.date)}</div>` +
-                `<button class="copilot-button int-open" data-url="${escapeHtml(file.url)}">OPEN</button>` +
-                `</div>`).join('');
+            const list = files.map((file, idx) => {
+                // Truncate name to 24 chars, show ellipsis if longer
+                let shortName = file.name.length > 24 ? file.name.slice(0, 21) + '...' : file.name;
+                // Only show first 2 lines (wrap, ellipsis)
+                const nameDiv = `<div class="int-doc-name" title="${escapeHtml(file.name)}">${escapeHtml(shortName)}</div>`;
+                // Format date as MM/DD/YY and time below
+                let dateObj = new Date(file.date);
+                let mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                let dd = String(dateObj.getDate()).padStart(2, '0');
+                let yy = String(dateObj.getFullYear()).slice(-2);
+                let time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                let dateDiv = `<div class="int-doc-date">${mm}/${dd}/${yy}<br><span class="int-doc-time">${time}</span></div>`;
+                // Clip icon for remove
+                const clip = `<span class="int-doc-clip" data-idx="${idx}" title="Remove">📎</span>`;
+                // OPEN button, 20% smaller
+                const openBtn = `<button class="copilot-button int-open" style="font-size:11px;padding:5px 8px;" data-url="${escapeHtml(file.url)}">OPEN</button>`;
+                return `<div class="int-row" style="display:flex;align-items:center;gap:8px;margin:4px 0;">${clip}${nameDiv}${dateDiv}${openBtn}</div>`;
+            }).join('');
             const filesHtml = list || '<div style="text-align:center;color:#aaa">No files</div>';
             const uploadHtml = `
                 <div id="int-upload-drop" style="border:1px dashed #666;padding:6px;margin-top:6px;text-align:center;cursor:pointer;">Drop files or click</div>
                 <input id="int-upload-input" type="file" multiple style="display:none" />
                 <div id="int-upload-list"></div>
-                <button id="int-upload-btn" class="copilot-button" style="display:none;margin-top:6px">UPLOAD</button>`;
+                <div style="display:flex;justify-content:center;"><button id="int-upload-btn" class="copilot-button" style="display:none;margin-top:6px">UPLOAD</button></div>`;
             box.innerHTML = filesHtml + uploadHtml;
             box.querySelectorAll('.int-open').forEach(b => {
                 b.addEventListener('click', () => { const u = b.dataset.url; if (u) window.open(u, '_blank'); });
+            });
+            // Clip icon remove logic
+            box.querySelectorAll('.int-doc-clip').forEach(clip => {
+                clip.addEventListener('mouseenter', e => { clip.textContent = '✖'; clip.classList.add('int-doc-x'); });
+                clip.addEventListener('mouseleave', e => { clip.textContent = '📎'; clip.classList.remove('int-doc-x'); });
+                clip.addEventListener('click', e => {
+                    const idx = parseInt(clip.dataset.idx);
+                    if (!isNaN(idx)) {
+                        files.splice(idx, 1);
+                        loadIntStorage(orderId);
+                    }
+                });
             });
             setupIntUpload(orderId);
         });
@@ -2979,6 +3013,7 @@ function getLastHoldUser() {
                 if (item.name !== item.file.name) nameInput.value = item.name;
                 nameInput.addEventListener('input', e => {
                     item.name = e.target.value.trim() || item.file.name;
+                    nameInput.style.color = '#000';
                 });
                 row.appendChild(icon);
                 row.appendChild(nameInput);
