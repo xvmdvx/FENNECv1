@@ -2816,15 +2816,35 @@ class DBLauncher extends Launcher {
         if (!info.orderId || String(data.orderId) !== String(info.orderId)) return;
         chrome.storage.local.remove('fennecPendingComment');
         const issue = getLastIssueInfo();
-        const after = () => { if (data.release) setTimeout(clickFraudReviewButton, 500); };
+        
+        // Handle fraud review removal for identity confirmation issues
+        const after = () => { 
+            if (data.release) setTimeout(clickFraudReviewButton, 500); 
+        };
+        
+        // If removeFraudReview flag is set, also click the fraud review button
+        const afterWithFraudRemoval = () => {
+            if (data.release) setTimeout(clickFraudReviewButton, 500);
+            if (data.removeFraudReview) {
+                // Click the "Remove from Fraud Review" button
+                setTimeout(() => {
+                    const fraudReviewBtn = document.getElementById('fraud_review_action');
+                    if (fraudReviewBtn && fraudReviewBtn.textContent.includes('- Fraud Review')) {
+                        fraudReviewBtn.click();
+                        console.log('[FENNEC (POO) DB SB] Clicked Remove from Fraud Review button');
+                    }
+                }, 1000); // Wait a bit longer for the page to be ready
+            }
+        };
+        
         if (issue && issue.active) {
             if (data.cancel) sessionStorage.setItem('fennecCancelPending', '1');
-            autoResolveIssue(data.comment, after);
+            autoResolveIssue(data.comment, data.removeFraudReview ? afterWithFraudRemoval : after);
         } else {
             if (data.comment) {
-                addOrderComment(data.comment, after);
+                addOrderComment(data.comment, data.removeFraudReview ? afterWithFraudRemoval : after);
             } else {
-                after();
+                (data.removeFraudReview ? afterWithFraudRemoval : after)();
             }
             if (data.cancel) setTimeout(openCancelPopup, 1500);
         }

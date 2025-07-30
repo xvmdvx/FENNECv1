@@ -1069,6 +1069,10 @@
                     container.innerHTML = sidebarDb.join("");
                     container.style.display = 'block';
                     attachCommonListeners(container);
+                    
+                    // Check for possible fraud flag and apply orange coloring to company summary
+                    checkAndApplyFraudColoring(container);
+                    
                     const qbox = container.querySelector('#quick-summary');
                     if (qbox) {
                         qbox.classList.remove('quick-summary-collapsed');
@@ -1145,6 +1149,20 @@
                 repositionDnaSummary();
                 updateDetailVisibility();
             });
+        }
+
+        // Function to check for possible fraud flag and apply orange coloring
+        function checkAndApplyFraudColoring(container) {
+            // Look for possible fraud notify button in the DB order data
+            const possibleFraudButton = container.querySelector('#possible-fraud-notify');
+            if (possibleFraudButton) {
+                // Apply orange background to company summary highlights using CSS class
+                const companyHighlights = container.querySelectorAll('.company-summary-highlight');
+                companyHighlights.forEach(highlight => {
+                    highlight.classList.add('possible-fraud');
+                });
+                console.log('[FENNEC (POO) GM SB] Applied possible fraud coloring to company summary highlights');
+            }
         }
 
         const insertDnaAfterCompany = window.insertDnaAfterCompany;
@@ -1487,12 +1505,29 @@
                 content.textContent = formatIssueText(info.text);
                 label.textContent = info.active ? 'ACTIVE' : 'RESOLVED';
                 label.className = 'issue-status-label ' + (info.active ? 'issue-status-active' : 'issue-status-resolved');
+                
+                // Check if this is an IDENTITY CONFIRMATION issue
+                const isIdentityConfirmation = info.text.toLowerCase().includes('identity confirmation') || 
+                                            info.text.toLowerCase().includes('id confirmation');
+                
                 if (btn) {
-                    // Set initial button state based on issue status
-                    if (info.active) {
-                        btn.textContent = 'COMMENT & RESOLVE';
+                    if (isIdentityConfirmation) {
+                        // For IDENTITY CONFIRMATION issues
+                        if (info.active) {
+                            // Check if there's text in comment section
+                            const hasComment = commentInput && commentInput.value.trim();
+                            btn.textContent = hasComment ? 'COMMENT & RELEASE' : 'RELEASE';
+                        } else {
+                            // For RESOLVED identity confirmation issues, only show COMMENT
+                            btn.textContent = 'COMMENT';
+                        }
                     } else {
-                        btn.textContent = 'COMMENT';
+                        // For other issues, use standard behavior
+                        if (info.active) {
+                            btn.textContent = 'COMMENT & RESOLVE';
+                        } else {
+                            btn.textContent = 'COMMENT';
+                        }
                     }
                 }
             } else {
@@ -1836,6 +1871,7 @@
         function ensureIssueControls(reset = false) {
             const issueBox = document.getElementById('issue-summary-box');
             if (!issueBox) return;
+            
             let input = document.getElementById('issue-comment-input');
             if (!input) {
                 input = document.createElement('textarea');
@@ -1847,14 +1883,54 @@
                 input.value = '';
                 issueBox.appendChild(input);
             }
+            
+            // Add event listener to comment input for identity confirmation issues
+            if (!input.dataset.listenerAttached) {
+                input.dataset.listenerAttached = 'true';
+                input.addEventListener('input', () => {
+                    // Update button label when comment text changes for identity confirmation issues
+                    const content = document.getElementById('issue-summary-content');
+                    const label = document.getElementById('issue-status-label');
+                    const btn = document.getElementById('issue-resolve-btn');
+                    
+                    if (content && label && btn) {
+                        const issueText = content.textContent.toLowerCase();
+                        const isIdentityConfirmation = issueText.includes('identity confirmation') || 
+                                                    issueText.includes('id confirmation');
+                        
+                        if (isIdentityConfirmation) {
+                            const hasComment = input.value.trim();
+                            const isActive = label.textContent === 'ACTIVE';
+                            
+                            if (isActive) {
+                                btn.textContent = hasComment ? 'COMMENT & RELEASE' : 'RELEASE';
+                            }
+                        }
+                    }
+                });
+            }
+            
             if (reset) {
-                droppedFiles = [];
-                const list = document.getElementById('dropped-file-list');
-                if (list) list.remove();
+                const content = document.getElementById('issue-summary-content');
+                const label = document.getElementById('issue-status-label');
+                const btn = document.getElementById('issue-resolve-btn');
+                const fileList = document.getElementById('dropped-file-list');
+                
+                if (content) content.innerHTML = 'No issue data yet.';
+                if (label) {
+                    label.textContent = '';
+                    label.className = 'issue-status-label';
+                }
+                if (btn) btn.textContent = 'COMMENT';
+                input.value = '';
                 input.disabled = false;
                 input.classList.remove('disabled');
-                updateResolveButtonLabel();
+                if (fileList) fileList.remove();
+                droppedFiles = [];
+                updateDroppedIcons();
+                return;
             }
+            
             let btn = document.getElementById('issue-resolve-btn');
             const btnLabel = reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE';
             if (!btn) {
@@ -1868,8 +1944,10 @@
                 btn.textContent = btnLabel;
                 issueBox.appendChild(btn);
             }
+            
             const updBtn = document.getElementById('update-info-btn');
             if (updBtn) issueBox.appendChild(updBtn);
+            
             setupResolveButton();
             updateResolveButtonLabel();
         }
@@ -2209,6 +2287,9 @@
                             <div class="issue-summary-box" id="issue-summary-box" style="display:none;">
                                 <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
                                 <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
+                                <textarea id="issue-comment-input" class="quick-resolve-comment" placeholder="Comment..."></textarea>
+                                <button id="issue-resolve-btn" class="copilot-button" style="margin-top:4px;">COMMENT & RELEASE</button>
+                                <button id="update-info-btn" class="copilot-button" style="margin-top:4px;">UPDATE</button>
                             </div>
                         </div>
                         <div id="int-storage-section" style="display:none; margin-top:10px;">
@@ -2667,22 +2748,16 @@
             const btn = document.getElementById('issue-resolve-btn');
             if (!btn) return;
             
-            // Don't apply this logic in REVIEW MODE
-            if (reviewMode) {
-                if (droppedFiles.length) {
-                    btn.textContent = allFilesPdf(droppedFiles)
-                        ? 'UPLOAD'
-                        : 'CONVERT & UPLOAD';
-                } else {
-                    btn.textContent = 'COMMENT & RELEASE';
-                }
-                return;
-            }
-            
             // Get issue status from the label
             const label = document.getElementById('issue-status-label');
             const isActive = label && label.textContent === 'ACTIVE';
             const isResolved = label && label.textContent === 'RESOLVED';
+            
+            // Get issue content to check if it's identity confirmation
+            const content = document.getElementById('issue-summary-content');
+            const issueText = content ? content.textContent.toLowerCase() : '';
+            const isIdentityConfirmation = issueText.includes('identity confirmation') || 
+                                        issueText.includes('id confirmation');
             
             if (droppedFiles.length) {
                 // When docs are dropped, show UPLOAD or RENAME & UPLOAD
@@ -2693,13 +2768,27 @@
                     btn.textContent = allFilesPdf(droppedFiles) ? 'UPLOAD' : 'CONVERT & UPLOAD';
                 }
             } else {
-                // Initial states based on issue status
-                if (isActive) {
-                    btn.textContent = 'COMMENT & RESOLVE';
-                } else if (isResolved) {
-                    btn.textContent = 'COMMENT';
+                // Handle identity confirmation issues
+                if (isIdentityConfirmation) {
+                    if (isActive) {
+                        // Check if there's text in comment section
+                        const commentInput = document.getElementById('issue-comment-input');
+                        const hasComment = commentInput && commentInput.value.trim();
+                        btn.textContent = hasComment ? 'COMMENT & RELEASE' : 'RELEASE';
+                    } else if (isResolved) {
+                        btn.textContent = 'COMMENT';
+                    } else {
+                        btn.textContent = 'COMMENT';
+                    }
                 } else {
-                    btn.textContent = 'COMMENT';
+                    // Standard behavior for other issues
+                    if (isActive) {
+                        btn.textContent = 'COMMENT & RESOLVE';
+                    } else if (isResolved) {
+                        btn.textContent = 'COMMENT';
+                    } else {
+                        btn.textContent = 'COMMENT';
+                    }
                 }
             }
         }
@@ -2819,8 +2908,25 @@
                     commentInput.focus();
                     return;
                 }
+                
+                // Check if this is an identity confirmation issue
+                const content = document.getElementById('issue-summary-content');
+                const issueText = content ? content.textContent.toLowerCase() : '';
+                const isIdentityConfirmation = issueText.includes('identity confirmation') || 
+                                            issueText.includes('id confirmation');
+                
+                // Check if this is a release action (no comment or explicit release)
+                const isReleaseAction = !comment || resolveBtn.textContent.includes('RELEASE');
+                
                 const data = { orderId, comment };
                 if (reviewMode && !comment) data.release = true;
+                
+                // For identity confirmation issues with release action, also trigger fraud review removal
+                if (isIdentityConfirmation && isReleaseAction) {
+                    data.release = true;
+                    data.removeFraudReview = true; // Flag to remove from fraud review
+                }
+                
                 sessionSet({ fennecPendingComment: data, fennecActiveSession: getFennecSessionId() }, () => {
                     const url = `https://db.incfile.com/incfile/order/detail/${orderId}`;
                     bg.openOrReuseTab({ url, active: false });

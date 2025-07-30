@@ -535,6 +535,14 @@
     margin-bottom: 6px;
     position: relative;
 }
+
+/* Possible fraud styling for company summary highlights */
+.company-summary-highlight.possible-fraud {
+    background-color: #fff3e0 !important;
+    border-left: 3px solid #ff9800;
+    color: #000 !important;
+}
+
 #copilot-sidebar .white-box .company-summary-highlight,
 #copilot-sidebar .white-box .company-summary-highlight * {
     color: #000 !important;
