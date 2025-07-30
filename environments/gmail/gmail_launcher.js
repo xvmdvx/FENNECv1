@@ -44,6 +44,32 @@
         if (msg.action === 'sosPermissionError') {
             alert('Permiso denegado para abrir la búsqueda SOS.');
         }
+        if (msg.action === 'intStorageLoadComplete') {
+            console.log('[FENNEC (POO) GM SB] Received INT STORAGE load complete signal for order:', msg.orderId, 'files count:', msg.filesCount);
+            
+            // Check if this is for the current order we're waiting for
+            if (window.currentIntStorageOrderId === msg.orderId) {
+                console.log('[FENNEC (POO) GM SB] INT STORAGE load complete for current order, checking storage for data');
+                
+                // Give a moment for the storage to be updated, then check for the data
+                setTimeout(() => {
+                    chrome.storage.local.get({ intStorageData: null }, ({ intStorageData }) => {
+                        if (intStorageData && intStorageData.orderId === msg.orderId) {
+                            console.log('[FENNEC (POO) GM SB] Found INT STORAGE data after completion signal');
+                            if (intStorageData.error) {
+                                updateIntStorageDisplay(null, msg.orderId, intStorageData.error);
+                            } else {
+                                updateIntStorageDisplay(intStorageData.files, msg.orderId);
+                            }
+                        } else {
+                            console.log('[FENNEC (POO) GM SB] No INT STORAGE data found after completion signal');
+                        }
+                    });
+                }, 500);
+            } else {
+                console.log('[FENNEC (POO) GM SB] INT STORAGE completion signal for different order:', msg.orderId, 'current order:', window.currentIntStorageOrderId);
+            }
+        }
     });
     chrome.storage.sync.get({ fennecReviewMode: false, fennecDevMode: false, sidebarWidth: 340 }, ({ fennecReviewMode, fennecDevMode, sidebarWidth }) => {
         chrome.storage.local.get({ extensionEnabled: true, lightMode: false, fennecDevMode: false }, ({ extensionEnabled, lightMode, fennecDevMode: localDev }) => {
@@ -273,7 +299,110 @@
                 }
             });
 
+            // Specifically target and ensure navigation buttons remain visible
+            const navigationContainers = [
+                ...Array.from(document.body.querySelectorAll('.ar5.J-J5-Ji')),
+                ...Array.from(document.body.querySelectorAll('[role="button"][aria-label*="Newer"]')),
+                ...Array.from(document.body.querySelectorAll('[role="button"][aria-label*="Older"]')),
+                ...Array.from(document.body.querySelectorAll('.T-I[role="button"]')),
+                ...Array.from(document.body.querySelectorAll('.amD[role="button"]'))
+            ];
+
+            navigationContainers.forEach(el => {
+                if (el) {
+                    // Ensure navigation buttons are not covered by sidebar
+                    const rect = el.getBoundingClientRect();
+                    const style = getComputedStyle(el);
+                    
+                    // If the element is positioned and might be covered by sidebar
+                    if (style.position === 'fixed' || style.position === 'absolute') {
+                        const rightEdge = rect.left + rect.width;
+                        const sidebarLeft = window.innerWidth - SIDEBAR_WIDTH;
+                        
+                        if (rightEdge > sidebarLeft) {
+                            // Adjust position to ensure visibility
+                            el.style.setProperty('right', SIDEBAR_WIDTH + 'px', 'important');
+                            el.style.setProperty('z-index', '1000', 'important');
+                        }
+                    } else {
+                        // For non-positioned elements, ensure they have proper margin
+                        el.style.setProperty('margin-right', SIDEBAR_WIDTH + 'px', 'important');
+                    }
+                    
+                    // Ensure proper padding and visibility
+                    el.style.setProperty('padding', '4px 8px', 'important');
+                    el.style.setProperty('min-height', '24px', 'important');
+                    el.style.setProperty('display', 'inline-flex', 'important');
+                    el.style.setProperty('align-items', 'center', 'important');
+                    el.style.setProperty('justify-content', 'center', 'important');
+                    el.style.setProperty('z-index', '1000', 'important');
+                }
+            });
+
             return mainPanels;
+        }
+
+        function ensureNavigationButtonsVisible() {
+            // Continuously monitor and ensure navigation buttons are visible
+            const navigationSelectors = [
+                '.ar5.J-J5-Ji',
+                '[role="button"][aria-label*="Newer"]',
+                '[role="button"][aria-label*="Older"]',
+                '.T-I[role="button"]',
+                '.amD[role="button"]'
+            ];
+
+            navigationSelectors.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    if (el) {
+                        const rect = el.getBoundingClientRect();
+                        const style = getComputedStyle(el);
+                        
+                        // Check if element is covered by sidebar
+                        const rightEdge = rect.left + rect.width;
+                        const sidebarLeft = window.innerWidth - SIDEBAR_WIDTH;
+                        
+                        if (rightEdge > sidebarLeft || rect.right > window.innerWidth - SIDEBAR_WIDTH) {
+                            // Ensure visibility
+                            el.style.setProperty('right', SIDEBAR_WIDTH + 'px', 'important');
+                            el.style.setProperty('z-index', '1000', 'important');
+                            el.style.setProperty('position', 'relative', 'important');
+                        }
+                        
+                        // Ensure proper styling
+                        el.style.setProperty('padding', '4px 8px', 'important');
+                        el.style.setProperty('min-height', '24px', 'important');
+                        el.style.setProperty('display', 'inline-flex', 'important');
+                        el.style.setProperty('align-items', 'center', 'important');
+                        el.style.setProperty('justify-content', 'center', 'important');
+                        el.style.setProperty('z-index', '1000', 'important');
+                        el.style.setProperty('visibility', 'visible', 'important');
+                        el.style.setProperty('opacity', '1', 'important');
+                    }
+                });
+            });
+        }
+
+        function ensureClientBillingHidden() {
+            // Continuously monitor and hide CLIENT and BILLING sections when not in review mode
+            const clientLabel = document.getElementById('client-section-label');
+            const clientBox = document.getElementById('client-section-box');
+            const billingLabel = document.getElementById('billing-section-label');
+            const billingBox = document.getElementById('billing-section-box');
+            
+            if (clientLabel) {
+                clientLabel.style.display = reviewMode ? '' : 'none';
+            }
+            if (clientBox) {
+                clientBox.style.display = reviewMode ? '' : 'none';
+            }
+            if (billingLabel) {
+                billingLabel.style.display = reviewMode ? '' : 'none';
+            }
+            if (billingBox) {
+                billingBox.style.display = reviewMode ? '' : 'none';
+            }
         }
         function showFloatingIcon() {
             if (document.getElementById("fennec-floating-icon")) return;
@@ -333,6 +462,38 @@
                     issueBox.style.display = 'none';
                 }
             }
+            
+            // Hide CLIENT and BILLING sections when not in review mode
+            if (clientLabel) {
+                clientLabel.style.display = reviewMode ? '' : 'none';
+            }
+            if (clientBox) {
+                clientBox.style.display = reviewMode ? '' : 'none';
+            }
+            if (billingLabel) {
+                billingLabel.style.display = reviewMode ? '' : 'none';
+            }
+            if (billingBox) {
+                billingBox.style.display = reviewMode ? '' : 'none';
+            }
+            
+            // Ensure INT STORAGE section is properly positioned after ISSUES
+            const intStorageSection = document.getElementById('int-storage-section');
+            const issueSection = document.getElementById('issue-summary-section');
+            if (intStorageSection && issueSection && intStorageSection.parentElement === issueSection.parentElement) {
+                // If INT STORAGE is not already after ISSUES, move it
+                if (intStorageSection.previousElementSibling !== issueSection) {
+                    issueSection.parentElement.insertBefore(intStorageSection, issueSection.nextSibling);
+                }
+            }
+            
+            // Show INT STORAGE section in classic mode
+            if (intStorageSection) {
+                intStorageSection.style.display = 'block';
+                const sectionLabel = intStorageSection.querySelector('.section-label');
+                if (sectionLabel) sectionLabel.style.display = 'block';
+            }
+            
             if (quick && quick.parentElement !== container) container.prepend(quick);
             if (reviewMode) {
                 quick.classList.remove("quick-summary-collapsed");
@@ -896,6 +1057,62 @@
                     }
                     storedOrderInfo = sidebarOrderInfo;
                     fillOrderSummaryBox(currentContext);
+                    
+                    // Hide CLIENT and BILLING sections when not in review mode
+                    const clientLabel = container.querySelector('#client-section-label');
+                    const clientBox = container.querySelector('#client-section-box');
+                    const billingLabel = container.querySelector('#billing-section-label');
+                    const billingBox = container.querySelector('#billing-section-box');
+                    
+                    if (clientLabel) {
+                        clientLabel.style.display = reviewMode ? '' : 'none';
+                    }
+                    if (clientBox) {
+                        clientBox.style.display = reviewMode ? '' : 'none';
+                    }
+                    if (billingLabel) {
+                        billingLabel.style.display = reviewMode ? '' : 'none';
+                    }
+                    if (billingBox) {
+                        billingBox.style.display = reviewMode ? '' : 'none';
+                    }
+                    
+                    // Ensure INT STORAGE section is properly positioned after ISSUES
+                    const intStorageSection = document.getElementById('int-storage-section');
+                    const issueSection = document.getElementById('issue-summary-section');
+                    if (intStorageSection && issueSection && intStorageSection.parentElement === issueSection.parentElement) {
+                        // If INT STORAGE is not already after ISSUES, move it
+                        if (intStorageSection.previousElementSibling !== issueSection) {
+                            issueSection.parentElement.insertBefore(intStorageSection, issueSection.nextSibling);
+                        }
+                    }
+                    
+                    // Show INT STORAGE section in classic mode
+                    if (intStorageSection) {
+                        intStorageSection.style.display = 'block';
+                        const sectionLabel = intStorageSection.querySelector('.section-label');
+                        if (sectionLabel) sectionLabel.style.display = 'block';
+                    }
+                    
+                    // Load ISSUES and INT STORAGE for both review mode and classic mode
+                    if (storedOrderInfo && storedOrderInfo.orderId) {
+                        console.log('[FENNEC (POO) GM SB] Loading ISSUES and INT STORAGE for order:', storedOrderInfo.orderId, 'reviewMode:', reviewMode);
+                        checkLastIssue(storedOrderInfo.orderId);
+                        
+                        // Wait for database tab to load INT STORAGE data in both review mode and classic mode
+                        console.log('[FENNEC (POO) GM SB] Waiting for DB tab to load INT STORAGE data for order:', storedOrderInfo.orderId);
+                        const box = document.getElementById('int-storage-box');
+                        if (box) {
+                            box.style.display = 'block';
+                            box.innerHTML = '<div style="text-align:center;color:#aaa">Waiting for DB tab...</div>';
+                        }
+                    } else {
+                        console.log('[FENNEC (POO) GM SB] Not loading INT STORAGE:', {
+                            reviewMode: reviewMode,
+                            hasStoredOrderInfo: !!storedOrderInfo,
+                            orderId: storedOrderInfo ? storedOrderInfo.orderId : null
+                        });
+                    }
                 } else if (container.innerHTML.trim() === '') {
                     container.innerHTML = '';
                     container.style.display = 'none';
@@ -1177,14 +1394,14 @@
                 chrome.storage.local.get({ adyenDnaInfo: null }, ({ adyenDnaInfo }) => {
                     const html = buildDnaHtml(adyenDnaInfo);
                     container.innerHTML = html || '';
-                    console.log('[Copilot] ADYEN DNA summary', html ? 'loaded' : 'not found');
+                    // console.log('[Copilot] ADYEN DNA summary', html ? 'loaded' : 'not found');
                     attachCommonListeners(container);
                     repositionDnaSummary();
                     ensureIssueControls();
                     setupResolveButton();
                 });
             } catch (err) {
-                console.warn('[Copilot] failed to load ADYEN DNA summary:', err);
+                // console.warn('[Copilot] failed to load ADYEN DNA summary:', err);
             }
         }
 
@@ -1195,7 +1412,7 @@
             chrome.storage.local.get({ kountInfo: null }, ({ kountInfo }) => {
                 const html = buildKountHtml(kountInfo);
                 container.innerHTML = html || '';
-                console.log('[Copilot] KOUNT summary', html ? 'loaded' : 'not found');
+                // console.log('[Copilot] KOUNT summary', html ? 'loaded' : 'not found');
                 attachCommonListeners(container);
             });
         }
@@ -1203,7 +1420,7 @@
         let dnaWatchInterval = null;
         function startDnaWatch() {
             if (dnaWatchInterval) clearInterval(dnaWatchInterval);
-            console.log('[Copilot] waiting for ADYEN DNA/KOUNT data...');
+            // console.log('[Copilot] waiting for ADYEN DNA/KOUNT data...');
             dnaWatchInterval = setInterval(() => {
                 chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null }, data => {
                     const hasDna = data.adyenDnaInfo && data.adyenDnaInfo.payment;
@@ -1215,7 +1432,7 @@
                         repositionDnaSummary();
                         clearInterval(dnaWatchInterval);
                         dnaWatchInterval = null;
-                        console.log('[Copilot] ADYEN DNA/KOUNT data loaded');
+                        // console.log('[Copilot] ADYEN DNA/KOUNT data loaded');
                     }
                 });
             }, 1000);
@@ -1233,6 +1450,7 @@
         }
 
         function fillIssueBox(info, orderId) {
+            const section = document.getElementById('issue-summary-section');
             const box = document.getElementById('issue-summary-box');
             const content = document.getElementById('issue-summary-content');
             const label = document.getElementById('issue-status-label');
@@ -1240,7 +1458,12 @@
             const btn = document.getElementById('issue-resolve-btn');
             const commentInput = document.getElementById('issue-comment-input');
             if (!box || !content || !label) return;
-            box.style.display = 'block';
+            
+            // Show the ISSUES section in review mode
+            if (section) section.style.display = 'block';
+            const sectionLabel = section ? section.querySelector('.section-label') : null;
+            if (sectionLabel) sectionLabel.style.display = 'block';
+            if (box) box.style.display = 'block';
             if (info && info.text) {
                 content.textContent = formatIssueText(info.text);
                 label.textContent = info.active ? 'ACTIVE' : 'RESOLVED';
@@ -1288,6 +1511,158 @@
                 }
                 fillIssueBox(resp && resp.issueInfo, orderId);
             });
+        }
+
+        function loadIntStorage(orderId) {
+            if (!orderId) return;
+            
+            const section = document.getElementById('int-storage-section');
+            const box = document.getElementById('int-storage-box');
+            
+            if (section) section.style.display = 'block';
+            const sectionLabel = section ? section.querySelector('.section-label') : null;
+            if (sectionLabel) sectionLabel.style.display = 'block';
+            if (box) {
+                box.style.display = 'block';
+                box.innerHTML = '<div style="text-align:center;color:#aaa">Loading...</div>';
+            }
+            
+            // Store the orderId for data sharing
+            window.currentIntStorageOrderId = orderId;
+            
+            // Clear any existing data for this order to ensure fresh load
+            chrome.storage.local.remove(['intStorageData', 'intStorageLoaded', 'intStorageOrderId'], () => {
+                console.log('[FENNEC (POO) GM SB] Cleared existing INT STORAGE data for fresh load');
+                
+                // No cleanup needed since we're not using storage listeners anymore
+                
+                // No longer need to listen for storage changes - we'll wait for completion signal
+                console.log('[FENNEC (POO) GM SB] Waiting for DB SB to complete INT STORAGE load');
+                
+                // Trigger DB SB to load INT STORAGE data and wait for completion signal
+                console.log('[FENNEC (POO) GM SB] Requesting fresh INT STORAGE data for order:', orderId);
+                bg.send('triggerIntStorageLoad', { orderId }, (response) => {
+                    console.log('[FENNEC (POO) GM SB] INT STORAGE load trigger response:', response);
+                    
+                    // Don't immediately request data - wait for DB SB to signal completion
+                    if (response && response.success) {
+                        console.log('[FENNEC (POO) GM SB] DB SB load triggered successfully, waiting for completion signal');
+                    } else {
+                        console.error('[FENNEC (POO) GM SB] Failed to trigger DB SB load:', response);
+                    }
+                });
+                
+                // Set a timeout to show "Waiting for DB..." after 5 seconds
+                setTimeout(() => {
+                    if (box && box.innerHTML.includes('Loading...')) {
+                        box.innerHTML = '<div style="text-align:center;color:#aaa">Waiting for DB...</div>';
+                    }
+                }, 5000);
+                
+                // Set a longer timeout to show "Failed to load" after 30 seconds
+                setTimeout(() => {
+                    if (box && (box.innerHTML.includes('Loading...') || box.innerHTML.includes('Waiting for DB...'))) {
+                        console.log('[FENNEC (POO) GM SB] INT STORAGE timeout - no completion signal received after 30 seconds');
+                        box.innerHTML = '<div style="text-align:center;color:#aaa">Failed to load</div>';
+                    }
+                }, 30000);
+            });
+        }
+
+        function startIntStorageListener(orderId) {
+            console.log('[FENNEC (POO) GM SB] Starting INT STORAGE listener for order:', orderId);
+            
+            // Create a one-time listener that will be removed after processing
+            const listener = function(changes, area) {
+                if (area === 'local' && changes.intStorageData) {
+                    const newData = changes.intStorageData.newValue;
+                    
+                    console.log('[FENNEC (POO) GM SB] INT STORAGE DEBUG: Received storage change for order:', orderId, 'data:', newData);
+                    
+                    // Only process if we have data and it's for the current order
+                    if (newData && newData.orderId === orderId) {
+                        console.log('[FENNEC (POO) GM SB] INT STORAGE DEBUG: Processing data for order:', orderId, 'files count:', newData.files ? newData.files.length : 'null');
+                        
+                        // Remove the listener since we got the data
+                        chrome.storage.onChanged.removeListener(listener);
+                        
+                        if (newData.error) {
+                            updateIntStorageDisplay(null, orderId, newData.error);
+                        } else {
+                            updateIntStorageDisplay(newData.files, orderId);
+                        }
+                    } else if (newData && newData.orderId !== orderId) {
+                        console.log('[FENNEC (POO) GM SB] INT STORAGE DEBUG: Data mismatch - expected orderId:', orderId, 'received orderId:', newData.orderId);
+                    } else if (!newData) {
+                        console.log('[FENNEC (POO) GM SB] INT STORAGE DEBUG: Received null data for order:', orderId);
+                    }
+                }
+            };
+            
+            // Add the listener
+            chrome.storage.onChanged.addListener(listener);
+            
+            // Store the listener reference for potential cleanup
+            window.currentIntStorageListener = listener;
+        }
+
+        function updateIntStorageDisplay(files, orderId, error = null) {
+            const box = document.getElementById('int-storage-box');
+            const section = document.getElementById('int-storage-section');
+            const sectionLabel = section ? section.querySelector('.section-label') : null;
+            
+            if (!box) return;
+            
+            if (error) {
+                if (sectionLabel) sectionLabel.style.display = 'block';
+                box.style.display = 'block';
+                box.innerHTML = `<div style="text-align:center;color:#aaa">${error}</div>`;
+                return;
+            }
+            
+            if (!files || !Array.isArray(files)) {
+                if (sectionLabel) sectionLabel.style.display = 'block';
+                box.style.display = 'block';
+                box.innerHTML = '<div style="text-align:center;color:#aaa">No files</div>';
+                return;
+            }
+            
+            if (files.length === 0) {
+                if (sectionLabel) sectionLabel.style.display = 'block';
+                box.style.display = 'block';
+                box.innerHTML = '<div style="text-align:center;color:#aaa">No files</div>';
+                return;
+            }
+            
+            const list = files.map((file, idx) => {
+                let shortName = file.name.length > 24 ? file.name.slice(0, 21) + '...' : file.name;
+                const nameDiv = `<div class="int-doc-name" title="${escapeHtml(file.name)}">${escapeHtml(shortName)}</div>`;
+                const uploaderDiv = `<div class="int-doc-uploader">${escapeHtml(file.uploadedBy || 'Unknown')}</div>`;
+                
+                let dateDiv = '';
+                if (file.date) {
+                    let dateObj = new Date(file.date);
+                    if (!isNaN(dateObj.getTime())) {
+                        let mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                        let dd = String(dateObj.getDate()).padStart(2, '0');
+                        let yy = String(dateObj.getFullYear()).slice(-2);
+                        let time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        dateDiv = `<div class="int-doc-date">${mm}/${dd}/${yy}<br><span class="int-doc-time">${time}</span></div>`;
+                    } else {
+                        dateDiv = `<div class="int-doc-date">--/--/--<br><span class="int-doc-time">--:--</span></div>`;
+                    }
+                } else {
+                    dateDiv = `<div class="int-doc-date">--/--/--<br><span class="int-doc-time">--:--</span></div>`;
+                }
+                
+                const clip = `<span class="int-doc-clip" data-idx="${idx}" title="Remove">📎</span>`;
+                const openBtn = `<button class="copilot-button int-open" style="font-size:11px;padding:5px 8px;" data-url="${escapeHtml(file.url)}">OPEN</button>`;
+                return `<div class="int-row" style="display:flex;align-items:center;gap:8px;margin:4px 0;">${clip}<div class="int-doc-info">${nameDiv}${uploaderDiv}</div>${dateDiv}${openBtn}</div>`;
+            }).join('');
+            
+            if (sectionLabel) sectionLabel.style.display = 'block';
+            box.style.display = 'block';
+            box.innerHTML = list;
         }
 
         function showDnaLoading() {
@@ -1370,7 +1745,7 @@
                 if (summary) summary.innerHTML = '';
                 const kount = dnaBox.querySelector('#kount-summary');
                 if (kount) kount.innerHTML = '';
-                console.log('[Copilot] cleared ADYEN DNA/KOUNT summaries');
+                // console.log('[Copilot] cleared ADYEN DNA/KOUNT summaries');
                 // Do not clear stored DNA/Kount info so summaries reappear when available
                 repositionDnaSummary();
                 startDnaWatch();
@@ -1427,6 +1802,9 @@
             const orderContainer = document.querySelector('.order-summary-box');
             const dbBox = document.getElementById('db-summary-section');
             const issueBox = document.getElementById('issue-summary-box');
+            const intStorageBox = document.getElementById('int-storage-box');
+            const issueSection = document.getElementById('issue-summary-section');
+            const intStorageSection = document.getElementById('int-storage-section');
             const dnaSummary = document.getElementById('dna-summary');
             const kountSummary = document.getElementById('kount-summary');
             const searchBtn = document.getElementById('btn-email-search');
@@ -1435,6 +1813,35 @@
             if (orderContainer) orderContainer.style.display = 'none';
             if (dbBox) dbBox.style.display = 'none';
             if (issueBox) issueBox.style.display = 'none';
+            if (intStorageBox) intStorageBox.style.display = 'none';
+            if (issueSection) {
+                const issueLabel = issueSection.querySelector('.section-label');
+                if (issueLabel) issueLabel.style.display = 'none';
+            }
+            if (intStorageSection) {
+                const intStorageLabel = intStorageSection.querySelector('.section-label');
+                if (intStorageLabel) intStorageLabel.style.display = 'none';
+            }
+            
+            // Hide CLIENT and BILLING sections when not in review mode
+            const clientLabel = document.getElementById('client-section-label');
+            const clientBox = document.getElementById('client-section-box');
+            const billingLabel = document.getElementById('billing-section-label');
+            const billingBox = document.getElementById('billing-section-box');
+            
+            if (clientLabel) {
+                clientLabel.style.display = reviewMode ? '' : 'none';
+            }
+            if (clientBox) {
+                clientBox.style.display = reviewMode ? '' : 'none';
+            }
+            if (billingLabel) {
+                billingLabel.style.display = reviewMode ? '' : 'none';
+            }
+            if (billingBox) {
+                billingBox.style.display = reviewMode ? '' : 'none';
+            }
+            
             if (orderBox) orderBox.innerHTML = '';
             if (dbBox) dbBox.innerHTML = '';
             if (issueBox) {
@@ -1450,7 +1857,7 @@
             }
             if (dnaSummary) dnaSummary.innerHTML = '';
             if (kountSummary) kountSummary.innerHTML = '';
-            console.log('[Copilot] cleared ADYEN DNA/KOUNT summaries');
+            // console.log('[Copilot] cleared ADYEN DNA/KOUNT summaries');
             ensureDnaSections();
             if (dnaWatchInterval) {
                 clearInterval(dnaWatchInterval);
@@ -1486,6 +1893,7 @@
         }
 
         function clearSidebar() {
+            console.log('[FENNEC (POO) GM SB] TAB TRACKING: Clearing fraudReviewSession (setting to null)');
             storedOrderInfo = null;
             currentContext = null;
             sessionSet({
@@ -1508,6 +1916,15 @@
                 'fennecQuickResolveDone',
                 'fennecUploadDone'
             ]);
+            
+                    // Clear INT STORAGE data
+        window.currentIntStorageOrderId = null;
+        
+        // Clear INT STORAGE from storage
+        chrome.storage.local.remove(['intStorageData', 'intStorageLoaded', 'intStorageOrderId'], () => {
+            console.log('[FENNEC (POO) GM SB] Cleared INT STORAGE data from storage during sidebar clear');
+        });
+            
             showInitialStatus();
             applyReviewMode();
             loadDnaSummary();
@@ -1600,6 +2017,30 @@
             });
             if (orderId) {
                 checkLastIssue(orderId);
+                
+                // Set up listener for INT STORAGE data from DB tab in both review mode and classic mode
+                console.log('[FENNEC (POO) GM SB] Setting up INT STORAGE listener for order:', orderId, 'reviewMode:', reviewMode);
+                window.currentIntStorageOrderId = orderId;
+                
+                // Set up a listener to wait for INT STORAGE completion signal
+                const checkForIntStorageData = () => {
+                    chrome.storage.local.get({ intStorageData: null }, ({ intStorageData }) => {
+                        if (intStorageData && intStorageData.orderId === orderId) {
+                            console.log('[FENNEC (POO) GM SB] Found INT STORAGE data from DB tab for order:', orderId);
+                            if (intStorageData.error) {
+                                updateIntStorageDisplay(null, orderId, intStorageData.error);
+                            } else {
+                                updateIntStorageDisplay(intStorageData.files, orderId);
+                            }
+                        } else {
+                            // Check again in 2 seconds
+                            setTimeout(checkForIntStorageData, 2000);
+                        }
+                    });
+                };
+                
+                // Start checking for INT STORAGE data after a short delay
+                setTimeout(checkForIntStorageData, 3000);
             }
         }
 
@@ -1607,38 +2048,101 @@
             if (document.getElementById('copilot-sidebar')) return;
 
             const sbObj = new Sidebar();
-sbObj.build(`
-                ${buildSidebarHeader()}
-                <div class="order-summary-header">
-                    ${reviewMode ? `<button id="btn-xray" class="copilot-button">🩻 XRAY</button>` : ''}
-                    <button id="btn-email-search" class="copilot-button">📧 SEARCH</button>
-                </div>
-                <div class="copilot-body">
-                    ${reviewMode ? `<div class="copilot-dna">
-                        <div id="dna-summary" style="margin-top:16px"></div>
-                        <div id="kount-summary" style="margin-top:10px"></div>
-                    </div>` : ''}
-                    <div class="order-summary-box">
-                        <div id="order-summary-content" style="color:#ccc; font-size:13px;">
-                            No order data yet.
+            
+            // Use custom template for GM SB REVIEW MODE, standardized template for other review modes
+            if (reviewMode) {
+                sbObj.build(`
+                    ${buildSidebarHeader()}
+                    <div class="order-summary-header">
+                        ORDER SUMMARY 
+                        <span id="qs-toggle" class="quick-summary-toggle">⚡</span>
+                    </div>
+                    <div class="copilot-body" id="copilot-body-content">
+                        <div class="copilot-actions" style="margin-top:8px;">
+                            <button id="btn-xray" class="copilot-button">🩻 XRAY</button>
+                            <button id="btn-email-search" class="copilot-button">📧 SEARCH</button>
                         </div>
+                        <div id="db-summary-section" style="margin-top:16px;">
+                            <div style="text-align:center; color:#888; margin-top:20px;">Cargando resumen...</div>
+                        </div>
+                        <div class="copilot-dna">
+                            <div id="dna-summary" style="margin-top:16px"></div>
+                            <div id="kount-summary" style="margin-top:10px"></div>
+                        </div>
+                        <div id="fraud-summary-section"></div>
+                        <div id="issue-summary-section" style="display:none; margin-top:10px;">
+                            <div class="section-label" style="display:none;">ISSUES:</div>
+                            <div class="issue-summary-box" id="issue-summary-box" style="display:none;">
+                                <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
+                                <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
+                            </div>
+                        </div>
+                        <div id="int-storage-section" style="display:none; margin-top:10px;">
+                            <div class="section-label" style="display:none;">INT STORAGE:</div>
+                            <div id="int-storage-box" class="white-box" style="margin-bottom:10px; display:none;">
+                                <div style="text-align:center;color:#aaa">Loading...</div>
+                            </div>
+                        </div>
+                        ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ''}
+                        <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
+                        ${devMode ? `
+                        <div id="mistral-chat" class="mistral-box">
+                            <div id="mistral-log" class="mistral-log"></div>
+                            <div class="mistral-input-row">
+                                <input id="mistral-input" type="text" placeholder="Ask Mistral..." />
+                                <button id="mistral-send" class="copilot-button">Send</button>
+                            </div>
+                        </div>` : ''}
+                        <div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
                     </div>
-                    <div id="db-summary-section"></div>
-                    <hr style="border:none;border-top:1px solid #555;margin:6px 0"/>
-                    <div class="issue-summary-box" id="issue-summary-box" style="margin-top:10px;">
-                        <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
-                        <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
-                        <textarea id="issue-comment-input" class="quick-resolve-comment" placeholder="Comment..."></textarea>
-                        <button id="issue-resolve-btn" class="copilot-button" style="margin-top:4px;">${reviewMode ? 'COMMENT & RELEASE' : 'COMMENT & RESOLVE'}</button>
-                        <button id="update-info-btn" class="copilot-button" style="margin-top:4px;">UPDATE</button>
+                `);
+            } else {
+                sbObj.build(`
+                    ${buildSidebarHeader()}
+                    <div class="order-summary-header">
+                        <button id="btn-email-search" class="copilot-button">📧 SEARCH</button>
                     </div>
-                    ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
-                    <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
-                </div>
-            `);
+                    <div class="copilot-body">
+                        <div class="order-summary-box">
+                            <div id="order-summary-content" style="color:#ccc; font-size:13px;">
+                                No order data yet.
+                            </div>
+                        </div>
+                        <div id="db-summary-section"></div>
+                        <hr style="border:none;border-top:1px solid #555;margin:6px 0"/>
+                        <div class="issue-summary-box" id="issue-summary-box" style="margin-top:10px;">
+                            <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
+                            <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
+                            <textarea id="issue-comment-input" class="quick-resolve-comment" placeholder="Comment..."></textarea>
+                            <button id="issue-resolve-btn" class="copilot-button" style="margin-top:4px;">COMMENT & RESOLVE</button>
+                            <button id="update-info-btn" class="copilot-button" style="margin-top:4px;">UPDATE</button>
+                        </div>
+                        <div id="int-storage-section" style="display:none; margin-top:10px;">
+                            <div class="section-label" style="display:none;">INT STORAGE:</div>
+                            <div id="int-storage-box" class="white-box" style="margin-bottom:10px; display:none;">
+                                <div style="text-align:center;color:#aaa">Loading...</div>
+                            </div>
+                        </div>
+                        ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
+                        <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
+                    </div>
+                `);
+            }
             sbObj.attach();
             const sidebar = sbObj.element;
             ensureDnaSections();
+            
+            // Override attachCommonListeners to ensure CLIENT and BILLING sections are hidden
+            const originalAttachCommonListeners = window.attachCommonListeners;
+            window.attachCommonListeners = function(rootEl) {
+                if (originalAttachCommonListeners) {
+                    originalAttachCommonListeners(rootEl);
+                }
+                // Ensure CLIENT and BILLING sections are hidden after any content is attached
+                setTimeout(() => {
+                    ensureClientBillingHidden();
+                }, 100);
+            };
             chrome.storage.sync.get({
                 sidebarFontSize: 13,
                 sidebarFont: "'Inter', sans-serif",
@@ -1652,11 +2156,23 @@ sbObj.build(`
             // Details load after the user interacts with SEARCH or when
             // opened automatically with context.
 
+            // Ensure navigation buttons are visible
+            ensureNavigationButtonsVisible();
+            ensureClientBillingHidden();
+            
+            // Set up periodic check for navigation buttons
+            const navigationCheckInterval = setInterval(() => {
+                ensureNavigationButtonsVisible();
+                ensureClientBillingHidden();
+            }, 1000);
+
             // Botón de cierre
             document.getElementById('copilot-close').onclick = () => {
                 sidebar.remove();
                 // Limpiar el margin aplicado a los paneles
                 mainPanels.forEach(el => el.style.marginRight = '');
+                // Clear the navigation check interval
+                clearInterval(navigationCheckInterval);
                 sessionStorage.setItem("fennecSidebarClosed", "true");
                 showFloatingIcon();
             };
@@ -1669,7 +2185,13 @@ sbObj.build(`
             }
 
             // Botón SEARCH (listener UNIFICADO)
-            document.getElementById("btn-email-search").onclick = () => handleEmailSearchClick();
+            const searchBtn = document.getElementById("btn-email-search");
+            if (searchBtn) searchBtn.onclick = () => handleEmailSearchClick();
+            
+            // Botón XRAY (solo en review mode)
+            const xrayBtn = document.getElementById("btn-xray");
+            if (xrayBtn) xrayBtn.onclick = () => runReviewXray();
+            
             const rBtn = document.getElementById("copilot-refresh");
             if (devMode && rBtn) rBtn.onclick = refreshSidebar;
             const clearSb = document.getElementById("copilot-clear");
@@ -1677,10 +2199,40 @@ sbObj.build(`
 
             setupResolveButton();
             setupUpdateButton();
+            setupXrayButton();
             applyReviewMode();
             if (reviewMode) {
                 loadDnaSummary();
                 loadKountSummary();
+                
+                            // Setup INT STORAGE event listeners
+            const sidebar = document.getElementById('copilot-sidebar');
+            if (sidebar) {
+                sidebar.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('int-open')) {
+                        const url = e.target.dataset.url;
+                        if (url) {
+                            bg.openOrReuseTab({ url, active: false });
+                        }
+                    }
+                    if (e.target.classList.contains('int-doc-clip')) {
+                        const idx = e.target.dataset.idx;
+                        if (idx !== undefined) {
+                            // Handle remove functionality if needed
+                            console.log('[FENNEC (POO) GM SB] Remove INT STORAGE item:', idx);
+                        }
+                    }
+                });
+            }
+            
+                    // Test INT STORAGE data sharing (for debugging)
+        console.log('[FENNEC (POO) GM SB] Testing INT STORAGE data sharing...');
+        chrome.storage.local.get({ intStorageData: null }, ({ intStorageData }) => {
+            console.log('[FENNEC (POO) GM SB] Current INT STORAGE data in storage:', intStorageData);
+        });
+        
+        // Setup cleanup when email tab is closed
+        setupEmailTabCleanup();
             }
         }
 
@@ -1690,6 +2242,10 @@ sbObj.build(`
                 const mainPanels = applyPaddingToMainPanels();
                 injectSidebar(mainPanels);
                 showInitialStatus();
+            } else {
+                // Ensure navigation buttons are visible even when sidebar is already present
+                ensureNavigationButtonsVisible();
+                ensureClientBillingHidden();
             }
         }
 
@@ -1700,6 +2256,8 @@ sbObj.build(`
             const sidebar = document.getElementById('copilot-sidebar');
             if (!sidebar) return;
             applyPaddingToMainPanels();
+            ensureNavigationButtonsVisible();
+            ensureClientBillingHidden();
             const hasEmail = isEmailOpen();
             if (hasEmail) {
                 if (clearTimer) { clearTimeout(clearTimer); clearTimer = null; }
@@ -1721,6 +2279,14 @@ sbObj.build(`
         observer.observe(document.body, { childList: true, subtree: true });
 
         setInterval(injectSidebarIfMissing, 1200);
+        
+        // Global interval to ensure navigation buttons are always visible
+        setInterval(() => {
+            if (document.getElementById('copilot-sidebar')) {
+                ensureNavigationButtonsVisible();
+                ensureClientBillingHidden();
+            }
+        }, 2000);
 
         chrome.storage.onChanged.addListener((changes, area) => {
             if (area === 'local' && changes.sidebarSessionId &&
@@ -2281,6 +2847,18 @@ sbObj.build(`
                 return;
             }
 
+            // Load ISSUES and INT STORAGE for review mode
+            if (reviewMode && orderId) {
+                console.log('[FENNEC (POO) GM SB] XRAY flow - loading ISSUES and INT STORAGE for order:', orderId);
+                checkLastIssue(orderId);
+                loadIntStorage(orderId);
+            } else {
+                console.log('[FENNEC (POO) GM SB] XRAY flow - not loading INT STORAGE:', {
+                    reviewMode: reviewMode,
+                    orderId: orderId
+                });
+            }
+
             const email = context && context.email
                 ? context.email
                 : (storedOrderInfo && storedOrderInfo.clientEmail) || null;
@@ -2294,6 +2872,7 @@ sbObj.build(`
             // stored a completion flag for this order.
             localStorage.removeItem('fraudXrayCompleted');
 
+            console.log('[FENNEC (POO) GM SB] TAB TRACKING: Setting fraudReviewSession to:', orderId);
             const data = {
                 fennecActiveSession: getFennecSessionId(),
                 fraudReviewSession: orderId,
@@ -2325,6 +2904,122 @@ sbObj.build(`
                 e.preventDefault();
                 e.stopPropagation();
                 runReviewXray();
+            });
+        }
+        
+        function setupEmailTabCleanup() {
+            // Listen for tab updates to detect when email tab is closed
+            chrome.tabs.onRemoved.addListener((tabId, removeInfo) => {
+                // Check if this is the current tab
+                chrome.tabs.getCurrent((currentTab) => {
+                    if (currentTab && currentTab.id === tabId) {
+                        console.log('[FENNEC (POO) GM SB] Email tab closed, cleaning up...');
+                        cleanupEmailSession();
+                    }
+                });
+            });
+            
+            // Listen for navigation away from Gmail
+            window.addEventListener('beforeunload', () => {
+                console.log('[FENNEC (POO) GM SB] Navigating away from Gmail, cleaning up...');
+                cleanupEmailSession();
+            });
+            
+            // Listen for URL changes to detect navigation back to inbox
+            let currentUrl = window.location.href;
+            let isInEmailView = currentUrl.includes('/mail/u/') && !currentUrl.includes('/#inbox') && !currentUrl.includes('/#search') && !currentUrl.includes('/#sent') && !currentUrl.includes('/#drafts');
+            
+            const checkUrlChange = () => {
+                const newUrl = window.location.href;
+                if (newUrl !== currentUrl) {
+                    console.log('[FENNEC (POO) GM SB] URL changed from', currentUrl, 'to', newUrl);
+                    
+                    const wasInEmailView = isInEmailView;
+                    isInEmailView = newUrl.includes('/mail/u/') && !newUrl.includes('/#inbox') && !newUrl.includes('/#search') && !newUrl.includes('/#sent') && !newUrl.includes('/#drafts');
+                    
+                    // Check if navigating from email view back to inbox
+                    if (wasInEmailView && !isInEmailView) {
+                        console.log('[FENNEC (POO) GM SB] Navigating from email view back to inbox, cleaning up...');
+                        cleanupEmailSession();
+                    }
+                    
+                    currentUrl = newUrl;
+                }
+            };
+            
+            // Check for URL changes periodically
+            setInterval(checkUrlChange, 1000);
+            
+            // Also observe DOM changes to detect Gmail navigation
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    // Check if we're now in inbox view by looking for inbox-specific elements
+                    const inboxIndicators = document.querySelectorAll('[data-tooltip="Inbox"], [aria-label="Inbox"], .bq9');
+                    const isInInbox = inboxIndicators.length > 0 && window.location.href.includes('/mail/u/');
+                    
+                    if (isInInbox && isInEmailView) {
+                        isInEmailView = false;
+                        cleanupEmailSession();
+                    }
+                });
+            });
+            
+            // Start observing
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+            
+            // Also listen for popstate events (back/forward navigation)
+            window.addEventListener('popstate', () => {
+                setTimeout(checkUrlChange, 100);
+            });
+            
+            // Listen for Gmail back button clicks
+            document.addEventListener('click', (event) => {
+                const target = event.target.closest('[data-tooltip="Back to Inbox"], [aria-label="Back to Inbox"]');
+                if (target) {
+                    // Wait a bit for the navigation to complete, then check if we're back to inbox
+                    setTimeout(() => {
+                        const currentUrl = window.location.href;
+                        if (currentUrl.includes('/mail/u/') && (currentUrl.includes('/#inbox') || currentUrl.includes('/#search') || currentUrl.includes('/#sent') || currentUrl.includes('/#drafts'))) {
+                            cleanupEmailSession();
+                        }
+                    }, 500);
+                }
+            });
+        }
+        
+        function cleanupEmailSession() {
+            // Prevent multiple cleanup calls
+            if (window.cleanupInProgress) return;
+            window.cleanupInProgress = true;
+            
+            console.log('[FENNEC (POO) GM SB] TAB CLEANUP: Starting cleanup process');
+            
+            // Clear INT STORAGE data
+            chrome.storage.local.remove(['intStorageData', 'intStorageLoaded', 'intStorageOrderId']);
+            
+            // Clear current order tracking
+            window.currentIntStorageOrderId = null;
+            
+            // Check what tabs are currently tracked before closing
+            chrome.storage.local.get({ xrayOpenedTabs: [], fraudReviewSession: null }, ({ xrayOpenedTabs, fraudReviewSession }) => {
+                console.log('[FENNEC (POO) GM SB] TAB CLEANUP: Current tracked tabs:', xrayOpenedTabs);
+                console.log('[FENNEC (POO) GM SB] TAB CLEANUP: Current fraud review session:', fraudReviewSession);
+                
+                // Close all tabs opened by the flow FIRST (before clearing session)
+                bg.send('closeFlowTabs', {}, (response) => {
+                    console.log('[FENNEC (POO) GM SB] TAB CLEANUP: closeFlowTabs response:', response);
+                    
+                    // Clear sidebar and show initial status AFTER tabs are closed
+                    clearSidebar();
+                    
+                    // Reset cleanup flag after a delay
+                    setTimeout(() => {
+                        window.cleanupInProgress = false;
+                    }, 2000);
+                });
             });
         }
 

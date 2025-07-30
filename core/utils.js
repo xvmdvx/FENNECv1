@@ -216,11 +216,42 @@ function attachCommonListeners(rootEl) {
             navigator.clipboard.writeText(text).catch(err => console.warn('[Copilot] Clipboard', err));
         });
     });
-    const ftIcon = document.getElementById('family-tree-icon');
+    // Quick Summary Toggle Handler
+    const qsToggle = rootEl.querySelector('#qs-toggle') || document.getElementById('qs-toggle');
+    if (qsToggle && !qsToggle.dataset.listenerAttached) {
+        qsToggle.dataset.listenerAttached = 'true';
+        qsToggle.addEventListener('click', () => {
+            console.log('[FENNEC (POO)] Quick Summary toggle clicked');
+            const box = document.getElementById('quick-summary');
+            if (!box) return;
+            if (box.style.maxHeight && parseInt(box.style.maxHeight) > 0) {
+                box.style.maxHeight = '0px';
+                box.classList.add('quick-summary-collapsed');
+            } else {
+                box.classList.remove('quick-summary-collapsed');
+                box.style.maxHeight = box.scrollHeight + 'px';
+            }
+        });
+    }
+    
+    // Family Tree Handler
+    const ftIcon = rootEl.querySelector('#family-tree-icon') || document.getElementById('family-tree-icon');
+    
     if (ftIcon && !ftIcon.dataset.listenerAttached) {
         ftIcon.dataset.listenerAttached = 'true';
-        ftIcon.addEventListener('click', () => {
-            console.log('[Copilot] Family Tree icon clicked');
+        console.log('[FENNEC (POO)] Attaching click listener to family tree icon');
+        
+        // Add a test click listener first to see if events are working
+        ftIcon.addEventListener('click', (event) => {
+            console.log('[FENNEC (POO)] TEST: Any click event detected on family tree icon');
+        });
+        
+        ftIcon.addEventListener('click', (event) => {
+            console.log('[FENNEC (POO)] Family Tree icon clicked - handler triggered!', {
+                event: event,
+                target: event.target,
+                currentTarget: event.currentTarget
+            });
             let container = document.getElementById('family-tree-orders');
             if (!container) {
                 const qs = document.getElementById('quick-summary');
@@ -245,19 +276,54 @@ function attachCommonListeners(rootEl) {
                 });
                 return;
             }
+            console.log('[FENNEC (POO)] getParentOrderId function available:', typeof getParentOrderId === 'function');
             const parentId = typeof getParentOrderId === 'function' ? getParentOrderId() : null;
-            console.log('[Copilot] Detected parent order ID:', parentId);
+            console.log('[FENNEC (POO)] Detected parent order ID:', parentId);
             if (!parentId) {
-                console.warn('[Copilot] Parent order not found');
+                console.warn('[FENNEC (POO)] Parent order not found');
                 alert('Parent order not found');
                 return;
             }
+            
+            console.log('[FENNEC (POO)] Family tree - Setting icon to loading state');
             ftIcon.style.opacity = '0.5';
             ftIcon.style.pointerEvents = 'none';
-            chrome.runtime.sendMessage({ action: 'fetchChildOrders', orderId: parentId }, (resp) => {
+            
+            console.log('[FENNEC (POO)] Family tree - Sending fetchChildOrders message for parentId:', parentId);
+            
+            // Add timeout to detect if background script isn't responding
+            let timeoutId = setTimeout(() => {
+                console.error('[FENNEC (POO)] Family tree - TIMEOUT: fetchChildOrders request took longer than 15 seconds');
                 ftIcon.style.opacity = '1';
                 ftIcon.style.pointerEvents = 'auto';
-                if (!resp || !resp.childOrders || !resp.parentInfo) return;
+                alert('Family tree loading timed out. Check console for details.');
+            }, 15000);
+            
+            chrome.runtime.sendMessage({ action: 'fetchChildOrders', orderId: parentId }, (resp) => {
+                clearTimeout(timeoutId);
+                
+                if (chrome.runtime.lastError) {
+                    console.error('[FENNEC (POO)] Family tree - Chrome runtime error:', chrome.runtime.lastError.message);
+                    ftIcon.style.opacity = '1';
+                    ftIcon.style.pointerEvents = 'auto';
+                    alert('Family tree error: ' + chrome.runtime.lastError.message);
+                    return;
+                }
+                
+                console.log('[FENNEC (POO)] Family tree - Received fetchChildOrders response:', resp);
+                ftIcon.style.opacity = '1';
+                ftIcon.style.pointerEvents = 'auto';
+                
+                if (!resp || !resp.childOrders || !resp.parentInfo) {
+                    console.warn('[FENNEC (POO)] Family tree - Invalid response received:', {
+                        hasResp: !!resp,
+                        hasChildOrders: resp ? !!resp.childOrders : false,
+                        hasParentInfo: resp ? !!resp.parentInfo : false
+                    });
+                    return;
+                }
+                
+                console.log('[FENNEC (POO)] Family tree - Valid response received, building family tree UI');
                 const box = document.createElement('div');
                 box.className = 'white-box';
                 box.style.marginBottom = '10px';
@@ -436,4 +502,51 @@ function toggleCompanySearch(box) {
     attachCommonListeners(box);
 }
 window.toggleCompanySearch = toggleCompanySearch;
+
+// Standardized sidebar template for REVIEW MODE across all environments
+function buildStandardizedReviewModeSidebar(reviewMode = false, devMode = false, includeXrayButton = false) {
+    return `
+        ${buildSidebarHeader()}
+        <div class="order-summary-header">
+            ${includeXrayButton ? `<button id="btn-xray" class="copilot-button">🩻 XRAY</button>` : ''}
+            <span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span> 
+            ORDER SUMMARY 
+            <span id="qs-toggle" class="quick-summary-toggle">⚡</span>
+        </div>
+        <div class="copilot-body" id="copilot-body-content">
+            <div id="db-summary-section">
+                <div style="text-align:center; color:#888; margin-top:20px;">Cargando resumen...</div>
+            </div>
+            ${reviewMode ? `<div class="copilot-dna">
+                <div id="dna-summary" style="margin-top:16px"></div>
+                <div id="kount-summary" style="margin-top:10px"></div>
+            </div>` : ''}
+            <div id="fraud-summary-section"></div>
+            <div id="issue-summary-section" style="display:none; margin-top:10px;">
+                <div class="section-label">ISSUES:</div>
+                <div class="issue-summary-box" id="issue-summary-box">
+                    <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
+                    <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
+                </div>
+            </div>
+            <div id="int-storage-section" style="display:none; margin-top:10px;">
+                <div class="section-label">INT STORAGE:</div>
+                <div id="int-storage-box" class="white-box" style="margin-bottom:10px">
+                    <div style="text-align:center;color:#aaa">Loading...</div>
+                </div>
+            </div>
+            ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ''}
+            <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
+            ${devMode ? `
+            <div id="mistral-chat" class="mistral-box">
+                <div id="mistral-log" class="mistral-log"></div>
+                <div class="mistral-input-row">
+                    <input id="mistral-input" type="text" placeholder="Ask Mistral..." />
+                    <button id="mistral-send" class="copilot-button">Send</button>
+                </div>
+            </div>` : ''}
+            <div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
+        </div>
+    `;
+}
 

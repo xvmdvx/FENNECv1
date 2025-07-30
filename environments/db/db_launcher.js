@@ -1,6 +1,10 @@
 // Injects the FENNEC (POO) sidebar into DB pages.
 class DBLauncher extends Launcher {
     init() {
+        console.log('[FENNEC (POO) DB SB] DB Launcher initialized on URL:', location.href);
+        if (location.pathname.includes('/storage/incfile/')) {
+            console.log('[FENNEC (POO) DB SB] This is a storage page');
+        }
     if (window.top !== window) return;
     const bg = fennecMessenger;
     // Clear the closed flag on reloads so the sidebar reappears
@@ -103,12 +107,154 @@ class DBLauncher extends Launcher {
     }
 
     function autoOpenFamilyTree() {
+        console.log('[FENNEC (POO)] autoOpenFamilyTree called, autoFamilyTreeDone:', autoFamilyTreeDone);
         if (autoFamilyTreeDone) return;
+        
         const ftIcon = document.getElementById('family-tree-icon');
+        console.log('[FENNEC (POO)] Family tree icon found:', !!ftIcon, 'display style:', ftIcon ? ftIcon.style.display : 'N/A');
+        console.log('[FENNEC (POO)] Family tree icon listener attached:', ftIcon ? ftIcon.dataset.listenerAttached : 'N/A');
+        
         if (ftIcon && ftIcon.style.display !== 'none') {
+            console.log('[FENNEC (POO)] Auto-clicking family tree icon');
             autoFamilyTreeDone = true;
-            ftIcon.click();
+            
+            // Check if there are multiple family tree icons
+            const allFtIcons = document.querySelectorAll('#family-tree-icon');
+            console.log('[FENNEC (POO)] Total family tree icons found:', allFtIcons.length);
+            allFtIcons.forEach((icon, index) => {
+                console.log(`[FENNEC (POO)] Icon ${index}:`, {
+                    display: icon.style.display,
+                    listenerAttached: icon.dataset.listenerAttached,
+                    parentElement: icon.parentElement.className
+                });
+            });
+            
+            // For MISC orders, we need to ensure the parent order is opened and child orders are fetched
+            if (miscMode) {
+                console.log('[FENNEC (POO)] MISC mode detected, ensuring parent order is opened first');
+                
+                // Get parent order ID
+                const parentId = getParentOrderId();
+                console.log('[FENNEC (POO)] Parent order ID:', parentId);
+                
+                if (parentId) {
+                    // Open parent order in background and fetch child orders
+                    const base = window.location.origin;
+                    const parentUrl = `${base}/incfile/order/detail/${parentId}?fennec_no_store=1`;
+                    
+                    console.log('[FENNEC (POO)] Opening parent order in background:', parentUrl);
+                    
+                    // Send message to background script to open parent order and fetch child orders
+                    chrome.runtime.sendMessage({ 
+                        action: 'fetchChildOrders', 
+                        orderId: parentId 
+                    }, (response) => {
+                        console.log('[FENNEC (POO)] fetchChildOrders response:', response);
+                        
+                        if (response && response.childOrders) {
+                            console.log('[FENNEC (POO)] Child orders fetched successfully, building family tree');
+                            
+                            // Build and display family tree
+                            const container = document.getElementById('family-tree-orders');
+                            if (container) {
+                                container.classList.remove('ft-collapsed');
+                                
+                                                            // Build family tree HTML with proper structure matching utils.js format
+                            let html = '';
+                            const parent = response.parentInfo;
+                            
+                            if (parent) {
+                                const pStatusClass =
+                                    /shipped/i.test(parent.status) ? 'copilot-tag copilot-tag-green' :
+                                    /review|processing/i.test(parent.status) ? 'copilot-tag copilot-tag-yellow' :
+                                    /canceled/i.test(parent.status) ? 'copilot-tag copilot-tag-red' :
+                                    /hold/i.test(parent.status) ? 'copilot-tag copilot-tag-purple' : 'copilot-tag';
+                                
+                                html += `<div class="section-label">PARENT</div>`;
+                                html += `<div class="ft-grid">` +
+                                    `<div><b><a href="#" class="ft-link" data-id="${parent.orderId || parentId}">${parent.orderId || parentId}</a></b></div>` +
+                                    `<div class="ft-type">${(parent.type || 'UNKNOWN').toUpperCase()}</div>` +
+                                    `<div class="ft-date">${parent.date || ''}</div>` +
+                                    `<div><span class="${pStatusClass} ft-status" data-id="${parent.orderId || parentId}">${parent.status || ''}</span></div>` +
+                                    `</div>`;
+                            }
+                            
+                            if (response.childOrders && response.childOrders.length > 0) {
+                                html += `<div class="section-label">CHILD</div>`;
+                                response.childOrders.forEach(child => {
+                                    const cls =
+                                        /shipped/i.test(child.status) ? 'copilot-tag copilot-tag-green' :
+                                        /review|processing/i.test(child.status) ? 'copilot-tag copilot-tag-yellow' :
+                                        /canceled/i.test(child.status) ? 'copilot-tag copilot-tag-red' :
+                                        /hold/i.test(child.status) ? 'copilot-tag copilot-tag-purple' : 'copilot-tag';
+                                    
+                                    html += `<div class="ft-grid">
+                                        <div><b><a href="#" class="ft-link" data-id="${child.orderId}">${child.orderId}</a></b></div>
+                                        <div class="ft-type">${(child.type || 'UNKNOWN').toUpperCase()}</div>
+                                        <div class="ft-date">${child.date}</div>
+                                        <div><span class="${cls} ft-status" data-id="${child.orderId}">${child.status}</span></div>
+                                    </div>`;
+                                });
+                            }
+                            
+                                                        html += `<div style="text-align:center; margin-top:8px;">
+                                <button id="ar-diagnose-btn" class="copilot-button">🩺 DIAGNOSE</button>
+                            </div>`;
+                            
+                            // Create white-box container
+                            const box = document.createElement('div');
+                            box.className = 'white-box';
+                            box.style.marginBottom = '10px';
+                            box.innerHTML = html;
+                            
+                            container.innerHTML = '';
+                            container.appendChild(box);
+                            container.dataset.loaded = 'true';
+                            
+                            // Add click handlers for links
+                            container.querySelectorAll('.ft-link').forEach(a => {
+                                a.addEventListener('click', e => {
+                                    e.preventDefault();
+                                    const id = a.dataset.id;
+                                    if (id) {
+                                        chrome.runtime.sendMessage({
+                                            action: 'openOrReuseTab',
+                                            url: `${location.origin}/incfile/order/detail/${id}`,
+                                            active: false
+                                        });
+                                    }
+                                });
+                            });
+                                
+                                // Show the family tree
+                                requestAnimationFrame(() => {
+                                    container.style.maxHeight = container.scrollHeight + 'px';
+                                });
+                                
+                                console.log('[FENNEC (POO)] Family tree displayed successfully');
+                            } else {
+                                console.warn('[FENNEC (POO)] Family tree container not found');
+                            }
+                        } else {
+                            console.warn('[FENNEC (POO)] Failed to fetch child orders or no response');
+                            // Fallback to manual click
+                            ftIcon.click();
+                        }
+                    });
+                } else {
+                    console.warn('[FENNEC (POO)] No parent order ID found, falling back to manual click');
+                    ftIcon.click();
+                }
+            } else {
+                // For non-MISC orders, just click the icon
+                console.log('[FENNEC (POO)] Non-MISC order, using manual click');
+                ftIcon.click();
+            }
+        } else {
+            console.warn('[FENNEC (POO)] Family tree icon not found or not visible');
         }
+        
+
     }
 
     function loadStoredSummary() {
@@ -118,7 +264,25 @@ class DBLauncher extends Launcher {
         chrome.storage.local.get({ sidebarDb: [], sidebarOrderId: null }, ({ sidebarDb, sidebarOrderId }) => {
             if (Array.isArray(sidebarDb) && sidebarDb.length && sidebarOrderId && sidebarOrderId === currentId) {
                 body.innerHTML = sidebarDb.join('');
-                if (typeof initQuickSummary === 'function') initQuickSummary();
+                
+                // Ensure INT STORAGE section exists
+                if (!body.querySelector('#int-storage-section')) {
+                    body.innerHTML += `
+                        <div id="int-storage-section" style="display:none; margin-top:10px;">
+                            <div class="section-label">INT STORAGE:</div>
+                            <div id="int-storage-box" class="white-box" style="margin-bottom:10px">
+                                <div style="text-align:center;color:#aaa">Loading...</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Initialize quick summary state
+                const box = body.querySelector('#quick-summary');
+                if (box) {
+                    box.style.maxHeight = '0px';
+                    box.classList.add('quick-summary-collapsed');
+                }
                 attachCommonListeners(body);
                 updateReviewDisplay();
                 insertDnaAfterCompany();
@@ -128,14 +292,73 @@ class DBLauncher extends Launcher {
                 if (typeof checkLastIssue === 'function') {
                     checkLastIssue(currentId);
                 }
+                
+                // Load INT STORAGE
+                console.log('[FENNEC (POO) DB SB] About to load INT STORAGE with currentId:', currentId);
+                loadIntStorage(currentId);
+                // Store INT STORAGE data to share with other environments
+                chrome.storage.local.set({ 
+                    intStorageLoaded: true, 
+                    intStorageOrderId: currentId 
+                });
+                
                 if (miscMode) {
-                    setTimeout(autoOpenFamilyTree, 100);
+                    console.log('[FENNEC (POO)] MISC mode detected, auto-opening family tree');
+                    // Use multiple attempts to ensure family tree opens
+                    const attemptAutoOpen = (attempt = 1) => {
+                        console.log(`[FENNEC (POO)] Auto-open attempt ${attempt} for MISC order (loadStoredSummary)`);
+                        const ftIcon = document.getElementById('family-tree-icon');
+                        if (ftIcon && ftIcon.style.display !== 'none') {
+                            console.log('[FENNEC (POO)] Family tree icon found and visible, triggering auto-open');
+                            autoOpenFamilyTree();
+                        } else if (attempt < 5) {
+                            console.log(`[FENNEC (POO)] Family tree icon not ready, retrying in ${attempt * 500}ms`);
+                            setTimeout(() => attemptAutoOpen(attempt + 1), attempt * 500);
+                        } else {
+                            console.warn('[FENNEC (POO)] Family tree icon not found after 5 attempts');
+                        }
+                    };
+                    
+                    // Start the auto-open process with a delay
+                    setTimeout(() => {
+                        requestAnimationFrame(() => {
+                            attemptAutoOpen();
+                        });
+                    }, 1500);
+                } else {
+                    console.log('[FENNEC (POO)] Not MISC mode, miscMode:', miscMode, 'orderType:', currentOrderTypeText);
                 }
             } else {
-                body.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:40px">No DB data.</div>';
+                body.innerHTML = `
+                    <div style="text-align:center; color:#aaa; margin-top:40px">No DB data.</div>
+                    <div id="int-storage-section" style="display:none; margin-top:10px;">
+                        <div class="section-label">INT STORAGE:</div>
+                        <div id="int-storage-box" class="white-box" style="margin-bottom:10px">
+                            <div style="text-align:center;color:#aaa">Loading...</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Load INT STORAGE even when there's no other DB data
+                console.log('[FENNEC (POO) DB SB] About to load INT STORAGE (no DB data) with currentId:', currentId);
+                loadIntStorage(currentId);
+                // Store INT STORAGE data to share with other environments
+                chrome.storage.local.set({ 
+                    intStorageLoaded: true, 
+                    intStorageOrderId: currentId 
+                });
             }
         });
     }
+    
+    // Listen for messages from other environments
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        if (message.action === 'loadIntStorage' && message.orderId) {
+            console.log('[FENNEC (POO) DB SB] Received INT STORAGE load trigger for order:', message.orderId);
+            loadIntStorage(message.orderId);
+            sendResponse({ success: true, message: 'INT STORAGE load triggered' });
+        }
+    });
     
     // Map of US states to their SOS business search pages (name and ID)
     const SOS_URLS = {
@@ -401,12 +624,39 @@ class DBLauncher extends Launcher {
             return true;
         }
         if (msg.action === 'getIntStorageList') {
+            console.log('[FENNEC (POO) DB SB] Received getIntStorageList message');
+            
+            // Check if we're on a storage page
+            if (!location.pathname.includes('/storage/incfile/')) {
+                console.log('[FENNEC (POO) DB SB] Not on storage page, current pathname:', location.pathname);
+                sendResponse({ files: null, error: 'Not on storage page' });
+                return true;
+            }
+            
             try {
+                // Check if page is fully loaded
+                if (document.readyState !== 'complete') {
+                    console.log('[FENNEC (POO) DB SB] Page not fully loaded, readyState:', document.readyState);
+                    sendResponse({ files: null, error: 'Page not fully loaded' });
+                    return true;
+                }
+                
                 const files = getIntStorageFiles();
+                console.log('[FENNEC (POO) DB SB] getIntStorageList response:', { files: files ? files.length : 'null' });
                 sendResponse({ files });
             } catch (err) {
-                console.warn('[FENNEC (POO)] Error extracting INT STORAGE files:', err);
-                sendResponse({ files: null });
+                console.error('[FENNEC (POO) DB SB] getIntStorageList error:', err);
+                sendResponse({ files: null, error: err.message });
+            }
+            return true;
+        }
+        if (msg.action === 'loadIntStorage') {
+            console.log('[FENNEC (POO) DB SB] Received INT STORAGE load trigger for order:', msg.orderId);
+            if (msg.orderId) {
+                loadIntStorage(msg.orderId);
+                sendResponse({ success: true, message: 'INT STORAGE load triggered' });
+            } else {
+                sendResponse({ success: false, error: 'No orderId provided' });
             }
             return true;
         }
@@ -626,34 +876,17 @@ class DBLauncher extends Launcher {
                 (function injectSidebar() {
                     if (document.getElementById('copilot-sidebar')) return;
                     const sbObj = new Sidebar();
-                    sbObj.build(`
-                        ${buildSidebarHeader()}
-                        <div class="order-summary-header"><span id="family-tree-icon" class="family-tree-icon" style="display:none">🌳</span> ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
-                        <div class="copilot-body" id="copilot-body-content">
-                            ${reviewMode ? `<div class="copilot-dna">
-                                <div id="dna-summary" style="margin-top:16px"></div>
-                                <div id="kount-summary" style="margin-top:10px"></div>
-                            </div>` : ''}
-                            <div style="text-align:center; color:#888; margin-top:20px;">Cargando resumen...</div>
-                            <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
-                                <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
-                                <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
-                            </div>
-                            ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
-                            <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
-                            ${devMode ? `
-                            <div id="mistral-chat" class="mistral-box">
-                                <div id="mistral-log" class="mistral-log"></div>
-                                <div class="mistral-input-row">
-                                    <input id="mistral-input" type="text" placeholder="Ask Mistral..." />
-                                    <button id="mistral-send" class="copilot-button">Send</button>
-                                </div>
-                            </div>` : ``}
-                            <div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
-                        </div>
-                    `);
+                    
+                    sbObj.build(buildStandardizedReviewModeSidebar(reviewMode, devMode));
                     sbObj.attach();
                     const sidebar = sbObj.element;
+                    
+                    // Debug: Check if INT STORAGE elements were created
+                    console.log('[FENNEC (POO)] Sidebar built, checking INT STORAGE elements immediately after creation:', {
+                        intStorageSection: !!sidebar.querySelector('#int-storage-section'),
+                        intStorageBox: !!sidebar.querySelector('#int-storage-box'),
+                        reviewMode: reviewMode
+                    });
                     chrome.storage.sync.get({
                         sidebarFontSize: 13,
                         sidebarFont: "'Inter', sans-serif",
@@ -690,6 +923,15 @@ class DBLauncher extends Launcher {
                         annualReportMode = /annual report/i.test(currentOrderTypeText);
                         reinstatementMode = /reinstat/i.test(currentOrderTypeText);
                         miscMode = !/formation/i.test(currentOrderTypeText);
+                        
+                        console.log('[FENNEC (POO)] Order type analysis:', {
+                            rawType: rawType,
+                            currentOrderTypeText: currentOrderTypeText,
+                            annualReportMode: annualReportMode,
+                            reinstatementMode: reinstatementMode, 
+                            miscMode: miscMode,
+                            formationTest: /formation/i.test(currentOrderTypeText)
+                        });
                         const frozen = sidebarFreezeId && sidebarFreezeId === currentId;
                         const hasStored = Array.isArray(sidebarDb) && sidebarDb.length && sidebarOrderId === currentId;
                         if (isStorage || (frozen && hasStored)) {
@@ -699,7 +941,25 @@ class DBLauncher extends Launcher {
                             currentOrderType = orderType;
                             const ftIcon = sidebar.querySelector('#family-tree-icon');
                             if (ftIcon) {
-                                ftIcon.style.display = orderType !== 'formation' ? 'inline' : 'none';
+                                const shouldShow = orderType !== 'formation';
+                                ftIcon.style.display = shouldShow ? 'inline' : 'none';
+                                console.log('[FENNEC (POO)] Family tree icon visibility:', {
+                                    orderType: orderType,
+                                    shouldShow: shouldShow,
+                                    displayStyle: ftIcon.style.display,
+                                    miscMode: miscMode,
+                                    currentOrderTypeText: currentOrderTypeText
+                                });
+                                
+                                // For MISC orders, ensure the icon is visible and add extra debugging
+                                if (miscMode && shouldShow) {
+                                    console.log('[FENNEC (POO)] MISC order detected, ensuring family tree icon is visible');
+                                    ftIcon.style.display = 'inline';
+                                    ftIcon.style.visibility = 'visible';
+                                    ftIcon.style.opacity = '1';
+                                }
+                            } else {
+                                console.warn('[FENNEC (POO)] Family tree icon not found in sidebar');
                             }
                             if (orderType === "amendment") {
                                 extractAndShowAmendmentData();
@@ -711,6 +971,8 @@ class DBLauncher extends Launcher {
                             loadDnaSummary();
                             loadKountSummary();
                         }
+                        
+
                         if (fraudXray) {
                             const trigger = () => setTimeout(runFraudXray, 500);
                             if (document.readyState === 'complete') {
@@ -1972,13 +2234,8 @@ class DBLauncher extends Launcher {
             }
         }
 
-        const intSection = `
-            <div class="section-label">INT STORAGE:</div>
-            <div id="int-storage-box" class="white-box" style="margin-bottom:10px">
-                <div style="text-align:center;color:#aaa">Loading...</div>
-            </div>`;
-        html += intSection;
-        dbSections.push(intSection);
+        // INT STORAGE is now handled in its own dedicated section in the sidebar template
+        // Removed from dbSections to avoid duplication
         // Add new box for MAIN and MISC orders
         if (currentOrderTypeText && (/main/i.test(currentOrderTypeText) || /misc/i.test(currentOrderTypeText))) {
             const mainMiscBox = `<div class="white-box" style="margin-bottom:10px;text-align:center;"><b>New Box for ${/main/i.test(currentOrderTypeText) ? 'MAIN' : 'MISC'} Order</b></div>`;
@@ -2015,6 +2272,16 @@ class DBLauncher extends Launcher {
         if (!html) {
             html = `<div style="text-align:center; color:#aaa; margin-top:40px">No se encontró información relevante de la orden.</div>`;
         }
+        
+        // Always add INT STORAGE section to the HTML 
+        html += `
+            <div id="int-storage-section" style="display:none; margin-top:10px;">
+                <div class="section-label">INT STORAGE:</div>
+                <div id="int-storage-box" class="white-box" style="margin-bottom:10px">
+                    <div style="text-align:center;color:#aaa">Loading...</div>
+                </div>
+            </div>
+        `;
         if (devMode) {
             if (reviewMode) {
                 html += `<div class="copilot-footer"><button id="filing-xray" class="copilot-button">🤖 FILE</button></div>`;
@@ -2061,7 +2328,14 @@ class DBLauncher extends Launcher {
         const body = document.getElementById('copilot-body-content');
         if (body) {
             body.innerHTML = html;
-            if (typeof initQuickSummary === 'function') initQuickSummary();
+            
+            // Initialize quick summary state
+            const box = body.querySelector('#quick-summary');
+            if (box) {
+                box.style.maxHeight = '0px';
+                box.classList.add('quick-summary-collapsed');
+            }
+            
             attachCommonListeners(body);
             insertDnaAfterCompany();
             if (typeof applyStandardSectionOrder === 'function') {
@@ -2072,9 +2346,38 @@ class DBLauncher extends Launcher {
             if (typeof checkLastIssue === 'function') {
                 checkLastIssue(orderInfo.orderId);
             }
+            console.log('[FENNEC (POO) DB SB] About to load INT STORAGE from extractAndShowFormationData with orderId:', orderInfo.orderId);
             loadIntStorage(orderInfo.orderId);
+            // Store INT STORAGE data to share with other environments
+            chrome.storage.local.set({ 
+                intStorageLoaded: true, 
+                intStorageOrderId: orderInfo.orderId 
+            });
             if (miscMode) {
-                setTimeout(autoOpenFamilyTree, 100);
+                console.log('[FENNEC (POO)] MISC mode detected in extractAndShowFormationData, auto-opening family tree');
+                // Use multiple attempts to ensure family tree opens
+                const attemptAutoOpen = (attempt = 1) => {
+                    console.log(`[FENNEC (POO)] Auto-open attempt ${attempt} for MISC order`);
+                    const ftIcon = document.getElementById('family-tree-icon');
+                    if (ftIcon && ftIcon.style.display !== 'none') {
+                        console.log('[FENNEC (POO)] Family tree icon found and visible, triggering auto-open');
+                        autoOpenFamilyTree();
+                    } else if (attempt < 5) {
+                        console.log(`[FENNEC (POO)] Family tree icon not ready, retrying in ${attempt * 500}ms`);
+                        setTimeout(() => attemptAutoOpen(attempt + 1), attempt * 500);
+                    } else {
+                        console.warn('[FENNEC (POO)] Family tree icon not found after 5 attempts');
+                    }
+                };
+                
+                // Start the auto-open process with a delay
+                setTimeout(() => {
+                    requestAnimationFrame(() => {
+                        attemptAutoOpen();
+                    });
+                }, 1500);
+            } else {
+                console.log('[FENNEC (POO)] Not MISC mode in extractAndShowFormationData, miscMode:', miscMode, 'orderType:', currentOrderTypeText);
             }
         }
     }
@@ -2314,11 +2617,12 @@ class DBLauncher extends Launcher {
     }
 
     function fillIssueBox(info, orderId) {
+        const section = document.getElementById('issue-summary-section');
         const box = document.getElementById('issue-summary-box');
         const content = document.getElementById('issue-summary-content');
         const label = document.getElementById('issue-status-label');
-        if (!box || !content || !label) return;
-        box.style.display = 'block';
+        if (!section || !box || !content || !label) return;
+        section.style.display = 'block';
         if (info && info.text) {
             content.textContent = formatIssueText(info.text);
             label.textContent = info.active ? 'ACTIVE' : 'RESOLVED';
@@ -2786,16 +3090,29 @@ class DBLauncher extends Launcher {
     }
 
     function getIntStorageFiles() {
-        const header = Array.from(document.querySelectorAll('h3.box-title'))
-            .find(h => /uploaded list/i.test(h.textContent));
+        console.log('[FENNEC (POO) DB SB] getIntStorageFiles() called');
+        
+        const headers = Array.from(document.querySelectorAll('h3.box-title'));
+        console.log('[FENNEC (POO) DB SB] Found headers:', headers.length, headers.map(h => h.textContent));
+        
+        const header = headers.find(h => /uploaded list/i.test(h.textContent));
+        console.log('[FENNEC (POO) DB SB] Found upload header:', header ? header.textContent : 'null');
+        
         let rows = [];
         if (header) {
             const table = header.parentElement.querySelector('table');
-            if (table) rows = Array.from(table.querySelectorAll('tbody tr'));
+            console.log('[FENNEC (POO) DB SB] Found table:', !!table);
+            if (table) {
+                const tbody = table.querySelector('tbody');
+                console.log('[FENNEC (POO) DB SB] Found tbody:', !!tbody);
+                if (tbody) {
+                    rows = Array.from(tbody.querySelectorAll('tr'));
+                    console.log('[FENNEC (POO) DB SB] Found rows:', rows.length);
+                }
+            }
         }
-        console.log('[FENNEC (POO)] Found INT STORAGE rows:', rows.length);
         
-        return rows.map(row => {
+        const files = rows.map(row => {
             const cells = row.querySelectorAll('td');
             if (cells.length < 4) return null;
             const name = cells[0].textContent.trim();
@@ -2808,13 +3125,9 @@ class DBLauncher extends Launcher {
                 if (m) url = m[1];
             }
             
-            console.log('[FENNEC (POO)] Raw extracted data:', { name, uploadedBy, dateText, url });
-            
             // Parse the date properly
             let date = null;
             if (dateText) {
-                console.log('[FENNEC (POO)] Processing date text:', dateText);
-                
                 // Handle format like "03/03/2025 16:51:32 pm"
                 const dateMatch = dateText.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+(am|pm)/i);
                 if (dateMatch) {
@@ -2827,10 +3140,7 @@ class DBLauncher extends Launcher {
                     
                     // Create ISO date string
                     date = `${year}-${month}-${day}T${hour24.toString().padStart(2, '0')}:${minute}:${second}`;
-                    console.log('[FENNEC (POO)] Parsed date from regex:', date);
                 } else {
-                    console.log('[FENNEC (POO)] Date regex did not match, trying alternative parsing');
-                    
                     // Try alternative format: "MM/DD/YYYY HH:MM:SS am/pm"
                     const altMatch = dateText.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})\s+(am|pm)/i);
                     if (altMatch) {
@@ -2843,31 +3153,31 @@ class DBLauncher extends Launcher {
                         
                         // Create ISO date string
                         date = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour24.toString().padStart(2, '0')}:${minute}:${second}`;
-                        console.log('[FENNEC (POO)] Parsed date from alternative regex:', date);
                     } else {
                         // Try to parse as regular date
                         const parsedDate = new Date(dateText);
                         if (!isNaN(parsedDate.getTime())) {
                             date = parsedDate.toISOString();
-                            console.log('[FENNEC (POO)] Parsed date from Date constructor:', date);
-                        } else {
-                            console.log('[FENNEC (POO)] Failed to parse date:', dateText);
                         }
                     }
                 }
-            } else {
-                console.log('[FENNEC (POO)] No date text found');
             }
             
-            const result = { name, uploadedBy, date, url };
-            console.log('[FENNEC (POO)] Final result:', result);
-            return result;
+            return { name, uploadedBy, date, url };
         }).filter(Boolean);
+        
+        console.log('[FENNEC (POO) DB SB] getIntStorageFiles() returning files:', files.length, files);
+        return files;
     }
 
     function getBasicOrderInfo() {
         const m = location.pathname.match(/(?:detail|storage\/incfile)\/(\d+)/);
         const orderId = m ? m[1] : '';
+        console.log('[FENNEC (POO)] getBasicOrderInfo() extracting from URL:', { 
+            pathname: location.pathname, 
+            match: m, 
+            orderId: orderId 
+        });
         let type = getOrderType();
         const pkgEl = document.getElementById('ordType');
         if (type === 'formation' && pkgEl) {
@@ -2880,7 +3190,9 @@ class DBLauncher extends Launcher {
         const dateRaw = dateLi ? getText(dateLi.querySelector('span')) || '' : '';
         const date = formatDateLikeParent(dateRaw);
         const status = getText(document.querySelector('.btn-status-text')) || '';
-        return { orderId, type, date, status };
+        const result = { orderId, type, date, status };
+        console.log('[FENNEC (POO)] getBasicOrderInfo() returning:', result);
+        return result;
     }
 
     function isExpeditedOrder() {
@@ -3173,32 +3485,79 @@ function getLastHoldUser() {
     window.currentOrderTypeText = currentOrderTypeText;
 
     function loadIntStorage(orderId) {
-        if (!orderId) return;
+        console.log('[FENNEC (POO) DB SB] loadIntStorage called for orderId:', orderId);
+        
+        if (!orderId) {
+            console.warn('[FENNEC (POO) DB SB] loadIntStorage: No orderId provided');
+            return;
+        }
+        
+        console.log('[FENNEC (POO) DB SB] orderId type:', typeof orderId, 'value:', JSON.stringify(orderId));
+        
         const setLoading = () => {
-            const bx = document.getElementById('int-storage-box');
-            if (bx) bx.innerHTML = '<div style="text-align:center;color:#aaa">Loading...</div>';
+            const section = document.getElementById('int-storage-section');
+            const box = document.getElementById('int-storage-box');
+            
+            console.log('[FENNEC (POO) DB SB] INT STORAGE elements check:', {
+                section: !!section,
+                box: !!box,
+                sectionDisplay: section ? section.style.display : 'n/a'
+            });
+            
+            if (section) {
+                section.style.display = 'block';
+                console.log('[FENNEC (POO) DB SB] INT STORAGE section made visible');
+            } else {
+                console.warn('[FENNEC (POO) DB SB] INT STORAGE section not found');
+            }
+            
+            if (box) {
+                box.innerHTML = '<div style="text-align:center;color:#aaa">Loading...</div>';
+                console.log('[FENNEC (POO) DB SB] INT STORAGE loading message set');
+            } else {
+                console.warn('[FENNEC (POO) DB SB] INT STORAGE box not found');
+            }
         };
+        
         setLoading();
-        console.log('[FENNEC (POO)] Requesting INT STORAGE for', orderId);
+        
         bg.send('fetchIntStorage', { orderId }, resp => {
             const box = document.getElementById('int-storage-box');
             if (!box) return;
+            
             const files = resp && Array.isArray(resp.files) ? resp.files : null;
+            
+            console.log('[FENNEC (POO) DB SB] INT STORAGE DEBUG: Response files:', files);
+            console.log('[FENNEC (POO) DB SB] INT STORAGE DEBUG: Files length:', files ? files.length : 'null');
+            
+            // Share INT STORAGE data with GM SB
+            chrome.storage.local.set({ 
+                intStorageData: { 
+                    orderId: orderId, 
+                    files: files, 
+                    timestamp: Date.now() 
+                },
+                intStorageLoaded: true,
+                intStorageOrderId: orderId
+            }, () => {
+                console.log('[FENNEC (POO) DB SB] INT STORAGE DEBUG: Shared data with GM SB - orderId:', orderId, 'files count:', files ? files.length : 'null');
+                
+                // Signal to GM SB that INT STORAGE loading is complete
+                bg.send('intStorageLoadComplete', { 
+                    orderId: orderId, 
+                    success: true, 
+                    filesCount: files ? files.length : 0 
+                }, (response) => {
+                    console.log('[FENNEC (POO) DB SB] INT STORAGE load complete signal sent, response:', response);
+                });
+            });
+            
             if (!files) {
-                console.warn('[FENNEC (POO)] INT STORAGE load failed', resp);
                 box.innerHTML = '<div style="text-align:center;color:#aaa">Failed to load</div>';
                 return;
             }
-            console.log('[FENNEC (POO)] INT STORAGE loaded', files.length);
+            
             const list = files.map((file, idx) => {
-                // Debug logging for date processing
-                console.log('[FENNEC (POO)] Processing file:', { 
-                    name: file.name, 
-                    uploadedBy: file.uploadedBy, 
-                    date: file.date,
-                    url: file.url 
-                });
-                
                 // Truncate name to 24 chars, show ellipsis if longer
                 let shortName = file.name.length > 24 ? file.name.slice(0, 21) + '...' : file.name;
                 // Show file name on one row, uploader on second row
@@ -3208,25 +3567,20 @@ function getLastHoldUser() {
                 // Format date as MM/DD/YY and time below, with proper error handling
                 let dateDiv = '';
                 if (file.date) {
-                    console.log('[FENNEC (POO)] Processing date:', file.date);
                     let dateObj = new Date(file.date);
-                    console.log('[FENNEC (POO)] Date object:', dateObj, 'Valid:', !isNaN(dateObj.getTime()));
                     if (!isNaN(dateObj.getTime())) {
                         // Valid date
                         let mm = String(dateObj.getMonth() + 1).padStart(2, '0');
                         let dd = String(dateObj.getDate()).padStart(2, '0');
                         let yy = String(dateObj.getFullYear()).slice(-2);
                         let time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        console.log('[FENNEC (POO)] Formatted date:', `${mm}/${dd}/${yy} ${time}`);
                         dateDiv = `<div class="int-doc-date">${mm}/${dd}/${yy}<br><span class="int-doc-time">${time}</span></div>`;
                     } else {
                         // Invalid date
-                        console.log('[FENNEC (POO)] Invalid date, showing placeholder');
                         dateDiv = `<div class="int-doc-date">--/--/--<br><span class="int-doc-time">--:--</span></div>`;
                     }
                 } else {
                     // No date provided
-                    console.log('[FENNEC (POO)] No date provided, showing placeholder');
                     dateDiv = `<div class="int-doc-date">--/--/--<br><span class="int-doc-time">--:--</span></div>`;
                 }
                 
@@ -3337,6 +3691,15 @@ function getLastHoldUser() {
         }
         const orderId = getBasicOrderInfo().orderId;
         sessionSet({ fraudReviewSession: orderId, sidebarFreezeId: orderId });
+        
+        // Clear any stale completion flags for this order to ensure fresh flow
+        const adyenFlowKey = `fennecAdyenFlowCompleted_${orderId}`;
+        const kountFlowKey = `fennecKountFlowCompleted_${orderId}`;
+        localStorage.removeItem(adyenFlowKey);
+        localStorage.removeItem(kountFlowKey);
+        localStorage.removeItem('fraudXrayFinished');
+        console.log('[FENNEC (POO)] Starting new XRAY flow for order:', orderId, '- cleared stale completion flags');
+        
         const key = 'fennecLtvRefreshed_' + orderId;
         const hadPending = sessionStorage.getItem('fraudXrayPending');
         if (hadPending) {

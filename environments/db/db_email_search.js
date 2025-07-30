@@ -26,22 +26,7 @@
             }
 
             const sb = new Sidebar();
-            sb.build(`
-                ${buildSidebarHeader()}
-                <div class="order-summary-header">ORDER SUMMARY</div>
-                <div class="copilot-body" id="copilot-body-content">
-                    <div id="db-summary-section"></div>
-                    <div class="copilot-dna">
-                        <div id="dna-summary" style="margin-top:16px"></div>
-                        <div id="kount-summary" style="margin-top:10px"></div>
-                    </div>
-                    <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
-                        <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
-                        <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
-                    </div>
-                    <div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
-                    <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
-                </div>`);
+            sb.build(buildStandardizedReviewModeSidebar(reviewMode, false));
             sb.attach();
             chrome.storage.sync.get({
                 sidebarFontSize: 13,

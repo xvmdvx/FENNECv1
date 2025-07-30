@@ -22,7 +22,21 @@ function registerMistralRule() {
 
 registerMistralRule();
 
+// Background script functionality
+chrome.runtime.onInstalled.addListener(() => {
+    // Extension installed/updated
+});
+
+chrome.runtime.onStartup.addListener(() => {
+    // Browser startup
+});
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'testMessage') {
+        sendResponse({ success: true, received: message });
+        return true;
+    }
+    
     if (fennecBackground[message.action]) {
         const result = fennecBackground[message.action](message, sender, sendResponse);
         if (result) return true;
@@ -142,6 +156,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === "fetchChildOrders" && message.orderId) {
+        console.log('[FENNEC (POO)] fetchChildOrders handler started for orderId:', message.orderId);
         const orderId = message.orderId;
         let base = "https://db.incfile.com";
         if (sender && sender.tab && sender.tab.url) {
@@ -159,18 +174,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         let attempts = 15;
         let delay = 1000;
         let createdTabId = null;
+        
+        console.log('[FENNEC (POO)] fetchChildOrders - Target URL:', url);
 
         const openAndQuery = () => {
+            console.log('[FENNEC (POO)] fetchChildOrders - Querying tabs with query:', query);
             chrome.tabs.query(query, (tabs) => {
                 let tab = tabs && tabs[0];
                 const ensureLoaded = () => {
                     if (!tab || tab.status !== "complete") {
                         if (attempts > 0) {
                             if (!tab && !createdTabId) {
+                                console.log('[FENNEC (POO)] fetchChildOrders - Creating new background tab for parent order');
                                 chrome.tabs.create({ url, active: false, windowId: sender.tab ? sender.tab.windowId : undefined }, t => {
                                     tab = t;
                                     createdTabId = t.id;
+                                    console.log('[FENNEC (POO)] fetchChildOrders - Created tab with ID:', t.id);
                                 });
+                            } else {
+                                console.log('[FENNEC (POO)] fetchChildOrders - Using existing tab or waiting for creation');
                             }
                             setTimeout(() => {
                                 attempts--;
@@ -184,13 +206,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         }
                         return;
                     }
+                    console.log('[FENNEC (POO)] fetchChildOrders - Sending getChildOrders message to tab:', tab.id);
                     chrome.tabs.sendMessage(tab.id, { action: "getChildOrders" }, resp => {
                         if (chrome.runtime.lastError) {
-                            console.warn("[Copilot] Child order extraction error:", chrome.runtime.lastError.message);
+                            console.warn("[FENNEC (POO)] fetchChildOrders - Child order extraction error:", chrome.runtime.lastError.message);
                             sendResponse({ childOrders: null, parentInfo: null });
                             if (createdTabId) chrome.tabs.remove(createdTabId);
                             return;
                         }
+                        console.log('[FENNEC (POO)] fetchChildOrders - Received response:', resp);
                         sendResponse(resp);
                         if (createdTabId) chrome.tabs.remove(createdTabId);
                     });
@@ -274,64 +298,134 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     if (message.action === "fetchIntStorage" && message.orderId) {
         const orderId = message.orderId;
-        let base = "https://db.incfile.com";
-        if (sender && sender.tab && sender.tab.url) {
-            try {
-                const url = new URL(sender.tab.url);
-                if (url.hostname.endsWith("incfile.com")) {
-                    base = url.origin;
-                }
-            } catch (err) {
-                console.warn("[Copilot] Invalid sender URL", sender.tab.url);
-            }
+        console.log('[FENNEC (POO) BG] fetchIntStorage called for orderId:', orderId);
+        
+        // Prevent multiple simultaneous requests for the same order
+        const requestKey = `intStorage_${orderId}`;
+        if (globalThis.activeRequests && globalThis.activeRequests[requestKey]) {
+            console.log('[FENNEC (POO) BG] Request already in progress for orderId:', orderId);
+            sendResponse({ files: null, error: "Request already in progress" });
+            return true;
         }
-        const url = `${base}/storage/incfile/${orderId}`;
-        const query = { url: `${url}*` };
-        let attempts = 15;
-        let delay = 1000;
-        let createdTabId = null;
-
-        const openAndFetch = () => {
-            chrome.tabs.query(query, tabs => {
-                let tab = tabs && tabs[0];
-                const ensureLoaded = () => {
-                    if (!tab || tab.status !== "complete") {
-                        if (attempts > 0) {
-                            if (!tab) {
-                                chrome.tabs.create({ url, active: false, windowId: sender.tab ? sender.tab.windowId : undefined }, t => {
-                                    tab = t;
-                                    createdTabId = t.id;
-                                });
-                            }
-                            setTimeout(() => {
-                                attempts--;
-                                delay = Math.min(delay * 1.5, 10000);
-                                chrome.tabs.query(query, qs => { tab = qs && qs[0]; ensureLoaded(); });
-                            }, delay);
-                        } else {
-                            console.warn(`[Copilot] INT STORAGE fetch timed out for ${orderId}`);
-                            sendResponse({ files: null });
-                            if (createdTabId) chrome.tabs.remove(createdTabId);
-                        }
-                        return;
-                    }
-                    chrome.tabs.sendMessage(tab.id, { action: "getIntStorageList" }, resp => {
-                        if (chrome.runtime.lastError || !resp) {
-                            const msg = chrome.runtime.lastError ? chrome.runtime.lastError.message : "no response";
-                            console.warn("[Copilot] INT STORAGE message error:", msg);
-                            sendResponse({ files: null });
-                        } else {
-                            console.log("[Copilot] INT STORAGE list obtained", { count: resp.files ? resp.files.length : 0 });
-                            sendResponse(resp);
-                        }
-                        if (createdTabId) chrome.tabs.remove(createdTabId);
-                    });
-                };
-                ensureLoaded();
-            });
+        
+        // Initialize global active requests tracker  
+        if (!globalThis.activeRequests) globalThis.activeRequests = {};
+        globalThis.activeRequests[requestKey] = true;
+        
+        // Cleanup function to remove active request tracking
+        const cleanup = () => {
+            delete globalThis.activeRequests[requestKey];
         };
+        
+        // Check if INT STORAGE data is already cached for this order
+        chrome.storage.local.get({ intStorageCache: {} }, ({ intStorageCache }) => {
+            const cacheKey = `order_${orderId}`;
+            const cachedData = intStorageCache[cacheKey];
+            
+            // If we have cached data and it's recent (less than 5 minutes old), return it immediately
+            if (cachedData && cachedData.timestamp && (Date.now() - cachedData.timestamp) < 300000) {
+                cleanup();
+                sendResponse(cachedData.data);
+                return;
+            }
+            
+            // No cached data or expired, fetch from storage page
+            let base = "https://db.incfile.com";
+            if (sender && sender.tab && sender.tab.url) {
+                try {
+                    const url = new URL(sender.tab.url);
+                    if (url.hostname.endsWith("incfile.com")) {
+                        base = url.origin;
+                    }
+                } catch (err) {
+                    console.warn("[Copilot] Invalid sender URL", sender.tab.url);
+                }
+            }
+            const url = `${base}/storage/incfile/${orderId}`;
+            console.log('[FENNEC (POO) BG] Opening URL:', url);
+            const query = { url: `${url}*` };
+            let attempts = 15;
+            let delay = 1000;
+            let createdTabId = null;
 
-        openAndFetch();
+            const openAndFetch = () => {
+                chrome.tabs.query(query, tabs => {
+                    let tab = tabs && tabs[0];
+                    const ensureLoaded = () => {
+                        console.log('[FENNEC (POO) BG] Tab status check:', tab ? { id: tab.id, status: tab.status } : 'no tab');
+                        if (!tab || tab.status !== "complete") {
+                            if (attempts > 0) {
+                                if (!tab) {
+                                    console.log('[FENNEC (POO) BG] Creating new tab for URL:', url);
+                                    chrome.tabs.create({ url, active: false, windowId: sender.tab ? sender.tab.windowId : undefined }, t => {
+                                        tab = t;
+                                        createdTabId = t.id;
+                                        console.log('[FENNEC (POO) BG] Created tab:', t.id);
+                                    });
+                                }
+                                setTimeout(() => {
+                                    attempts--;
+                                    delay = Math.min(delay * 1.5, 10000);
+                                    chrome.tabs.query(query, qs => { tab = qs && qs[0]; ensureLoaded(); });
+                                }, delay);
+                            } else {
+                                console.log('[FENNEC (POO) BG] Tab loading timeout, attempts exhausted');
+                                cleanup();
+                                sendResponse({ files: null });
+                                if (createdTabId) chrome.tabs.remove(createdTabId);
+                            }
+                            return;
+                        }
+                        console.log('[FENNEC (POO) BG] Sending getIntStorageList to tab:', tab.id);
+                        
+                        // Add retry mechanism for content script injection
+                        let retryCount = 0;
+                        const maxRetries = 5;
+                        
+                        const sendGetIntStorageList = () => {
+                            chrome.tabs.sendMessage(tab.id, { action: "getIntStorageList" }, resp => {
+                                console.log('[FENNEC (POO) BG] getIntStorageList response:', resp);
+                                if (chrome.runtime.lastError || !resp) {
+                                    const msg = chrome.runtime.lastError ? chrome.runtime.lastError.message : "no response";
+                                    console.error('[FENNEC (POO) BG] getIntStorageList error:', msg);
+                                    
+                                    // Retry if content script might not be ready yet
+                                    if (retryCount < maxRetries && /Could not establish connection|Receiving end does not exist/i.test(msg)) {
+                                        retryCount++;
+                                        console.log('[FENNEC (POO) BG] Retrying getIntStorageList, attempt:', retryCount);
+                                        setTimeout(sendGetIntStorageList, 1000);
+                                        return;
+                                    }
+                                    
+                                    cleanup();
+                                    sendResponse({ files: null, error: msg });
+                                } else {
+                                    // Cache the data for future requests
+                                    const cacheData = {
+                                        data: resp,
+                                        timestamp: Date.now()
+                                    };
+                                    chrome.storage.local.get({ intStorageCache: {} }, ({ intStorageCache: currentCache }) => {
+                                        currentCache[cacheKey] = cacheData;
+                                        chrome.storage.local.set({ intStorageCache: currentCache });
+                                    });
+                                    
+                                    cleanup();
+                                    sendResponse(resp);
+                                }
+                                if (createdTabId) chrome.tabs.remove(createdTabId);
+                            });
+                        };
+                        
+                        // Start the retry mechanism with initial delay to allow content script to initialize
+                        setTimeout(sendGetIntStorageList, 2000);
+                    };
+                    ensureLoaded();
+                });
+            };
+
+            openAndFetch();
+        });
         return true;
     }
 
@@ -825,4 +919,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
         return;
     }
+    
+    // Debug: Log unhandled messages
+    console.log('[FENNEC (POO)] Message reached end without handling:', message.action, message);
 });

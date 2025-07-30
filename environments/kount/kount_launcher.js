@@ -4,14 +4,28 @@ class KountLauncher extends Launcher {
     const bg = fennecMessenger;
     
     // Check if extension is enabled and get review mode status
-    chrome.storage.local.get({ extensionEnabled: true, fennecReviewMode: false, fennecActiveSession: null }, ({ extensionEnabled, fennecReviewMode, fennecActiveSession }) => {
+    chrome.storage.local.get({ extensionEnabled: true, fennecReviewMode: false, fennecActiveSession: null, fraudReviewSession: null }, ({ extensionEnabled, fennecReviewMode, fennecActiveSession, fraudReviewSession }) => {
         if (!extensionEnabled) return;
         
         // Check if this is a flow-triggered open or manual open
         const params = new URLSearchParams(window.location.search);
         const orderParam = params.get('fennec_order');
-        const isFlowTriggered = orderParam && fennecReviewMode;
-        const isManualOpen = !orderParam;
+        
+        // Check for flow indicators
+        const hasOrderParam = orderParam && fennecReviewMode;
+        const hasFraudSession = fraudReviewSession && fennecReviewMode;
+        const isFlowTriggered = hasOrderParam || hasFraudSession;
+        const isManualOpen = !hasOrderParam && !hasFraudSession;
+        
+        console.log('[FENNEC (POO)] KOUNT flow detection:', { 
+            orderParam, 
+            fraudReviewSession, 
+            fennecReviewMode, 
+            hasOrderParam, 
+            hasFraudSession, 
+            isFlowTriggered, 
+            isManualOpen 
+        });
         
         // If not in review mode and not manually opened, don't initialize
         if (!fennecReviewMode && !isManualOpen) {
@@ -25,13 +39,36 @@ class KountLauncher extends Launcher {
             return;
         }
         
+        console.log('[FENNEC (POO)] KOUNT initialization proceeding - will inject sidebar and run flow');
+        
         // If flow-triggered, check if flow is already completed
         if (isFlowTriggered) {
-            const flowKey = `fennecKountFlowCompleted_${orderParam}`;
-            if (localStorage.getItem(flowKey)) {
-                console.log('[FENNEC (POO)] Kount flow already completed, skipping initialization.');
+            const orderId = orderParam || fraudReviewSession;
+            const flowKey = `fennecKountFlowCompleted_${orderId}`;
+            const adyenFlowKey = `fennecAdyenFlowCompleted_${orderId}`;
+            
+            // Check if this is a fresh flow (no ADYEN completion yet)
+            const adyenCompleted = localStorage.getItem(adyenFlowKey);
+            const kountCompleted = localStorage.getItem(flowKey);
+            
+            // If both flows are completed, skip initialization
+            if (adyenCompleted && kountCompleted) {
+                console.log('[FENNEC (POO)] Both ADYEN and KOUNT flows already completed, skipping initialization.');
                 return;
             }
+            
+            // If only KOUNT is completed but ADYEN is not, clear the KOUNT flag to restart
+            if (kountCompleted && !adyenCompleted) {
+                console.log('[FENNEC (POO)] KOUNT completed but ADYEN not completed, clearing KOUNT flag to restart flow.');
+                localStorage.removeItem(flowKey);
+            }
+            
+            console.log('[FENNEC (POO)] Flow status:', { 
+                orderId, 
+                adyenCompleted: !!adyenCompleted, 
+                kountCompleted: !!kountCompleted,
+                willInitialize: true 
+            });
         }
         
         if (fennecActiveSession) {
@@ -234,22 +271,8 @@ class KountLauncher extends Launcher {
             document.body.style.transition = 'margin-right 0.2s';
             document.body.style.marginRight = SIDEBAR_WIDTH + 'px';
             const sb = new Sidebar();
-            sb.build(`
-                ${buildSidebarHeader()}
-                <div class="order-summary-header">ORDER SUMMARY <span id="qs-toggle" class="quick-summary-toggle">⚡</span></div>
-                <div class="copilot-body" id="copilot-body-content">
-                    <div id="db-summary-section"></div>
-                    <div class="copilot-dna">
-                        <div id="dna-summary" style="margin-top:16px"></div>
-                        <div id="kount-summary" style="margin-top:10px"></div>
-                    </div>
-                    <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
-                        <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
-                        <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
-                    </div>
-                    <div id="review-mode-label" class="review-mode-label" style="display:none; margin-top:4px; text-align:center; font-size:11px;">REVIEW MODE</div>
-                    <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
-                </div>`);
+            
+            sb.build(buildStandardizedReviewModeSidebar(true, false));
             sb.attach();
             chrome.storage.sync.get({
                 sidebarFontSize: 13,
@@ -264,7 +287,22 @@ class KountLauncher extends Launcher {
                 }
                 loadDbSummary(() => {
                     loadDnaSummary(() => {
-                        loadKountSummary(updateReviewDisplay);
+                        loadKountSummary(() => {
+                            // Only display INT STORAGE if it was already loaded in DB
+                            chrome.storage.local.get({ 
+                                fraudReviewSession: null, 
+                                intStorageLoaded: false, 
+                                intStorageOrderId: null 
+                            }, ({ fraudReviewSession, intStorageLoaded, intStorageOrderId }) => {
+                                if (intStorageLoaded && intStorageOrderId) {
+                                    const order = sessionStorage.getItem('fennec_order') || fraudReviewSession;
+                                    if (order === intStorageOrderId && typeof loadIntStorage === 'function') {
+                                        loadIntStorage(order);
+                                    }
+                                }
+                            });
+                            updateReviewDisplay();
+                        });
                     });
                 });
             });
@@ -306,6 +344,61 @@ class KountLauncher extends Launcher {
                 sessionSet({ sidebarDb: [], adyenDnaInfo: null, kountInfo: null });
             };
         }
+        
+        // INT STORAGE loading function for KOUNT launcher
+        function loadIntStorage(orderId) {
+            if (!orderId) return;
+            const setLoading = () => {
+                const section = document.getElementById('int-storage-section');
+                const box = document.getElementById('int-storage-box');
+                if (section) section.style.display = 'block';
+                if (box) box.innerHTML = '<div style="text-align:center;color:#aaa">Loading...</div>';
+            };
+            setLoading();
+            console.log('[FENNEC (POO)] Requesting INT STORAGE for', orderId);
+            bg.send('fetchIntStorage', { orderId }, resp => {
+                const box = document.getElementById('int-storage-box');
+                if (!box) return;
+                const files = resp && Array.isArray(resp.files) ? resp.files : null;
+                if (!files) {
+                    console.warn('[FENNEC (POO)] INT STORAGE load failed', resp);
+                    box.innerHTML = '<div style="text-align:center;color:#aaa">Failed to load</div>';
+                    return;
+                }
+                console.log('[FENNEC (POO)] INT STORAGE loaded', files.length);
+                const list = files.map((file, idx) => {
+                    let shortName = file.name.length > 24 ? file.name.slice(0, 21) + '...' : file.name;
+                    const nameDiv = `<div class="int-doc-name" title="${escapeHtml(file.name)}">${escapeHtml(shortName)}</div>`;
+                    const uploaderDiv = `<div class="int-doc-uploader">${escapeHtml(file.uploadedBy || 'Unknown')}</div>`;
+                    
+                    let dateDiv = '';
+                    if (file.date) {
+                        let dateObj = new Date(file.date);
+                        if (!isNaN(dateObj.getTime())) {
+                            let mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                            let dd = String(dateObj.getDate()).padStart(2, '0');
+                            let yy = String(dateObj.getFullYear()).slice(-2);
+                            let time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            dateDiv = `<div class="int-doc-date">${mm}/${dd}/${yy}<br><span class="int-doc-time">${time}</span></div>`;
+                        } else {
+                            dateDiv = `<div class="int-doc-date">--/--/--<br><span class="int-doc-time">--:--</span></div>`;
+                        }
+                    } else {
+                        dateDiv = `<div class="int-doc-date">--/--/--<br><span class="int-doc-time">--:--</span></div>`;
+                    }
+                    
+                    const clip = `<span class="int-doc-clip" data-idx="${idx}" title="Remove">📎</span>`;
+                    const openBtn = `<button class="copilot-button int-open" style="font-size:11px;padding:5px 8px;" data-url="${escapeHtml(file.url)}">OPEN</button>`;
+                    return `<div class="int-row" style="display:flex;align-items:center;gap:8px;margin:4px 0;">${clip}<div class="int-doc-info">${nameDiv}${uploaderDiv}</div>${dateDiv}${openBtn}</div>`;
+                }).join('');
+                const filesHtml = list || '<div style="text-align:center;color:#aaa">No files</div>';
+                box.innerHTML = filesHtml;
+                box.querySelectorAll('.int-open').forEach(b => {
+                    b.addEventListener('click', () => { const u = b.dataset.url; if (u) window.open(u, '_blank'); });
+                });
+            });
+        }
+        
         try {
             function saveData(part) {
                 chrome.storage.local.get({ kountInfo: {} }, ({ kountInfo }) => {
@@ -313,17 +406,28 @@ class KountLauncher extends Launcher {
                     sessionSet({ kountInfo: updated });
                     
                     // Mark KOUNT flow as completed if this is a flow-triggered session
-                    const order = sessionStorage.getItem('fennec_order');
-                    if (order) {
-                        const flowKey = `fennecKountFlowCompleted_${order}`;
-                        localStorage.setItem(flowKey, '1');
-                        console.log('[FENNEC (POO)] KOUNT flow completed for order:', order);
-                    }
+                    chrome.storage.local.get({ fraudReviewSession: null }, ({ fraudReviewSession }) => {
+                        const order = sessionStorage.getItem('fennec_order') || fraudReviewSession;
+                        if (order) {
+                            const flowKey = `fennecKountFlowCompleted_${order}`;
+                            localStorage.setItem(flowKey, '1');
+                            console.log('[FENNEC (POO)] KOUNT flow completed for order:', order);
+                            
+                            // Check if ADYEN flow is also completed to mark overall XRAY as finished
+                            const adyenFlowKey = `fennecAdyenFlowCompleted_${order}`;
+                            if (localStorage.getItem(adyenFlowKey)) {
+                                // Both flows are complete, mark XRAY as finished
+                                localStorage.setItem('fraudXrayFinished', '1');
+                                sessionSet({ fraudXrayFinished: '1' });
+                                console.log('[FENNEC (POO)] Both ADYEN and KOUNT flows completed, marking XRAY as finished for order:', order);
+                            }
+                        }
+                    });
                 });
             }
 
             const path = window.location.pathname;
-            if (path.includes('/workflow/ekata')) {
+            if (path.includes('/workflow/ekata') || path.includes('/workflow/ekata.html')) {
                 document.title = '[EKATA] ' + document.title;
             } else {
                 document.title = '[KOUNT] ' + document.title;
@@ -342,6 +446,8 @@ class KountLauncher extends Launcher {
 
             if (path.includes('/workflow/detail')) {
                 const run = () => {
+                    console.log('[FENNEC (POO)] On KOUNT workflow detail page, extracting data...');
+                    
                     const emailAgeEl = document.querySelector('span[title*="email address was first seen"]');
                     const emailAge = emailAgeEl ? emailAgeEl.textContent.trim() : '';
                     const locEl = document.querySelector('th[title="Device Location"] + td span');
@@ -349,10 +455,20 @@ class KountLauncher extends Launcher {
                     const ipEl = document.querySelector('th[title*="IP Address"] + td');
                     const ip = ipEl ? ipEl.textContent.trim() : '';
 
+                    console.log('[FENNEC (POO)] Basic KOUNT data extracted:', { emailAge, deviceLocation, ip });
+
                     const vipBtn = Array.from(document.querySelectorAll('a,button'))
                         .find(el => /VIP Lists/i.test(el.textContent));
-                    if (vipBtn) vipBtn.click();
+                    if (vipBtn) {
+                        console.log('[FENNEC (POO)] Found VIP Lists button, clicking...');
+                        vipBtn.click();
+                    } else {
+                        console.warn('[FENNEC (POO)] VIP Lists button not found');
+                    }
+                    
                     setTimeout(() => {
+                        console.log('[FENNEC (POO)] Extracting VIP declines and linked data...');
+                        
                         const declines = Array.from(document.querySelectorAll('#vip-lists tr'))
                             .filter(row => row.querySelector('input[value="decline"]')?.checked)
                             .map(row => {
@@ -382,50 +498,104 @@ class KountLauncher extends Launcher {
                             }
                         });
 
+                        console.log('[FENNEC (POO)] KOUNT data extracted:', { declines, linked });
                         saveData({ emailAge, deviceLocation, ip, declines, linked });
 
                         const ekataLink = document.querySelector('a[href*="/workflow/ekata"]');
                         if (ekataLink) {
+                            console.log('[FENNEC (POO)] Found EKATA link, navigating to:', ekataLink.href);
                             const url = ekataLink.href.startsWith('http') ? ekataLink.href : location.origin + ekataLink.getAttribute('href');
                             bg.openOrReuseTab({ url, active: true });
+                        } else {
+                            console.warn('[FENNEC (POO)] EKATA link not found, trying alternative selectors...');
+                            // Try alternative selectors for EKATA link
+                            const alternativeLinks = [
+                                'a[href*="ekata"]',
+                                'a[href*="Ekata"]',
+                                'a[href*="EKATA"]',
+                                'a[href*="/workflow/ekata.html"]',
+                                'a[href*="/workflow/ekata"]',
+                                'a:contains("Ekata")',
+                                'a:contains("EKATA")'
+                            ];
+                            
+                            for (const selector of alternativeLinks) {
+                                const link = document.querySelector(selector);
+                                if (link) {
+                                    console.log('[FENNEC (POO)] Found EKATA link with alternative selector:', selector);
+                                    const url = link.href.startsWith('http') ? link.href : location.origin + link.getAttribute('href');
+                                    bg.openOrReuseTab({ url, active: true });
+                                    break;
+                                }
+                            }
+                            
+                            // If still not found, try to find any link containing "ekata" in text
+                            const allLinks = Array.from(document.querySelectorAll('a'));
+                            const ekataTextLink = allLinks.find(link => 
+                                link.textContent.toLowerCase().includes('ekata') || 
+                                link.textContent.toLowerCase().includes('ekata report')
+                            );
+                            
+                            if (ekataTextLink) {
+                                console.log('[FENNEC (POO)] Found EKATA link by text content:', ekataTextLink.textContent);
+                                const url = ekataTextLink.href.startsWith('http') ? ekataTextLink.href : location.origin + ekataTextLink.getAttribute('href');
+                                bg.openOrReuseTab({ url, active: true });
+                            } else {
+                                console.error('[FENNEC (POO)] EKATA link not found with any method');
+                            }
                         }
                     }, 500);
                 };
                 if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', run);
                 } else run();
-            } else if (path.includes('/workflow/ekata')) {
+            } else if (path.includes('/workflow/ekata') || path.includes('/workflow/ekata.html')) {
                 const run = () => {
+                    console.log('[FENNEC (POO)] On EKATA page, looking for report generation...');
+                    
                     const link = Array.from(document.querySelectorAll('a.link'))
                         .find(a => /Generate Ekata Report/i.test(a.textContent));
                     if (link) {
+                        console.log('[FENNEC (POO)] Found Generate Ekata Report link, clicking...');
                         link.click();
                         return;
                     }
+                    
                     const btn = document.querySelector('input.simple-submit[value="Update Report"]');
                     if (btn && !sessionStorage.getItem('fennecEkataUpdateClicked')) {
+                        console.log('[FENNEC (POO)] Found Update Report button, clicking...');
                         sessionStorage.setItem('fennecEkataUpdateClicked', '1');
                         btn.click();
                         return;
                     }
+                    
+                    // Wait a bit longer for the report to be generated/updated
                     setTimeout(() => {
+                        console.log('[FENNEC (POO)] Extracting EKATA data...');
                         const ipValid = findVal('Is Valid');
                         const proxyRisk = findVal('Proxy Risk');
                         const addressToName = findVal('Address to Name');
                         const residentName = findVal('Resident Name');
+                        
+                        console.log('[FENNEC (POO)] EKATA data extracted:', { ipValid, proxyRisk, addressToName, residentName });
                         saveData({ ekata: { ipValid, proxyRisk, addressToName, residentName } });
+                        
                         // Do not mark XRAY as finished yet. The Adyen step will
                         // trigger the Trial floater once all data is collected.
                         sessionStorage.removeItem('fennecEkataUpdateClicked');
-                        chrome.storage.local.get({ fennecFraudAdyen: null }, ({ fennecFraudAdyen }) => {
+                        
+                        console.log('[FENNEC (POO)] EKATA completed, navigating to ADYEN...');
+                        chrome.storage.local.get({ fennecFraudAdyen: null, fraudReviewSession: null }, ({ fennecFraudAdyen, fraudReviewSession }) => {
                             if (fennecFraudAdyen) {
+                                console.log('[FENNEC (POO)] Opening ADYEN URL:', fennecFraudAdyen);
                                 chrome.storage.local.remove('fennecFraudAdyen');
                                 bg.openOrReuseTab({ url: fennecFraudAdyen, active: true });
                             } else {
+                                console.log('[FENNEC (POO)] No ADYEN URL found, refocusing to fraud tracker');
                                 bg.refocusTab();
                             }
                         });
-                    }, 1500);
+                    }, 2000); // Increased timeout to allow for report generation
                 };
                 if (document.readyState === 'loading') {
                     document.addEventListener('DOMContentLoaded', run);

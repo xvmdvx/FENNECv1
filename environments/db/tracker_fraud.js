@@ -1,13 +1,20 @@
 (function() {
     if (window.top !== window) return;
     const bg = fennecMessenger;
-    chrome.storage.local.get({ extensionEnabled: true, lightMode: false }, opts => {
+    chrome.storage.local.get({ extensionEnabled: true, lightMode: false, fennecReviewMode: false }, opts => {
         if (!opts.extensionEnabled) return;
         if (opts.lightMode) {
             document.body.classList.add('fennec-light-mode');
         } else {
             document.body.classList.remove('fennec-light-mode');
         }
+        
+        // Only inject if REVIEW MODE is enabled
+        if (!opts.fennecReviewMode) {
+            console.log('[FENNEC (POO)] Fraud tracker: REVIEW MODE is disabled, skipping injection');
+            return;
+        }
+        
         const SIDEBAR_WIDTH = 340;
         const trialFloater = new TrialFloater();
         // Opening the fraud tracker manually should reset any pending floater
@@ -17,8 +24,13 @@
         let floaterRefocusDone = false;
         const queueScan = new URLSearchParams(location.search).get('fennec_queue_scan') === '1';
         if (queueScan) collectAllFraudOrders();
-        chrome.storage.local.set({ fennecReviewMode: true });
-        chrome.storage.sync.set({ fennecReviewMode: true });
+        
+        // Only set REVIEW MODE if it's not already set
+        if (!opts.fennecReviewMode) {
+            chrome.storage.local.set({ fennecReviewMode: true });
+            chrome.storage.sync.set({ fennecReviewMode: true });
+        }
+        
         // Only display the trial floater after the XRAY flow is manually
         // triggered. Avoid restoring it automatically when reloading the
         // fraud tracker.
@@ -27,6 +39,8 @@
                 chrome.storage.local.remove('fraudXrayFinished');
             }
         });
+
+
 
         function injectSidebar() {
             if (document.getElementById('copilot-sidebar')) return;
@@ -46,22 +60,7 @@
 
             const sidebar = document.createElement('div');
             sidebar.id = 'copilot-sidebar';
-            sidebar.innerHTML = `
-                ${buildSidebarHeader()}
-                <div class="order-summary-header">ORDER SUMMARY</div>
-                <div class="copilot-body" id="copilot-body-content">
-                    <div id="db-summary-section"></div>
-                    <div class="copilot-dna">
-                        <div id="dna-summary" style="margin-top:16px"></div>
-                        <div id="kount-summary" style="margin-top:10px"></div>
-                    </div>
-                    <div id="fraud-summary-section"></div>
-                    <div class="issue-summary-box" id="issue-summary-box" style="display:none; margin-top:10px;">
-                        <strong>ISSUE <span id="issue-status-label" class="issue-status-label"></span></strong><br>
-                        <div id="issue-summary-content" style="color:#ccc; font-size:13px; white-space:pre-line;">No issue data yet.</div>
-                    </div>
-                    <div class="copilot-footer"><button id="copilot-clear" class="copilot-button">🧹 CLEAR</button></div>
-                </div>`;
+            sidebar.innerHTML = buildStandardizedReviewModeSidebar(true, false);
             document.body.appendChild(sidebar);
             chrome.storage.sync.get({
                 sidebarFontSize: 13,
@@ -82,6 +81,18 @@
                     bg.closeOtherTabs();
                 };
             }
+            
+            // Initialize quick summary to be fully hidden
+            const qsToggle = sidebar.querySelector('#qs-toggle');
+            if (qsToggle) {
+                const initQuickSummary = () => {
+                    const box = sidebar.querySelector('#quick-summary');
+                    if (!box) return;
+                    box.style.maxHeight = '0px';
+                    box.classList.add('quick-summary-collapsed');
+                };
+                initQuickSummary();
+            }
         }
 
         function runXray(orderId) {
@@ -95,7 +106,8 @@
                 sidebarOrderId: null,
                 sidebarOrderInfo: null,
                 adyenDnaInfo: null,
-                kountInfo: null
+                kountInfo: null,
+                xrayOpenedTabs: [] // Track tabs opened during XRAY flow
             }, () => {
                 bg.openOrReuseTab({ url: dbUrl, active: true, refocus: true });
             });
@@ -638,10 +650,6 @@
                     title.remove();
                     endFraudSession();
                     showTrialSuccess();
-                    chrome.storage.local.set({ fennecReturnTab: null }, () => {
-                        bg.refocusTab();
-                    });
-                    bg.closeOtherTabs();
                 }
 
                 const crBtn = overlay.querySelector('#trial-btn-cr');
@@ -1230,11 +1238,12 @@ function namesMatch(a, b) {
         }
 
         function fillIssueBox(info, orderId) {
+            const section = document.getElementById('issue-summary-section');
             const box = document.getElementById('issue-summary-box');
             const content = document.getElementById('issue-summary-content');
             const label = document.getElementById('issue-status-label');
-            if (!box || !content || !label) return;
-            box.style.display = 'block';
+            if (!section || !box || !content || !label) return;
+            section.style.display = 'block';
             if (info && info.text) {
                 content.textContent = formatIssueText(info.text);
                 label.textContent = info.active ? 'ACTIVE' : 'RESOLVED';
@@ -1248,14 +1257,15 @@ function namesMatch(a, b) {
         }
 
         function hideIssueBox() {
+            const section = document.getElementById('issue-summary-section');
             const box = document.getElementById('issue-summary-box');
             const content = document.getElementById('issue-summary-content');
             const label = document.getElementById('issue-status-label');
-            if (!box || !content || !label) return;
+            if (!section || !box || !content || !label) return;
             content.innerHTML = 'No issue data yet.';
             label.textContent = '';
             label.className = 'issue-status-label';
-            box.style.display = 'none';
+            section.style.display = 'none';
         }
 
         function checkLastIssue(orderId) {
@@ -1287,7 +1297,10 @@ function namesMatch(a, b) {
                     container.innerHTML = sidebarDb.join('');
                     attachCommonListeners(container);
                     const qbox = container.querySelector('#quick-summary');
-                    if (qbox) { qbox.classList.remove('quick-summary-collapsed'); qbox.style.maxHeight = 'none'; }
+                    if (qbox) { 
+                        qbox.classList.add('quick-summary-collapsed'); 
+                        qbox.style.maxHeight = '0px'; 
+                    }
                     insertDnaAfterCompany();
                     if (typeof applyStandardSectionOrder === 'function') {
                         applyStandardSectionOrder(container);
@@ -1309,32 +1322,129 @@ function namesMatch(a, b) {
             const db = document.getElementById('db-summary-section');
             const dna = document.getElementById('dna-summary');
             const fraud = document.getElementById('fraud-summary-section');
-            const issue = document.getElementById('issue-summary-box');
+            const issueSection = document.getElementById('issue-summary-section');
             if (db) db.innerHTML = '';
             if (dna && resetDna) dna.innerHTML = '';
             if (fraud) fraud.innerHTML = '';
-            if (issue) {
-                const content = issue.querySelector('#issue-summary-content');
-                const label = issue.querySelector('#issue-status-label');
+            if (issueSection) {
+                const content = issueSection.querySelector('#issue-summary-content');
+                const label = issueSection.querySelector('#issue-status-label');
                 if (content) content.innerHTML = 'No issue data yet.';
                 if (label) { label.textContent = ''; label.className = 'issue-status-label'; }
-                issue.style.display = 'none';
+                issueSection.style.display = 'none';
             }
             insertFraudSummary();
         }
 
         function endFraudSession() {
+            console.log('[FENNEC (POO)] Ending fraud session - closing all XRAY flow tabs and clearing storage');
+            
+            // Clear sidebar and local storage
             clearSidebar(false);
-            chrome.storage.local.set({
-                fraudReviewSession: null
-            });
-            localStorage.removeItem('fraudXrayCompleted');
-            localStorage.removeItem('fraudXrayFinished');
-            sessionStorage.removeItem('fennecShowTrialFloater');
-            floaterRefocusDone = false;
-            showInitialStatus();
-            chrome.storage.local.set({ fennecReturnTab: null }, () => {
-                bg.refocusTab();
+            
+            // Get the current fraud review session to identify which tabs to close
+            chrome.storage.local.get({ fraudReviewSession: null }, ({ fraudReviewSession }) => {
+                const orderId = fraudReviewSession;
+                
+                // Clear all XRAY-related storage
+                const storageKeysToClear = [
+                    'fraudReviewSession',
+                    'sidebarFreezeId',
+                    'sidebarDb',
+                    'sidebarOrderId', 
+                    'sidebarOrderInfo',
+                    'adyenDnaInfo',
+                    'kountInfo',
+                    'fennecFraudAdyen',
+                    'fennecReturnTab',
+                    'fennecDbSearchTab',
+                    'intStorageLoaded',
+                    'intStorageOrderId',
+                    'xrayOpenedTabs',
+                    'intStorageCache'
+                ];
+                
+                chrome.storage.local.remove(storageKeysToClear);
+                
+                // Clear localStorage flags
+                localStorage.removeItem('fraudXrayCompleted');
+                localStorage.removeItem('fraudXrayFinished');
+                
+                // Clear session storage
+                sessionStorage.removeItem('fennecShowTrialFloater');
+                sessionStorage.removeItem('fennec_order');
+                
+                // Clear flow completion flags for this order
+                if (orderId) {
+                    localStorage.removeItem(`fennecAdyenFlowCompleted_${orderId}`);
+                    localStorage.removeItem(`fennecKountFlowCompleted_${orderId}`);
+                }
+                
+                // Close all tabs opened during the XRAY flow using tracked tab IDs
+                chrome.storage.local.get({ xrayOpenedTabs: [], fraudReviewSession: null }, ({ xrayOpenedTabs, fraudReviewSession }) => {
+                    if (xrayOpenedTabs && xrayOpenedTabs.length > 0) {
+                        console.log('[FENNEC (POO)] Closing tracked XRAY flow tabs:', xrayOpenedTabs.length, 'tabs');
+                        
+                        // Use background controller to close tracked tabs
+                        bg.send('closeTabsByIds', { tabIds: xrayOpenedTabs }, (response) => {
+                            if (response && response.success) {
+                                console.log('[FENNEC (POO)] Successfully closed tracked XRAY flow tabs');
+                            } else {
+                                console.log('[FENNEC (POO)] Failed to close tracked tabs, trying fallback');
+                                closeTabsByUrlPatterns();
+                            }
+                        });
+                    } else {
+                        console.log('[FENNEC (POO)] No tracked XRAY tabs found - using URL pattern fallback');
+                        closeTabsByUrlPatterns();
+                    }
+                });
+                
+                function closeTabsByUrlPatterns() {
+                    // Use background controller to close tabs by URL patterns
+                    const urlPatterns = [
+                        'db.incfile.com/incfile/order/detail/',
+                        'db.incfile.com/order-tracker/orders/order-search',
+                        'awc.kount.net/workflow/',
+                        'ca-live.adyen.com'
+                    ];
+                    
+                    bg.send('closeTabsByUrlPatterns', { 
+                        patterns: urlPatterns,
+                        fraudReviewSession: fraudReviewSession 
+                    }, (response) => {
+                        if (response && response.success) {
+                            console.log('[FENNEC (POO)] Successfully closed XRAY flow tabs by URL patterns');
+                        } else {
+                            console.log('[FENNEC (POO)] Failed to close tabs by URL patterns, trying title-based matching');
+                            closeTabsByTitles();
+                        }
+                    });
+                }
+                
+                function closeTabsByTitles() {
+                    // Use background controller to close tabs by titles
+                    const titlePatterns = ['[DB]', '[KOUNT]', '[EKATA]', '[ADYEN]', 'Order Search'];
+                    
+                    bg.send('closeTabsByTitles', { 
+                        patterns: titlePatterns 
+                    }, (response) => {
+                        if (response && response.success) {
+                            console.log('[FENNEC (POO)] Successfully closed XRAY flow tabs by titles');
+                        } else {
+                            console.log('[FENNEC (POO)] Failed to close tabs by titles');
+                        }
+                    });
+                }
+                
+                // Reset state and show initial status
+                floaterRefocusDone = false;
+                showInitialStatus();
+                
+                // Focus back to the fraud tracker
+                chrome.storage.local.set({ fennecReturnTab: null }, () => {
+                    bg.refocusTab();
+                });
             });
         }
 
@@ -1343,11 +1453,11 @@ function namesMatch(a, b) {
             const dna = document.getElementById('dna-summary');
             const kount = document.getElementById('kount-summary');
             const fraud = document.getElementById('fraud-summary-section');
-            const issue = document.getElementById('issue-summary-box');
+            const issueSection = document.getElementById('issue-summary-section');
             if (db) db.innerHTML = '';
             if (dna) dna.innerHTML = '';
             if (kount) kount.innerHTML = '';
-            if (issue) hideIssueBox();
+            if (issueSection) hideIssueBox();
             if (fraud) insertFraudSummary();
         }
 
