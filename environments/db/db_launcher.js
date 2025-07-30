@@ -118,133 +118,18 @@ class DBLauncher extends Launcher {
             console.log('[FENNEC (POO)] Auto-clicking family tree icon');
             autoFamilyTreeDone = true;
             
-            // Check if there are multiple family tree icons
-            const allFtIcons = document.querySelectorAll('#family-tree-icon');
-            console.log('[FENNEC (POO)] Total family tree icons found:', allFtIcons.length);
-            allFtIcons.forEach((icon, index) => {
-                console.log(`[FENNEC (POO)] Icon ${index}:`, {
-                    display: icon.style.display,
-                    listenerAttached: icon.dataset.listenerAttached,
-                    parentElement: icon.parentElement.className
-                });
-            });
-            
-            // For MISC orders, we need to ensure the parent order is opened and child orders are fetched
+            // For MISC orders, trigger the family tree click to open it automatically
             if (miscMode) {
-                console.log('[FENNEC (POO)] MISC mode detected, ensuring parent order is opened first');
-                
-                // Get parent order ID
-                const parentId = getParentOrderId();
-                console.log('[FENNEC (POO)] Parent order ID:', parentId);
-                
-                if (parentId) {
-                    // Open parent order in background and fetch child orders
-                    const base = window.location.origin;
-                    const parentUrl = `${base}/incfile/order/detail/${parentId}?fennec_no_store=1`;
-                    
-                    console.log('[FENNEC (POO)] Opening parent order in background:', parentUrl);
-                    
-                    // Send message to background script to open parent order and fetch child orders
-                    chrome.runtime.sendMessage({ 
-                        action: 'fetchChildOrders', 
-                        orderId: parentId 
-                    }, (response) => {
-                        console.log('[FENNEC (POO)] fetchChildOrders response:', response);
-                        
-                        if (response && response.childOrders) {
-                            console.log('[FENNEC (POO)] Child orders fetched successfully, building family tree');
-                            
-                            // Build and display family tree
-                            const container = document.getElementById('family-tree-orders');
-                            if (container) {
-                                container.classList.remove('ft-collapsed');
-                                
-                                                            // Build family tree HTML with proper structure matching utils.js format
-                            let html = '';
-                            const parent = response.parentInfo;
-                            
-                            if (parent) {
-                                const pStatusClass =
-                                    /shipped/i.test(parent.status) ? 'copilot-tag copilot-tag-green' :
-                                    /review|processing/i.test(parent.status) ? 'copilot-tag copilot-tag-yellow' :
-                                    /canceled/i.test(parent.status) ? 'copilot-tag copilot-tag-red' :
-                                    /hold/i.test(parent.status) ? 'copilot-tag copilot-tag-purple' : 'copilot-tag';
-                                
-                                html += `<div class="section-label">PARENT</div>`;
-                                html += `<div class="ft-grid">` +
-                                    `<div><b><a href="#" class="ft-link" data-id="${parent.orderId || parentId}">${parent.orderId || parentId}</a></b></div>` +
-                                    `<div class="ft-type">${(parent.type || 'UNKNOWN').toUpperCase()}</div>` +
-                                    `<div class="ft-date">${parent.date || ''}</div>` +
-                                    `<div><span class="${pStatusClass} ft-status" data-id="${parent.orderId || parentId}">${parent.status || ''}</span></div>` +
-                                    `</div>`;
-                            }
-                            
-                            if (response.childOrders && response.childOrders.length > 0) {
-                                html += `<div class="section-label">CHILD</div>`;
-                                response.childOrders.forEach(child => {
-                                    const cls =
-                                        /shipped/i.test(child.status) ? 'copilot-tag copilot-tag-green' :
-                                        /review|processing/i.test(child.status) ? 'copilot-tag copilot-tag-yellow' :
-                                        /canceled/i.test(child.status) ? 'copilot-tag copilot-tag-red' :
-                                        /hold/i.test(child.status) ? 'copilot-tag copilot-tag-purple' : 'copilot-tag';
-                                    
-                                    html += `<div class="ft-grid">
-                                        <div><b><a href="#" class="ft-link" data-id="${child.orderId}">${child.orderId}</a></b></div>
-                                        <div class="ft-type">${(child.type || 'UNKNOWN').toUpperCase()}</div>
-                                        <div class="ft-date">${child.date}</div>
-                                        <div><span class="${cls} ft-status" data-id="${child.orderId}">${child.status}</span></div>
-                                    </div>`;
-                                });
-                            }
-                            
-                                                        html += `<div style="text-align:center; margin-top:8px;">
-                                <button id="ar-diagnose-btn" class="copilot-button">🩺 DIAGNOSE</button>
-                            </div>`;
-                            
-                            // Create white-box container
-                            const box = document.createElement('div');
-                            box.className = 'white-box';
-                            box.style.marginBottom = '10px';
-                            box.innerHTML = html;
-                            
-                            container.innerHTML = '';
-                            container.appendChild(box);
-                            container.dataset.loaded = 'true';
-                            
-                            // Add click handlers for links
-                            container.querySelectorAll('.ft-link').forEach(a => {
-                                a.addEventListener('click', e => {
-                                    e.preventDefault();
-                                    const id = a.dataset.id;
-                                    if (id) {
-                                        chrome.runtime.sendMessage({
-                                            action: 'openOrReuseTab',
-                                            url: `${location.origin}/incfile/order/detail/${id}`,
-                                            active: false
-                                        });
-                                    }
-                                });
-                            });
-                                
-                                // Show the family tree
-                                requestAnimationFrame(() => {
-                                    container.style.maxHeight = container.scrollHeight + 'px';
-                                });
-                                
-                                console.log('[FENNEC (POO)] Family tree displayed successfully');
-                            } else {
-                                console.warn('[FENNEC (POO)] Family tree container not found');
-                            }
-                        } else {
-                            console.warn('[FENNEC (POO)] Failed to fetch child orders or no response');
-                            // Fallback to manual click
-                            ftIcon.click();
-                        }
-                    });
-                } else {
-                    console.warn('[FENNEC (POO)] No parent order ID found, falling back to manual click');
-                    ftIcon.click();
-                }
+                console.log('[FENNEC (POO)] MISC mode detected, triggering family tree click');
+                // Use a small delay to ensure the icon is ready
+                setTimeout(() => {
+                    if (ftIcon && ftIcon.style.display !== 'none') {
+                        console.log('[FENNEC (POO)] Triggering click on family tree icon for MISC order');
+                        ftIcon.click();
+                    } else {
+                        console.warn('[FENNEC (POO)] Family tree icon not visible after delay');
+                    }
+                }, 500);
             } else {
                 // For non-MISC orders, just click the icon
                 console.log('[FENNEC (POO)] Non-MISC order, using manual click');
@@ -252,9 +137,15 @@ class DBLauncher extends Launcher {
             }
         } else {
             console.warn('[FENNEC (POO)] Family tree icon not found or not visible');
+            // Try again after a delay if the icon is not ready
+            if (!autoFamilyTreeDone) {
+                setTimeout(() => {
+                    console.log('[FENNEC (POO)] Retrying autoOpenFamilyTree after delay');
+                    autoFamilyTreeDone = false;
+                    autoOpenFamilyTree();
+                }, 1000);
+            }
         }
-        
-
     }
 
     function loadStoredSummary() {
@@ -934,7 +825,8 @@ class DBLauncher extends Launcher {
                             annualReportMode: annualReportMode,
                             reinstatementMode: reinstatementMode, 
                             miscMode: miscMode,
-                            formationTest: /formation/i.test(currentOrderTypeText)
+                            formationTest: /formation/i.test(currentOrderTypeText),
+                            isFormation: /formation/i.test(currentOrderTypeText)
                         });
                         const frozen = sidebarFreezeId && sidebarFreezeId === currentId;
                         const hasStored = Array.isArray(sidebarDb) && sidebarDb.length && sidebarOrderId === currentId;
@@ -961,6 +853,24 @@ class DBLauncher extends Launcher {
                                     ftIcon.style.display = 'inline';
                                     ftIcon.style.visibility = 'visible';
                                     ftIcon.style.opacity = '1';
+                                    
+                                    // Also ensure the icon is clickable
+                                    ftIcon.style.pointerEvents = 'auto';
+                                    ftIcon.style.cursor = 'pointer';
+                                    
+                                    console.log('[FENNEC (POO)] Family tree icon styles after MISC setup:', {
+                                        display: ftIcon.style.display,
+                                        visibility: ftIcon.style.visibility,
+                                        opacity: ftIcon.style.opacity,
+                                        pointerEvents: ftIcon.style.pointerEvents,
+                                        cursor: ftIcon.style.cursor
+                                    });
+                                    
+                                    // Auto-open family tree for MISC orders
+                                    setTimeout(() => {
+                                        console.log('[FENNEC (POO)] Auto-opening family tree for MISC order');
+                                        autoOpenFamilyTree();
+                                    }, 1000);
                                 }
                             } else {
                                 console.warn('[FENNEC (POO)] Family tree icon not found in sidebar');

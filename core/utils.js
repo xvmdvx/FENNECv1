@@ -127,6 +127,7 @@ function abbreviateOrderType(type) {
     if (t.includes('sales tax registration')) return 'SALES TAX';
     if (t.includes('registered agent change')) return 'RA CHANGE';
     if (t.includes('trade name search')) return 'TRADENAME';
+    if (t.includes('beneficial ownership information report')) return 'BOIR';
     return type;
 }
 window.abbreviateOrderType = abbreviateOrderType;

@@ -202,21 +202,21 @@ class BackgroundController {
             return;
         }
         
-        console.log('[FENNEC (POO)] Closing tabs by URL patterns:', msg.patterns);
+        console.log('[FENNEC (POO)] Closing tabs by URL patterns:', msg.patterns, 'excludeTabId:', msg.excludeTabId);
         
         chrome.tabs.query({}, (allTabs) => {
             const tabsToClose = [];
             
             allTabs.forEach(tab => {
+                // Skip the excluded tab (current tab)
+                if (msg.excludeTabId && tab.id === msg.excludeTabId) {
+                    console.log('[FENNEC (POO)] Skipping excluded tab (current tab):', tab.url);
+                    return;
+                }
+                
                 if (tab.url) {
                     const matchesPattern = msg.patterns.some(pattern => {
-                        if (pattern === 'db.incfile.com/incfile/order/detail/') {
-                            return tab.url.includes(pattern) && tab.url.includes('fraud_xray=1');
-                        } else if (pattern === 'db.incfile.com/order-tracker/orders/order-search') {
-                            return tab.url.includes(pattern) && tab.url.includes('fennec_email=');
-                        } else {
-                            return tab.url.includes(pattern);
-                        }
+                        return tab.url.includes(pattern);
                     });
                     
                     if (matchesPattern) {
@@ -267,6 +267,47 @@ class BackgroundController {
             } else {
                 console.log('[FENNEC (POO)] No tabs found matching title patterns');
                 sendResponse({ success: false, error: 'No matching tabs found' });
+            }
+        });
+    }
+
+    getCurrentTabId(msg, sender, sendResponse) {
+        if (!sender || !sender.tab) {
+            sendResponse(null);
+            return;
+        }
+        
+        console.log('[FENNEC (POO)] Getting current tab ID:', sender.tab.id);
+        sendResponse(sender.tab.id);
+    }
+
+    queryTabs(msg, sender, sendResponse) {
+        if (!msg.url) {
+            sendResponse([]);
+            return;
+        }
+        
+        console.log('[FENNEC (POO)] Querying tabs with URL pattern:', msg.url);
+        chrome.tabs.query({ url: msg.url }, (tabs) => {
+            console.log('[FENNEC (POO)] Found tabs:', tabs.length);
+            sendResponse(tabs);
+        });
+    }
+
+    getTab(msg, sender, sendResponse) {
+        if (!msg.tabId) {
+            sendResponse(null);
+            return;
+        }
+        
+        console.log('[FENNEC (POO)] Getting tab with ID:', msg.tabId);
+        chrome.tabs.get(msg.tabId, (tab) => {
+            if (chrome.runtime.lastError) {
+                console.log('[FENNEC (POO)] Tab not found or closed:', msg.tabId);
+                sendResponse(null);
+            } else {
+                console.log('[FENNEC (POO)] Tab found:', tab.url);
+                sendResponse(tab);
             }
         });
     }

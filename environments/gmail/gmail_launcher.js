@@ -47,7 +47,7 @@
         if (msg.action === 'intStorageLoadComplete') {
             console.log('[FENNEC (POO) GM SB] Received INT STORAGE load complete signal for order:', msg.orderId, 'files count:', msg.filesCount);
             
-            // Check if this is for the current order we're waiting for
+            // Process completion signal for current order
             if (window.currentIntStorageOrderId === msg.orderId) {
                 console.log('[FENNEC (POO) GM SB] INT STORAGE load complete for current order, checking storage for data');
                 
@@ -57,9 +57,9 @@
                         if (intStorageData && intStorageData.orderId === msg.orderId) {
                             console.log('[FENNEC (POO) GM SB] Found INT STORAGE data after completion signal');
                             if (intStorageData.error) {
-                                updateIntStorageDisplay(null, msg.orderId, intStorageData.error);
+                                updateIntStorageDisplay(null, msg.orderId, intStorageData.error, 0);
                             } else {
-                                updateIntStorageDisplay(intStorageData.files, msg.orderId);
+                                updateIntStorageDisplay(intStorageData.files, msg.orderId, null, 0);
                             }
                         } else {
                             console.log('[FENNEC (POO) GM SB] No INT STORAGE data found after completion signal');
@@ -299,7 +299,7 @@
                 }
             });
 
-            // Specifically target and ensure navigation buttons remain visible
+            // More selective approach to navigation buttons - only adjust if they're actually covered
             const navigationContainers = [
                 ...Array.from(document.body.querySelectorAll('.ar5.J-J5-Ji')),
                 ...Array.from(document.body.querySelectorAll('[role="button"][aria-label*="Newer"]')),
@@ -310,32 +310,28 @@
 
             navigationContainers.forEach(el => {
                 if (el) {
-                    // Ensure navigation buttons are not covered by sidebar
                     const rect = el.getBoundingClientRect();
                     const style = getComputedStyle(el);
                     
-                    // If the element is positioned and might be covered by sidebar
-                    if (style.position === 'fixed' || style.position === 'absolute') {
-                        const rightEdge = rect.left + rect.width;
-                        const sidebarLeft = window.innerWidth - SIDEBAR_WIDTH;
-                        
-                        if (rightEdge > sidebarLeft) {
-                            // Adjust position to ensure visibility
+                    // Only adjust if the element is actually covered by the sidebar
+                    const rightEdge = rect.left + rect.width;
+                    const sidebarLeft = window.innerWidth - SIDEBAR_WIDTH;
+                    
+                    if (rightEdge > sidebarLeft) {
+                        // Only apply positioning fixes if the element is covered
+                        if (style.position === 'fixed' || style.position === 'absolute') {
                             el.style.setProperty('right', SIDEBAR_WIDTH + 'px', 'important');
                             el.style.setProperty('z-index', '1000', 'important');
+                        } else {
+                            // For non-positioned elements, ensure they have proper margin
+                            el.style.setProperty('margin-right', SIDEBAR_WIDTH + 'px', 'important');
                         }
-                    } else {
-                        // For non-positioned elements, ensure they have proper margin
-                        el.style.setProperty('margin-right', SIDEBAR_WIDTH + 'px', 'important');
                     }
                     
-                    // Ensure proper padding and visibility
-                    el.style.setProperty('padding', '4px 8px', 'important');
-                    el.style.setProperty('min-height', '24px', 'important');
-                    el.style.setProperty('display', 'inline-flex', 'important');
-                    el.style.setProperty('align-items', 'center', 'important');
-                    el.style.setProperty('justify-content', 'center', 'important');
+                    // Only apply minimal styling to ensure visibility, don't override Gmail's own styles
                     el.style.setProperty('z-index', '1000', 'important');
+                    el.style.setProperty('visibility', 'visible', 'important');
+                    el.style.setProperty('opacity', '1', 'important');
                 }
             });
 
@@ -364,21 +360,44 @@
                         const sidebarLeft = window.innerWidth - SIDEBAR_WIDTH;
                         
                         if (rightEdge > sidebarLeft || rect.right > window.innerWidth - SIDEBAR_WIDTH) {
-                            // Ensure visibility
-                            el.style.setProperty('right', SIDEBAR_WIDTH + 'px', 'important');
-                            el.style.setProperty('z-index', '1000', 'important');
-                            el.style.setProperty('position', 'relative', 'important');
+                            // Only apply positioning fixes if the element is actually covered
+                            if (style.position === 'fixed' || style.position === 'absolute') {
+                                el.style.setProperty('right', SIDEBAR_WIDTH + 'px', 'important');
+                                el.style.setProperty('z-index', '1000', 'important');
+                            } else {
+                                el.style.setProperty('position', 'relative', 'important');
+                            }
                         }
                         
-                        // Ensure proper styling
-                        el.style.setProperty('padding', '4px 8px', 'important');
-                        el.style.setProperty('min-height', '24px', 'important');
-                        el.style.setProperty('display', 'inline-flex', 'important');
-                        el.style.setProperty('align-items', 'center', 'important');
-                        el.style.setProperty('justify-content', 'center', 'important');
+                        // Only apply minimal styling to ensure visibility, don't override Gmail's own styles
                         el.style.setProperty('z-index', '1000', 'important');
                         el.style.setProperty('visibility', 'visible', 'important');
                         el.style.setProperty('opacity', '1', 'important');
+                    }
+                });
+            });
+        }
+
+        function ensureGmailIconsVisible() {
+            // Ensure Gmail icons and indicators remain visible
+            const iconSelectors = [
+                '[data-tooltip*="unread"]',
+                '[data-tooltip*="Unread"]',
+                '[aria-label*="unread"]',
+                '[aria-label*="Unread"]',
+                '.gb_1', '.gb_2', '.gb_3', '.gb_4', '.gb_5', '.gb_6', '.gb_7', '.gb_8', '.gb_9', '.gb_A',
+                '.T-I', '.T-I-J3', '.T-I-JW', '.T-I-JW-ax7',
+                '.aeF', '.aeG', '.aeH', '.aeI'
+            ];
+
+            iconSelectors.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    if (el) {
+                        // Only apply minimal visibility fixes, don't override Gmail's own styling
+                        el.style.setProperty('visibility', 'visible', 'important');
+                        el.style.setProperty('opacity', '1', 'important');
+                        el.style.setProperty('z-index', '1000', 'important');
                     }
                 });
             });
@@ -1587,9 +1606,9 @@
                         chrome.storage.onChanged.removeListener(listener);
                         
                         if (newData.error) {
-                            updateIntStorageDisplay(null, orderId, newData.error);
+                            updateIntStorageDisplay(null, orderId, newData.error, 0);
                         } else {
-                            updateIntStorageDisplay(newData.files, orderId);
+                            updateIntStorageDisplay(newData.files, orderId, null, 0);
                         }
                     } else if (newData && newData.orderId !== orderId) {
                         console.log('[FENNEC (POO) GM SB] INT STORAGE DEBUG: Data mismatch - expected orderId:', orderId, 'received orderId:', newData.orderId);
@@ -1606,7 +1625,7 @@
             window.currentIntStorageListener = listener;
         }
 
-        function updateIntStorageDisplay(files, orderId, error = null) {
+        function updateIntStorageDisplay(files, orderId, error = null, retryCount = 0) {
             const box = document.getElementById('int-storage-box');
             const section = document.getElementById('int-storage-section');
             const sectionLabel = section ? section.querySelector('.section-label') : null;
@@ -1624,6 +1643,35 @@
                 if (sectionLabel) sectionLabel.style.display = 'block';
                 box.style.display = 'block';
                 box.innerHTML = '<div style="text-align:center;color:#aaa">No files</div>';
+                // Retry logic for "No files" - retry up to 3 times
+                if (retryCount < 3) {
+                    console.log(`[FENNEC (POO) GM SB] INT STORAGE: No files found, retrying in 5 seconds (attempt ${retryCount + 1}/3)`);
+                    setTimeout(() => {
+                        // Trigger a fresh INT STORAGE load from DB
+                        bg.send('triggerIntStorageLoad', { orderId }, (response) => {
+                            console.log('[FENNEC (POO) GM SB] INT STORAGE retry triggered:', response);
+                            // Set up a listener to wait for the new data
+                            const checkForNewData = () => {
+                                chrome.storage.local.get({ intStorageData: null }, ({ intStorageData }) => {
+                                    if (intStorageData && intStorageData.orderId === orderId) {
+                                        console.log('[FENNEC (POO) GM SB] INT STORAGE retry: Found new data');
+                                        if (intStorageData.error) {
+                                            updateIntStorageDisplay(null, orderId, intStorageData.error, retryCount + 1);
+                                        } else {
+                                            updateIntStorageDisplay(intStorageData.files, orderId, null, retryCount + 1);
+                                        }
+                                    } else {
+                                        // Check again in 2 seconds
+                                        setTimeout(checkForNewData, 2000);
+                                    }
+                                });
+                            };
+                            setTimeout(checkForNewData, 3000);
+                        });
+                    }, 5000);
+                } else {
+                    console.log('[FENNEC (POO) GM SB] INT STORAGE: No files found after 3 retries, giving up');
+                }
                 return;
             }
             
@@ -1631,6 +1679,35 @@
                 if (sectionLabel) sectionLabel.style.display = 'block';
                 box.style.display = 'block';
                 box.innerHTML = '<div style="text-align:center;color:#aaa">No files</div>';
+                // Retry logic for empty files array - retry up to 3 times
+                if (retryCount < 3) {
+                    console.log(`[FENNEC (POO) GM SB] INT STORAGE: Empty files array, retrying in 5 seconds (attempt ${retryCount + 1}/3)`);
+                    setTimeout(() => {
+                        // Trigger a fresh INT STORAGE load from DB
+                        bg.send('triggerIntStorageLoad', { orderId }, (response) => {
+                            console.log('[FENNEC (POO) GM SB] INT STORAGE retry triggered:', response);
+                            // Set up a listener to wait for the new data
+                            const checkForNewData = () => {
+                                chrome.storage.local.get({ intStorageData: null }, ({ intStorageData }) => {
+                                    if (intStorageData && intStorageData.orderId === orderId) {
+                                        console.log('[FENNEC (POO) GM SB] INT STORAGE retry: Found new data');
+                                        if (intStorageData.error) {
+                                            updateIntStorageDisplay(null, orderId, intStorageData.error, retryCount + 1);
+                                        } else {
+                                            updateIntStorageDisplay(intStorageData.files, orderId, null, retryCount + 1);
+                                        }
+                                    } else {
+                                        // Check again in 2 seconds
+                                        setTimeout(checkForNewData, 2000);
+                                    }
+                                });
+                            };
+                            setTimeout(checkForNewData, 3000);
+                        });
+                    }, 5000);
+                } else {
+                    console.log('[FENNEC (POO) GM SB] INT STORAGE: Empty files array after 3 retries, giving up');
+                }
                 return;
             }
             
@@ -2001,7 +2078,7 @@
             const queryParts = [];
             if (context.orderNumber) {
                 queryParts.push(context.orderNumber);
-                queryParts.push(`subject:"${context.orderNumber}"`);
+                // Remove subject limitation - search in all fields
             }
             if (email) queryParts.push(`"${email}"`);
             if (context && context.name) queryParts.push(`"${context.name}"`);
@@ -2050,15 +2127,32 @@
                 localStorage.removeItem('fraudXrayFinished');
             }
             sessionSet(data, () => {
-                urls.forEach(url => {
-                    bg.openOrReuseTab({ url, active: false });
+                // Close existing DB and GM tabs before opening new ones, but exclude current tab
+                const urlPatterns = [
+                    'mail.google.com',
+                    'db.incfile.com'
+                ];
+                
+                // Get current tab ID to exclude it from closing
+                bg.send('getCurrentTabId', {}, (currentTabId) => {
+                    bg.send('closeTabsByUrlPatterns', { 
+                        patterns: urlPatterns,
+                        excludeTabId: currentTabId 
+                    }, (response) => {
+                        console.log('[FENNEC (POO) GM SB] Closed existing tabs:', response);
+                        
+                        // Open new tabs after closing existing ones
+                        urls.forEach(url => {
+                            bg.openOrReuseTab({ url, active: false });
+                        });
+                        setTimeout(() => { searchInProgress = false; }, 1000);
+                    });
                 });
-                setTimeout(() => { searchInProgress = false; }, 1000);
             });
-            if (orderId) {
+                        if (orderId) {
                 checkLastIssue(orderId);
                 
-                // Set up listener for INT STORAGE data from DB tab in both review mode and classic mode
+                // Set up INT STORAGE listener for order
                 console.log('[FENNEC (POO) GM SB] Setting up INT STORAGE listener for order:', orderId, 'reviewMode:', reviewMode);
                 window.currentIntStorageOrderId = orderId;
                 
@@ -2068,9 +2162,9 @@
                         if (intStorageData && intStorageData.orderId === orderId) {
                             console.log('[FENNEC (POO) GM SB] Found INT STORAGE data from DB tab for order:', orderId);
                             if (intStorageData.error) {
-                                updateIntStorageDisplay(null, orderId, intStorageData.error);
+                                updateIntStorageDisplay(null, orderId, intStorageData.error, 0);
                             } else {
-                                updateIntStorageDisplay(intStorageData.files, orderId);
+                                updateIntStorageDisplay(intStorageData.files, orderId, null, 0);
                             }
                         } else {
                             // Check again in 2 seconds
@@ -2198,11 +2292,13 @@
 
             // Ensure navigation buttons are visible
             ensureNavigationButtonsVisible();
+            ensureGmailIconsVisible();
             ensureClientBillingHidden();
             
             // Set up periodic check for navigation buttons
             const navigationCheckInterval = setInterval(() => {
                 ensureNavigationButtonsVisible();
+                ensureGmailIconsVisible();
                 ensureClientBillingHidden();
             }, 1000);
 
@@ -2285,6 +2381,7 @@
             } else {
                 // Ensure navigation buttons are visible even when sidebar is already present
                 ensureNavigationButtonsVisible();
+                ensureGmailIconsVisible();
                 ensureClientBillingHidden();
             }
         }
@@ -2297,6 +2394,7 @@
             if (!sidebar) return;
             applyPaddingToMainPanels();
             ensureNavigationButtonsVisible();
+            ensureGmailIconsVisible();
             ensureClientBillingHidden();
             const hasEmail = isEmailOpen();
             if (hasEmail) {
@@ -2324,6 +2422,7 @@
         setInterval(() => {
             if (document.getElementById('copilot-sidebar')) {
                 ensureNavigationButtonsVisible();
+                ensureGmailIconsVisible();
                 ensureClientBillingHidden();
             }
         }, 2000);
