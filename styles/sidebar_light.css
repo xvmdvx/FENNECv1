@@ -549,3 +549,86 @@
 .fennec-flash {
     animation: fennecFlash 1s infinite;
 }
+
+/* Gmail Navigation Button Padding Fix - Light Mode */
+.ar5.J-J5-Ji {
+    padding: 4px 8px !important;
+    z-index: 1000 !important;
+    position: relative !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.ar5.J-J5-Ji .T-I {
+    padding: 4px 8px !important;
+    margin: 0 2px !important;
+    z-index: 1000 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.ar5.J-J5-Ji .amD {
+    padding: 4px 8px !important;
+    z-index: 1000 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.ar5.J-J5-Ji .amF {
+    padding: 2px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.ar5.J-J5-Ji .amI,
+.ar5.J-J5-Ji .amJ {
+    padding: 2px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Ensure proper spacing for navigation elements */
+.ar5.J-J5-Ji > span {
+    padding: 2px 4px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.ar5.J-J5-Ji .Dj {
+    padding: 2px 4px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Maintain existing functionality while adding padding */
+.ar5.J-J5-Ji[role="button"] {
+    padding: 4px 8px !important;
+    min-height: 24px !important;
+    z-index: 1000 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.ar5.J-J5-Ji .T-I[role="button"] {
+    padding: 4px 8px !important;
+    min-height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 1000 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Additional selectors for navigation buttons */
+[role="button"][aria-label*="Newer"],
+[role="button"][aria-label*="Older"] {
+    padding: 4px 8px !important;
+    min-height: 24px !important;
+    z-index: 1000 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}

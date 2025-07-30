@@ -18,6 +18,89 @@
     font-size: var(--sb-font-size);
     transition: transform 0.2s;
 }
+
+/* Gmail Navigation Button Padding Fix */
+.ar5.J-J5-Ji {
+    padding: 4px 8px !important;
+    z-index: 1000 !important;
+    position: relative !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.ar5.J-J5-Ji .T-I {
+    padding: 4px 8px !important;
+    margin: 0 2px !important;
+    z-index: 1000 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.ar5.J-J5-Ji .amD {
+    padding: 4px 8px !important;
+    z-index: 1000 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.ar5.J-J5-Ji .amF {
+    padding: 2px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.ar5.J-J5-Ji .amI,
+.ar5.J-J5-Ji .amJ {
+    padding: 2px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Ensure proper spacing for navigation elements */
+.ar5.J-J5-Ji > span {
+    padding: 2px 4px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.ar5.J-J5-Ji .Dj {
+    padding: 2px 4px !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Maintain existing functionality while adding padding */
+.ar5.J-J5-Ji[role="button"] {
+    padding: 4px 8px !important;
+    min-height: 24px !important;
+    z-index: 1000 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.ar5.J-J5-Ji .T-I[role="button"] {
+    padding: 4px 8px !important;
+    min-height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 1000 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Additional selectors for navigation buttons */
+[role="button"][aria-label*="Newer"],
+[role="button"][aria-label*="Older"] {
+    padding: 4px 8px !important;
+    min-height: 24px !important;
+    z-index: 1000 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
 .copilot-header {
     display: flex;
     align-items: center;
@@ -388,6 +471,8 @@
 #copilot-sidebar #quick-summary.quick-summary-collapsed {
     margin-bottom: 0 !important;
     padding: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
 }
 
 /* Slightly larger names in each section */
@@ -608,6 +693,50 @@
     color: #f44336;
     cursor: pointer;
     margin-left: 4px;
+}
+
+/* Family tree item styling */
+#family-tree-orders .ft-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid #444;
+}
+
+#family-tree-orders .ft-item:last-child {
+    border-bottom: none;
+}
+
+#family-tree-orders .ft-type {
+    font-weight: bold;
+    color: #ccc;
+    font-size: 11px;
+    min-width: 50px;
+}
+
+#family-tree-orders .ft-link {
+    color: #1a73e8;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#family-tree-orders .ft-link:hover {
+    text-decoration: underline;
+}
+
+#family-tree-orders .ft-date {
+    color: #aaa;
+    font-size: 11px;
+    text-align: right;
+}
+
+#family-tree-orders .ft-status {
+    color: #fff;
+    font-size: 11px;
+    text-align: right;
+    min-width: 60px;
 }
 
 @keyframes fennec-blink {
