@@ -2655,18 +2655,67 @@ class DBLauncher extends Launcher {
     window.checkLastIssue = checkLastIssue;
 
     function clearSidebar() {
+        console.log('[FENNEC (POO) DB SB] Clearing all storage and resetting sidebar to brand new state');
+        
+        // Clear all session data
         sessionSet({
             sidebarDb: [],
             sidebarOrderId: null,
             sidebarOrderInfo: null,
             adyenDnaInfo: null,
+            kountInfo: null,
             sidebarFreezeId: null,
-            sidebarSnapshot: null
+            fraudReviewSession: null,
+            forceFraudXray: null,
+            fennecFraudAdyen: null,
+            sidebarSnapshot: null,
+            fennecActiveSession: null
         });
+        
+        // Clear session storage
+        sessionStorage.removeItem('fennecSidebarClosed');
+        sessionStorage.removeItem('fennecShowTrialFloater');
+        sessionStorage.removeItem('fennecCancelPending');
+        
+        // Clear localStorage
+        localStorage.removeItem('fraudXrayFinished');
+        localStorage.removeItem('fennecShowTrialFloater');
+        
+        // Clear all chrome.storage.local data
+        chrome.storage.local.remove([
+            'fennecPendingComment',
+            'fennecPendingUpload',
+            'fennecUpdateRequest',
+            'fennecQuickResolveDone',
+            'fennecUploadDone',
+            'intStorageData',
+            'intStorageLoaded',
+            'intStorageOrderId',
+            'sidebarOrderInfo',
+            'sidebarOrderId',
+            'sidebarDb',
+            'adyenDnaInfo',
+            'kountInfo',
+            'sidebarFreezeId',
+            'fraudReviewSession',
+            'forceFraudXray',
+            'fennecFraudAdyen',
+            'sidebarSnapshot',
+            'fennecActiveSession'
+        ], () => {
+            console.log('[FENNEC (POO) DB SB] Cleared all storage data during sidebar clear');
+        });
+        
+        // Clear any INT STORAGE data
+        window.currentIntStorageOrderId = null;
+        
+        // Reset sidebar content
         const body = document.getElementById('copilot-body-content');
         if (body) body.innerHTML = '<div style="text-align:center; color:#aaa; margin-top:40px">No DB data.</div>';
+        
         const dnaContainer = document.getElementById('dna-summary');
         if (dnaContainer) dnaContainer.innerHTML = '';
+        
         const issueContent = document.getElementById('issue-summary-content');
         const issueLabel = document.getElementById('issue-status-label');
         if (issueContent) issueContent.innerHTML = 'No issue data yet.';
@@ -2674,7 +2723,16 @@ class DBLauncher extends Launcher {
             issueLabel.textContent = '';
             issueLabel.className = 'issue-status-label';
         }
+        
+        // Clear INT STORAGE section if it exists
+        const intStorageBox = document.getElementById('int-storage-box');
+        if (intStorageBox) {
+            intStorageBox.innerHTML = '<div style="text-align:center;color:#aaa">No INT STORAGE data.</div>';
+        }
+        
         updateReviewDisplay();
+        
+        console.log('[FENNEC (POO) DB SB] Sidebar cleared and reset to brand new state');
     }
 
     function getBillingInfo() {

@@ -1894,8 +1894,17 @@
 
         function clearSidebar() {
             console.log('[FENNEC (POO) GM SB] TAB TRACKING: Clearing fraudReviewSession (setting to null)');
+            
+            // Clear all local variables
             storedOrderInfo = null;
             currentContext = null;
+            searchInProgress = false;
+            
+            // Clear session storage
+            sessionStorage.removeItem('fennecSidebarClosed');
+            sessionStorage.removeItem('fennecShowTrialFloater');
+            
+            // Clear all session data
             sessionSet({
                 sidebarDb: [],
                 sidebarOrderId: null,
@@ -1906,30 +1915,61 @@
                 fraudReviewSession: null,
                 forceFraudXray: null,
                 fennecFraudAdyen: null,
-                sidebarSnapshot: null
+                sidebarSnapshot: null,
+                fennecActiveSession: null,
+                fennecFraudAdyen: null
             });
+            
+            // Clear localStorage
             localStorage.removeItem('fraudXrayFinished');
+            localStorage.removeItem('fennecShowTrialFloater');
+            
+            // Clear all chrome.storage.local data
             chrome.storage.local.remove([
                 'fennecPendingComment',
                 'fennecPendingUpload',
                 'fennecUpdateRequest',
                 'fennecQuickResolveDone',
-                'fennecUploadDone'
-            ]);
+                'fennecUploadDone',
+                'intStorageData',
+                'intStorageLoaded',
+                'intStorageOrderId',
+                'sidebarOrderInfo',
+                'sidebarOrderId',
+                'sidebarDb',
+                'adyenDnaInfo',
+                'kountInfo',
+                'sidebarFreezeId',
+                'fraudReviewSession',
+                'forceFraudXray',
+                'fennecFraudAdyen',
+                'sidebarSnapshot',
+                'fennecActiveSession',
+                'fennecFraudAdyen'
+            ], () => {
+                console.log('[FENNEC (POO) GM SB] Cleared all storage data during sidebar clear');
+            });
             
-                    // Clear INT STORAGE data
-        window.currentIntStorageOrderId = null;
-        
-        // Clear INT STORAGE from storage
-        chrome.storage.local.remove(['intStorageData', 'intStorageLoaded', 'intStorageOrderId'], () => {
-            console.log('[FENNEC (POO) GM SB] Cleared INT STORAGE data from storage during sidebar clear');
-        });
+            // Clear INT STORAGE data
+            window.currentIntStorageOrderId = null;
             
+            // Clear any dropped files
+            window.droppedFiles = [];
+            
+            // Clear any timers
+            if (window.clearTimer) {
+                clearTimeout(window.clearTimer);
+                window.clearTimer = null;
+            }
+            
+            // Reset sidebar to initial state
             showInitialStatus();
             applyReviewMode();
             loadDnaSummary();
             loadKountSummary();
             repositionDnaSummary();
+            
+            console.log('[FENNEC (POO) GM SB] Sidebar cleared and reset to brand new state');
         }
 
         async function handleEmailSearchClick(xray = false) {

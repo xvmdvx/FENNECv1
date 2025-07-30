@@ -604,15 +604,64 @@ class AdyenLauncher extends Launcher {
             }
 
             function clearSidebar() {
+                console.log('[FENNEC (POO) ADYEN SB] Clearing all storage and resetting sidebar to brand new state');
+                
+                // Clear all session data
                 sessionSet({
                     sidebarDb: [],
                     sidebarOrderId: null,
                     sidebarOrderInfo: null,
                     adyenDnaInfo: null,
+                    kountInfo: null,
                     sidebarFreezeId: null,
-                    sidebarSnapshot: null
+                    fraudReviewSession: null,
+                    forceFraudXray: null,
+                    fennecFraudAdyen: null,
+                    sidebarSnapshot: null,
+                    fennecActiveSession: null
                 });
+                
+                // Clear session storage
+                sessionStorage.removeItem('fennecSidebarClosed');
+                sessionStorage.removeItem('fennecShowTrialFloater');
+                sessionStorage.removeItem('fennecCancelPending');
+                
+                // Clear localStorage
+                localStorage.removeItem('fraudXrayFinished');
+                localStorage.removeItem('fennecShowTrialFloater');
+                
+                // Clear all chrome.storage.local data
+                chrome.storage.local.remove([
+                    'fennecPendingComment',
+                    'fennecPendingUpload',
+                    'fennecUpdateRequest',
+                    'fennecQuickResolveDone',
+                    'fennecUploadDone',
+                    'intStorageData',
+                    'intStorageLoaded',
+                    'intStorageOrderId',
+                    'sidebarOrderInfo',
+                    'sidebarOrderId',
+                    'sidebarDb',
+                    'adyenDnaInfo',
+                    'kountInfo',
+                    'sidebarFreezeId',
+                    'fraudReviewSession',
+                    'forceFraudXray',
+                    'fennecFraudAdyen',
+                    'sidebarSnapshot',
+                    'fennecActiveSession'
+                ], () => {
+                    console.log('[FENNEC (POO) ADYEN SB] Cleared all storage data during sidebar clear');
+                });
+                
+                // Clear any INT STORAGE data
+                window.currentIntStorageOrderId = null;
+                
+                // Reset sidebar to initial state
                 showInitialStatus();
+                
+                console.log('[FENNEC (POO) ADYEN SB] Sidebar cleared and reset to brand new state');
             }
 
             function injectSidebar() {

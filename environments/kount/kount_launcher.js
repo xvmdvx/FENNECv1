@@ -338,10 +338,72 @@ class KountLauncher extends Launcher {
             if (clearTabsBtn) clearTabsBtn.onclick = () => bg.closeOtherTabs();
             const clearSb = sb.element.querySelector('#copilot-clear');
             if (clearSb) clearSb.onclick = () => {
+                console.log('[FENNEC (POO) KOUNT SB] Clearing all storage and resetting sidebar to brand new state');
+                
+                // Clear all session data
+                sessionSet({
+                    sidebarDb: [],
+                    sidebarOrderId: null,
+                    sidebarOrderInfo: null,
+                    adyenDnaInfo: null,
+                    kountInfo: null,
+                    sidebarFreezeId: null,
+                    fraudReviewSession: null,
+                    forceFraudXray: null,
+                    fennecFraudAdyen: null,
+                    sidebarSnapshot: null,
+                    fennecActiveSession: null
+                });
+                
+                // Clear session storage
+                sessionStorage.removeItem('fennecSidebarClosed');
+                sessionStorage.removeItem('fennecShowTrialFloater');
+                sessionStorage.removeItem('fennecCancelPending');
+                
+                // Clear localStorage
+                localStorage.removeItem('fraudXrayFinished');
+                localStorage.removeItem('fennecShowTrialFloater');
+                
+                // Clear all chrome.storage.local data
+                chrome.storage.local.remove([
+                    'fennecPendingComment',
+                    'fennecPendingUpload',
+                    'fennecUpdateRequest',
+                    'fennecQuickResolveDone',
+                    'fennecUploadDone',
+                    'intStorageData',
+                    'intStorageLoaded',
+                    'intStorageOrderId',
+                    'sidebarOrderInfo',
+                    'sidebarOrderId',
+                    'sidebarDb',
+                    'adyenDnaInfo',
+                    'kountInfo',
+                    'sidebarFreezeId',
+                    'fraudReviewSession',
+                    'forceFraudXray',
+                    'fennecFraudAdyen',
+                    'sidebarSnapshot',
+                    'fennecActiveSession'
+                ], () => {
+                    console.log('[FENNEC (POO) KOUNT SB] Cleared all storage data during sidebar clear');
+                });
+                
+                // Clear any INT STORAGE data
+                window.currentIntStorageOrderId = null;
+                
+                // Clear sidebar content
                 sb.element.querySelector('#db-summary-section').innerHTML = '';
                 sb.element.querySelector('#dna-summary').innerHTML = '';
                 sb.element.querySelector('#kount-summary').innerHTML = '';
-                sessionSet({ sidebarDb: [], adyenDnaInfo: null, kountInfo: null });
+                
+                // Clear INT STORAGE section if it exists
+                const intStorageBox = sb.element.querySelector('#int-storage-box');
+                if (intStorageBox) {
+                    intStorageBox.innerHTML = '<div style="text-align:center;color:#aaa">No INT STORAGE data.</div>';
+                }
+                
+                console.log('[FENNEC (POO) KOUNT SB] Sidebar cleared and reset to brand new state');
             };
         }
         
