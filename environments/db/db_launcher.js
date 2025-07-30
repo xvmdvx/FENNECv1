@@ -2715,11 +2715,26 @@ class DBLauncher extends Launcher {
     function clickFraudReviewButton() {
         const btn = document.getElementById('fraud_review_action');
         if (!btn) return;
+        
+        // Click the fraud review button
         btn.click();
-        setTimeout(() => {
-            const yes = document.getElementById('fraud-review-yes-button');
-            if (yes) yes.click();
-        }, 500);
+        
+        // Wait for the confirmation dialog to appear and click YES
+        const waitForConfirmation = () => {
+            const modal = document.querySelector('.modal-dialog');
+            const yesBtn = document.getElementById('fraud-review-yes-button');
+            
+            if (modal && yesBtn) {
+                console.log('[FENNEC (POO) DB SB] Found fraud review confirmation dialog, clicking YES');
+                yesBtn.click();
+            } else {
+                // Retry after a short delay
+                setTimeout(waitForConfirmation, 200);
+            }
+        };
+        
+        // Start waiting for the confirmation dialog
+        setTimeout(waitForConfirmation, 500);
     }
 
     function formatDateLikeParent(text) {
@@ -2826,14 +2841,8 @@ class DBLauncher extends Launcher {
         const afterWithFraudRemoval = () => {
             if (data.release) setTimeout(clickFraudReviewButton, 500);
             if (data.removeFraudReview) {
-                // Click the "Remove from Fraud Review" button
-                setTimeout(() => {
-                    const fraudReviewBtn = document.getElementById('fraud_review_action');
-                    if (fraudReviewBtn && fraudReviewBtn.textContent.includes('- Fraud Review')) {
-                        fraudReviewBtn.click();
-                        console.log('[FENNEC (POO) DB SB] Clicked Remove from Fraud Review button');
-                    }
-                }, 1000); // Wait a bit longer for the page to be ready
+                // Use the improved clickFraudReviewButton function which handles the confirmation dialog
+                setTimeout(clickFraudReviewButton, 1000);
             }
         };
         
