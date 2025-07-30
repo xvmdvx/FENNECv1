@@ -915,6 +915,10 @@ class DBLauncher extends Launcher {
                     }
                     const clearSb = sidebar.querySelector('#copilot-clear');
                     if (clearSb) clearSb.onclick = clearSidebar;
+                    
+                    // XRAY button (only in review mode)
+                    const xrayBtn = sidebar.querySelector('#btn-xray');
+                    if (xrayBtn) xrayBtn.onclick = () => runFraudXray();
                     const isStorage = /\/storage\/incfile\//.test(location.pathname);
                     chrome.storage.local.get({ sidebarFreezeId: null, sidebarDb: [], sidebarOrderId: null }, ({ sidebarFreezeId, sidebarDb, sidebarOrderId }) => {
                         const currentId = getBasicOrderInfo().orderId;
@@ -3767,7 +3771,7 @@ function getLastHoldUser() {
         }
         // Proceed with XRAY even if the LTV refresh flag is missing to
         // ensure external tabs open reliably after manual page reloads.
-        fraudXray = false;
+        // Don't set fraudXray = false here - let it complete the flow first
         const info = getBasicOrderInfo();
         const client = getClientInfo();
         const parts = [];
@@ -3814,6 +3818,10 @@ function getLastHoldUser() {
             }
             openKount();
         }
+        
+        // Mark XRAY flow as completed after opening all tabs
+        console.log('[FENNEC (POO)] XRAY flow completed - all tabs opened for order:', orderId);
+        fraudXray = false;
     }
 
 chrome.storage.local.get({ fennecPendingComment: null }, ({ fennecPendingComment }) => {
