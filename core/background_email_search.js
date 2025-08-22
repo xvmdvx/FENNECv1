@@ -1,4 +1,30 @@
 import "./background_controller.js";
+
+// Mute tagged console output in background context without affecting control flow
+// (e.g., `return console.warn(...)` still returns undefined).
+if (!globalThis.__fennecLogSilencerInstalled) {
+    try {
+        const TAGS_TO_MUTE = ["[FENNEC (MVP)]", "[FENNEC (MVP) DB SB]"];
+        const originalConsole = {
+            log: console.log.bind(console),
+            info: console.info ? console.info.bind(console) : console.log.bind(console),
+            warn: console.warn ? console.warn.bind(console) : console.log.bind(console),
+            error: console.error ? console.error.bind(console) : console.log.bind(console),
+            debug: console.debug ? console.debug.bind(console) : console.log.bind(console)
+        };
+        const shouldMute = (args) => {
+            const first = args && args[0];
+            return typeof first === 'string' && TAGS_TO_MUTE.some(tag => first.startsWith(tag));
+        };
+        ["log", "info", "warn", "error", "debug"].forEach(method => {
+            console[method] = function(...args) {
+                if (shouldMute(args)) return;
+                return originalConsole[method](...args);
+            };
+        });
+        globalThis.__fennecLogSilencerInstalled = true;
+    } catch {}
+}
 // Background worker handling tab management and other extension messages
 // Use a declarative rule to strip the Origin header from local Mistral API
 // requests so Ollama accepts them without CORS errors.
@@ -34,6 +60,137 @@ chrome.runtime.onStartup.addListener(() => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'testMessage') {
         sendResponse({ success: true, received: message });
+        return true;
+    }
+    
+    // Auto-upload files handler
+    if (message.action === 'autoUploadFiles') {
+        console.log('[FENNEC (MVP) BG] Auto-upload request received:', message);
+        
+        const { files, orderId } = message;
+        
+        // Store the files for processing
+        chrome.storage.local.get({ autoUploadQueue: [] }, (result) => {
+            const queue = result.autoUploadQueue;
+            const uploadItem = {
+                id: Date.now(),
+                orderId: orderId,
+                files: files,
+                timestamp: new Date().toISOString(),
+                status: 'pending'
+            };
+            
+            queue.push(uploadItem);
+            
+            chrome.storage.local.set({ autoUploadQueue: queue }, () => {
+                console.log('[FENNEC (MVP) BG] Files queued for auto-upload:', uploadItem);
+                
+                // Notify content script about the upload
+                chrome.tabs.query({ url: "*://*.incfile.com/*" }, (tabs) => {
+                    tabs.forEach(tab => {
+                        chrome.tabs.sendMessage(tab.id, {
+                            action: 'autoUploadQueued',
+                            uploadItem: uploadItem
+                        }, () => {
+                            if (chrome.runtime.lastError) {
+                                // Tab might not be ready
+                            }
+                        });
+                    });
+                });
+                
+                sendResponse({ success: true, uploadId: uploadItem.id });
+            });
+        });
+        return true;
+    }
+    
+    // USPS auto-close and focus management
+    if (message.action === 'returnFocusToDB') {
+        const address = message.address;
+        console.log('[FENNEC (MVP) BG] Returning focus to DB tab for address:', address);
+        
+        // Get the stored source tab info for this address
+        const uspsKey = `usps_source_${address}`;
+        chrome.storage.local.get({ [uspsKey]: null }, (result) => {
+            const sourceInfo = result[uspsKey];
+            
+            if (sourceInfo && sourceInfo.tabId) {
+                // Try to focus the specific source tab
+                chrome.tabs.get(sourceInfo.tabId, (tab) => {
+                    if (chrome.runtime.lastError) {
+                        console.log('[FENNEC (MVP) BG] Source tab not found for address:', address);
+                        sendResponse({ success: false, error: 'Source tab not found' });
+                    } else {
+                        // Focus the specific source tab
+                        chrome.tabs.update(sourceInfo.tabId, { active: true }, () => {
+                            console.log('[FENNEC (MVP) BG] Successfully focused source DB tab:', sourceInfo.tabId);
+                            sendResponse({ success: true, tabId: sourceInfo.tabId });
+                        });
+                    }
+                });
+            } else {
+                console.log('[FENNEC (MVP) BG] No source tab info found for address:', address);
+                sendResponse({ success: false, error: 'No source tab info found' });
+            }
+        });
+        return true;
+    }
+    
+    if (message.action === 'checkTabActivity') {
+        const address = message.address;
+        console.log('[FENNEC (MVP) BG] Checking tab activity for address:', address);
+        
+        // Check if the current tab (USPS tab) is still active
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs.length > 0) {
+                const currentTab = tabs[0];
+                const isUspsTab = currentTab.url && currentTab.url.includes('tools.usps.com');
+                // If USPS tab is still active, user manually activated it, so DON'T close
+                const shouldClose = !isUspsTab; // Close if it's NOT the USPS tab (user switched away)
+                
+                console.log('[FENNEC (MVP) BG] Tab activity check - isUspsTab:', isUspsTab, 'shouldClose:', shouldClose);
+                sendResponse({ shouldClose: shouldClose, tabId: currentTab.id });
+            } else {
+                sendResponse({ shouldClose: false, error: 'No active tab found' });
+            }
+        });
+        return true;
+    }
+    
+    if (message.action === 'openUspsAndStoreSource') {
+        const url = message.url;
+        const address = message.address;
+        console.log('[FENNEC (MVP) BG] Opening USPS and storing source tab for address:', address);
+        
+        // Store the source tab info
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs.length > 0) {
+                const sourceTab = tabs[0];
+                const uspsKey = `usps_source_${address}`;
+                
+                chrome.storage.local.set({ [uspsKey]: { tabId: sourceTab.id, url: sourceTab.url } }, () => {
+                    console.log('[FENNEC (MVP) BG] Stored source tab info for address:', address, 'tabId:', sourceTab.id);
+                    
+                    // Open USPS tab
+                    chrome.tabs.create({ url: url, active: false }, (uspsTab) => {
+                        console.log('[FENNEC (MVP) BG] USPS tab opened:', uspsTab.id);
+                        
+                        // Activate the USPS tab after a short delay to ensure it loads
+                        setTimeout(() => {
+                            chrome.tabs.update(uspsTab.id, { active: true }, () => {
+                                console.log('[FENNEC (MVP) BG] USPS tab activated:', uspsTab.id);
+                            });
+                        }, 100);
+                        
+                        sendResponse({ success: true, uspsTabId: uspsTab.id, sourceTabId: sourceTab.id });
+                    });
+                });
+            } else {
+                console.log('[FENNEC (MVP) BG] No source tab found');
+                sendResponse({ success: false, error: 'No source tab found' });
+            }
+        });
         return true;
     }
     
@@ -156,7 +313,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === "fetchChildOrders" && message.orderId) {
-        console.log('[FENNEC (POO)] fetchChildOrders handler started for orderId:', message.orderId);
+        console.log('[FENNEC (MVP)] fetchChildOrders handler started for orderId:', message.orderId);
         const orderId = message.orderId;
         let base = "https://db.incfile.com";
         if (sender && sender.tab && sender.tab.url) {
@@ -175,24 +332,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         let delay = 1000;
         let createdTabId = null;
         
-        console.log('[FENNEC (POO)] fetchChildOrders - Target URL:', url);
+        console.log('[FENNEC (MVP)] fetchChildOrders - Target URL:', url);
 
         const openAndQuery = () => {
-            console.log('[FENNEC (POO)] fetchChildOrders - Querying tabs with query:', query);
+            console.log('[FENNEC (MVP)] fetchChildOrders - Querying tabs with query:', query);
             chrome.tabs.query(query, (tabs) => {
                 let tab = tabs && tabs[0];
                 const ensureLoaded = () => {
                     if (!tab || tab.status !== "complete") {
                         if (attempts > 0) {
                             if (!tab && !createdTabId) {
-                                console.log('[FENNEC (POO)] fetchChildOrders - Creating new background tab for parent order');
+                                console.log('[FENNEC (MVP)] fetchChildOrders - Creating new background tab for parent order');
                                 chrome.tabs.create({ url, active: false, windowId: sender.tab ? sender.tab.windowId : undefined }, t => {
                                     tab = t;
                                     createdTabId = t.id;
-                                    console.log('[FENNEC (POO)] fetchChildOrders - Created tab with ID:', t.id);
+                                    console.log('[FENNEC (MVP)] fetchChildOrders - Created tab with ID:', t.id);
                                 });
                             } else {
-                                console.log('[FENNEC (POO)] fetchChildOrders - Using existing tab or waiting for creation');
+                                console.log('[FENNEC (MVP)] fetchChildOrders - Using existing tab or waiting for creation');
                             }
                             setTimeout(() => {
                                 attempts--;
@@ -206,15 +363,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         }
                         return;
                     }
-                    console.log('[FENNEC (POO)] fetchChildOrders - Sending getChildOrders message to tab:', tab.id);
+                    console.log('[FENNEC (MVP)] fetchChildOrders - Sending getChildOrders message to tab:', tab.id);
                     chrome.tabs.sendMessage(tab.id, { action: "getChildOrders" }, resp => {
                         if (chrome.runtime.lastError) {
-                            console.warn("[FENNEC (POO)] fetchChildOrders - Child order extraction error:", chrome.runtime.lastError.message);
+                            console.warn("[FENNEC (MVP)] fetchChildOrders - Child order extraction error:", chrome.runtime.lastError.message);
                             sendResponse({ childOrders: null, parentInfo: null });
                             if (createdTabId) chrome.tabs.remove(createdTabId);
                             return;
                         }
-                        console.log('[FENNEC (POO)] fetchChildOrders - Received response:', resp);
+                        console.log('[FENNEC (MVP)] fetchChildOrders - Received response:', resp);
                         sendResponse(resp);
                         if (createdTabId) chrome.tabs.remove(createdTabId);
                     });
@@ -296,14 +453,178 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
 
+    if (message.action === "findAndRefreshIntStorageTab" && message.orderId) {
+        const orderId = message.orderId;
+        console.log('[FENNEC (MVP) BG] findAndRefreshIntStorageTab called for orderId:', orderId);
+        
+        let base = "https://db.incfile.com";
+        if (sender && sender.tab && sender.tab.url) {
+            try {
+                const url = new URL(sender.tab.url);
+                if (url.hostname.endsWith("incfile.com")) {
+                    base = url.origin;
+                }
+            } catch (err) {
+                console.warn("[Copilot] Invalid sender URL", sender.tab.url);
+            }
+        }
+        const url = `${base}/storage/incfile/${orderId}`;
+        console.log('[FENNEC (MVP) BG] Looking for INT STORAGE tab:', url);
+        
+        const query = { url: `${url}*` };
+        chrome.tabs.query(query, tabs => {
+            let tab = tabs && tabs[0];
+            if (tab) {
+                console.log('[FENNEC (MVP) BG] Found existing INT STORAGE tab, refreshing:', tab.id);
+                chrome.tabs.reload(tab.id, {}, () => {
+                    console.log('[FENNEC (MVP) BG] INT STORAGE tab refreshed successfully');
+                    sendResponse({ success: true, message: 'Tab refreshed', tabId: tab.id });
+                });
+            } else {
+                console.log('[FENNEC (MVP) BG] No INT STORAGE tab found, creating new one');
+                chrome.tabs.create({ url, active: false, windowId: sender.tab ? sender.tab.windowId : undefined }, newTab => {
+                    console.log('[FENNEC (MVP) BG] Created new INT STORAGE tab:', newTab.id);
+                    sendResponse({ success: true, message: 'New tab created', tabId: newTab.id });
+                });
+            }
+        });
+        
+        return true;
+    }
+
+    if (message.action === "openIntStorageTab" && message.orderId) {
+        const orderId = message.orderId;
+        console.log('[FENNEC (MVP) BG] openIntStorageTab called for orderId:', orderId);
+        
+        let base = "https://db.incfile.com";
+        if (sender && sender.tab && sender.tab.url) {
+            try {
+                const url = new URL(sender.tab.url);
+                if (url.hostname.endsWith("incfile.com")) {
+                    base = url.origin;
+                }
+            } catch (err) {
+                console.warn("[Copilot] Invalid sender URL", sender.tab.url);
+            }
+        }
+        const url = `${base}/storage/incfile/${orderId}`;
+        console.log('[FENNEC (MVP) BG] Looking for INT STORAGE tab to open/activate:', url);
+        
+        const query = { url: `${url}*` };
+        chrome.tabs.query(query, tabs => {
+            let tab = tabs && tabs[0];
+            if (tab) {
+                console.log('[FENNEC (MVP) BG] Found existing INT STORAGE tab, activating:', tab.id);
+                chrome.tabs.update(tab.id, { active: true }, () => {
+                    chrome.windows.update(tab.windowId, { focused: true }, () => {
+                        console.log('[FENNEC (MVP) BG] INT STORAGE tab activated successfully');
+                        sendResponse({ success: true, message: 'Tab activated', tabId: tab.id });
+                    });
+                });
+            } else {
+                console.log('[FENNEC (MVP) BG] No INT STORAGE tab found, creating new one');
+                chrome.tabs.create({ url, active: true, windowId: sender.tab ? sender.tab.windowId : undefined }, newTab => {
+                    console.log('[FENNEC (MVP) BG] Created new INT STORAGE tab:', newTab.id);
+                    sendResponse({ success: true, message: 'New tab created and activated', tabId: newTab.id });
+                });
+            }
+        });
+        
+        return true;
+    }
+
+    if (message.action === "closeIntStorageTab" && message.orderId) {
+        const orderId = message.orderId;
+        console.log('[FENNEC (MVP) BG] closeIntStorageTab called for orderId:', orderId);
+        
+        let base = "https://db.incfile.com";
+        if (sender && sender.tab && sender.tab.url) {
+            try {
+                const url = new URL(sender.tab.url);
+                if (url.hostname.endsWith("incfile.com")) {
+                    base = url.origin;
+                }
+            } catch (err) {
+                console.warn("[Copilot] Invalid sender URL", sender.tab.url);
+            }
+        }
+        const url = `${base}/storage/incfile/${orderId}`;
+        console.log('[FENNEC (MVP) BG] Looking for INT STORAGE tab to close:', url);
+        
+        const query = { url: `${url}*` };
+        chrome.tabs.query(query, tabs => {
+            if (tabs && tabs.length > 0) {
+                const tabIds = tabs.map(tab => tab.id);
+                console.log('[FENNEC (MVP) BG] Closing INT STORAGE tabs:', tabIds);
+                chrome.tabs.remove(tabIds, () => {
+                    console.log('[FENNEC (MVP) BG] INT STORAGE tabs closed successfully');
+                    sendResponse({ success: true, message: 'Tabs closed', closedCount: tabIds.length });
+                });
+            } else {
+                console.log('[FENNEC (MVP) BG] No INT STORAGE tabs found to close');
+                sendResponse({ success: true, message: 'No tabs to close' });
+            }
+        });
+        
+        return true;
+    }
+
+    if (message.action === "refreshIntStorageInAllEnvironments" && message.orderId) {
+        const orderId = message.orderId;
+        console.log('[FENNEC (MVP) BG] refreshIntStorageInAllEnvironments called for orderId:', orderId);
+        
+        // Find all tabs that might have sidebars with this order's INT STORAGE
+        chrome.tabs.query({}, tabs => {
+            const relevantTabs = tabs.filter(tab => {
+                // Check if tab URL contains the order ID or is a DB/Gmail page
+                return tab.url && (
+                    tab.url.includes(orderId) ||
+                    tab.url.includes('db.incfile.com') ||
+                    tab.url.includes('mail.google.com')
+                );
+            });
+            
+            console.log('[FENNEC (MVP) BG] Found relevant tabs for INT STORAGE refresh:', relevantTabs.length);
+            
+            let refreshCount = 0;
+            const totalTabs = relevantTabs.length;
+            
+            if (totalTabs === 0) {
+                sendResponse({ success: true, message: 'No relevant tabs found', refreshedCount: 0 });
+                return;
+            }
+            
+            relevantTabs.forEach(tab => {
+                chrome.tabs.sendMessage(tab.id, { 
+                    action: 'refreshIntStorageForOrder', 
+                    orderId: orderId 
+                }, response => {
+                    refreshCount++;
+                    console.log(`[FENNEC (MVP) BG] Tab ${tab.id} refresh response:`, response);
+                    
+                    if (refreshCount >= totalTabs) {
+                        console.log('[FENNEC (MVP) BG] All tabs processed for INT STORAGE refresh');
+                        sendResponse({ 
+                            success: true, 
+                            message: 'INT STORAGE refreshed in all environments', 
+                            refreshedCount: refreshCount 
+                        });
+                    }
+                });
+            });
+        });
+        
+        return true;
+    }
+
     if (message.action === "fetchIntStorage" && message.orderId) {
         const orderId = message.orderId;
-        console.log('[FENNEC (POO) BG] fetchIntStorage called for orderId:', orderId);
+        console.log('[FENNEC (MVP) BG] fetchIntStorage called for orderId:', orderId);
         
         // Prevent multiple simultaneous requests for the same order
         const requestKey = `intStorage_${orderId}`;
         if (globalThis.activeRequests && globalThis.activeRequests[requestKey]) {
-            console.log('[FENNEC (POO) BG] Request already in progress for orderId:', orderId);
+            console.log('[FENNEC (MVP) BG] Request already in progress for orderId:', orderId);
             sendResponse({ files: null, error: "Request already in progress" });
             return true;
         }
@@ -342,7 +663,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 }
             }
             const url = `${base}/storage/incfile/${orderId}`;
-            console.log('[FENNEC (POO) BG] Opening URL:', url);
+            console.log('[FENNEC (MVP) BG] Opening URL:', url);
             const query = { url: `${url}*` };
             let attempts = 15;
             let delay = 1000;
@@ -352,15 +673,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 chrome.tabs.query(query, tabs => {
                     let tab = tabs && tabs[0];
                     const ensureLoaded = () => {
-                        console.log('[FENNEC (POO) BG] Tab status check:', tab ? { id: tab.id, status: tab.status } : 'no tab');
+                        console.log('[FENNEC (MVP) BG] Tab status check:', tab ? { id: tab.id, status: tab.status } : 'no tab');
                         if (!tab || tab.status !== "complete") {
                             if (attempts > 0) {
                                 if (!tab) {
-                                    console.log('[FENNEC (POO) BG] Creating new tab for URL:', url);
+                                    console.log('[FENNEC (MVP) BG] Creating new tab for URL:', url);
                                     chrome.tabs.create({ url, active: false, windowId: sender.tab ? sender.tab.windowId : undefined }, t => {
                                         tab = t;
                                         createdTabId = t.id;
-                                        console.log('[FENNEC (POO) BG] Created tab:', t.id);
+                                        console.log('[FENNEC (MVP) BG] Created tab:', t.id);
                                     });
                                 }
                                 setTimeout(() => {
@@ -369,14 +690,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                     chrome.tabs.query(query, qs => { tab = qs && qs[0]; ensureLoaded(); });
                                 }, delay);
                             } else {
-                                console.log('[FENNEC (POO) BG] Tab loading timeout, attempts exhausted');
+                                console.log('[FENNEC (MVP) BG] Tab loading timeout, attempts exhausted');
                                 cleanup();
                                 sendResponse({ files: null });
                                 if (createdTabId) chrome.tabs.remove(createdTabId);
                             }
                             return;
                         }
-                        console.log('[FENNEC (POO) BG] Sending getIntStorageList to tab:', tab.id);
+                        console.log('[FENNEC (MVP) BG] Sending getIntStorageList to tab:', tab.id);
                         
                         // Add retry mechanism for content script injection
                         let retryCount = 0;
@@ -384,15 +705,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                         
                         const sendGetIntStorageList = () => {
                             chrome.tabs.sendMessage(tab.id, { action: "getIntStorageList" }, resp => {
-                                console.log('[FENNEC (POO) BG] getIntStorageList response:', resp);
+                                console.log('[FENNEC (MVP) BG] getIntStorageList response:', resp);
                                 if (chrome.runtime.lastError || !resp) {
                                     const msg = chrome.runtime.lastError ? chrome.runtime.lastError.message : "no response";
-                                    console.error('[FENNEC (POO) BG] getIntStorageList error:', msg);
+                                    console.error('[FENNEC (MVP) BG] getIntStorageList error:', msg);
                                     
                                     // Retry if content script might not be ready yet
                                     if (retryCount < maxRetries && /Could not establish connection|Receiving end does not exist/i.test(msg)) {
                                         retryCount++;
-                                        console.log('[FENNEC (POO) BG] Retrying getIntStorageList, attempt:', retryCount);
+                                        console.log('[FENNEC (MVP) BG] Retrying getIntStorageList, attempt:', retryCount);
                                         setTimeout(sendGetIntStorageList, 1000);
                                         return;
                                     }
@@ -430,14 +751,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     function fetchEmailOrders(winId, email, callback) {
-        console.log('[FENNEC (POO)] fetchEmailOrders', { winId, email });
+        console.log('[FENNEC (MVP)] fetchEmailOrders', { winId, email });
         const encoded = email ? encodeURIComponent(email) : null;
         const queryTabs = () => {
             chrome.tabs.query({ windowId: winId }, tabs => {
                 const searchTabs = tabs.filter(t => t.url &&
                     (t.url.includes('/order-tracker/orders/order-search') ||
                      t.url.includes('/db-tools/scan-email-address')));
-                console.log('[FENNEC (POO)] available search tabs', searchTabs.map(t => t.url));
+                console.log('[FENNEC (MVP)] available search tabs', searchTabs.map(t => t.url));
                 let searchTab = null;
                 if (encoded) searchTab = searchTabs.find(t => t.url.includes('fennec_email=' + encoded));
                 if (!searchTab) searchTab = searchTabs.find(t => t.active) || searchTabs[0];
@@ -459,7 +780,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
                 let attempts = 8;
                 const runFetch = () => {
-                    console.log('[FENNEC (POO)] getEmailOrders attempt', { attempts_left: attempts, tabId: searchTab.id });
+                    console.log('[FENNEC (MVP)] getEmailOrders attempt', { attempts_left: attempts, tabId: searchTab.id });
                     chrome.tabs.sendMessage(searchTab.id, { action: 'getEmailOrders' }, resp => {
                         if (chrome.runtime.lastError || !resp) {
                             const msg = chrome.runtime.lastError ? chrome.runtime.lastError.message : 'no response';
@@ -468,10 +789,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                 setTimeout(runFetch, 1000);
                                 return;
                             }
-                            console.warn('[FENNEC (POO)] getEmailOrders failed:', msg);
+                            console.warn('[FENNEC (MVP)] getEmailOrders failed:', msg);
                             callback(null);
                         } else {
-                            console.log('[FENNEC (POO)] getEmailOrders response', resp);
+                            console.log('[FENNEC (MVP)] getEmailOrders response', resp);
                             const orders = Array.isArray(resp.orders) ? resp.orders : [];
                             const counts = { cxl: 0, pending: 0, shipped: 0, transferred: 0 };
                             orders.forEach(o => {
@@ -536,16 +857,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const winId = sender.tab.windowId;
         fetchEmailOrders(winId, message.email, info => {
             if (!info) {
-                sendResponse({ orderCount: 0, statusCounts: null, ltv: message.ltv });
+                sendResponse({ orderCount: 0, statusCounts: null, ltv: message.ltv, orders: [] });
                 return;
             }
-            sendResponse({ orderCount: info.counts.total, statusCounts: info.counts, ltv: message.ltv });
+            sendResponse({ orderCount: info.counts.total, statusCounts: info.counts, ltv: message.ltv, orders: info.orders });
         });
         return true;
     }
 
     if (message.action === 'detectSubscriptions' && message.email && sender.tab) {
-        console.log('[FENNEC (POO)] detectSubscriptions request for', message.email);
+        console.log('[FENNEC (MVP)] detectSubscriptions request for', message.email);
         const winId = sender.tab.windowId;
         fetchEmailOrders(winId, message.email, info => {
             if (!info) { sendResponse({ orderCount: 0, activeSubs: [], ltv: message.ltv }); return; }
@@ -565,16 +886,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.action === "sosSearch" && message.url && message.query) {
+        console.log('[FENNEC (MVP)] Background: Received SOS search request:', message);
+        
         const openSearchTab = () => {
             chrome.tabs.create({ url: message.url, active: true }, (tab) => {
                 if (chrome.runtime.lastError) {
-                    console.error("[Copilot] Error opening SOS tab:", chrome.runtime.lastError.message);
+                    console.error("[FENNEC (MVP)] Error opening SOS tab:", chrome.runtime.lastError.message);
                     return;
                 }
+                
+                console.log('[FENNEC (MVP)] Background: Created SOS search tab:', tab.id);
+                
                 const inject = (tabId) => {
+                    console.log('[FENNEC (MVP)] Background: Injecting search script into tab:', tabId);
+                    
                     chrome.scripting.executeScript({
                         target: { tabId },
                         func: (q, type) => {
+                            console.log('[FENNEC (MVP)] Content script: Starting SOS search injection:', { query: q, type });
+                            
                             const patterns = type === "id"
                                 ? ["id", "number", "document", "control", "filing", "account"]
                                 : ["name", "business", "entity", "organization", "company", "keyword", "search"];
@@ -585,6 +915,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                             let attempts = 20; // was 10
                             const run = () => {
                                 const inputs = Array.from(document.querySelectorAll("input[type='text'],input[type='search'],input:not([type]),textarea"));
+                                console.log('[FENNEC (MVP)] Content script: Found inputs:', inputs.length);
+                                
                                 const field = inputs.find(i => {
                                     if (i.type === 'hidden' || !(i.offsetWidth || i.offsetHeight || i.getClientRects().length)) return false;
                                     const attrs = (i.name || "") + " " + (i.id || "") + " " + (i.placeholder || "") + " " + (i.getAttribute("aria-label") || "");
@@ -592,31 +924,47 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                                     if (skip.some(p => txt.includes(p))) return false;
                                     return patterns.some(p => txt.includes(p));
                                 });
+                                
                                 if (field) {
+                                    console.log('[FENNEC (MVP)] Content script: Found search field:', field);
                                     field.focus();
                                     field.value = q;
                                     field.dispatchEvent(new Event("input", { bubbles: true }));
                                     const form = field.form;
                                     const btn = form ? form.querySelector("button[type=\"submit\"],input[type=\"submit\"]") : null;
                                     if (btn) {
+                                        console.log('[FENNEC (MVP)] Content script: Clicking submit button');
                                         btn.click();
                                     } else if (form) {
+                                        console.log('[FENNEC (MVP)] Content script: Submitting form');
                                         form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
                                     } else {
+                                        console.log('[FENNEC (MVP)] Content script: Sending Enter key events');
                                         field.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
                                         field.dispatchEvent(new KeyboardEvent("keyup", { key: "Enter", bubbles: true }));
                                     }
                                 } else if (attempts-- > 0) {
+                                    console.log('[FENNEC (MVP)] Content script: Search field not found, retrying... (attempts left:', attempts, ')');
                                     setTimeout(run, 500);
+                                } else {
+                                    console.error('[FENNEC (MVP)] Content script: Could not find search field after all attempts');
                                 }
                             };
                             run();
                         },
                         args: [message.query, message.searchType]
+                    }, (result) => {
+                        if (chrome.runtime.lastError) {
+                            console.error('[FENNEC (MVP)] Background: Error executing search script:', chrome.runtime.lastError);
+                        } else {
+                            console.log('[FENNEC (MVP)] Background: Search script executed successfully');
+                        }
                     });
                 };
+                
                 const listener = (tabId, info) => {
                     if (tabId === tab.id && info.status === "complete") {
+                        console.log('[FENNEC (MVP)] Background: Tab loaded completely, injecting script');
                         chrome.tabs.onUpdated.removeListener(listener);
                         inject(tabId);
                     }
@@ -919,7 +1267,39 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
         return;
     }
+
+    if (message.action === "uspsCmraResult") {
+        console.log('[FENNEC (MVP) BG] Received USPS CMRA result:', message);
+        
+        // Store the CMRA result for the sidebar to access
+        chrome.storage.local.set({
+            uspsCmraResults: {
+                [message.address]: {
+                    isCMRA: message.isCMRA,
+                    cmraValue: message.cmraValue,
+                    timestamp: Date.now()
+                }
+            }
+        }, () => {
+            // Notify all sidebar tabs about the CMRA result
+            chrome.tabs.query({}, (tabs) => {
+                tabs.forEach(tab => {
+                    if (tab.url && (tab.url.includes('mail.google.com') || tab.url.includes('db.incfile.com'))) {
+                        chrome.tabs.sendMessage(tab.id, {
+                            action: 'uspsCmraResult',
+                            address: message.address,
+                            isCMRA: message.isCMRA,
+                            cmraValue: message.cmraValue
+                        }).catch(() => {
+                            // Ignore errors for tabs that don't have content scripts
+                        });
+                    }
+                });
+            });
+        });
+        return true;
+    }
     
     // Debug: Log unhandled messages
-    console.log('[FENNEC (POO)] Message reached end without handling:', message.action, message);
+    console.log('[FENNEC (MVP)] Message reached end without handling:', message.action, message);
 });

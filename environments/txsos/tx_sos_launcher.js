@@ -5,13 +5,11 @@ class TxSosLauncher extends Launcher {
     const bg = fennecMessenger;
     chrome.storage.local.get({ extensionEnabled: true }, ({ extensionEnabled }) => {
         if (!extensionEnabled) {
-            console.log("[FENNEC (POO)] Extension disabled, skipping TX SOS launcher.");
             return;
         }
 
         chrome.storage.sync.get({ txsosUser: "", txsosPass: "" }, ({ txsosUser, txsosPass }) => {
             const path = location.pathname.toLowerCase();
-            console.log("[FENNEC (POO) TXSOS] Path:", path);
 
             function findElement(selector, root = document, depth = 3) {
                 try {
@@ -36,16 +34,14 @@ class TxSosLauncher extends Launcher {
             }
 
             function waitFor(selector, timeout = 50000) {
-                console.log("[FENNEC (POO) TXSOS] Waiting for", selector);
                 return new Promise(resolve => {
                     const start = Date.now();
                     (function check() {
                         const el = findElement(selector);
                         if (el) {
-                            console.log("[FENNEC (POO) TXSOS] Found", selector);
                             resolve(el);
                         } else if (Date.now() - start >= timeout) {
-                            console.warn("[FENNEC (POO) TXSOS] Timeout waiting for", selector);
+                            console.warn("[FENNEC (MVP) TXSOS] Timeout waiting for", selector);
                             resolve(null);
                         } else {
                             setTimeout(check, 500);
@@ -56,10 +52,9 @@ class TxSosLauncher extends Launcher {
 
             function fillLogin() {
                 if (!txsosUser || !txsosPass) {
-                    console.warn("[FENNEC (POO) TXSOS] Missing credentials");
+                    console.warn("[FENNEC (MVP) TXSOS] Missing credentials");
                     return;
                 }
-                console.log("[FENNEC (POO) TXSOS] Filling login form");
                 Promise.all([
                     waitFor("input[name='client_id']"),
                     waitFor("input[name='web_password']"),
@@ -77,19 +72,18 @@ class TxSosLauncher extends Launcher {
                             passInput.dispatchEvent(new Event("input", { bubbles: true }));
                         }
                         if (button && userInput && passInput) {
-                            console.log("[FENNEC (POO) TXSOS] Submitting login via button");
                             setTimeout(() => button.click(), 300);
                         } else if (userInput && passInput) {
                             const form = userInput.closest("form");
                             if (form) {
-                                console.warn("[FENNEC (POO) TXSOS] Button missing; submitting form directly");
+                                console.warn("[FENNEC (MVP) TXSOS] Button missing; submitting form directly");
                                 setTimeout(() => form.submit(), 300);
                             } else {
-                                console.error("[FENNEC (POO) TXSOS] No login form found");
+                                console.error("[FENNEC (MVP) TXSOS] No login form found");
                             }
                         }
                     } catch (err) {
-                        console.error("[FENNEC (POO) TXSOS] Login error", err);
+                        console.error("[FENNEC (MVP) TXSOS] Login error", err);
                     }
                 });
             }
@@ -115,20 +109,17 @@ class TxSosLauncher extends Launcher {
                 waitFor("select[name='payment_type_id']").then(dropdown => {
                     if (!dropdown) return;
                     try {
-                        console.log("[FENNEC (POO) TXSOS] Selecting Client Account");
                         setDropdownValue(dropdown, "5");
                         setTimeout(() => {
-                            console.log("[FENNEC (POO) TXSOS] Option after set:", dropdown.value);
                             waitFor("input[type='submit'][name='Submit'], input[type='submit'][value='Continue']")
                                 .then(btn => {
                                     if (btn) {
-                                        console.log("[FENNEC (POO) TXSOS] Continuing to next step");
                                         setTimeout(() => btn.click(), 300);
                                     }
                                 });
                         }, 300);
                     } catch (err) {
-                        console.error("[FENNEC (POO) TXSOS] Payment step error", err);
+                        console.error("[FENNEC (MVP) TXSOS] Payment step error", err);
                     }
                 });
             }

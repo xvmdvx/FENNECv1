@@ -356,7 +356,6 @@
         function highlightMatches(ids) {
             const set = ids ? new Set(ids.map(String)) : fraudSet;
             const rows = document.querySelectorAll('#tableStatusResults tbody tr');
-            console.log(`[FENNEC] Applying fraud flags for ${set.size} orders`);
             rows.forEach(r => {
                 const link = r.querySelector('a[data-detail-link*="/order/detail/"]') ||
                              r.querySelector('a[href*="/order/detail/"]');
@@ -379,7 +378,6 @@
                     r.dataset.possibleFraud = '';
                 }
             });
-            console.log('[FENNEC] Fraud flags applied');
             applyFilters();
         }
 
@@ -413,7 +411,6 @@
                 const orders = [];
                 if (csv) {
                     const rows = parseCsv(csv);
-                    console.log(`[FENNEC] CSV text length ${csv.length}, rows ${rows.length}`);
                     rows.slice(1).forEach(cols => {
                         const id = cols[0];
                         const state = cols[1];
@@ -428,7 +425,6 @@
                     });
                 }
                 if (!csv) console.warn('[FENNEC] CSV not captured');
-                console.log(`[FENNEC] Parsed ${orders.length} orders from CSV`);
                 cb(orders);
             }
             function onMsg(e) {
@@ -450,7 +446,6 @@
 
         function showCsvSummary(orders) {
             const { total, stateCounts, statusCounts, expCount, dateCounts, fraudCount } = summarizeOrders(orders);
-            console.log(`[FENNEC] Rendering summary for ${total} CSV orders`);
             renderSummary(total, expCount, fraudCount, stateCounts, statusCounts, dateCounts);
             lastCsvSummary = { total, stateCounts, statusCounts, expCount, dateCounts, fraudCount };
             csvSummaryActive = true;
@@ -486,7 +481,6 @@
         }
 
         function injectCsvOrders(orders) {
-            console.log(`[FENNEC] Injecting ${orders.length} orders into table`);
             const tableEl = document.getElementById('tableStatusResults');
             if (!tableEl) { console.warn('[FENNEC] tableStatusResults not found'); return; }
             injectTableHelper().then(() => {
@@ -538,7 +532,6 @@
                         cells.join('') + '</tr>';
                     rows.push(rowHtml);
                 });
-                if (!rows.length) { console.log('[FENNEC] No new CSV orders to inject'); return; }
 
                 const headerTexts = headers.map(th => th.textContent.trim().toLowerCase());
                 const orderedIdx = headerTexts.findIndex(t => t.includes('ordered'));
@@ -552,7 +545,6 @@
                         const ordered = cell ? cell.textContent.trim() : '';
                         tr.dataset.ordered = ordered;
                     });
-                    console.log('[FENNEC] Table updated with CSV orders');
                     if (pendingHighlightIds) {
                         highlightMatches(pendingHighlightIds);
                         const orders = lastCsvOrders || collectOrders();
@@ -573,7 +565,6 @@
                 progress.textContent = 'Downloading queue CSV...';
                 progress.style.display = 'block';
             }
-            console.log('[FENNEC] Starting queue scan...');
             sessionStorage.removeItem('fennecCsvSummary');
             sessionStorage.removeItem('fennecCsvSummaryActive');
             sessionStorage.removeItem('fennecCsvOrders');
@@ -598,7 +589,6 @@
                 // Trigger the standard CSV download in case the custom request fails.
                 const genBtn = document.getElementById('generateCSV');
                 if (genBtn) {
-                    console.log('[FENNEC] Triggering built-in CSV download button');
                     genBtn.click();
                 } else {
                     console.warn('[FENNEC] generateCSV button not found');
@@ -610,7 +600,6 @@
                         progress.textContent = '';
                         progress.style.display = 'none';
                     }
-                    console.log(`[FENNEC] CSV downloaded with ${orders.length} orders`);
 
                     // Update sidebar summary first using the CSV data
                     showCsvSummary(orders);
@@ -621,12 +610,10 @@
                     skipSummaryUpdate = true;
                     if (tableObserver) tableObserver.disconnect();
 
-                    console.log('[FENNEC] Injecting CSV orders into search results table');
                     injectCsvOrders(orders);
 
                     const ids = orders.map(o => String(o.id));
                     const highlightIds = ids.filter(id => fraudSet.has(id));
-                    console.log(`[FENNEC] Flagging ${highlightIds.length} possible fraud orders`);
                     pendingHighlightIds = highlightIds;
                     highlightMatches(highlightIds);
 
@@ -641,7 +628,6 @@
         }
 
         function openCurrentView() {
-            console.log('[FENNEC] Showing summary for current page');
             const orders = collectOrders();
             showCsvSummary(orders);
             lastCsvOrders = orders;
@@ -656,7 +642,6 @@
         }
 
         function clearQueueData() {
-            console.log('[FENNEC] Clearing queue summary');
             sessionStorage.removeItem('fennecCsvSummary');
             sessionStorage.removeItem('fennecCsvSummaryActive');
             sessionStorage.removeItem('fennecCsvOrders');
@@ -733,22 +718,45 @@
                 input.value = email;
                 input.dispatchEvent(new Event('input', { bubbles: true }));
 
-                // Trigger the search without invoking the <a href="javascript:void(0)">
-                // default handler, which is blocked by the extension's CSP when
-                // executed programmatically.  Dispatching the keypress event
-                // causes the page's jQuery handler to run `ajaxSearch()` safely.
-                input.dispatchEvent(new KeyboardEvent('keypress', {
-                    key: 'Enter',
-                    keyCode: 13,
-                    which: 13,
-                    bubbles: true
-                }));
+                // Try multiple methods to trigger the search
+                setTimeout(() => {
+                    // Method 1: Try clicking the Go button directly
+                    const goButton = document.querySelector('input[type="submit"], button[type="submit"], .btn-primary, #mainSearching');
+                    if (goButton) {
+                        goButton.click();
+                    } else {
+                        // Method 2: Try form submission
+                        const form = input.closest('form');
+                        if (form) {
+                            form.submit();
+                        } else {
+                            // Method 3: Try Enter key events
+                            input.dispatchEvent(new KeyboardEvent('keydown', {
+                                key: 'Enter',
+                                keyCode: 13,
+                                which: 13,
+                                bubbles: true
+                            }));
+                            input.dispatchEvent(new KeyboardEvent('keypress', {
+                                key: 'Enter',
+                                keyCode: 13,
+                                which: 13,
+                                bubbles: true
+                            }));
+                            input.dispatchEvent(new KeyboardEvent('keyup', {
+                                key: 'Enter',
+                                keyCode: 13,
+                                which: 13,
+                                bubbles: true
+                            }));
+                        }
+                    }
+                }, 500); // Small delay to ensure the input is properly set
             } else {
                 const btn = document.getElementById('mainSearching') || document.querySelector('#mainSearching');
-                // Fallback for very old pages: try clicking the button.  This may
-                // be ignored by modern pages where the event is attached to the
-                // input field instead.
-                if (btn) btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                if (btn) {
+                    btn.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                }
             }
             waitForResults(() => {
                 const orders = collectOrders().map(o => ({ orderId: o.id, type: '', status: o.status }));
@@ -814,7 +822,6 @@
                 const sendOrders = () => {
                     const orders = collectOrders().map(o => ({ orderId: o.id, type: '', status: o.status }));
                     const total = getTotalCount();
-                    console.log('[FENNEC (POO)] db_order_search returning', orders.length, 'orders');
                     sendResponse({ orders, total });
                 };
                 const tbody = document.querySelector('#tableStatusResults tbody');

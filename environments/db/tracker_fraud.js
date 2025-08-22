@@ -11,7 +11,6 @@
         
         // Only inject if REVIEW MODE is enabled
         if (!opts.fennecReviewMode) {
-            console.log('[FENNEC (POO)] Fraud tracker: REVIEW MODE is disabled, skipping injection');
             return;
         }
         
@@ -40,6 +39,68 @@
             }
         });
 
+        // Helper functions that need to be defined early
+        function collectStates(order, dna, kount) {
+            const set = new Set();
+            const add = a => { const s = guessState(a); if (s) set.add(s); };
+            if (order) {
+                if (order.billing && order.billing.address) add(order.billing.address);
+                if (order.registeredAgent && order.registeredAgent.address) add(order.registeredAgent.address);
+                if (Array.isArray(order.members)) order.members.forEach(m => add(m.address));
+            }
+            if (dna && dna.payment && dna.payment.shopper && dna.payment.shopper['Billing address']) add(dna.payment.shopper['Billing address']);
+            if (kount && kount.deviceLocation) add(kount.deviceLocation);
+            return Array.from(set);
+        }
+
+        // State and country utility functions and constants
+        const STATE_ABBRS = 'AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY'.split(' ');
+        const STATE_NAMES = [
+            'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'
+        ];
+
+        function guessCountry(text) {
+            if (!text || typeof text !== 'string') return null;
+            const t = String(text).toUpperCase();
+            if (/UNITED STATES|USA\b|US\b/.test(t)) return 'US';
+            if (/CANADA|\bCA\b/.test(t)) return 'CA';
+            if (/MEXICO|\bMX\b/.test(t)) return 'MX';
+            if (/UNITED KINGDOM|\bUK\b|\bGB\b/.test(t)) return 'GB';
+            if (/AUSTRALIA|\bAU\b/.test(t)) return 'AU';
+            const seg = t.split(',').pop().trim();
+            if (seg.length === 2 && !STATE_ABBRS.includes(seg)) return seg;
+            if (seg.length > 2 && /^[A-Z ]+$/.test(seg) && !STATE_ABBRS.includes(seg)) {
+                return seg.replace(/\s+/g, '').slice(0, 2);
+            }
+            return null;
+        }
+
+        function guessState(text) {
+            if (!text || typeof text !== 'string') return null;
+            const t = String(text).toUpperCase();
+            const abbr = STATE_ABBRS.find(a => new RegExp('\\b' + a + '\\b').test(t));
+            if (abbr) return abbr;
+            for (let i = 0; i < STATE_NAMES.length; i++) {
+                if (new RegExp('\\b' + STATE_NAMES[i].toUpperCase() + '\\b').test(t)) {
+                    return STATE_ABBRS[i];
+                }
+            }
+            return null;
+        }
+
+        function collectCountries(order, dna, kount) {
+            const set = new Set();
+            const add = a => { const c = guessCountry(a); if (c) set.add(c); };
+            if (order) {
+                if (order.billing && order.billing.address) add(order.billing.address);
+                if (order.registeredAgent && order.registeredAgent.address) add(order.registeredAgent.address);
+                if (Array.isArray(order.members)) order.members.forEach(m => add(m.address));
+            }
+            if (dna && dna.payment && dna.payment.shopper && dna.payment.shopper['Billing address']) add(dna.payment.shopper['Billing address']);
+            if (kount && kount.deviceLocation) add(kount.deviceLocation);
+            return Array.from(set);
+        }
+
 
 
         function injectSidebar() {
@@ -62,6 +123,12 @@
             sidebar.id = 'copilot-sidebar';
             sidebar.innerHTML = buildStandardizedReviewModeSidebar(true, false);
             document.body.appendChild(sidebar);
+            
+            // Setup INT STORAGE click handler
+            const orderId = sessionStorage.getItem('fennec_order') || localStorage.getItem('fraudReviewSession');
+            if (orderId) {
+                setupIntStorageClickHandler(orderId);
+            }
             chrome.storage.sync.get({
                 sidebarFontSize: 13,
                 sidebarFont: "'Inter', sans-serif",
@@ -437,6 +504,11 @@
                     return isNaN(n) ? 0 : n;
                 }
 
+                function formatCurrency(amount) {
+                    if (!amount || amount === 0) return '$0.00';
+                    return '$' + amount.toFixed(2);
+                }
+
                 const entries = Object.keys(tx).map(k => {
                     const t = tx[k];
                     let label = k;
@@ -508,6 +580,32 @@
 
         // Make callable from page scripts
         window.loadDnaSummary = loadDnaSummary;
+        
+        // Function to focus on ADYEN DNA tab
+        function focusAdyenDnaTab() {
+            const dnaElement = document.getElementById('dna-summary');
+            if (dnaElement) {
+                dnaElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                dnaElement.style.border = '2px solid #007bff';
+                setTimeout(() => {
+                    dnaElement.style.border = '';
+                }, 2000);
+            }
+            
+            // Also try to find and focus on the ADYEN DNA tab in the sidebar
+            const sidebar = document.querySelector('.sidebar-content');
+            if (sidebar) {
+                const adyenTab = sidebar.querySelector('[data-tab="adyen"]') || 
+                                 sidebar.querySelector('.tab-button[onclick*="adyen"]') ||
+                                 sidebar.querySelector('.tab-button:contains("ADYEN")');
+                if (adyenTab) {
+                    adyenTab.click();
+                }
+            }
+        }
+        
+        // Make callable from page scripts
+        window.focusAdyenDnaTab = focusAdyenDnaTab;
 
        function loadKountSummary() {
            const container = document.getElementById('kount-summary');
@@ -530,11 +628,27 @@
         function showTrialFloater(retries = 60, force = false) {
             const flag = sessionStorage.getItem('fennecShowTrialFloater');
             const overlayExists = trialFloater.exists();
-            if ((!flag && !force && !overlayExists) || retries <= 0) return;
+            if ((!flag && !force && !overlayExists) || retries <= 0) {
+                return;
+            }
             const summary = document.getElementById("fraud-summary-box");
             if (summary) summary.remove();
             chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null, sidebarOrderInfo: null }, data => {
-                const html = buildTrialHtml(data.adyenDnaInfo, data.kountInfo, data.sidebarOrderInfo);
+                let html = '';
+                try {
+                    html = buildTrialHtml(data.adyenDnaInfo, data.kountInfo, data.sidebarOrderInfo);
+                } catch (error) {
+                    console.error('[EKATA] buildTrialHtml error', error);
+                    // Create a basic fallback HTML
+                    html = `
+                        <div class="trial-error">
+                            <div class="trial-line trial-center"><b>TRIAL FLOATER ERROR</b></div>
+                            <div class="trial-line trial-center">Data extraction completed successfully</div>
+                            <div class="trial-line trial-center">but display encountered an error</div>
+                            <div class="trial-line trial-center">Please check console for details</div>
+                        </div>
+                    `;
+                }
                 sessionStorage.removeItem('fennecShowTrialFloater');
                 if (data.sidebarOrderInfo && data.sidebarOrderInfo.orderId) {
                     localStorage.setItem('fraudXrayCompleted', String(data.sidebarOrderInfo.orderId));
@@ -550,22 +664,44 @@
                     bg.refocusTab();
                 });
                 floaterRefocusDone = true;
+                try {
                 trialFloater.ensure();
                 const overlay = trialFloater.element;
                 const title = trialFloater.header;
+                    if (overlay && html) {
                 overlay.innerHTML = html;
-                const txHeader = overlay.querySelector('.trial-tx-header');
+                    } else {
+                        console.error('[EKATA] floater overlay/HTML missing', { overlay: !!overlay, html: !!html });
+                    }
+                } catch (error) {
+                    console.error('[EKATA] ensure floater error', error);
+                }
+                
+                if (!trialFloater.element) {
+                    console.error('[EKATA] floater overlay missing');
+                    return;
+                }
+                
+                const txHeader = trialFloater.element.querySelector('.trial-tx-header');
                 if (txHeader) txHeader.addEventListener('click', () => bg.send('focusDnaTab'));
-                const close = overlay.querySelector('.trial-close');
+                const ordersHeader = trialFloater.element.querySelector('.trial-orders-header');
+                if (ordersHeader) ordersHeader.addEventListener('click', () => {
+                    const email = (data.sidebarOrderInfo && data.sidebarOrderInfo.clientEmail) || '';
+                    const url = email ? `https://db.incfile.com/order-tracker/orders/order-search?fennec_email=${encodeURIComponent(email)}` : 'https://db.incfile.com/order-tracker/orders/order-search';
+                    chrome.storage.local.set({ fennecReturnTab: null }, () => {
+                        bg.openOrReuseTab({ url, active: true, refocus: true });
+                    });
+                });
+                const close = trialFloater.element.querySelector('.trial-close');
                 if (close) close.addEventListener('click', () => {
-                    overlay.remove();
-                    title.remove();
+                    trialFloater.element.remove();
+                    if (trialFloater.header) trialFloater.header.remove();
                     endFraudSession();
                     chrome.storage.local.set({ fennecReturnTab: null }, () => {
                         bg.refocusTab();
                     });
                 });
-                const subBtn = overlay.querySelector('#sub-detection-btn');
+                const subBtn = trialFloater.element.querySelector('#sub-detection-btn');
                 if (subBtn) {
                     subBtn.addEventListener('click', () => {
                         subBtn.disabled = true;
@@ -573,7 +709,7 @@
                         const dna = data.adyenDnaInfo;
                         const kount = data.kountInfo;
                         const order = data.sidebarOrderInfo;
-                        const dbCol = overlay.querySelector('.trial-col');
+                        const dbCol = trialFloater.element.querySelector('.trial-col');
                         let loadingLine = null;
                         if (dbCol) {
                             loadingLine = document.createElement('div');
@@ -590,7 +726,7 @@
                             if (req !== subDetectSeq) return;
                             subBtn.disabled = false;
                             if (!resp) return;
-                            const col = overlay.querySelector('.trial-col');
+                            const col = trialFloater.element.querySelector('.trial-col');
                             if (!col) return;
                             if (loadingLine) loadingLine.textContent = `Orders: ${resp.orderCount}`;
                             else {
@@ -647,25 +783,25 @@
                 function handleTrialAction(selector) {
                     clickDbAction(selector);
                     overlay.remove();
-                    title.remove();
+                    if (title) title.remove();
                     endFraudSession();
                     showTrialSuccess();
                 }
 
-                const crBtn = overlay.querySelector('#trial-btn-cr');
+                const crBtn = trialFloater.element.querySelector('#trial-btn-cr');
                 if (crBtn) crBtn.addEventListener('click', () => handleTrialAction('.cancel-and-refund-potential-fraud'));
-                const idBtn = overlay.querySelector('#trial-btn-id');
+                const idBtn = trialFloater.element.querySelector('#trial-btn-id');
                 if (idBtn) idBtn.addEventListener('click', () => handleTrialAction('.confirm-fraud-potential-fraud'));
-                const relBtn = overlay.querySelector('#trial-btn-release');
+                const relBtn = trialFloater.element.querySelector('#trial-btn-release');
                 if (relBtn) relBtn.addEventListener('click', () => handleTrialAction('.remove-potential-fraud'));
 
-                const crossCountTotal = overlay.querySelectorAll('.db-adyen-cross').length;
+                const crossCountTotal = trialFloater.element.querySelectorAll('.db-adyen-cross').length;
                 let crossCount = crossCountTotal;
                 if (crossCountTotal > 0) {
                     const labels = ['AVS:', 'CLIENT:', 'EMAIL:', 'EMAIL AGE:'];
                     let excl = 0;
                     labels.forEach(l => {
-                        const line = Array.from(overlay.querySelectorAll('.trial-line')).find(div => {
+                        const line = Array.from(trialFloater.element.querySelectorAll('.trial-line')).find(div => {
                             const t = div.querySelector('.trial-tag');
                             return t && t.textContent.trim() === l;
                         });
@@ -673,14 +809,14 @@
                     });
                     if (crossCountTotal === excl) crossCount = 0;
                 }
-                const bigSpot = overlay.querySelector('#trial-big-button');
+                const bigSpot = trialFloater.element.querySelector('#trial-big-button');
                 let headerCls = 'trial-header-green';
                 if (crossCount > 4) headerCls = 'trial-header-red';
                 else if (crossCount > 0) headerCls = 'trial-header-purple';
-                title.className = headerCls;
-                overlay.classList.remove('trial-header-green','trial-header-purple','trial-header-red');
-                overlay.classList.add(headerCls);
-                const orderHeader = overlay.querySelector('.trial-order');
+                if (trialFloater.header) trialFloater.header.className = headerCls;
+                trialFloater.element.classList.remove('trial-header-green','trial-header-purple','trial-header-red');
+                trialFloater.element.classList.add(headerCls);
+                const orderHeader = trialFloater.element.querySelector('.trial-order');
                 if (orderHeader) {
                     orderHeader.classList.remove('trial-header-green','trial-header-purple','trial-header-red');
                     orderHeader.classList.add(headerCls);
@@ -706,7 +842,7 @@
                     const dna = data.adyenDnaInfo;
                     const kount = data.kountInfo;
                     const order = data.sidebarOrderInfo;
-                    const cols = overlay.querySelectorAll('.trial-columns .trial-col');
+                    const cols = trialFloater.element.querySelectorAll('.trial-columns .trial-col');
                     const dbCol = cols && cols[0];
                     const fetchStats = (attempts = 8) => {
                         const req = ++subDetectSeq;
@@ -727,7 +863,7 @@
                             }
                             if (!dbCol) return;
                             const extraInfo = dbCol.querySelector('#db-extra-info');
-                            const addLine = html => {
+                    const addLine = html => {
                                 if (!extraInfo) return;
                                 const div = document.createElement('div');
                                 div.className = 'trial-line trial-two-col';
@@ -763,8 +899,37 @@
                                 for (let i = 0; i < pairs.length; i += 2) {
                                     addFour(pairs.slice(i, i + 2));
                                 }
+                                // Make each status label clickable with a tooltip of order IDs
+                                const statusToOrders = { CXL: [], PENDING: [], SHIPPED: [], TRANSFER: [] };
+                                if (Array.isArray(resp.orders)) {
+                                    resp.orders.forEach(o => {
+                                        const s = String(o.status || '').toUpperCase();
+                                        const id = o.orderId || o.id;
+                                        if (!id) return;
+                                        if (/CANCEL/.test(s)) statusToOrders.CXL.push(id);
+                                        else if (/TRANSFERRED/.test(s)) statusToOrders.TRANSFER.push(id);
+                                        else if (/SHIPPED/.test(s)) statusToOrders.SHIPPED.push(id);
+                                        else if (/PROCESSING|REVIEW|HOLD/.test(s)) statusToOrders.PENDING.push(id);
+                                    });
+                                }
+                                // Enhance the recently added rows: inject spans with data-status
+                                const fourRows = extraInfo.querySelectorAll('.trial-four-col');
+                                fourRows.forEach(row => {
+                                    const spans = row.querySelectorAll('.trial-tag');
+                                    spans.forEach(tagSpan => {
+                                        const label = (tagSpan.textContent || '').replace(':', '').trim();
+                                        if (['CXL', 'PENDING', 'SHIPPED', 'TRANSFER'].includes(label)) {
+                                            const valueSpan = tagSpan.nextElementSibling;
+                                            if (valueSpan) {
+                                                valueSpan.classList.add('trial-status-label');
+                                                valueSpan.setAttribute('data-status', label);
+                                                valueSpan.style.cursor = 'pointer';
+                                            }
+                                        }
+                                    });
+                                });
                                 const goodTotal = resp.statusCounts.total >= resp.statusCounts.cxl * 2;
-                                addCenter(`TOTAL: <b>${resp.statusCounts.total}</b> <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}">${goodTotal ? '✔' : '✖'}</span>`);
+                                addCenter(`TOTAL: <b>${resp.statusCounts.total}</b> <span class="${goodTotal ? 'db-adyen-check' : 'db-adyen-cross'}" title="Order volume vs cancellations">${goodTotal ? '✔' : '✖'}</span>`);
                                 addSep();
                                 if (resp.ltv) {
                                     const openOrders = (parseInt(resp.statusCounts.total, 10) || 0) -
@@ -773,26 +938,71 @@
                                     const ratio = openOrders > 0 ? `$${(ltvNum / openOrders).toFixed(2)}` : '$0.00';
                                     addFour([['LTV', resp.ltv], ['P/ORDER', ratio]]);
                                 }
-                                const states = collectStates(order, dna, kount);
-                                const countries = collectCountries(order, dna, kount);
-                                if ((states.length || countries.length) && extraInfo && !extraInfo.querySelector('.trial-country-state-line')) {
-                                    const blank = document.createElement('div');
-                                    blank.className = 'trial-line';
-                                    blank.innerHTML = '&nbsp;';
-                                    extraInfo.appendChild(blank);
-                                    const div = document.createElement('div');
-                                    if (states.length && countries.length) {
-                                        div.className = 'trial-line trial-four-col trial-country-state-line';
-                                        div.innerHTML = `<span class="trial-tag">COUNTRY:</span><span class="trial-value">${countries.join(', ')}</span><span class="trial-tag">STATE:</span><span class="trial-value">${states.join(', ')}</span>`;
-                                    } else if (countries.length) {
-                                        div.className = 'trial-line trial-two-col trial-country-state-line';
-                                        div.innerHTML = `<span class="trial-tag">COUNTRY:</span><span class="trial-value">${countries.join(', ')}</span>`;
-                                    } else if (states.length) {
-                                        div.className = 'trial-line trial-two-col trial-country-state-line';
-                                        div.innerHTML = `<span class="trial-tag">STATE:</span><span class="trial-value">${states.join(', ')}</span>`;
-                                    }
-                                    if (div.innerHTML) extraInfo.appendChild(div);
-                                }
+                                // Attach click handlers for tooltip popovers after DOM update
+                                setTimeout(() => {
+                                    const existing = trialFloater.element.querySelectorAll('.trial-status-tooltip');
+                                    existing.forEach(e => e.remove());
+                                    const onDocClick = (ev) => {
+                                        const tip = ev.target.closest('.trial-status-tooltip');
+                                        const label = ev.target.closest('.trial-status-label');
+                                        if (tip || label) return; // keep open if clicking inside or on a label
+                                        document.removeEventListener('click', onDocClick, true);
+                                        const tips = trialFloater.element.querySelectorAll('.trial-status-tooltip');
+                                        tips.forEach(t => t.remove());
+                                    };
+                                    extraInfo.querySelectorAll('.trial-status-label').forEach(lbl => {
+                                        lbl.addEventListener('click', (e) => {
+                                            // Check if there's already a tooltip for this label
+                                            const existingTip = document.querySelector('.trial-status-tooltip');
+                                            if (existingTip) {
+                                                existingTip.remove();
+                                                document.removeEventListener('click', onDocClick, true);
+                                                return;
+                                            }
+                                            
+                                            const statusKey = lbl.getAttribute('data-status');
+                                            const ids = statusToOrders[statusKey] || [];
+                                            const tip = document.createElement('div');
+                                            tip.className = 'trial-status-tooltip';
+                                            tip.style.position = 'absolute';
+                                            tip.style.zIndex = '2147483647';
+                                            tip.style.background = '#fff';
+                                            tip.style.border = '1px solid #ccc';
+                                            tip.style.borderRadius = '6px';
+                                            tip.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+                                            tip.style.padding = '8px';
+                                            tip.style.maxWidth = '260px';
+                                            tip.style.fontSize = '12px';
+                                            const list = document.createElement('div');
+                                            const topTen = ids.slice(0, 10);
+                                            list.innerHTML = topTen.map(id => `<div><a href="https://db.incfile.com/incfile/order/detail/${id}" target="_blank" rel="noreferrer">${id}</a></div>`).join('') || '<div>No orders</div>';
+                                            tip.appendChild(list);
+                                            if (ids.length > 10) {
+                                                const more = document.createElement('div');
+                                                more.style.marginTop = '6px';
+                                                more.innerHTML = `<a href="#" class="trial-see-more">See more</a>`;
+                                                more.querySelector('a').addEventListener('click', (ev) => {
+                                                    ev.preventDefault();
+                                                    // Focus Order Search tab
+                                                    chrome.storage.local.set({ fennecReturnTab: null }, () => {
+                                                        const email = (order && order.clientEmail) || (data.sidebarOrderInfo && data.sidebarOrderInfo.clientEmail) || '';
+                                                        const url = email ? `https://db.incfile.com/order-tracker/orders/order-search?fennec_email=${encodeURIComponent(email)}` : 'https://db.incfile.com/order-tracker/orders/order-search';
+                                                        bg.openOrReuseTab({ url, active: true, refocus: true });
+                                                    });
+                                                });
+                                                tip.appendChild(more);
+                                            }
+                                            // Position near label
+                                            const rect = lbl.getBoundingClientRect();
+                                            tip.style.left = Math.round(rect.left + window.scrollX) + 'px';
+                                            tip.style.top = Math.round(rect.bottom + window.scrollY + 6) + 'px';
+                                            document.body.appendChild(tip);
+                                            // Close on outside click
+                                            setTimeout(() => document.addEventListener('click', onDocClick, true), 0);
+                                        });
+                                    });
+                                }, 0);
+                                // Do not append COUNTRY/STATE lines here to avoid duplication with the main DB column.
                             }
                         });
                     };
@@ -828,8 +1038,8 @@
                 if (matchNames) break;
             }
             const iconHtml = matchNames
-                ? '<span class="name-match check">✔</span>'
-                : '<span class="name-match cross">✖</span>';
+                ? '<span class="name-match check" title="Names across DB/Adyen/Kount match">✔</span>'
+                : '<span class="name-match cross" title="Names across DB/Adyen/Kount do not match">✖</span>';
 
             function colorFor(res) {
                 if (res === 'green') return 'copilot-tag-green';
@@ -839,6 +1049,11 @@
             function pushFlag(html) {
                 if (/copilot-tag-green/.test(html)) green.push(html);
                 if (/copilot-tag-purple/.test(html)) red.push(html);
+            }
+
+            function verdictIcon(ok, label) {
+                const safe = escapeHtml(label || '');
+                return `<span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}" title="${safe}">${ok ? '✔' : '✖'}</span>`;
             }
             function formatCvv(t) {
                 t = (t || '').toLowerCase();
@@ -863,7 +1078,7 @@
             }
 
             function formatExpShort(text) {
-                if (!text) return '';
+                if (!text || typeof text !== 'string') return '';
                 const digits = String(text).replace(/[^0-9]/g, '');
                 if (digits.length >= 4) {
                     const mm = digits.slice(0,2).padStart(2, '0');
@@ -873,67 +1088,13 @@
                 return text;
             }
 
-            const STATE_ABBRS = 'AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY'.split(' ');
-            const STATE_NAMES = [
-                'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'
-            ];
-            function guessCountry(text) {
-                if (!text) return null;
-                const t = String(text).toUpperCase();
-                if (/UNITED STATES|USA\b|US\b/.test(t)) return 'US';
-                if (/CANADA|\bCA\b/.test(t)) return 'CA';
-                if (/MEXICO|\bMX\b/.test(t)) return 'MX';
-                if (/UNITED KINGDOM|\bUK\b|\bGB\b/.test(t)) return 'GB';
-                if (/AUSTRALIA|\bAU\b/.test(t)) return 'AU';
-                const seg = t.split(',').pop().trim();
-                if (seg.length === 2 && !STATE_ABBRS.includes(seg)) return seg;
-                if (seg.length > 2 && /^[A-Z ]+$/.test(seg) && !STATE_ABBRS.includes(seg)) {
-                    return seg.replace(/\s+/g, '').slice(0, 2);
-                }
-                return null;
-            }
 
-            function guessState(text) {
-                if (!text) return null;
-                const t = String(text).toUpperCase();
-                const abbr = STATE_ABBRS.find(a => new RegExp('\\b' + a + '\\b').test(t));
-                if (abbr) return abbr;
-                for (let i = 0; i < STATE_NAMES.length; i++) {
-                    if (new RegExp('\\b' + STATE_NAMES[i].toUpperCase() + '\\b').test(t)) {
-                        return STATE_ABBRS[i];
-                    }
-                }
-                return null;
-            }
 
-            function collectStates(order, dna, kount) {
-                const set = new Set();
-                const add = a => { const s = guessState(a); if (s) set.add(s); };
-                if (order) {
-                    if (order.billing && order.billing.address) add(order.billing.address);
-                    if (order.registeredAgent && order.registeredAgent.address) add(order.registeredAgent.address);
-                    if (Array.isArray(order.members)) order.members.forEach(m => add(m.address));
-                }
-                if (dna && dna.payment && dna.payment.shopper && dna.payment.shopper['Billing address']) add(dna.payment.shopper['Billing address']);
-                if (kount && kount.deviceLocation) add(kount.deviceLocation);
-                return Array.from(set);
-            }
 
-            function collectCountries(order, dna, kount) {
-                const set = new Set();
-                const add = a => { const c = guessCountry(a); if (c) set.add(c); };
-                if (order) {
-                    if (order.billing && order.billing.address) add(order.billing.address);
-                    if (order.registeredAgent && order.registeredAgent.address) add(order.registeredAgent.address);
-                    if (Array.isArray(order.members)) order.members.forEach(m => add(m.address));
-                }
-                if (dna && dna.payment && dna.payment.shopper && dna.payment.shopper['Billing address']) add(dna.payment.shopper['Billing address']);
-                if (kount && kount.deviceLocation) add(kount.deviceLocation);
-                return Array.from(set);
-            }
 
             function normName(name) {
-                return (name || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim();
+                if (!name || typeof name !== 'string') return '';
+                return name.toLowerCase().replace(/[^a-z]+/g, ' ').trim();
             }
 
 function namesMatch(a, b) {
@@ -964,7 +1125,10 @@ function namesMatch(a, b) {
             }
 
             function emailMatches(email, names = [], company = '') {
-                const norm = t => (t || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+                const norm = t => {
+                    if (!t || typeof t !== 'string') return '';
+                    return t.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+                };
                 const user = norm((email || '').split('@')[0]);
                 if (!user) return false;
                 const tokens = [];
@@ -994,9 +1158,9 @@ function namesMatch(a, b) {
             if (order && order.billing) {
                 dbLines.push(`<div class="trial-line trial-name">${escapeHtml(order.billing.cardholder || '')} ${iconHtml}</div>`);
                 dbDigits = (order.billing.last4 || '').replace(/\D+/g, '');
-                dnaDigits = (dna && dna.payment && dna.payment.card ? dna.payment.card['Card number'] : '').replace(/\D+/g, '').slice(-4);
+                dnaDigits = (dna && dna.payment && dna.payment.card && dna.payment.card['Card number'] ? dna.payment.card['Card number'] : '').replace(/\D+/g, '').slice(-4);
                 dbExp = (order.billing.expiry || '').replace(/\D+/g, '');
-                dnaExp = (dna && dna.payment && dna.payment.card ? dna.payment.card['Expiry date'] : '').replace(/\D+/g, '');
+                dnaExp = (dna && dna.payment && dna.payment.card && dna.payment.card['Expiry date'] ? dna.payment.card['Expiry date'] : '').replace(/\D+/g, '');
                 if (order.billing.expiry || order.billing.last4) {
                     const parts = [];
                     if (order.billing.expiry) parts.push(`<span class="copilot-tag copilot-tag-white">${escapeHtml(formatExpShort(order.billing.expiry))}</span>`);
@@ -1013,7 +1177,7 @@ function namesMatch(a, b) {
                 const clientName = order.clientName || clientInfo.name || '';
                 const email = order.clientEmail || clientInfo.email || '';
                 const emailOk = emailMatches(email, [order.billing.cardholder, clientName], order.companyName);
-                dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">EMAIL:</span><span class="trial-value">${escapeHtml(email)} <span class="${emailOk ? 'db-adyen-check' : 'db-adyen-cross'}">${emailOk ? '✔' : '✖'}</span></span></div>`);
+                dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">EMAIL:</span><span class="trial-value">${escapeHtml(email)} ${verdictIcon(emailOk, 'Email user matches client/member/company')}</span></div>`);
                 if (clientName) {
                     let cOk = namesMatch(clientName, order.billing.cardholder) ||
                                namesPartialMatch(clientName, order.billing.cardholder);
@@ -1021,7 +1185,7 @@ function namesMatch(a, b) {
                         cOk = order.members.some(m => namesMatch(clientName, m.name) ||
                                                      namesPartialMatch(clientName, m.name));
                     }
-                    dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CLIENT:</span><span class="trial-value">${escapeHtml(clientName)} <span class="${cOk ? 'db-adyen-check' : 'db-adyen-cross'}">${cOk ? '✔' : '✖'}</span></span></div>`);
+                    dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CLIENT:</span><span class="trial-value">${escapeHtml(clientName)} ${verdictIcon(cOk, 'Client name matches cardholder or member')}</span></div>`);
                 }
                 if (Array.isArray(order.members) && order.members.length) {
                     const items = order.members.map(m => {
@@ -1029,15 +1193,11 @@ function namesMatch(a, b) {
                                    namesPartialMatch(m.name, order.billing.cardholder) ||
                                    namesMatch(m.name, clientInfo.name) ||
                                    namesPartialMatch(m.name, clientInfo.name);
-                        return `<li>${escapeHtml(m.name)}${ok ? ' <span class="db-adyen-check">✔</span>' : ''}</li>`;
+                        return `<li>${escapeHtml(m.name)}${ok ? ' <span class="db-adyen-check" title="Member name matches cardholder or client">✔</span>' : ''}</li>`;
                     }).join('');
                     dbLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">MEMBERS:</span><span class="trial-value"><ul class="member-list">${items}</ul></span></div>`);
                 }
-                dbLines.push('<div class="trial-line trial-sep"></div>');
-                dbLines.push('<div class="trial-line" style="text-align:center;font-weight:bold;">ORDERS:</div>');
-                dbLines.push('<div id="db-extra-info"></div>');
-                const btn = `<button id="sub-detection-btn" class="sub-detect-btn">SUB DETECTION</button>`;
-                dbLines.push(`<div class="trial-line">${btn}</div>`);
+                // Move COUNTRY/STATE right after MEMBERS and before the separator
                 const states = collectStates(order, dna, kount);
                 const countries = collectCountries(order, dna, kount);
                 if (states.length || countries.length) {
@@ -1049,6 +1209,11 @@ function namesMatch(a, b) {
                         dbLines.push(`<div class="trial-line trial-two-col trial-country-state-line"><span class="trial-tag">STATE:</span><span class="trial-value">${states.join(', ')}</span></div>`);
                     }
                 }
+                dbLines.push('<div class="trial-line trial-sep"></div>');
+                dbLines.push('<div class="trial-line trial-orders-header" style="text-align:center;font-weight:bold;cursor:pointer;">ORDERS</div>');
+                dbLines.push('<div id="db-extra-info"></div>');
+                const btn = `<button id="sub-detection-btn" class="sub-detect-btn">SUB DETECTION</button>`;
+                dbLines.push(`<div class="trial-line">${btn}</div>`);
                 if (order.billing.cardholder) {
                     const card = order.billing.cardholder;
                     const names = [];
@@ -1075,7 +1240,7 @@ function namesMatch(a, b) {
                 if (proc['CVC/CVV']) {
                     const r = formatCvv(proc['CVC/CVV']);
                     const ok = r.result === 'green';
-                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CVV:</span><span class="trial-value">${escapeHtml(proc['CVC/CVV'])} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></span></div>`);
+                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CVV:</span><span class="trial-value">${escapeHtml(proc['CVC/CVV'])} ${verdictIcon(ok, 'CVV matches')}</span></div>`);
                     if (ok) {
                         const tag = `<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`;
                         pushFlag(tag);
@@ -1084,69 +1249,683 @@ function namesMatch(a, b) {
                 if (proc['AVS']) {
                     const r = formatAvs(proc['AVS']);
                     const ok = r.result === 'green';
-                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">AVS:</span><span class="trial-value">${escapeHtml(proc['AVS'])} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></span></div>`);
+                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">AVS:</span><span class="trial-value">${escapeHtml(proc['AVS'])} ${verdictIcon(ok, 'AVS matches')}</span></div>`);
                     if (ok) {
                         const tag = `<span class="copilot-tag ${colorFor(r.result)}">${escapeHtml(r.label)}</span>`;
                         pushFlag(tag);
                     }
                 }
                 adyenLines.push('<div class="trial-line trial-sep"></div>');
-                adyenLines.push('<div class="trial-line trial-tx-header" style="text-align:center;font-weight:bold;cursor:pointer;">TRANSACTIONS</div>');
+                adyenLines.push('<div class="trial-line trial-tx-header" style="text-align:center;font-weight:bold;cursor:pointer;" onclick="focusAdyenDnaTab()">TRANSACTIONS</div>');
                 const tx = dna.transactions || {};
                 const settledCount = parseInt((tx['Settled'] || tx['Authorised / Settled'] || {}).count || '0', 10);
                 const totalCount = parseInt((tx['Total'] || tx['Total transactions'] || {}).count || '0', 10);
                 const settledAmt = parseAmount((tx['Settled'] || tx['Authorised / Settled'] || {}).amount);
                 const totalAmt = parseAmount((tx['Total'] || tx['Total transactions'] || {}).amount);
+                
+                // Build two-column layout
+                const leftColumn = [];
+                const rightColumn = [];
+                
                 if (totalCount) {
-                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">ATTEMPTS:</span><span class="trial-value">${totalCount}</span></div>`);
-                    const pct = Math.round(settledCount / totalCount * 100);
-                    const ok = pct >= 65;
-                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">SETTLED:</span><span class="trial-value">${pct}% <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></span></div>`);
+                    leftColumn.push(`<div class="trial-line trial-two-col"><span class="trial-tag">TOTAL:</span><span class="trial-value">${totalCount}</span></div>`);
                     const failed = totalCount - settledCount;
-                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">FAILED:</span><span class="trial-value">${failed}</span></div>`);
-                    if (!ok) red.push('<span class="copilot-tag copilot-tag-purple">APPROVED %</span>');
+                    if (failed > 0) {
+                        rightColumn.push(`<div class="trial-line trial-two-col"><span class="trial-tag">FAILED:</span><span class="trial-value">${failed}</span></div>`);
+                    }
+                    if (settledCount > 0) {
+                        rightColumn.push(`<div class="trial-line trial-two-col"><span class="trial-tag">SETTLED:</span><span class="trial-value">${settledCount}</span></div>`);
+                    }
                 } else if (totalAmt) {
-                    const pct = Math.round(settledAmt / totalAmt * 100);
+                    // Handle amount-based transactions
+                    leftColumn.push(`<div class="trial-line trial-two-col"><span class="trial-tag">TOTAL:</span><span class="trial-value">${formatCurrency(totalAmt)}</span></div>`);
+                    const failedAmt = totalAmt - settledAmt;
+                    if (failedAmt > 0) {
+                        rightColumn.push(`<div class="trial-line trial-two-col"><span class="trial-tag">FAILED:</span><span class="trial-value">${formatCurrency(failedAmt)}</span></div>`);
+                    }
+                    if (settledAmt > 0) {
+                        rightColumn.push(`<div class="trial-line trial-two-col"><span class="trial-tag">SETTLED:</span><span class="trial-value">${formatCurrency(settledAmt)}</span></div>`);
+                    }
+                }
+                
+                // CXL (refunded) - only show if > 0
+                const refundedCount = parseInt((tx['Refunded'] || tx['Refunded / Cancelled'] || {}).count || '0', 10);
+                const refundedAmt = parseAmount((tx['Refunded'] || tx['Refunded / Cancelled'] || {}).amount);
+                if (refundedCount > 0) {
+                    rightColumn.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CXL:</span><span class="trial-value">${refundedCount}</span></div>`);
+                } else if (refundedAmt > 0) {
+                    rightColumn.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CXL:</span><span class="trial-value">${formatCurrency(refundedAmt)}</span></div>`);
+                }
+                
+                // CB (chargebacks) - only show if > 0
+                const cb = parseInt((tx['Chargebacks'] || tx['Chargeback'] || {}).count || '0', 10);
+                const cbAmt = parseAmount((tx['Chargebacks'] || tx['Chargeback'] || {}).amount);
+                if (cb > 0) {
+                    rightColumn.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CB:</span><span class="trial-value">${cb}</span></div>`);
+                    red.push('<span class="copilot-tag copilot-tag-purple">CB</span>');
+                } else if (cbAmt > 0) {
+                    rightColumn.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CB:</span><span class="trial-value">${formatCurrency(cbAmt)}</span></div>`);
+                    red.push('<span class="copilot-tag copilot-tag-purple">CB</span>');
+                }
+                
+                // Render two-column layout
+                if (leftColumn.length > 0 || rightColumn.length > 0) {
+                    adyenLines.push('<div class="trial-line" style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">');
+                    adyenLines.push(`<div style="overflow:hidden;">${leftColumn.join('')}</div>`);
+                    adyenLines.push(`<div style="overflow:hidden;">${rightColumn.join('')}</div>`);
+                    adyenLines.push('</div>');
+                }
+                
+                // SETTLED percentage - centered single column
+                if (totalCount || totalAmt) {
+                    const pct = totalCount ? Math.round(settledCount / totalCount * 100) : Math.round(settledAmt / totalAmt * 100);
                     const ok = pct >= 65;
-                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">SETTLED:</span><span class="trial-value">${pct}% <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></span></div>`);
+                    adyenLines.push(`<div class="trial-line trial-center"><b>SETTLED: ${pct}% ${verdictIcon(ok, 'Settled rate ≥ 65%')}</b></div>`);
                     if (!ok) red.push('<span class="copilot-tag copilot-tag-purple">APPROVED %</span>');
                 }
-                const cb = parseInt((tx['Chargebacks'] || tx['Chargeback'] || {}).count || '0', 10);
-                const okCb = cb === 0;
-                if (okCb) {
-                    adyenLines.push('<div class="trial-line trial-center"><b>NO PREVIOUS CB\'s <span class="db-adyen-check">✔</span></b></div>');
-                } else {
-                    adyenLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">CB:</span><span class="trial-value">${cb} <span class="db-adyen-cross">✖</span></span></div>`);
-                    red.push('<span class="copilot-tag copilot-tag-purple">CB</span>');
+                
+                // NO PREVIOUS CB's legend
+                if (cb === 0 && cbAmt === 0) {
+                    adyenLines.push('<div class="trial-line trial-center"><b>NO PREVIOUS CB\'s <span class="db-adyen-check" title="No prior chargebacks">✔</span></b></div>');
                 }
             }
 
             if (kount) {
-                if (kount.ekata && kount.ekata.residentName) {
-                    const otherNames = [];
-                    if (order && order.billing && order.billing.cardholder) otherNames.push(order.billing.cardholder);
-                    if (order && order.clientName) otherNames.push(order.clientName);
-                    if (Array.isArray(order.members)) otherNames.push(...order.members.map(m => m.name));
-                    if (order && order.registeredAgent && order.registeredAgent.name) otherNames.push(order.registeredAgent.name);
-                    if (adyenName) otherNames.push(adyenName);
-                    const match = otherNames.some(n => namesSharePart(kount.ekata.residentName, n));
-                    const kIcon = `<span class="${match ? 'db-adyen-check' : 'db-adyen-cross'}">${match ? '✔' : '✖'}</span>`;
-                    kountLines.push(`<div class="trial-line trial-name">${escapeHtml(kount.ekata.residentName)} ${kIcon}</div>`);
+                // New organized KOUNT layout
+                if (kount.ekata) {
+                    const ekata = kount.ekata;
+                    
+                    // Helper function to extract data from detailed EKATA info
+                    const extractFromDetails = (details, key) => {
+                        if (!details) return null;
+                        const text = typeof details === 'string' ? details : JSON.stringify(details);
+                        
+                        // Special handling for resident name extraction
+                        if (key === 'Resident Name' || key === 'Name') {
+                            // Look for the specific pattern from the HTML structure
+                            const residentMatch = text.match(/Resident Name[\\s:]+([^\\n\\r]+?)(?=\\s+Is Commercial|\\s+Is Forwarder|\\s+Type:|$)/i);
+                            if (residentMatch) {
+                                return residentMatch[1].trim();
+                            }
+                            
+                            // Fallback to general pattern
+                            const regex = new RegExp(`${key}[\\s:]+([^\\n\\r]+?)(?=\\s+Is Commercial|\\s+Is Forwarder|\\s+Type:|$)/i`);
+                            const match = text.match(regex);
+                            return match ? match[1].trim() : null;
+                        }
+                        
+                        // General pattern for other fields
+                        const regex = new RegExp(`${key}[\\s:]+([^\\s,]+)`, 'i');
+                        const match = text.match(regex);
+                        return match ? match[1] : null;
+                    };
+
+                    // Helper function to extract resident names from different sections
+                    const extractResidentNames = (ekata) => {
+                        const names = {};
+                        
+                        
+                        // Priority: Use the new structured billingInfo and shippingInfo
+                        if (ekata && ekata.billingInfo && ekata.billingInfo.residentName) {
+                            names.billing = ekata.billingInfo.residentName.trim();
+                        }
+                        
+                        if (ekata && ekata.shippingInfo && ekata.shippingInfo.residentName) {
+                            names.shipping = ekata.shippingInfo.residentName.trim();
+                        }
+                        
+                        // Fallback: Try to parse from residentDetails JSON
+                        if ((!names.billing || !names.shipping) && ekata && ekata.residentDetails) {
+                            try {
+                                const details = typeof ekata.residentDetails === 'string' 
+                                    ? JSON.parse(ekata.residentDetails) 
+                                    : ekata.residentDetails;
+                                
+                                if (details.billing && details.billing.residentName && !names.billing) {
+                                    names.billing = details.billing.residentName.trim();
+                                }
+                                
+                                if (details.shipping && details.shipping.residentName && !names.shipping) {
+                                    names.shipping = details.shipping.residentName.trim();
+                                }
+                            } catch (e) {
+                            }
+                        }
+                        
+                        // Legacy fallback: Extract from text patterns
+                        if (!names.billing || !names.shipping) {
+                            const allText = JSON.stringify(ekata);
+                            
+                            // Look for Resident Name patterns
+                            const residentMatches = allText.match(/Resident Name[\\s:]+([^\\n\r]+?)(?=\\s+(Is Commercial|Is Forwarder|Type:|Distance|Linked|Warnings:|Errors:|Is Valid|Input Completeness|Match to Name)|$)/gi);
+                            if (residentMatches && residentMatches.length > 0) {
+                                if (!names.billing && residentMatches[0]) {
+                                    const billingMatch = residentMatches[0].match(/Resident Name[\\s:]+([^\\n\r]+?)(?=\\s+(Is Commercial|Is Forwarder|Type:|Distance|Linked|Warnings:|Errors:|Is Valid|Input Completeness|Match to Name)|$)/i);
+                                    if (billingMatch) {
+                                        names.billing = billingMatch[1].trim();
+                                    }
+                                }
+                                
+                                if (!names.shipping && residentMatches[1]) {
+                                    const shippingMatch = residentMatches[1].match(/Resident Name[\\s:]+([^\\n\r]+?)(?=\\s+(Is Commercial|Is Forwarder|Type:|Distance|Linked|Warnings:|Errors:|Is Valid|Input Completeness|Match to Name)|$)/i);
+                                    if (shippingMatch) {
+                                        names.shipping = shippingMatch[1].trim();
+                                    }
+                                }
+                                
+                                // If only one match found, use for both
+                                if (!names.billing && !names.shipping && residentMatches.length === 1) {
+                                    const match = residentMatches[0].match(/Resident Name[\\s:]+([^\\n\r]+?)(?=\\s+(Is Commercial|Is Forwarder|Type:|Distance|Linked|Warnings:|Errors:|Is Valid|Input Completeness|Match to Name)|$)/i);
+                                if (match) {
+                                    const name = match[1].trim();
+                                        names.billing = name;
+                                        names.shipping = name;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        return names;
+                    };
+                    
+                    // ADDRESS section
+                    kountLines.push('<div class="trial-line trial-center"><b>ADDRESS</b></div>');
+                    
+                    // Extract resident names from different sections
+                    const residentNames = extractResidentNames(ekata);
+                    
+                    // ADDRESS section - reorganized layout
+                    
+                    // Helper function to get CMRA status for an address
+                    const getCmraStatus = (addressType) => {
+                        let isCommercial = false;
+                        
+                        // Priority: Use the new structured data
+                        if (addressType === 'Billing' && ekata.billingInfo && ekata.billingInfo.isCommercial) {
+                            isCommercial = /^(yes|true|1)$/i.test(ekata.billingInfo.isCommercial);
+                        } else if (addressType === 'Shipping' && ekata.shippingInfo && ekata.shippingInfo.isCommercial) {
+                            isCommercial = /^(yes|true|1)$/i.test(ekata.shippingInfo.isCommercial);
+                        }
+                        
+                        // Fallback: Try to parse from residentDetails JSON
+                        if (!isCommercial && ekata.residentDetails) {
+                            try {
+                                const details = typeof ekata.residentDetails === 'string' 
+                                    ? JSON.parse(ekata.residentDetails) 
+                                    : ekata.residentDetails;
+                                
+                                if (addressType === 'Billing' && details.billing && details.billing.isCommercial) {
+                                    isCommercial = /^(yes|true|1)$/i.test(details.billing.isCommercial);
+                                } else if (addressType === 'Shipping' && details.shipping && details.shipping.isCommercial) {
+                                    isCommercial = /^(yes|true|1)$/i.test(details.shipping.isCommercial);
+                                }
+                            } catch (e) {
+                            }
+                        }
+                        
+                        // Legacy fallback: Extract from text patterns
+                        if (!isCommercial && ekata.residentDetails) {
+                            const rdText = typeof ekata.residentDetails === 'string' ? ekata.residentDetails : JSON.stringify(ekata.residentDetails);
+                            const sectionMatch = rdText.match(new RegExp(`${addressType} Info[\\s\\S]*?(?=Shipping Info|Billing Info|Phone|Email|$)`, 'i'));
+                            if (sectionMatch) {
+                                const commercialMatch = sectionMatch[0].match(/Is Commercial[\\s:]+(yes|no|true|false|1|0)/i);
+                                if (commercialMatch) {
+                                    isCommercial = /^(yes|true|1)$/i.test(commercialMatch[1]);
+                                    
+                                }
+                            }
+                        }
+                        
+                        return isCommercial;
+                    };
+                    
+                    // Check if billing and shipping are the same
+                    const sameAddress = residentNames.billing && residentNames.shipping && 
+                                      residentNames.billing.toLowerCase() === residentNames.shipping.toLowerCase();
+                    
+                    if (sameAddress) {
+                        // Combined SHIPPING/BILLING display
+                        const otherNames = [];
+                        if (order && order.billing && order.billing.cardholder) otherNames.push(order.billing.cardholder);
+                        if (order && order.clientName) otherNames.push(order.clientName);
+                        if (Array.isArray(order.members)) otherNames.push(...order.members.map(m => m.name));
+                        if (order && order.registeredAgent && order.registeredAgent.name) otherNames.push(order.registeredAgent.name);
+                        if (adyenName) otherNames.push(adyenName);
+                        const match = otherNames.some(n => namesSharePart(residentNames.shipping, n));
+                        const kIcon = verdictIcon(match, 'Shipping/Billing resident name aligns with cardholder/client/member');
+                        kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">SHIPPING/BILLING:</span><span class="trial-value">${escapeHtml(residentNames.shipping)} ${kIcon}</span></div>`);
+                        
+                        // Combined CMRA status
+                        const shippingCmra = getCmraStatus('Shipping');
+                        const billingCmra = getCmraStatus('Billing');
+                        const combinedCmra = shippingCmra || billingCmra;
+                        
+                        // Use KOUNT CMRA data (not USPS)
+                        cmraText = combinedCmra ? 'YES' : 'NO';
+                        cmraIcon = combinedCmra 
+                            ? '<span class="db-adyen-warning" title="KOUNT CMRA Detected">⚠️</span>'
+                            : '<span class="db-adyen-check" title="KOUNT: Not CMRA">✔</span>';
+                        
+                        kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">KOUNT CMRA:</span><span class="trial-value">${cmraText} ${cmraIcon}</span></div>`);
+                        if (combinedCmra) red.push('<span class="copilot-tag copilot-tag-purple">KOUNT CMRA YES</span>');
+                    } else {
+                        // Separate SHIPPING and BILLING display
+                        if (residentNames.shipping) {
+                            const otherNames = [];
+                            if (order && order.billing && order.billing.cardholder) otherNames.push(order.billing.cardholder);
+                            if (order && order.clientName) otherNames.push(order.clientName);
+                            if (Array.isArray(order.members)) otherNames.push(...order.members.map(m => m.name));
+                            if (order && order.registeredAgent && order.registeredAgent.name) otherNames.push(order.registeredAgent.name);
+                            if (adyenName) otherNames.push(adyenName);
+                            const match = otherNames.some(n => namesSharePart(residentNames.shipping, n));
+                            const kIcon = verdictIcon(match, 'Shipping resident name aligns with cardholder/client/member');
+                            kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">SHIPPING:</span><span class="trial-value">${escapeHtml(residentNames.shipping)} ${kIcon}</span></div>`);
+                            
+                            // Shipping CMRA
+                            const shippingCmra = getCmraStatus('Shipping');
+                            
+                            // Use KOUNT CMRA data (not USPS)
+                            cmraText = shippingCmra ? 'YES' : 'NO';
+                            cmraIcon = shippingCmra 
+                                ? '<span class="db-adyen-warning" title="KOUNT CMRA Detected">⚠️</span>'
+                                : '<span class="db-adyen-check" title="KOUNT: Not CMRA">✔</span>';
+                            
+                            kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">KOUNT CMRA:</span><span class="trial-value">${cmraText} ${cmraIcon}</span></div>`);
+                            if (shippingCmra) red.push('<span class="copilot-tag copilot-tag-purple">KOUNT CMRA YES</span>');
+                        } else {
+                            kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">SHIPPING:</span><span class="trial-value">NOT PROVIDED</span></div>`);
+                        }
+                        
+                        if (residentNames.billing) {
+                            const otherNames = [];
+                            if (order && order.billing && order.billing.cardholder) otherNames.push(order.billing.cardholder);
+                            if (order && order.clientName) otherNames.push(order.clientName);
+                            if (Array.isArray(order.members)) otherNames.push(...order.members.map(m => m.name));
+                            if (order && order.registeredAgent && order.registeredAgent.name) otherNames.push(order.registeredAgent.name);
+                            if (adyenName) otherNames.push(adyenName);
+                            const match = otherNames.some(n => namesSharePart(residentNames.billing, n));
+                            const kIcon = verdictIcon(match, 'Billing resident name aligns with cardholder/client/member');
+                            kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">BILLING:</span><span class="trial-value">${escapeHtml(residentNames.billing)} ${kIcon}</span></div>`);
+                            
+                            // Billing CMRA
+                            const billingCmra = getCmraStatus('Billing');
+                            
+                            // Use KOUNT CMRA data (not USPS)
+                            cmraText = billingCmra ? 'YES' : 'NO';
+                            cmraIcon = billingCmra 
+                                ? '<span class="db-adyen-warning" title="KOUNT CMRA Detected">⚠️</span>'
+                                : '<span class="db-adyen-check" title="KOUNT: Not CMRA">✔</span>';
+                            
+                            kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">KOUNT CMRA:</span><span class="trial-value">${cmraText} ${cmraIcon}</span></div>`);
+                            if (billingCmra) red.push('<span class="copilot-tag copilot-tag-purple">KOUNT CMRA YES</span>');
+                        } else {
+                            kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">BILLING:</span><span class="trial-value">NOT PROVIDED</span></div>`);
+                        }
+                    }
+                    
+                    // Add Match to Name status if available
+                    const getMatchToNameStatus = (addressType) => {
+                        let matchStatus = '';
+                        
+                        // Priority: Use the new structured data
+                        if (addressType === 'Billing' && ekata.billingInfo && ekata.billingInfo.matchToName) {
+                            matchStatus = ekata.billingInfo.matchToName.trim();
+                        } else if (addressType === 'Shipping' && ekata.shippingInfo && ekata.shippingInfo.matchToName) {
+                            matchStatus = ekata.shippingInfo.matchToName.trim();
+                        }
+                        
+                        // Fallback: Try to parse from residentDetails JSON
+                        if (!matchStatus && ekata.residentDetails) {
+                            try {
+                                const details = typeof ekata.residentDetails === 'string' 
+                                    ? JSON.parse(ekata.residentDetails) 
+                                    : ekata.residentDetails;
+                                
+                                if (addressType === 'Billing' && details.billing && details.billing.matchToName) {
+                                    matchStatus = details.billing.matchToName.trim();
+                                } else if (addressType === 'Shipping' && details.shipping && details.shipping.matchToName) {
+                                    matchStatus = details.shipping.matchToName.trim();
+                                }
+                            } catch (e) {
+                            }
+                        }
+                        
+                        return matchStatus;
+                    };
+                    
+                    // Removed MATCH TO NAME line under ADDRESS per request
+                    
+                    // Add separation before EMAIL section
+                    kountLines.push('<div class="trial-line trial-sep"></div>');
+                    kountLines.push('<div class="trial-line trial-center"><b>EMAIL</b></div>');
+                    
+                    // Build per-address EMAIL lines with BILLING/SHIPPING labels
+                    const normalizeFirstSeen = (val) => {
+                        if (val === undefined || val === null || val === '') return '';
+                        const n = parseInt(String(val).match(/\d+/)?.[0] || '0', 10);
+                        return n === 0 ? 'NEW' : `${n} days`;
+                    };
+                    
+                    const emailEntries = [];
+                    const eBilling = ekata.email && ekata.email.billing ? ekata.email.billing : {};
+                    const eShipping = ekata.email && ekata.email.shipping ? ekata.email.shipping : {};
+                    
+                    if (eBilling.registeredOwnerName || eBilling.emailFirstSeenDays || typeof eBilling.isValid === 'boolean') {
+                        emailEntries.push({ 
+                            tag: 'BILLING', 
+                            owner: (eBilling.registeredOwnerName || '').trim(), 
+                            firstSeen: normalizeFirstSeen(eBilling.emailFirstSeenDays),
+                            isValid: eBilling.isValid
+                        });
+                    }
+                    if (eShipping.registeredOwnerName || eShipping.emailFirstSeenDays || typeof eShipping.isValid === 'boolean') {
+                        emailEntries.push({ 
+                            tag: 'SHIPPING', 
+                            owner: (eShipping.registeredOwnerName || '').trim(), 
+                            firstSeen: normalizeFirstSeen(eShipping.emailFirstSeenDays),
+                            isValid: eShipping.isValid
+                        });
+                    }
+                    
+                    // Fallback when structured email missing
+                    let emailOwner = ekata.emailOwner;
+                    if (emailEntries.length === 0 && !emailOwner) {
+                        const allText = JSON.stringify(ekata);
+                        let ownerMatch = allText.match(/Registered Owner Name[\s:]+([^\s]+(?:[\s]+[^\s]+)*?)(?=\s+Is Commercial|\s+Is Forwarder|\s+Type:|$)/i);
+                        if (!ownerMatch) {
+                            ownerMatch = allText.match(/Registered Owner Name[\s:]+([^\s]+(?:[\s]+[^\s]+)*)/i);
+                        }
+                        if (!ownerMatch) {
+                            ownerMatch = allText.match(/Email Owner[\s:]+([^\s]+(?:[\s]+[^\s]+)*?)(?=\s+Is Commercial|\s+Is Forwarder|\s+Type:|$)/i);
+                        }
+                        if (!ownerMatch) {
+                            ownerMatch = allText.match(/Email Owner[\s:]+([^\s]+(?:[\s]+[^\s]+)*)/i);
+                        }
+                        if (!ownerMatch) {
+                            const allOwnerMatches = allText.match(/Registered Owner Name[\s:]+([^\s]+(?:[\s]+[^\s]+)*?)(?=\s+Is Commercial|\s+Is Forwarder|\s+Type:|$)/gi);
+                            if (allOwnerMatches && allOwnerMatches.length > 0) {
+                                const firstMatch = allOwnerMatches[0];
+                                const nameMatch = firstMatch.match(/Registered Owner Name[\s:]+([^\s]+(?:[\s]+[^\s]+)*?)(?=\s+Is Commercial|\s+Is Forwarder|\s+Type:|$)/i);
+                                if (nameMatch) {
+                                    ownerMatch = nameMatch;
+                                }
+                            }
+                        }
+                        if (ownerMatch) emailOwner = ownerMatch[1].trim();
+                        
+                        if (!emailOwner) {
+                            if (ekata.proxyDetails && typeof ekata.proxyDetails === 'string') {
+                                const proxyText = ekata.proxyDetails;
+                                const ownerMatch = proxyText.match(/Registered Owner Name[\s:]+([^\s]+\s+[^\s]+(?:[\s]+[^\s]+)?)/i);
+                                if (ownerMatch) emailOwner = ownerMatch[1].trim();
+                            }
+                        }
+                        
+                        if (!emailOwner) {
+                            const allText = JSON.stringify(ekata);
+                            const ownerMatch = allText.match(/Registered Owner Name[\s:]+([^\s]+\s+[^\s]+(?:[\s]+[^\s]+)?)/i);
+                            if (ownerMatch) emailOwner = ownerMatch[1].trim();
+                        }
+                    }
+                    if (emailEntries.length === 0 && emailOwner) {
+                        emailEntries.push({ tag: 'EMAIL', owner: emailOwner, firstSeen: '', isValid: undefined });
+                    }
+
+                    // Render per-address EMAIL lines with separate rows for each field
+                    const renderEmailSection = ({ tag, owner, firstSeen, isValid }) => {
+                        const lines = [];
+                        const otherNames = [];
+                        if (order && order.billing && order.billing.cardholder) otherNames.push(order.billing.cardholder);
+                        if (order && order.clientName) otherNames.push(order.clientName);
+                        if (Array.isArray(order.members)) otherNames.push(...order.members.map(m => m.name));
+                        if (order && order.registeredAgent && order.registeredAgent.name) otherNames.push(order.registeredAgent.name);
+                        if (adyenName) otherNames.push(adyenName);
+                        
+                        // Owner row
+                        if (owner) {
+                            const match = otherNames.some(n => namesSharePart(owner, n));
+                            const icon = verdictIcon(match, 'Email owner aligns with cardholder/client/member');
+                            lines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">${tag}:</span><span class="trial-value">${escapeHtml(owner)} ${icon}</span></div>`);
+                        }
+                        
+                        // First Seen row
+                        if (firstSeen) {
+                            const num = /\d+/.test(firstSeen) ? parseInt(firstSeen, 10) : 0;
+                            const ok = num > 1;
+                            const icon = verdictIcon(ok, 'Email age > 1 day');
+                            lines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">1ST SEEN:</span><span class="trial-value">${escapeHtml(firstSeen)} ${icon}</span></div>`);
+                        }
+                        
+                        // Valid row
+                        if (typeof isValid === 'boolean') {
+                            const validText = isValid ? 'VALID' : 'INVALID';
+                            const icon = verdictIcon(isValid, 'Email address valid');
+                            lines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">VALID:</span><span class="trial-value">${validText} ${icon}</span></div>`);
+                        }
+                        
+                        return lines;
+                    };
+                    
+                    // Render each email section
+                    emailEntries.forEach(entry => {
+                        const lines = renderEmailSection(entry);
+                        lines.forEach(line => kountLines.push(line));
+                    });
+                    
+                    // Add separation before IP section
+                    kountLines.push('<div class="trial-line trial-sep"></div>');
+                    kountLines.push('<div class="trial-line trial-center"><b>IP</b></div>');
+                    
+                    // PROXY RISK (prefer structured ipInfo)
+                    let isProxy = (ekata.ipInfo && typeof ekata.ipInfo.proxyRisk !== 'undefined') ? ekata.ipInfo.proxyRisk : ekata.proxyRisk;
+                    if (typeof isProxy !== 'boolean') {
+                        const allText = JSON.stringify(ekata);
+                        const proxyMatch = allText.match(/Proxy Risk[\\s:]+(\\w+)/i);
+                        if (proxyMatch) isProxy = /^(yes|true|1)$/i.test(proxyMatch[1]);
+                    }
+                    if (typeof isProxy === 'boolean') {
+                        const proxyText = isProxy ? 'YES' : 'NO';
+                        const ok = !isProxy;
+                    kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">PROXY:</span><span class="trial-value">${proxyText} ${verdictIcon(ok, 'No proxy/VPN detected')}</span></div>`);
+                        if (isProxy) red.push('<span class="copilot-tag copilot-tag-purple">PROXY YES</span>');
+                    }
+                    
+                    // VALID (prefer structured ipInfo)
+                    let ipValid = (ekata.ipInfo && typeof ekata.ipInfo.isValid !== 'undefined') ? ekata.ipInfo.isValid : ekata.ipValid;
+                    if (typeof ipValid !== 'boolean') {
+                        const allText = JSON.stringify(ekata);
+                        const validMatch = allText.match(/Is Valid[\\s:]+(\\w+)/i);
+                        if (validMatch) ipValid = /^(yes|true|1)$/i.test(validMatch[1]);
+                    }
+                    if (typeof ipValid === 'boolean') {
+                        const validText = ipValid ? 'VALID' : 'INVALID';
+                        const ok = ipValid;
+                        kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">VALID:</span><span class="trial-value">${validText} ${verdictIcon(ok, 'IP address valid')}</span></div>`);
+                        if (!ipValid) red.push('<span class="copilot-tag copilot-tag-purple">IP INVALID</span>');
+                    }
+                    
+                    // LOCATION line - Subdivision/State, Country (prefer structured ipInfo)
+                    let location = '';
+                    const stateFromIp = ekata.ipInfo && (ekata.ipInfo.subdivision || ekata.ipInfo.state);
+                    const countryFromIp = ekata.ipInfo && ekata.ipInfo.country;
+                    if (stateFromIp || countryFromIp) {
+                        location = [stateFromIp, countryFromIp].filter(Boolean).join(', ');
+                    } else if (ekata.state || ekata.country) {
+                        location = [ekata.state, ekata.country].filter(Boolean).join(', ');
+                    } else {
+                        const state = extractFromDetails(ekata, 'Subdivision') || extractFromDetails(ekata, 'State');
+                        const country = extractFromDetails(ekata, 'Country');
+                        if (state || country) location = [state, country].filter(Boolean).join(', ');
+                    }
+                    if (location) {
+                        // Convert country names to standard abbreviations
+                        const countryAbbreviations = {
+                            'united states': 'US',
+                            'united states of america': 'US',
+                            'usa': 'US',
+                            'canada': 'CA',
+                            'mexico': 'MX',
+                            'united kingdom': 'UK',
+                            'united kingdom of great britain and northern ireland': 'UK',
+                            'great britain': 'UK',
+                            'germany': 'DE',
+                            'france': 'FR',
+                            'spain': 'ES',
+                            'italy': 'IT',
+                            'japan': 'JP',
+                            'china': 'CN',
+                            'australia': 'AU',
+                            'brazil': 'BR',
+                            'india': 'IN'
+                        };
+                        
+                        let formattedLocation = location;
+                        // Sort by length (longest first) to avoid partial matches
+                        const sortedAbbreviations = Object.entries(countryAbbreviations)
+                            .sort((a, b) => b[0].length - a[0].length);
+                        
+                        sortedAbbreviations.forEach(([fullName, abbr]) => {
+                            const regex = new RegExp(`\\b${fullName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+                            formattedLocation = formattedLocation.replace(regex, abbr);
+                        });
+                        
+                        kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">LOCATION:</span><span class="trial-value">${escapeHtml(formattedLocation)}</span></div>`);
+                    }
+                    
+                    // Add separation before PHONE section
+                    kountLines.push('<div class="trial-line trial-sep"></div>');
+                    kountLines.push('<div class="trial-line trial-center"><b>PHONE</b></div>');
+                    
+                    // VALID line - extract phone validation
+                    let phoneValid = ekata.phoneValid;
+                    if (phoneValid === undefined || phoneValid === null) {
+                        const validText = extractFromDetails(ekata, 'Phone.*Is Valid') ||
+                                        extractFromDetails(ekata, 'Is Valid.*true');
+                        phoneValid = validText ? true : false;
+                    }
+                    if (typeof phoneValid === 'boolean') {
+                        const validText = phoneValid ? 'VALID' : 'INVALID';
+                        const ok = phoneValid; // Valid phone is good
+                    kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">VALID:</span><span class="trial-value">${validText} ${verdictIcon(ok, 'Phone number valid')}</span></div>`);
+                        if (!phoneValid) red.push('<span class="copilot-tag copilot-tag-purple">PHONE INVALID</span>');
+                    }
+                    
+                    // LOCATION line - extract phone location from Carrier
+                    let phoneLocation = ekata.phoneLocation;
+                    if (!phoneLocation) {
+                        const allText = JSON.stringify(ekata);
+                        
+                        
+                        // Try multiple patterns for phone carrier
+                        let carrierMatch = allText.match(/Carrier[\\s:]+([^\\s]+(?:\\s+[^\\s]+)*)/i);
+                        if (!carrierMatch) {
+                            carrierMatch = allText.match(/Phone.*Carrier[\\s:]+([^\\s]+(?:\\s+[^\\s]+)*)/i);
+                        }
+                        if (!carrierMatch) {
+                            carrierMatch = allText.match(/Line Type[\\s:]+([^\\s]+(?:\\s+[^\\s]+)*)/i);
+                        }
+                        if (carrierMatch) {
+                            phoneLocation = carrierMatch[1].trim();
+                        }
+                        
+                        // If still no phone location, try to extract from the actual data structure
+                        if (!phoneLocation) {
+                            // The data might be nested in proxyDetails or other fields
+                            if (ekata.proxyDetails && typeof ekata.proxyDetails === 'string') {
+                                const proxyText = ekata.proxyDetails;
+                                const carrierMatch = proxyText.match(/Carrier[\\s:]+([^\\s]+(?:\\s+[^\\s]+)*)/i);
+                                if (carrierMatch) {
+                                    phoneLocation = carrierMatch[1].trim();
+                                }
+                            }
+                        }
+                        
+                        // If still no phone location, try to extract from the raw JSON string
+                        if (!phoneLocation) {
+                            const allText = JSON.stringify(ekata);
+                            const carrierMatch = allText.match(/Carrier[\\s:]+([^\\s]+(?:\\s+[^\\s]+)*)/i);
+                            if (carrierMatch) {
+                                phoneLocation = carrierMatch[1].trim();
+                            }
+                        }
+                    }
+                    if (phoneLocation) {
+                        kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">LOCATION:</span><span class="trial-value">${escapeHtml(phoneLocation)}</span></div>`);
+                    }
+                    
+                    // OWNER line - extract phone owner from Subscriber Name
+                    let phoneOwner = ekata.phoneOwner;
+                    if (!phoneOwner) {
+                        const allText = JSON.stringify(ekata);
+                        
+                        
+                        // Try multiple patterns for phone owner
+                        let ownerMatch = allText.match(/Subscriber Name[\\s:]+([^\\s]+\\s+[^\\s]+\\s+[^\\s]+)/i);
+                        if (!ownerMatch) {
+                            ownerMatch = allText.match(/Subscriber Name[\\s:]+([^\\s]+\\s+[^\\s]+)/i);
+                        }
+                        if (!ownerMatch) {
+                            ownerMatch = allText.match(/Phone Owner[\\s:]+([^\\s]+\\s+[^\\s]+\\s+[^\\s]+)/i);
+                        }
+                        if (!ownerMatch) {
+                            // Try a more flexible approach for phone owner
+                            const allOwnerMatches = allText.match(/Subscriber Name[\\s:]+([^\\s]+\\s+[^\\s]+(?:\\s+[^\\s]+)?)/gi);
+                            if (allOwnerMatches && allOwnerMatches.length > 0) {
+                                const firstMatch = allOwnerMatches[0];
+                                const nameMatch = firstMatch.match(/Subscriber Name[\\s:]+([^\\s]+\\s+[^\\s]+(?:\\s+[^\\s]+)?)/i);
+                                if (nameMatch) {
+                                    ownerMatch = nameMatch;
+                                }
+                            }
+                        }
+                        if (ownerMatch) {
+                            phoneOwner = ownerMatch[1].trim();
+                        }
+                        
+                        // If still no phone owner, try to extract from the actual data structure
+                        if (!phoneOwner) {
+                            // The data might be nested in proxyDetails or other fields
+                            if (ekata.proxyDetails && typeof ekata.proxyDetails === 'string') {
+                                const proxyText = ekata.proxyDetails;
+                                const ownerMatch = proxyText.match(/Subscriber Name[\\s:]+([^\\s]+\\s+[^\\s]+(?:\\s+[^\\s]+)?)/i);
+                                if (ownerMatch) {
+                                    phoneOwner = ownerMatch[1].trim();
+                                }
+                            }
+                        }
+                        
+                        // If still no phone owner, try to extract from the raw JSON string
+                        if (!phoneOwner) {
+                            const allText = JSON.stringify(ekata);
+                            const ownerMatch = allText.match(/Subscriber Name[\\s:]+([^\\s]+\\s+[^\\s]+(?:\\s+[^\\s]+)?)/i);
+                            if (ownerMatch) {
+                                phoneOwner = ownerMatch[1].trim();
+                            }
+                        }
+                    }
+                    if (phoneOwner) {
+                        const otherNames = [];
+                        if (order && order.billing && order.billing.cardholder) otherNames.push(order.billing.cardholder);
+                        if (order && order.clientName) otherNames.push(order.clientName);
+                        if (Array.isArray(order.members)) otherNames.push(...order.members.map(m => m.name));
+                        if (order && order.registeredAgent && order.registeredAgent.name) otherNames.push(order.registeredAgent.name);
+                        if (adyenName) otherNames.push(adyenName);
+                        const match = otherNames.some(n => namesSharePart(phoneOwner, n));
+                        const kIcon = `<span class="${match ? 'db-adyen-check' : 'db-adyen-cross'}">${match ? '✔' : '✖'}</span>`;
+                        kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">OWNER:</span><span class="trial-value">${escapeHtml(phoneOwner)} ${kIcon}</span></div>`);
+                    }
+                    
                 }
-                if (kount.ekata && kount.ekata.proxyRisk) {
-                    const ok = /^no$/i.test(kount.ekata.proxyRisk);
-                    kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">PROXY:</span><span class="trial-value">${escapeHtml(kount.ekata.proxyRisk)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></span></div>`);
-                    if (!ok) red.push('<span class="copilot-tag copilot-tag-purple">PROXY YES</span>');
-                }
+                
+                // Display legacy KOUNT data (like old KOUNT)
                 if (kount.emailAge) {
                     const num = parseInt(String(kount.emailAge).replace(/\D+/g, ''), 10) || 0;
                     const ok = num > 1;
-                    kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">EMAIL AGE:</span><span class="trial-value">${escapeHtml(kount.emailAge)} <span class="${ok ? 'db-adyen-check' : 'db-adyen-cross'}">${ok ? '✔' : '✖'}</span></span></div>`);
-                    kountLines.push('<div class="trial-line trial-sep"></div>');
+                    kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">EMAIL AGE:</span><span class="trial-value">${escapeHtml(kount.emailAge)} ${verdictIcon(ok, 'Email age > 1 day')}</span></div>`);
                 }
                 if (Array.isArray(kount.declines)) {
                     const count = kount.declines.length;
-                    kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">DECLINE:</span><span class="trial-value">${count} <span class="${count === 0 ? 'db-adyen-check' : 'db-adyen-cross'}">${count === 0 ? '✔' : '✖'}</span></span></div>`);
+                    kountLines.push(`<div class="trial-line trial-two-col"><span class="trial-tag">DECLINE:</span><span class="trial-value">${count} ${verdictIcon(count === 0, 'No linked orders with declines')}</span></div>`);
                 }
 
                 if (kount.linked) {
@@ -1337,10 +2116,18 @@ function namesMatch(a, b) {
         }
 
         function endFraudSession() {
-            console.log('[FENNEC (POO)] Ending fraud session - closing all XRAY flow tabs and clearing storage');
             
             // Clear sidebar and local storage
             clearSidebar(false);
+			
+			// Also remove the sidebar UI and restore page layout so DB page is clean
+			const sidebarEl = document.getElementById('copilot-sidebar');
+			if (sidebarEl) {
+				sidebarEl.remove();
+				document.body.style.marginRight = '';
+				const padStyle = document.getElementById('copilot-db-padding');
+				if (padStyle) padStyle.remove();
+			}
             
             // Get the current fraud review session to identify which tabs to close
             chrome.storage.local.get({ fraudReviewSession: null }, ({ fraudReviewSession }) => {
@@ -1383,40 +2170,36 @@ function namesMatch(a, b) {
                 // Close all tabs opened during the XRAY flow using tracked tab IDs
                 chrome.storage.local.get({ xrayOpenedTabs: [], fraudReviewSession: null }, ({ xrayOpenedTabs, fraudReviewSession }) => {
                     if (xrayOpenedTabs && xrayOpenedTabs.length > 0) {
-                        console.log('[FENNEC (POO)] Closing tracked XRAY flow tabs:', xrayOpenedTabs.length, 'tabs');
                         
                         // Use background controller to close tracked tabs
                         bg.send('closeTabsByIds', { tabIds: xrayOpenedTabs }, (response) => {
                             if (response && response.success) {
-                                console.log('[FENNEC (POO)] Successfully closed tracked XRAY flow tabs');
                             } else {
-                                console.log('[FENNEC (POO)] Failed to close tracked tabs, trying fallback');
                                 closeTabsByUrlPatterns();
                             }
                         });
                     } else {
-                        console.log('[FENNEC (POO)] No tracked XRAY tabs found - using URL pattern fallback');
                         closeTabsByUrlPatterns();
                     }
                 });
                 
                 function closeTabsByUrlPatterns() {
                     // Use background controller to close tabs by URL patterns
-                    const urlPatterns = [
-                        'db.incfile.com/incfile/order/detail/',
-                        'db.incfile.com/order-tracker/orders/order-search',
-                        'awc.kount.net/workflow/',
-                        'ca-live.adyen.com'
-                    ];
+					const urlPatterns = [
+						'db.incfile.com/incfile/order/detail/',
+						'db.incfile.com/order-tracker/orders/order-search',
+						'awc.kount.net/workflow/',
+						'app.kount.com',
+						'/event-analysis/order/',
+						'ca-live.adyen.com'
+					];
                     
                     bg.send('closeTabsByUrlPatterns', { 
                         patterns: urlPatterns,
                         fraudReviewSession: fraudReviewSession 
                     }, (response) => {
                         if (response && response.success) {
-                            console.log('[FENNEC (POO)] Successfully closed XRAY flow tabs by URL patterns');
                         } else {
-                            console.log('[FENNEC (POO)] Failed to close tabs by URL patterns, trying title-based matching');
                             closeTabsByTitles();
                         }
                     });
@@ -1424,15 +2207,13 @@ function namesMatch(a, b) {
                 
                 function closeTabsByTitles() {
                     // Use background controller to close tabs by titles
-                    const titlePatterns = ['[DB]', '[KOUNT]', '[EKATA]', '[ADYEN]', 'Order Search'];
+					const titlePatterns = ['[DB]', '[KOUNT]', '[KOUNT 360]', '[EKATA]', '[ADYEN]', 'Order Search'];
                     
                     bg.send('closeTabsByTitles', { 
                         patterns: titlePatterns 
                     }, (response) => {
                         if (response && response.success) {
-                            console.log('[FENNEC (POO)] Successfully closed XRAY flow tabs by titles');
                         } else {
-                            console.log('[FENNEC (POO)] Failed to close tabs by titles');
                         }
                     });
                 }
@@ -1445,6 +2226,11 @@ function namesMatch(a, b) {
                 chrome.storage.local.set({ fennecReturnTab: null }, () => {
                     bg.refocusTab();
                 });
+				
+				// Ensure the Fraud Review page shows a brand new start
+				setTimeout(() => {
+					try { location.reload(); } catch (e) { /* noop */ }
+				}, 100);
             });
         }
 
@@ -1459,6 +2245,12 @@ function namesMatch(a, b) {
             if (kount) kount.innerHTML = '';
             if (issueSection) hideIssueBox();
             if (fraud) insertFraudSummary();
+            
+            // Clean up any existing TRIAL FLOATER
+                if (trialFloater.exists()) {
+                trialFloater.element.remove();
+                if (trialFloater.header) trialFloater.header.remove();
+            }
         }
 
         injectSidebar();
@@ -1467,6 +2259,11 @@ function namesMatch(a, b) {
             if (!sessionStorage.getItem('fennecShowTrialFloater')) {
                 chrome.storage.local.set({ sidebarDb: [], sidebarOrderId: null, sidebarOrderInfo: null, adyenDnaInfo: null, kountInfo: null, sidebarFreezeId: null });
                 showInitialStatus();
+                // Clean up any existing TRIAL FLOATER that shouldn't be there
+                if (trialFloater.exists()) {
+                    trialFloater.element.remove();
+                    if (trialFloater.header) trialFloater.header.remove();
+                }
             } else {
                 loadDbSummary();
                 loadDnaSummary();
@@ -1521,11 +2318,8 @@ function namesMatch(a, b) {
                         if (sessionStorage.getItem('fennecShowTrialFloater') || trialFloater.exists()) {
                             showTrialFloater(60, true);
                         }
-                    } else {
-                        if (sessionStorage.getItem('fennecShowTrialFloater') || trialFloater.exists()) {
-                            showTrialFloater(60, true);
                         }
-                    }
+                    // Removed the else clause that was causing TRIAL FLOATER to show when it shouldn't
                 });
             }
         });

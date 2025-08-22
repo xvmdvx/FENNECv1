@@ -30,7 +30,6 @@ async function clickAndWait(page, selector) {
     const company = process.env.TX_COMPANY || "My Company LLC";
     const organizer = "LOVETTE DOBSON";
 
-    console.log("[PUPPETEER] Starting TX SOS automation");
     await page.goto("https://direct.sos.state.tx.us/acct/acct-login.asp");
     await waitAndType(page, "input[name='client_id']", user);
     await waitAndType(page, "input[name='web_password']", pass);
@@ -87,7 +86,6 @@ async function clickAndWait(page, selector) {
     await waitAndType(page, "input[name=':Ssignature_name']", organizer);
     await clickAndWait(page, "input[name='submit'][value='Continue']");
 
-    console.log("[PUPPETEER] Review and verify the information");
 
     await browser.close();
 })();

@@ -28,6 +28,12 @@
             const sb = new Sidebar();
             sb.build(buildStandardizedReviewModeSidebar(reviewMode, false));
             sb.attach();
+            
+            // Setup INT STORAGE click handler
+            const orderId = sessionStorage.getItem('fennec_order');
+            if (orderId) {
+                setupIntStorageClickHandler(orderId);
+            }
             chrome.storage.sync.get({
                 sidebarFontSize: 13,
                 sidebarFont: "'Inter', sans-serif",

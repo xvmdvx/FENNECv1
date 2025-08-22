@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1] - 2024-12-19 - FENNEC (MVP) Release
+### Added
+- Renamed application to FENNEC (MVP) for production release
+- Cleaned up backup files and unnecessary temporary files
+- Updated version numbers across all configuration files
+
+### Changed
+- Updated manifest.json name and description
+- Updated package.json with new version and description
+- Updated README.md with new application name
+
 ## Unreleased
 - Start of new changelog. Latest updates have been incorporated into the README.
 - Fixed email order count in Fraud Review XRAY to read from the active email

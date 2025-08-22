@@ -1,6 +1,6 @@
 # Directorio core
 
-Este directorio agrupa los componentes reutilizables de FENNEC (POO).
+Este directorio agrupa los componentes reutilizables de FENNEC (MVP).
 
 - **background_controller.js** – Controlador base del service worker, enruta mensajes y acciones.
 - **background_email_search.js** – Service worker principal. Maneja pestañas, mensajes y reglas CORS para la integración con Mistral.

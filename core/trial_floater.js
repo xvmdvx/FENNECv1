@@ -1,7 +1,8 @@
 // Floater used for the Fraud Review summary overlay.
 class TrialFloater extends Floater {
     constructor() {
-        super('fennec-trial-overlay', 'fennec-trial-title', 'FRAUD REVIEW');
+        // Do not create or attach a header for the Trial Floater
+        super('fennec-trial-overlay', null, '');
     }
 
     adjustHeader() {

@@ -8,7 +8,7 @@ class AdyenLauncher extends Launcher {
     // Check if extension is enabled and get review mode status
     chrome.storage.local.get({ extensionEnabled: true, fennecReviewMode: false, fennecActiveSession: null, fraudReviewSession: null }, ({ extensionEnabled, fennecReviewMode, fennecActiveSession, fraudReviewSession }) => {
         if (!extensionEnabled) {
-            console.log('[FENNEC (POO)] Extension disabled, skipping Adyen launcher.');
+            console.log('[FENNEC (MVP)] Extension disabled, skipping Adyen launcher.');
             return;
         }
 
@@ -25,7 +25,7 @@ class AdyenLauncher extends Launcher {
         // Always tag ADYEN tabs when in review mode, regardless of how they were opened
         const shouldTag = fennecReviewMode;
         
-        console.log('[FENNEC (POO)] ADYEN flow detection:', { 
+        console.log('[FENNEC (MVP)] ADYEN flow detection:', { 
             orderParam, 
             fraudReviewSession, 
             fennecReviewMode, 
@@ -38,14 +38,14 @@ class AdyenLauncher extends Launcher {
         
         // If not in review mode and not manually opened, don't initialize
         if (!fennecReviewMode && !isManualOpen) {
-            console.log('[FENNEC (POO)] Adyen opened outside review mode and not manually opened, skipping initialization.');
+            console.log('[FENNEC (MVP)] Adyen opened outside review mode and not manually opened, skipping initialization.');
             return;
         }
         
         // In REVIEW MODE, always inject sidebar for flow-triggered opens
         // Only skip sidebar injection for truly manual opens (no order param and no fraud session)
         if (isManualOpen && fennecReviewMode && !orderParam && !fraudReviewSession) {
-            console.log('[FENNEC (POO)] Adyen manually opened in review mode (no flow context), tab only (no sidebar).');
+            console.log('[FENNEC (MVP)] Adyen manually opened in review mode (no flow context), tab only (no sidebar).');
             // Still tag the tab even if manually opened in review mode
             if (shouldTag) {
                 const path = window.location.pathname;
@@ -61,7 +61,7 @@ class AdyenLauncher extends Launcher {
         // Additional check: if we have an order parameter but review mode is not set,
         // we should still proceed with the flow (this handles edge cases)
         if (orderParam && !fennecReviewMode) {
-            console.log('[FENNEC (POO)] ADYEN opened with order parameter but not in review mode, enabling review mode and proceeding with flow.');
+            console.log('[FENNEC (MVP)] ADYEN opened with order parameter but not in review mode, enabling review mode and proceeding with flow.');
             chrome.storage.local.set({ fennecReviewMode: true });
             chrome.storage.sync.set({ fennecReviewMode: true });
             fennecReviewMode = true;
@@ -73,13 +73,13 @@ class AdyenLauncher extends Launcher {
             const flowKey = `fennecAdyenFlowCompleted_${orderId}`;
             const wasCompleted = localStorage.getItem(flowKey);
             if (wasCompleted) {
-                console.log('[FENNEC (POO)] ADYEN: Clearing stale completion flag for order:', orderId);
+                console.log('[FENNEC (MVP)] ADYEN: Clearing stale completion flag for order:', orderId);
                 localStorage.removeItem(flowKey);
             }
         }
         
         // Additional debugging for flow detection
-        console.log('[FENNEC (POO)] ADYEN flow detection details:', {
+        console.log('[FENNEC (MVP)] ADYEN flow detection details:', {
             orderParam,
             fraudReviewSession,
             fennecReviewMode,
@@ -96,14 +96,14 @@ class AdyenLauncher extends Launcher {
             const orderId = orderParam || fraudReviewSession;
             const flowKey = `fennecAdyenFlowCompleted_${orderId}`;
             const isCompleted = localStorage.getItem(flowKey);
-            console.log('[FENNEC (POO)] ADYEN flow completion check:', {
+            console.log('[FENNEC (MVP)] ADYEN flow completion check:', {
                 orderId,
                 flowKey,
                 isCompleted,
                 willSkip: isCompleted ? 'YES' : 'NO'
             });
             if (isCompleted) {
-                console.log('[FENNEC (POO)] Adyen flow already completed, skipping initialization.');
+                console.log('[FENNEC (MVP)] Adyen flow already completed, skipping initialization.');
                 // Still tag the tab even if flow is completed
                 if (shouldTag) {
                     const path = window.location.pathname;
@@ -127,7 +127,7 @@ class AdyenLauncher extends Launcher {
         try {
             // Always tag ADYEN tabs when in review mode
             const path = window.location.pathname;
-            console.log('[FENNEC (POO)] ADYEN: Tab tagging check:', {
+            console.log('[FENNEC (MVP)] ADYEN: Tab tagging check:', {
                 fennecReviewMode,
                 path,
                 isDnaPage: path.includes('showOilSplashList.shtml'),
@@ -137,38 +137,38 @@ class AdyenLauncher extends Launcher {
             if (fennecReviewMode) {
                 if (path.includes('showOilSplashList.shtml')) {
                     document.title = '[ADYEN DNA] ' + document.title;
-                    console.log('[FENNEC (POO)] ADYEN: Tagged as ADYEN DNA');
+                    console.log('[FENNEC (MVP)] ADYEN: Tagged as ADYEN DNA');
                 } else {
                     document.title = '[ADYEN] ' + document.title;
-                    console.log('[FENNEC (POO)] ADYEN: Tagged as ADYEN');
+                    console.log('[FENNEC (MVP)] ADYEN: Tagged as ADYEN');
                 }
             } else {
-                console.log('[FENNEC (POO)] ADYEN: Not in review mode, skipping tab tagging');
+                console.log('[FENNEC (MVP)] ADYEN: Not in review mode, skipping tab tagging');
             }
             
             if (orderParam) {
                 sessionStorage.setItem('fennec_order', orderParam);
-                console.log('[FENNEC (POO)] ADYEN: Order parameter found and stored:', orderParam);
+                console.log('[FENNEC (MVP)] ADYEN: Order parameter found and stored:', orderParam);
             }
 
             // Fallback: if no order parameter but we have a fraud session, use that
             if (!orderParam && fraudReviewSession && fennecReviewMode) {
-                console.log('[FENNEC (POO)] ADYEN: No order parameter but fraud session found, using fraud session as order:', fraudReviewSession);
+                console.log('[FENNEC (MVP)] ADYEN: No order parameter but fraud session found, using fraud session as order:', fraudReviewSession);
                 sessionStorage.setItem('fennec_order', fraudReviewSession);
             }
             
             // Determine the order ID for the flow
             const order = orderParam || fraudReviewSession;
-            console.log('[FENNEC (POO)] ADYEN: Final order ID for flow:', order);
+            console.log('[FENNEC (MVP)] ADYEN: Final order ID for flow:', order);
             
             // Ensure we proceed with sidebar injection in REVIEW MODE
-            console.log('[FENNEC (POO)] ADYEN: Proceeding with sidebar injection in REVIEW MODE');
+            console.log('[FENNEC (MVP)] ADYEN: Proceeding with sidebar injection in REVIEW MODE');
 
             // Store order in session storage for consistency
             if (order) {
                 sessionStorage.setItem('fennec_order', order);
             }
-            console.log('[FENNEC (POO)] ADYEN: Order stored in session storage:', order);
+            console.log('[FENNEC (MVP)] ADYEN: Order stored in session storage:', order);
 
             function waitForElement(selector, timeout = 10000) {
                 return new Promise(resolve => {
@@ -190,32 +190,32 @@ class AdyenLauncher extends Launcher {
             }
 
             function fillAndSubmit() {
-                console.log('[FENNEC (POO)] ADYEN: Starting fillAndSubmit with order:', order);
+                console.log('[FENNEC (MVP)] ADYEN: Starting fillAndSubmit with order:', order);
                 waitForElement('.header-search__input, input[name="query"]').then(input => {
                     try {
                         if (!input) {
-                            console.log('[FENNEC (POO)] ADYEN: Search input not found');
+                            console.log('[FENNEC (MVP)] ADYEN: Search input not found');
                             return;
                         }
-                        console.log('[FENNEC (POO)] ADYEN: Found search input, filling with order:', order);
+                        console.log('[FENNEC (MVP)] ADYEN: Found search input, filling with order:', order);
                         input.focus();
                         input.value = order;
                         input.dispatchEvent(new Event('input', { bubbles: true }));
                         const payments = document.querySelector('input[type="radio"][value="payments"]');
                         if (payments) {
-                            console.log('[FENNEC (POO)] ADYEN: Found payments radio button, clicking');
+                            console.log('[FENNEC (MVP)] ADYEN: Found payments radio button, clicking');
                             payments.click();
                         }
                         waitForElement('button[type="submit"], input[type="submit"], button[aria-label*="search" i]').then(btn => {
                             if (btn) {
-                                console.log('[FENNEC (POO)] ADYEN: Found submit button, clicking');
+                                console.log('[FENNEC (MVP)] ADYEN: Found submit button, clicking');
                                 btn.click();
                             } else {
-                                console.log('[FENNEC (POO)] ADYEN: Submit button not found');
+                                console.log('[FENNEC (MVP)] ADYEN: Submit button not found');
                             }
                         });
                     } catch (err) {
-                        console.error('[FENNEC (POO) Adyen] Error filling form:', err);
+                        console.error('[FENNEC (MVP) Adyen] Error filling form:', err);
                     }
                 });
             }
@@ -227,7 +227,7 @@ class AdyenLauncher extends Launcher {
                             link.click();
                         }
                     } catch (err) {
-                        console.error('[FENNEC (POO) Adyen] Error opening result:', err);
+                        console.error('[FENNEC (MVP) Adyen] Error opening result:', err);
                     }
                 });
             }
@@ -580,7 +580,7 @@ class AdyenLauncher extends Launcher {
                 }
                 bg.send('checkLastIssue', { orderId }, (resp) => {
                     if (chrome.runtime.lastError) {
-                        console.warn('[FENNEC (POO)] Issue check failed:', chrome.runtime.lastError.message);
+                        console.warn('[FENNEC (MVP)] Issue check failed:', chrome.runtime.lastError.message);
                         fillIssueBox(null, orderId);
                         return;
                     }
@@ -604,7 +604,7 @@ class AdyenLauncher extends Launcher {
             }
 
             function clearSidebar() {
-                console.log('[FENNEC (POO) ADYEN SB] Clearing all storage and resetting sidebar to brand new state');
+                console.log('[FENNEC (MVP) ADYEN SB] Clearing all storage and resetting sidebar to brand new state');
                 
                 // Clear all session data
                 sessionSet({
@@ -652,7 +652,7 @@ class AdyenLauncher extends Launcher {
                     'sidebarSnapshot',
                     'fennecActiveSession'
                 ], () => {
-                    console.log('[FENNEC (POO) ADYEN SB] Cleared all storage data during sidebar clear');
+                    console.log('[FENNEC (MVP) ADYEN SB] Cleared all storage data during sidebar clear');
                 });
                 
                 // Clear any INT STORAGE data
@@ -661,20 +661,25 @@ class AdyenLauncher extends Launcher {
                 // Reset sidebar to initial state
                 showInitialStatus();
                 
-                console.log('[FENNEC (POO) ADYEN SB] Sidebar cleared and reset to brand new state');
+                console.log('[FENNEC (MVP) ADYEN SB] Sidebar cleared and reset to brand new state');
             }
 
             function injectSidebar() {
-                console.log('[FENNEC (POO)] ADYEN: Starting sidebar injection');
+                console.log('[FENNEC (MVP)] ADYEN: Starting sidebar injection');
                 if (document.getElementById('copilot-sidebar')) {
-                    console.log('[FENNEC (POO)] ADYEN: Sidebar already exists, skipping injection');
+                    console.log('[FENNEC (MVP)] ADYEN: Sidebar already exists, skipping injection');
                     return;
                 }
-                console.log('[FENNEC (POO)] ADYEN: Creating new sidebar');
+                console.log('[FENNEC (MVP)] ADYEN: Creating new sidebar');
                 const sbObj = new Sidebar();
                 
                 sbObj.build(buildStandardizedReviewModeSidebar(true, false));
                 sbObj.attach();
+                
+                // Setup INT STORAGE click handler
+                if (order) {
+                    setupIntStorageClickHandler(order);
+                }
                 const sidebar = sbObj.element;
                 chrome.storage.sync.get({
                     sidebarFontSize: 13,
@@ -754,20 +759,20 @@ class AdyenLauncher extends Launcher {
                     const section = document.getElementById('int-storage-section');
                     const box = document.getElementById('int-storage-box');
                     if (section) section.style.display = 'block';
-                    if (box) box.innerHTML = '<div style="text-align:center;color:#aaa">Loading...</div>';
+                    if (box) box.innerHTML = '<div style="text-align:center;color:#aaa">Loading<span class="loading-dots">...</span></div>';
                 };
                 setLoading();
-                console.log('[FENNEC (POO)] Requesting INT STORAGE for', orderId);
+                console.log('[FENNEC (MVP)] Requesting INT STORAGE for', orderId);
                 bg.send('fetchIntStorage', { orderId }, resp => {
                     const box = document.getElementById('int-storage-box');
                     if (!box) return;
                     const files = resp && Array.isArray(resp.files) ? resp.files : null;
                     if (!files) {
-                        console.warn('[FENNEC (POO)] INT STORAGE load failed', resp);
+                        console.warn('[FENNEC (MVP)] INT STORAGE load failed', resp);
                         box.innerHTML = '<div style="text-align:center;color:#aaa">Failed to load</div>';
                         return;
                     }
-                    console.log('[FENNEC (POO)] INT STORAGE loaded', files.length);
+                    console.log('[FENNEC (MVP)] INT STORAGE loaded', files.length);
                     const list = files.map((file, idx) => {
                         let shortName = file.name.length > 24 ? file.name.slice(0, 21) + '...' : file.name;
                         const nameDiv = `<div class="int-doc-name" title="${escapeHtml(file.name)}">${escapeHtml(shortName)}</div>`;
@@ -839,15 +844,26 @@ class AdyenLauncher extends Launcher {
                             sessionStorage.removeItem('fennec_order');
                         }
                     } catch (err) {
-                        console.error('[FENNEC (POO) Adyen] Error opening DNA:', err);
+                        console.error('[FENNEC (MVP) Adyen] Error opening DNA:', err);
                     }
                 });
             }
 
             function handleDnaPage() {
-                // Large DNA pages can take a while to render all stats,
-                // so allow a longer wait time before giving up.
-                waitForElement('.data-breakdown .item', 30000).then(() => {
+                // Stay on DNA until widgets are rendered and data is saved
+                const waitForDnaReady = (timeoutMs = 45000) => new Promise(resolve => {
+                    const start = Date.now();
+                    const tick = () => {
+                        const hasStats = document.querySelectorAll('.stats-bar-item').length > 0;
+                        const hasBreakdown = document.querySelector('.data-breakdown .item');
+                        if (hasStats && hasBreakdown) return resolve(true);
+                        if (Date.now() - start >= timeoutMs) return resolve(true); // proceed best-effort
+                        setTimeout(tick, 500);
+                    };
+                    tick();
+                });
+
+                waitForDnaReady().then(() => {
                     const stats = {};
                     document.querySelectorAll('.stats-bar-item').forEach(item => {
                         const label = item.querySelector('.stats-bar-item__label');
@@ -860,7 +876,7 @@ class AdyenLauncher extends Launcher {
                         };
                     });
 
-                    function extractNetworkTransactions() {
+                    const extractNetworkTransactions = () => {
                         const netHeading = Array.from(document.querySelectorAll('.adl-heading'))
                             .find(h => h.textContent.trim() === 'Network');
                         if (!netHeading || !netHeading.parentElement) return null;
@@ -880,31 +896,42 @@ class AdyenLauncher extends Launcher {
                             }
                         });
                         return data;
-                    }
+                    };
 
                     const networkTx = extractNetworkTransactions();
-                    saveData({ transactions: stats, networkTransactions: networkTx, updated: Date.now() });
-                    
-                    // Mark ADYEN flow as completed
-                    const order = sessionStorage.getItem('fennec_order');
-                    if (order) {
-                        const adyenFlowKey = `fennecAdyenFlowCompleted_${order}`;
-                        localStorage.setItem(adyenFlowKey, '1');
-                        console.log('[FENNEC (POO)] ADYEN flow completed for order:', order);
-                        
-                        // Check if KOUNT flow is also completed to mark overall XRAY as finished
-                        const kountFlowKey = `fennecKountFlowCompleted_${order}`;
-                        if (localStorage.getItem(kountFlowKey)) {
-                            // Both flows are complete, mark XRAY as finished
-                            localStorage.setItem('fraudXrayFinished', '1');
-                            sessionSet({ fraudXrayFinished: '1' });
-                            console.log('[FENNEC (POO)] Both ADYEN and KOUNT flows completed, marking XRAY as finished for order:', order);
+                    const stamp = Date.now();
+                    saveData({ transactions: stats, networkTransactions: networkTx, updated: stamp });
+
+                    // Wait for storage to reflect the updated stamp to ensure injection consumers can read it
+                    const confirmSaved = new Promise(resolve => {
+                        let tries = 0;
+                        const check = () => {
+                            chrome.storage.local.get({ adyenDnaInfo: null }, ({ adyenDnaInfo }) => {
+                                if (adyenDnaInfo && adyenDnaInfo.updated && adyenDnaInfo.updated >= stamp) return resolve(true);
+                                if (++tries >= 40) return resolve(true);
+                                setTimeout(check, 250);
+                            });
+                        };
+                        check();
+                    });
+
+                    confirmSaved.then(() => {
+                        const order = sessionStorage.getItem('fennec_order');
+                        if (order) {
+                            const adyenFlowKey = `fennecAdyenFlowCompleted_${order}`;
+                            localStorage.setItem(adyenFlowKey, '1');
+                            // Only refocus when both flows are completed
+                            const kountFlowKey = `fennecKountFlowCompleted_${order}`;
+                            const bothDone = !!localStorage.getItem(kountFlowKey);
+                            if (bothDone) {
+                                localStorage.setItem('fraudXrayFinished', '1');
+                                sessionSet({ fraudXrayFinished: '1' });
+                                sessionStorage.setItem('fennecShowTrialFloater', '1');
+                                chrome.storage.local.set({ fennecReturnTab: null }, () => {
+                                    bg.refocusTab();
+                                });
+                            }
                         }
-                    }
-                    
-                    // When both ADYEN and KOUNT flows are completed, refocus to FRAUD REVIEW tab
-                    chrome.storage.local.set({ fennecReturnTab: null }, () => {
-                        bg.refocusTab();
                     });
                 });
             }
@@ -919,7 +946,7 @@ class AdyenLauncher extends Launcher {
             }
             const isDnaPage = path.includes('showOilSplashList.shtml');
             const ready = document.readyState === 'loading' ? 'DOMContentLoaded' : null;
-            console.log('[FENNEC (POO)] ADYEN: Sidebar injection timing:', {
+            console.log('[FENNEC (MVP)] ADYEN: Sidebar injection timing:', {
                 ready,
                 documentReadyState: document.readyState,
                 willWaitForDOM: ready === 'DOMContentLoaded',
@@ -930,14 +957,14 @@ class AdyenLauncher extends Launcher {
             });
             
             if (ready) {
-                console.log('[FENNEC (POO)] ADYEN: Waiting for DOMContentLoaded to inject sidebar');
+                console.log('[FENNEC (MVP)] ADYEN: Waiting for DOMContentLoaded to inject sidebar');
                 document.addEventListener('DOMContentLoaded', injectSidebar);
             } else {
-                console.log('[FENNEC (POO)] ADYEN: DOM ready, injecting sidebar immediately');
+                console.log('[FENNEC (MVP)] ADYEN: DOM ready, injecting sidebar immediately');
                 injectSidebar();
             }
 
-            console.log('[FENNEC (POO)] ADYEN: Flow execution check:', {
+            console.log('[FENNEC (MVP)] ADYEN: Flow execution check:', {
                 order,
                 path: window.location.pathname,
                 ready,
@@ -948,21 +975,21 @@ class AdyenLauncher extends Launcher {
             });
             
             if (order && path.includes('/overview/default.shtml')) {
-                console.log('[FENNEC (POO)] ADYEN: Executing fillAndSubmit for overview page');
+                console.log('[FENNEC (MVP)] ADYEN: Executing fillAndSubmit for overview page');
                 if (ready) {
                     document.addEventListener('DOMContentLoaded', fillAndSubmit);
                 } else {
                     fillAndSubmit();
                 }
             } else if (order && path.includes('/payments/showList.shtml')) {
-                console.log('[FENNEC (POO)] ADYEN: Executing openMostRecent for payments page');
+                console.log('[FENNEC (MVP)] ADYEN: Executing openMostRecent for payments page');
                 if (ready) {
                     document.addEventListener('DOMContentLoaded', openMostRecent);
                 } else {
                     openMostRecent();
                 }
             } else if (path.includes('/accounts/showTx.shtml')) {
-                console.log('[FENNEC (POO)] ADYEN: Executing payment page handler');
+                console.log('[FENNEC (MVP)] ADYEN: Executing payment page handler');
                 const run = () => {
                     Promise.all([
                         waitForElement('h3.adl-heading'),
@@ -978,14 +1005,14 @@ class AdyenLauncher extends Launcher {
                     run();
                 }
             } else if (path.includes('showOilSplashList.shtml')) {
-                console.log('[FENNEC (POO)] ADYEN: Executing DNA page handler');
+                console.log('[FENNEC (MVP)] ADYEN: Executing DNA page handler');
                 if (ready) {
                     document.addEventListener('DOMContentLoaded', handleDnaPage);
                 } else {
                     handleDnaPage();
                 }
             } else {
-                console.log('[FENNEC (POO)] ADYEN: No matching page type found for flow execution');
+                console.log('[FENNEC (MVP)] ADYEN: No matching page type found for flow execution');
             }
 
             chrome.storage.onChanged.addListener((changes, area) => {
@@ -1005,7 +1032,7 @@ class AdyenLauncher extends Launcher {
                 }
             });
         } catch (e) {
-            console.error('[FENNEC (POO) Adyen] Launcher error:', e);
+            console.error('[FENNEC (MVP) Adyen] Launcher error:', e);
         }
     });
     }

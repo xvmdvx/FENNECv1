@@ -40,13 +40,10 @@ class BackgroundController {
             if (tab) {
                 // Track existing tab if it's part of XRAY flow
                 chrome.storage.local.get({ fraudReviewSession: null, xrayOpenedTabs: [] }, ({ fraudReviewSession, xrayOpenedTabs }) => {
-                    console.log('[FENNEC (POO)] TAB TRACKING: Checking existing tab - fraudReviewSession:', fraudReviewSession, 'tab ID:', tab.id);
                     if (fraudReviewSession && !xrayOpenedTabs.includes(tab.id)) {
                         const updatedTabs = [...xrayOpenedTabs, tab.id];
                         chrome.storage.local.set({ xrayOpenedTabs: updatedTabs });
-                        console.log('[FENNEC (POO)] TAB TRACKING: Tracked existing XRAY tab:', tab.url, 'ID:', tab.id);
                     } else {
-                        console.log('[FENNEC (POO)] TAB TRACKING: Not tracking existing tab - fraudReviewSession:', fraudReviewSession, 'already tracked:', xrayOpenedTabs.includes(tab.id));
                     }
                 });
                 chrome.tabs.update(tab.id, { active: Boolean(msg.active) }, finalize);
@@ -60,14 +57,11 @@ class BackgroundController {
                 chrome.tabs.create(opts, (newTab) => {
                     // Track tabs opened during XRAY flow
                     chrome.storage.local.get({ fraudReviewSession: null, xrayOpenedTabs: [] }, ({ fraudReviewSession, xrayOpenedTabs }) => {
-                        console.log('[FENNEC (POO)] TAB TRACKING: Checking new tab - fraudReviewSession:', fraudReviewSession, 'new tab ID:', newTab ? newTab.id : 'null');
                         if (fraudReviewSession && newTab) {
                             // Only track if we're in a fraud review session
                             const updatedTabs = [...xrayOpenedTabs, newTab.id];
                             chrome.storage.local.set({ xrayOpenedTabs: updatedTabs });
-                            console.log('[FENNEC (POO)] TAB TRACKING: Tracked new XRAY tab:', newTab.url, 'ID:', newTab.id);
                         } else {
-                            console.log('[FENNEC (POO)] TAB TRACKING: Not tracking new tab - fraudReviewSession:', fraudReviewSession, 'newTab:', !!newTab);
                         }
                     });
                     finalize();
@@ -176,7 +170,6 @@ class BackgroundController {
             return;
         }
         
-        console.log('[FENNEC (POO)] Closing tabs by IDs:', msg.tabIds);
         
         // Filter out any invalid tab IDs and close the valid ones
         chrome.tabs.query({}, (allTabs) => {
@@ -186,11 +179,9 @@ class BackgroundController {
             
             if (validTabIds.length > 0) {
                 chrome.tabs.remove(validTabIds, () => {
-                    console.log('[FENNEC (POO)] Successfully closed tabs by IDs');
                     sendResponse({ success: true, closedCount: validTabIds.length });
                 });
             } else {
-                console.log('[FENNEC (POO)] No valid tabs found to close');
                 sendResponse({ success: false, error: 'No valid tabs found' });
             }
         });
@@ -202,7 +193,6 @@ class BackgroundController {
             return;
         }
         
-        console.log('[FENNEC (POO)] Closing tabs by URL patterns:', msg.patterns, 'excludeTabId:', msg.excludeTabId);
         
         chrome.tabs.query({}, (allTabs) => {
             const tabsToClose = [];
@@ -210,7 +200,6 @@ class BackgroundController {
             allTabs.forEach(tab => {
                 // Skip the excluded tab (current tab)
                 if (msg.excludeTabId && tab.id === msg.excludeTabId) {
-                    console.log('[FENNEC (POO)] Skipping excluded tab (current tab):', tab.url);
                     return;
                 }
                 
@@ -220,7 +209,6 @@ class BackgroundController {
                     });
                     
                     if (matchesPattern) {
-                        console.log('[FENNEC (POO)] Found tab to close by URL pattern:', tab.url);
                         tabsToClose.push(tab.id);
                     }
                 }
@@ -228,11 +216,9 @@ class BackgroundController {
             
             if (tabsToClose.length > 0) {
                 chrome.tabs.remove(tabsToClose, () => {
-                    console.log('[FENNEC (POO)] Successfully closed tabs by URL patterns');
                     sendResponse({ success: true, closedCount: tabsToClose.length });
                 });
             } else {
-                console.log('[FENNEC (POO)] No tabs found matching URL patterns');
                 sendResponse({ success: false, error: 'No matching tabs found' });
             }
         });
@@ -244,7 +230,6 @@ class BackgroundController {
             return;
         }
         
-        console.log('[FENNEC (POO)] Closing tabs by title patterns:', msg.patterns);
         
         chrome.tabs.query({}, (allTabs) => {
             const tabsToClose = [];
@@ -254,18 +239,15 @@ class BackgroundController {
                 const matchesPattern = msg.patterns.some(pattern => title.includes(pattern));
                 
                 if (matchesPattern) {
-                    console.log('[FENNEC (POO)] Found tab to close by title pattern:', title);
                     tabsToClose.push(tab.id);
                 }
             });
             
             if (tabsToClose.length > 0) {
                 chrome.tabs.remove(tabsToClose, () => {
-                    console.log('[FENNEC (POO)] Successfully closed tabs by title patterns');
                     sendResponse({ success: true, closedCount: tabsToClose.length });
                 });
             } else {
-                console.log('[FENNEC (POO)] No tabs found matching title patterns');
                 sendResponse({ success: false, error: 'No matching tabs found' });
             }
         });
@@ -277,7 +259,6 @@ class BackgroundController {
             return;
         }
         
-        console.log('[FENNEC (POO)] Getting current tab ID:', sender.tab.id);
         sendResponse(sender.tab.id);
     }
 
@@ -287,9 +268,7 @@ class BackgroundController {
             return;
         }
         
-        console.log('[FENNEC (POO)] Querying tabs with URL pattern:', msg.url);
         chrome.tabs.query({ url: msg.url }, (tabs) => {
-            console.log('[FENNEC (POO)] Found tabs:', tabs.length);
             sendResponse(tabs);
         });
     }
@@ -300,20 +279,16 @@ class BackgroundController {
             return;
         }
         
-        console.log('[FENNEC (POO)] Getting tab with ID:', msg.tabId);
         chrome.tabs.get(msg.tabId, (tab) => {
             if (chrome.runtime.lastError) {
-                console.log('[FENNEC (POO)] Tab not found or closed:', msg.tabId);
                 sendResponse(null);
             } else {
-                console.log('[FENNEC (POO)] Tab found:', tab.url);
                 sendResponse(tab);
             }
         });
     }
 
     reset(msg, sender, sendResponse) {
-        console.log('[FENNEC (POO)] Background reset triggered');
         
         // Clear background storage
         this.pendingUrls.clear();
@@ -321,17 +296,13 @@ class BackgroundController {
         
         // Clear any background-specific storage
         chrome.storage.local.remove(['fennecReturnTab'], () => {
-            console.log('[FENNEC (POO)] Background storage cleared');
             sendResponse({ success: true });
         });
     }
     
     closeFlowTabs(msg, sender, sendResponse) {
-        console.log('[FENNEC (POO)] TAB CLEANUP: closeFlowTabs called');
         
         chrome.storage.local.get({ xrayOpenedTabs: [], fraudReviewSession: null }, ({ xrayOpenedTabs, fraudReviewSession }) => {
-            console.log('[FENNEC (POO)] TAB CLEANUP: Retrieved from storage - xrayOpenedTabs:', xrayOpenedTabs);
-            console.log('[FENNEC (POO)] TAB CLEANUP: Retrieved from storage - fraudReviewSession:', fraudReviewSession);
             
             if (xrayOpenedTabs.length > 0) {
                 // Verify tabs still exist before trying to close them
@@ -340,31 +311,22 @@ class BackgroundController {
                     const tabsToClose = xrayOpenedTabs.filter(tabId => existingTabIds.includes(tabId));
                     const nonExistentTabs = xrayOpenedTabs.filter(tabId => !existingTabIds.includes(tabId));
                     
-                    console.log('[FENNEC (POO)] TAB CLEANUP: All existing tab IDs:', existingTabIds);
-                    console.log('[FENNEC (POO)] TAB CLEANUP: Tabs to close:', tabsToClose);
-                    console.log('[FENNEC (POO)] TAB CLEANUP: Non-existent tabs:', nonExistentTabs);
                     
                     if (tabsToClose.length > 0) {
-                        console.log('[FENNEC (POO)] TAB CLEANUP: Attempting to close tabs:', tabsToClose);
                         chrome.tabs.remove(tabsToClose, () => {
-                            console.log('[FENNEC (POO)] TAB CLEANUP: Successfully closed tabs');
                             // Clear the tracked tabs
                             chrome.storage.local.remove(['xrayOpenedTabs', 'fraudReviewSession'], () => {
-                                console.log('[FENNEC (POO)] TAB CLEANUP: Cleared tab tracking from storage');
                                 sendResponse({ success: true, closedCount: tabsToClose.length, totalTracked: xrayOpenedTabs.length });
                             });
                         });
                     } else {
-                        console.log('[FENNEC (POO)] TAB CLEANUP: No tabs to close, clearing tracking only');
                         // No tabs to close, just clear tracking
                         chrome.storage.local.remove(['xrayOpenedTabs', 'fraudReviewSession'], () => {
-                            console.log('[FENNEC (POO)] TAB CLEANUP: Cleared tab tracking from storage');
                             sendResponse({ success: true, closedCount: 0, totalTracked: xrayOpenedTabs.length });
                         });
                     }
                 });
             } else {
-                console.log('[FENNEC (POO)] TAB CLEANUP: No tracked tabs found');
                 sendResponse({ success: true, closedCount: 0, totalTracked: 0 });
             }
         });
@@ -372,47 +334,71 @@ class BackgroundController {
     }
     
     triggerIntStorageLoad(msg, sender, sendResponse) {
-        console.log('[FENNEC (POO)] Triggering INT STORAGE load for order:', msg.orderId);
         
         // Find DB tab and send message to load INT STORAGE
         chrome.tabs.query({ url: '*://db.incfile.com/*' }, (tabs) => {
             if (tabs.length > 0) {
                 const dbTab = tabs[0];
-                console.log('[FENNEC (POO)] Found DB tab, sending INT STORAGE load message:', dbTab.id);
                 chrome.tabs.sendMessage(dbTab.id, { 
                     action: 'loadIntStorage', 
                     orderId: msg.orderId 
                 }, (response) => {
-                    console.log('[FENNEC (POO)] DB tab INT STORAGE load response:', response);
                     sendResponse({ success: true, message: 'INT STORAGE load triggered' });
                 });
             } else {
-                console.log('[FENNEC (POO)] No DB tab found to trigger INT STORAGE load');
-                sendResponse({ success: false, error: 'No DB tab found' });
+                // No DB tab found, create one and then trigger the load
+                console.log('[FENNEC (MVP) BG] No DB tab found, creating one for INT STORAGE load');
+                chrome.tabs.create({ 
+                    url: 'https://db.incfile.com/incfile/order/detail/' + msg.orderId + '?fennec_int_storage=1', 
+                    active: false 
+                }, (newTab) => {
+                    // Wait for the tab to load, then trigger INT STORAGE load
+                    const checkTabReady = () => {
+                        chrome.tabs.get(newTab.id, (tab) => {
+                            if (chrome.runtime.lastError) {
+                                // Tab was closed
+                                sendResponse({ success: false, error: 'DB tab was closed' });
+                                return;
+                            }
+                            
+                            if (tab.status === 'complete') {
+                                // Tab is ready, trigger INT STORAGE load
+                                chrome.tabs.sendMessage(tab.id, { 
+                                    action: 'loadIntStorage', 
+                                    orderId: msg.orderId 
+                                }, (response) => {
+                                    sendResponse({ success: true, message: 'INT STORAGE load triggered in new DB tab' });
+                                });
+                            } else {
+                                // Tab still loading, check again in 1 second
+                                setTimeout(checkTabReady, 1000);
+                            }
+                        });
+                    };
+                    
+                    // Start checking after a short delay
+                    setTimeout(checkTabReady, 2000);
+                });
             }
         });
         return true;
     }
     
     intStorageLoadComplete(msg, sender, sendResponse) {
-        console.log('[FENNEC (POO)] INT STORAGE load complete for order:', msg.orderId, 'files count:', msg.filesCount);
         
         // Forward the completion signal to GM SB
         chrome.tabs.query({ url: '*://mail.google.com/*' }, (tabs) => {
             if (tabs.length > 0) {
                 const gmailTab = tabs[0];
-                console.log('[FENNEC (POO)] Forwarding INT STORAGE completion to GM tab:', gmailTab.id);
                 chrome.tabs.sendMessage(gmailTab.id, { 
                     action: 'intStorageLoadComplete', 
                     orderId: msg.orderId,
                     success: msg.success,
                     filesCount: msg.filesCount
                 }, (response) => {
-                    console.log('[FENNEC (POO)] GM tab INT STORAGE completion response:', response);
                     sendResponse({ success: true, message: 'Completion signal forwarded' });
                 });
             } else {
-                console.log('[FENNEC (POO)] No GM tab found to forward INT STORAGE completion');
                 sendResponse({ success: false, error: 'No GM tab found' });
             }
         });

@@ -1,9 +1,10 @@
-// Injects the FENNEC (POO) sidebar into DB pages.
+// Injects the FENNEC (MVP) sidebar into DB pages.
 class DBLauncher extends Launcher {
     init() {
-        console.log('[FENNEC (POO) DB SB] DB Launcher initialized on URL:', location.href);
+        console.log('[FENNEC (MVP) DB SB] DB Launcher initialized on URL:', location.href);
         if (location.pathname.includes('/storage/incfile/')) {
-            console.log('[FENNEC (POO) DB SB] This is a storage page');
+            console.log('[FENNEC (MVP) DB SB] This is a storage page');
+            setupIntStoragePageRefreshDetection();
         }
     if (window.top !== window) return;
     const bg = fennecMessenger;
@@ -30,8 +31,12 @@ class DBLauncher extends Launcher {
     let devMode = false;
     const diagnoseFloater = new DiagnoseFloater();
     let fraudXray = new URLSearchParams(location.search).get('fraud_xray') === '1';
+    let intStorageMode = new URLSearchParams(location.search).get('fennec_int_storage') === '1';
     if (fraudXray) {
         document.title = '[DB] ' + document.title;
+    }
+    if (intStorageMode) {
+        document.title = '[DB-INT] ' + document.title;
     }
     if (!fraudXray && sessionStorage.getItem('fraudXrayPending')) {
         fraudXray = true;
@@ -103,44 +108,52 @@ class DBLauncher extends Launcher {
     }
 
     function getText(el) {
-        return el ? (el.innerText || el.textContent || "").trim() : "";
+        const result = el ? (el.innerText || el.textContent || "").trim() : "";
+        return result;
+    }
+
+    // Focused, toggleable logging for address debugging
+    window.FENNEC_ADDR_DEBUG = window.FENNEC_ADDR_DEBUG ?? true; // set to false to silence
+    function addrLog(...args) {
+        if (!window.FENNEC_ADDR_DEBUG) return;
+        console.log('[FENNEC SB][ADDR]', ...args);
     }
 
     function autoOpenFamilyTree() {
-        console.log('[FENNEC (POO)] autoOpenFamilyTree called, autoFamilyTreeDone:', autoFamilyTreeDone);
+        console.log('[FENNEC (MVP)] autoOpenFamilyTree called, autoFamilyTreeDone:', autoFamilyTreeDone);
         if (autoFamilyTreeDone) return;
         
         const ftIcon = document.getElementById('family-tree-icon');
-        console.log('[FENNEC (POO)] Family tree icon found:', !!ftIcon, 'display style:', ftIcon ? ftIcon.style.display : 'N/A');
-        console.log('[FENNEC (POO)] Family tree icon listener attached:', ftIcon ? ftIcon.dataset.listenerAttached : 'N/A');
+        console.log('[FENNEC (MVP)] Family tree icon found:', !!ftIcon, 'display style:', ftIcon ? ftIcon.style.display : 'N/A');
+        console.log('[FENNEC (MVP)] Family tree icon listener attached:', ftIcon ? ftIcon.dataset.listenerAttached : 'N/A');
         
         if (ftIcon && ftIcon.style.display !== 'none') {
-            console.log('[FENNEC (POO)] Auto-clicking family tree icon');
+            console.log('[FENNEC (MVP)] Auto-clicking family tree icon');
             autoFamilyTreeDone = true;
             
             // For MISC orders, trigger the family tree click to open it automatically
             if (miscMode) {
-                console.log('[FENNEC (POO)] MISC mode detected, triggering family tree click');
+                console.log('[FENNEC (MVP)] MISC mode detected, triggering family tree click');
                 // Use a small delay to ensure the icon is ready
                 setTimeout(() => {
                     if (ftIcon && ftIcon.style.display !== 'none') {
-                        console.log('[FENNEC (POO)] Triggering click on family tree icon for MISC order');
+                        console.log('[FENNEC (MVP)] Triggering click on family tree icon for MISC order');
                         ftIcon.click();
                     } else {
-                        console.warn('[FENNEC (POO)] Family tree icon not visible after delay');
+                        console.warn('[FENNEC (MVP)] Family tree icon not visible after delay');
                     }
                 }, 500);
             } else {
                 // For non-MISC orders, just click the icon
-                console.log('[FENNEC (POO)] Non-MISC order, using manual click');
+                console.log('[FENNEC (MVP)] Non-MISC order, using manual click');
                 ftIcon.click();
             }
         } else {
-            console.warn('[FENNEC (POO)] Family tree icon not found or not visible');
+            console.warn('[FENNEC (MVP)] Family tree icon not found or not visible');
             // Try again after a delay if the icon is not ready
             if (!autoFamilyTreeDone) {
                 setTimeout(() => {
-                    console.log('[FENNEC (POO)] Retrying autoOpenFamilyTree after delay');
+                    console.log('[FENNEC (MVP)] Retrying autoOpenFamilyTree after delay');
                     autoFamilyTreeDone = false;
                     autoOpenFamilyTree();
                 }, 1000);
@@ -162,7 +175,7 @@ class DBLauncher extends Launcher {
                         <div id="int-storage-section" style="display:none; margin-top:10px;">
                             <div class="section-label">INT STORAGE:</div>
                             <div id="int-storage-box" class="white-box" style="margin-bottom:10px">
-                                <div style="text-align:center;color:#aaa">Loading...</div>
+                                <div style="text-align:center;color:#aaa">Loading<span class="loading-dots">...</span></div>
                             </div>
                         </div>
                     `;
@@ -177,6 +190,9 @@ class DBLauncher extends Launcher {
                 attachCommonListeners(body);
                 updateReviewDisplay();
                 insertDnaAfterCompany();
+                
+                // Setup global drag and drop for INT STORAGE uploads
+                setupGlobalIntStorageDrop(body, currentId);
                 if (typeof applyStandardSectionOrder === 'function') {
                     applyStandardSectionOrder(body.querySelector('#db-summary-section'));
                 }
@@ -185,7 +201,7 @@ class DBLauncher extends Launcher {
                 }
                 
                 // Load INT STORAGE
-                console.log('[FENNEC (POO) DB SB] About to load INT STORAGE with currentId:', currentId);
+                console.log('[FENNEC (MVP) DB SB] About to load INT STORAGE with currentId:', currentId);
                 loadIntStorage(currentId);
                 // Store INT STORAGE data to share with other environments
                 chrome.storage.local.set({ 
@@ -194,19 +210,19 @@ class DBLauncher extends Launcher {
                 });
                 
                 if (miscMode) {
-                    console.log('[FENNEC (POO)] MISC mode detected, auto-opening family tree');
+                    console.log('[FENNEC (MVP)] MISC mode detected, auto-opening family tree');
                     // Use multiple attempts to ensure family tree opens
                     const attemptAutoOpen = (attempt = 1) => {
-                        console.log(`[FENNEC (POO)] Auto-open attempt ${attempt} for MISC order (loadStoredSummary)`);
+                        console.log(`[FENNEC (MVP)] Auto-open attempt ${attempt} for MISC order (loadStoredSummary)`);
                         const ftIcon = document.getElementById('family-tree-icon');
                         if (ftIcon && ftIcon.style.display !== 'none') {
-                            console.log('[FENNEC (POO)] Family tree icon found and visible, triggering auto-open');
+                            console.log('[FENNEC (MVP)] Family tree icon found and visible, triggering auto-open');
                             autoOpenFamilyTree();
                         } else if (attempt < 5) {
-                            console.log(`[FENNEC (POO)] Family tree icon not ready, retrying in ${attempt * 500}ms`);
+                            console.log(`[FENNEC (MVP)] Family tree icon not ready, retrying in ${attempt * 500}ms`);
                             setTimeout(() => attemptAutoOpen(attempt + 1), attempt * 500);
                         } else {
-                            console.warn('[FENNEC (POO)] Family tree icon not found after 5 attempts');
+                            console.warn('[FENNEC (MVP)] Family tree icon not found after 5 attempts');
                         }
                     };
                     
@@ -217,7 +233,7 @@ class DBLauncher extends Launcher {
                         });
                     }, 1500);
                 } else {
-                    console.log('[FENNEC (POO)] Not MISC mode, miscMode:', miscMode, 'orderType:', currentOrderTypeText);
+                    console.log('[FENNEC (MVP)] Not MISC mode, miscMode:', miscMode, 'orderType:', currentOrderTypeText);
                 }
             } else {
                 body.innerHTML = `
@@ -225,14 +241,17 @@ class DBLauncher extends Launcher {
                     <div id="int-storage-section" style="display:none; margin-top:10px;">
                         <div class="section-label">INT STORAGE:</div>
                         <div id="int-storage-box" class="white-box" style="margin-bottom:10px">
-                            <div style="text-align:center;color:#aaa">Loading...</div>
+                            <div style="text-align:center;color:#aaa">Loading<span class="loading-dots">...</span></div>
                         </div>
                     </div>
                 `;
                 
                 // Load INT STORAGE even when there's no other DB data
-                console.log('[FENNEC (POO) DB SB] About to load INT STORAGE (no DB data) with currentId:', currentId);
+                console.log('[FENNEC (MVP) DB SB] About to load INT STORAGE (no DB data) with currentId:', currentId);
                 loadIntStorage(currentId);
+                
+                // Setup global drag and drop for INT STORAGE uploads (no DB data case)
+                setupGlobalIntStorageDrop(body, currentId);
                 // Store INT STORAGE data to share with other environments
                 chrome.storage.local.set({ 
                     intStorageLoaded: true, 
@@ -245,9 +264,16 @@ class DBLauncher extends Launcher {
     // Listen for messages from other environments
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (message.action === 'loadIntStorage' && message.orderId) {
-            console.log('[FENNEC (POO) DB SB] Received INT STORAGE load trigger for order:', message.orderId);
+            console.log('[FENNEC (MVP) DB SB] Received INT STORAGE load trigger for order:', message.orderId);
             loadIntStorage(message.orderId);
             sendResponse({ success: true, message: 'INT STORAGE load triggered' });
+            return true;
+        }
+        
+        if (message.action === 'uspsCmraResult') {
+            console.log('[FENNEC (MVP) DB SB] Received USPS CMRA result:', message);
+            // The utils.js will handle the icon updates
+            return true;
         }
     });
     
@@ -480,7 +506,7 @@ class DBLauncher extends Launcher {
                         setTimeout(tryExtract, 500);
                     }
                 } catch (err) {
-                    console.warn('[FENNEC (POO)] Error extracting issue text:', err);
+                    console.warn('[FENNEC (MVP)] Error extracting issue text:', err);
                     sendResponse({ issueInfo: null });
                 }
             };
@@ -493,7 +519,7 @@ class DBLauncher extends Launcher {
                 const parent = getBasicOrderInfo();
                 sendResponse({ childOrders: orders, parentInfo: parent });
             } catch (err) {
-                console.warn('[FENNEC (POO)] Error extracting child orders:', err);
+                console.warn('[FENNEC (MVP)] Error extracting child orders:', err);
                 sendResponse({ childOrders: null, parentInfo: null });
             }
             return true;
@@ -509,17 +535,17 @@ class DBLauncher extends Launcher {
                 const subs = getActiveSubscriptions();
                 sendResponse({ subs });
             } catch (err) {
-                console.warn('[FENNEC (POO)] Error extracting subscriptions:', err);
+                console.warn('[FENNEC (MVP)] Error extracting subscriptions:', err);
                 sendResponse({ subs: [] });
             }
             return true;
         }
         if (msg.action === 'getIntStorageList') {
-            console.log('[FENNEC (POO) DB SB] Received getIntStorageList message');
+            console.log('[FENNEC (MVP) DB SB] Received getIntStorageList message');
             
             // Check if we're on a storage page
             if (!location.pathname.includes('/storage/incfile/')) {
-                console.log('[FENNEC (POO) DB SB] Not on storage page, current pathname:', location.pathname);
+                console.log('[FENNEC (MVP) DB SB] Not on storage page, current pathname:', location.pathname);
                 sendResponse({ files: null, error: 'Not on storage page' });
                 return true;
             }
@@ -527,22 +553,22 @@ class DBLauncher extends Launcher {
             try {
                 // Check if page is fully loaded
                 if (document.readyState !== 'complete') {
-                    console.log('[FENNEC (POO) DB SB] Page not fully loaded, readyState:', document.readyState);
+                    console.log('[FENNEC (MVP) DB SB] Page not fully loaded, readyState:', document.readyState);
                     sendResponse({ files: null, error: 'Page not fully loaded' });
                     return true;
                 }
                 
                 const files = getIntStorageFiles();
-                console.log('[FENNEC (POO) DB SB] getIntStorageList response:', { files: files ? files.length : 'null' });
+                console.log('[FENNEC (MVP) DB SB] getIntStorageList response:', { files: files ? files.length : 'null' });
                 sendResponse({ files });
             } catch (err) {
-                console.error('[FENNEC (POO) DB SB] getIntStorageList error:', err);
+                console.error('[FENNEC (MVP) DB SB] getIntStorageList error:', err);
                 sendResponse({ files: null, error: err.message });
             }
             return true;
         }
         if (msg.action === 'loadIntStorage') {
-            console.log('[FENNEC (POO) DB SB] Received INT STORAGE load trigger for order:', msg.orderId);
+            console.log('[FENNEC (MVP) DB SB] Received INT STORAGE load trigger for order:', msg.orderId);
             if (msg.orderId) {
                 loadIntStorage(msg.orderId);
                 sendResponse({ success: true, message: 'INT STORAGE load triggered' });
@@ -551,6 +577,31 @@ class DBLauncher extends Launcher {
             }
             return true;
         }
+        
+        if (msg.action === 'refreshIntStorageForOrder') {
+            console.log('[FENNEC (MVP) DB SB] Received INT STORAGE refresh request for order:', msg.orderId);
+            if (msg.orderId) {
+                // Check if this tab has a sidebar with INT STORAGE for this order
+                const currentOrderId = (location.pathname.match(/(?:detail|storage\/incfile)\/(\d+)/) || [])[1];
+                if (currentOrderId === msg.orderId) {
+                    console.log('[FENNEC (MVP) DB SB] Refreshing INT STORAGE for current order');
+                    loadIntStorage(msg.orderId);
+                    sendResponse({ success: true, message: 'INT STORAGE refreshed for current order' });
+                } else {
+                    console.log('[FENNEC (MVP) DB SB] Order ID mismatch, not refreshing INT STORAGE');
+                    sendResponse({ success: false, message: 'Order ID mismatch' });
+                }
+            } else {
+                sendResponse({ success: false, error: 'No orderId provided' });
+            }
+            return true;
+        }
+    });
+
+    // Track auto-upload setting for global drag & drop
+    window.fennecAutoUpload = false;
+    chrome.storage.local.get({ autoUpload: false }, ({ autoUpload }) => {
+        window.fennecAutoUpload = !!autoUpload;
     });
     function getOrderType() {
         const el = document.getElementById("ordType");
@@ -634,7 +685,7 @@ class DBLauncher extends Launcher {
 
     chrome.storage.local.get({ extensionEnabled: true, lightMode: false, fennecReviewMode: false, fennecDevMode: false }, ({ extensionEnabled, lightMode, fennecReviewMode, fennecDevMode }) => {
         if (!extensionEnabled || noStore) {
-            console.log('[FENNEC (POO)] Extension disabled or no-store mode, skipping DB launcher.');
+            console.log('[FENNEC (MVP)] Extension disabled or no-store mode, skipping DB launcher.');
             return;
         }
         if (lightMode) {
@@ -654,14 +705,14 @@ class DBLauncher extends Launcher {
         const isStorage = /\/storage\/incfile\//.test(location.pathname);
         if (isStorage && currentId) {
             // This is a storage page, check if we have order information available
-            console.log('[FENNEC (POO)] Detected INTERNAL STORAGE page for order:', currentId);
+            console.log('[FENNEC (MVP)] Detected INTERNAL STORAGE page for order:', currentId);
             
             // Check if order information is available from previous order page visit
             function checkAndLoadOrderInfoForStorage() {
                 chrome.storage.local.get({ sidebarOrderId: null, sidebarDb: [] }, ({ sidebarOrderId, sidebarDb }) => {
                     // Only show order info if we have data from a previous order page visit
                     if (sidebarOrderId && sidebarDb && sidebarDb.length > 0) {
-                        console.log('[FENNEC (POO)] Order information available, loading sidebar for storage page');
+                        console.log('[FENNEC (MVP)] Order information available, loading sidebar for storage page');
                         
                         // Set the order ID in session storage for consistency
                         sessionStorage.setItem('fennec_order', sidebarOrderId);
@@ -698,6 +749,9 @@ class DBLauncher extends Launcher {
                                                 attachCommonListeners(body);
                                                 updateReviewDisplay();
                                                 insertDnaAfterCompany();
+                                                
+                                                // Setup global drag and drop for INT STORAGE uploads on storage pages
+                                                setupGlobalIntStorageDrop(body, currentId);
                                                 if (typeof applyStandardSectionOrder === 'function') {
                                                     applyStandardSectionOrder(body.querySelector('#db-summary-section'));
                                                 }
@@ -719,7 +773,7 @@ class DBLauncher extends Launcher {
                             }
                         }, 500);
                     } else {
-                        console.log('[FENNEC (POO)] No order information available for storage page');
+                        console.log('[FENNEC (MVP)] No order information available for storage page');
                         
                         // Show "NO ORDER INFO AVAILABLE" message
                         setTimeout(() => {
@@ -747,7 +801,7 @@ class DBLauncher extends Launcher {
         function initSidebar() {
             if (sessionStorage.getItem("fennecSidebarClosed") === "true") { showFloatingIcon(); return; }
             if (!document.getElementById('copilot-sidebar')) {
-                console.log("[FENNEC (POO)] Sidebar no encontrado, inyectando en DB...");
+                console.log("[FENNEC (MVP)] Sidebar no encontrado, inyectando en DB...");
 
                 const SIDEBAR_WIDTH = 340;
                 document.body.style.transition = 'margin-right 0.2s';
@@ -770,10 +824,16 @@ class DBLauncher extends Launcher {
                     
                     sbObj.build(buildStandardizedReviewModeSidebar(reviewMode, devMode));
                     sbObj.attach();
+                    
+                    // Setup INT STORAGE click handler
+                    const currentId = getBasicOrderInfo().orderId;
+                    if (currentId) {
+                        setupIntStorageClickHandler(currentId);
+                    }
                     const sidebar = sbObj.element;
                     
                     // Debug: Check if INT STORAGE elements were created
-                    console.log('[FENNEC (POO)] Sidebar built, checking INT STORAGE elements immediately after creation:', {
+                    console.log('[FENNEC (MVP)] Sidebar built, checking INT STORAGE elements immediately after creation:', {
                         intStorageSection: !!sidebar.querySelector('#int-storage-section'),
                         intStorageBox: !!sidebar.querySelector('#int-storage-box'),
                         reviewMode: reviewMode
@@ -793,7 +853,7 @@ class DBLauncher extends Launcher {
                             const style = document.getElementById('copilot-db-padding');
                             if (style) style.remove();
                             sessionStorage.setItem("fennecSidebarClosed", "true");
-                            console.log("[FENNEC (POO)] Sidebar cerrado manualmente en DB.");
+                            console.log("[FENNEC (MVP)] Sidebar cerrado manualmente en DB.");
                             showFloatingIcon();
                         };
                     }
@@ -819,7 +879,7 @@ class DBLauncher extends Launcher {
                         reinstatementMode = /reinstat/i.test(currentOrderTypeText);
                         miscMode = !/formation/i.test(currentOrderTypeText);
                         
-                        console.log('[FENNEC (POO)] Order type analysis:', {
+                        console.log('[FENNEC (MVP)] Order type analysis:', {
                             rawType: rawType,
                             currentOrderTypeText: currentOrderTypeText,
                             annualReportMode: annualReportMode,
@@ -839,7 +899,7 @@ class DBLauncher extends Launcher {
                             if (ftIcon) {
                                 const shouldShow = orderType !== 'formation';
                                 ftIcon.style.display = shouldShow ? 'inline' : 'none';
-                                console.log('[FENNEC (POO)] Family tree icon visibility:', {
+                                console.log('[FENNEC (MVP)] Family tree icon visibility:', {
                                     orderType: orderType,
                                     shouldShow: shouldShow,
                                     displayStyle: ftIcon.style.display,
@@ -849,7 +909,7 @@ class DBLauncher extends Launcher {
                                 
                                 // For MISC orders, ensure the icon is visible and add extra debugging
                                 if (miscMode && shouldShow) {
-                                    console.log('[FENNEC (POO)] MISC order detected, ensuring family tree icon is visible');
+                                    console.log('[FENNEC (MVP)] MISC order detected, ensuring family tree icon is visible');
                                     ftIcon.style.display = 'inline';
                                     ftIcon.style.visibility = 'visible';
                                     ftIcon.style.opacity = '1';
@@ -858,7 +918,7 @@ class DBLauncher extends Launcher {
                                     ftIcon.style.pointerEvents = 'auto';
                                     ftIcon.style.cursor = 'pointer';
                                     
-                                    console.log('[FENNEC (POO)] Family tree icon styles after MISC setup:', {
+                                    console.log('[FENNEC (MVP)] Family tree icon styles after MISC setup:', {
                                         display: ftIcon.style.display,
                                         visibility: ftIcon.style.visibility,
                                         opacity: ftIcon.style.opacity,
@@ -868,12 +928,12 @@ class DBLauncher extends Launcher {
                                     
                                     // Auto-open family tree for MISC orders
                                     setTimeout(() => {
-                                        console.log('[FENNEC (POO)] Auto-opening family tree for MISC order');
+                                        console.log('[FENNEC (MVP)] Auto-opening family tree for MISC order');
                                         autoOpenFamilyTree();
                                     }, 1000);
                                 }
                             } else {
-                                console.warn('[FENNEC (POO)] Family tree icon not found in sidebar');
+                                console.warn('[FENNEC (MVP)] Family tree icon not found in sidebar');
                             }
                             if (orderType === "amendment") {
                                 extractAndShowAmendmentData();
@@ -926,7 +986,7 @@ class DBLauncher extends Launcher {
                         qaMenu.id = 'quick-actions-menu';
                         qaMenu.style.display = 'none';
                         qaMenu.innerHTML = '<div class="qa-title">QUICK ACTIONS</div>' +
-                            '<ul><li id="qa-emails">Emails</li><li id="qa-cancel">Cancel</li><li id="qa-coda">CODA SEARCH</li></ul>';
+                            '<ul><li id="qa-emails">Emails</li><li id="qa-cancel">Cancel</li><li id="qa-coda">CODA SEARCH</li><li id="qa-ein">EIN</li></ul>';
                         document.body.appendChild(qaMenu);
 
                         function showMenu() {
@@ -997,6 +1057,14 @@ class DBLauncher extends Launcher {
                                 openCodaSearch();
                             });
                         }
+
+                        const einItem = qaMenu.querySelector('#qa-ein');
+                        if (einItem) {
+                            einItem.addEventListener('click', () => {
+                                hideMenu();
+                                openEINSearch();
+                            });
+                        }
                     }
                         if (devMode) {
                             const refreshBtn = sidebar.querySelector('#copilot-refresh');
@@ -1021,12 +1089,24 @@ class DBLauncher extends Launcher {
         }
 
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initSidebar);
+            document.addEventListener('DOMContentLoaded', () => {
+                initSidebar();
+                // Auto-load INT STORAGE if in INT STORAGE mode
+                if (intStorageMode && currentId) {
+                    console.log('[FENNEC (MVP) DB SB] Auto-loading INT STORAGE for order:', currentId);
+                    setTimeout(() => loadIntStorage(currentId), 2000);
+                }
+            });
         } else {
             initSidebar();
+            // Auto-load INT STORAGE if in INT STORAGE mode
+            if (intStorageMode && currentId) {
+                console.log('[FENNEC (MVP) DB SB] Auto-loading INT STORAGE for order:', currentId);
+                setTimeout(() => loadIntStorage(currentId), 2000);
+            }
         }
     } catch (e) {
-        console.error("[FENNEC (POO)] ERROR en DB Launcher:", e);
+        console.error("[FENNEC (MVP)] ERROR en DB Launcher:", e);
 
         const body = document.getElementById('copilot-body-content');
         if (body) {
@@ -1037,10 +1117,37 @@ class DBLauncher extends Launcher {
 
     function canonicalizeState(state) {
         if (!state) return '';
+        
+        // State abbreviation to full name mapping
+        const stateAbbreviations = {
+            'al': 'Alabama', 'ak': 'Alaska', 'az': 'Arizona', 'ar': 'Arkansas', 'ca': 'California',
+            'co': 'Colorado', 'ct': 'Connecticut', 'de': 'Delaware', 'dc': 'District of Columbia',
+            'fl': 'Florida', 'ga': 'Georgia', 'hi': 'Hawaii', 'id': 'Idaho', 'il': 'Illinois',
+            'in': 'Indiana', 'ia': 'Iowa', 'ks': 'Kansas', 'ky': 'Kentucky', 'la': 'Louisiana',
+            'me': 'Maine', 'md': 'Maryland', 'ma': 'Massachusetts', 'mi': 'Michigan', 'mn': 'Minnesota',
+            'ms': 'Mississippi', 'mo': 'Missouri', 'mt': 'Montana', 'ne': 'Nebraska', 'nv': 'Nevada',
+            'nh': 'New Hampshire', 'nj': 'New Jersey', 'nm': 'New Mexico', 'ny': 'New York',
+            'nc': 'North Carolina', 'nd': 'North Dakota', 'oh': 'Ohio', 'ok': 'Oklahoma',
+            'or': 'Oregon', 'pa': 'Pennsylvania', 'ri': 'Rhode Island', 'sc': 'South Carolina',
+            'sd': 'South Dakota', 'tn': 'Tennessee', 'tx': 'Texas', 'ut': 'Utah', 'vt': 'Vermont',
+            'va': 'Virginia', 'wa': 'Washington', 'wv': 'West Virginia', 'wi': 'Wisconsin', 'wy': 'Wyoming'
+        };
+        
         const clean = String(state).trim().toLowerCase();
+        
+        // First check if it's a state abbreviation and convert to full name
+        if (stateAbbreviations[clean]) {
+            const fullName = stateAbbreviations[clean];
+            console.log(`[FENNEC (MVP)] Converted state abbreviation "${state}" to "${fullName}"`);
+            return fullName;
+        }
+        
+        // Then check for exact matches in SOS_URLS keys
         for (const key of Object.keys(SOS_URLS)) {
             if (key.toLowerCase() === clean) return key;
         }
+        
+        console.warn(`[FENNEC (MVP)] Could not canonicalize state: "${state}"`);
         return String(state).trim();
     }
 
@@ -1089,7 +1196,15 @@ class DBLauncher extends Launcher {
     }
 
     function renderAddress(addr, isVA = false) {
+        // If addr is an object (raw address data), build a normalized string first
+        if (typeof addr === 'object' && addr !== null) {
+            const built = buildAddress(addr);
+            addr = built || '';
+        }
+
         if (!isValidField(addr)) return '';
+        
+        // Otherwise, treat as string and parse it
         const parts = addr.split(/,\s*/);
 
         const firstLine = parts.shift() || '';
@@ -1106,6 +1221,8 @@ class DBLauncher extends Launcher {
         const lines = [firstLine];
         if (secondLine) lines.push(secondLine);
         if (rest) lines.push(rest);
+        
+        // Use simple text with line breaks for more reliable display
         const display = lines.map(escapeHtml).join('<br>');
         
         // Use the cleaned address for USPS links
@@ -1115,7 +1232,143 @@ class DBLauncher extends Launcher {
         const extra = isVA
             ? ` <span class="copilot-tag copilot-tag-green">VA</span>`
             : `<span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span><span class="copilot-copy-icon" data-copy="${escFull}" title="Copy">⧉</span>`;
-        return `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${escFull}">${display}</a>${extra}</span>`;
+        
+        const result = `<span class="address-wrapper">${display}${extra}</span>`;
+        console.log('[FENNEC] DB PRINT - Address:', addr, 'HTML:', result);
+        return result;
+    }
+
+    function renderAddressFromObject(addrObj, isVA = false) {
+        if (!addrObj) return '';
+        
+        const isValid = val => val && val.trim() && val.trim().toLowerCase() !== 'n/a';
+        
+        const lines = [];
+        
+        // Add street address
+        if (isValid(addrObj.street)) {
+            lines.push(escapeHtml(addrObj.street.trim()));
+        }
+        
+        // Add city, state, zip as a single line - handle both with and without country
+        console.log('[FENNEC] renderAddressFromObject - cityStateZipCountry:', addrObj.cityStateZipCountry, 'cityStateZip:', addrObj.cityStateZip);
+        if (isValid(addrObj.cityStateZipCountry)) {
+            console.log('[FENNEC] Using cityStateZipCountry:', addrObj.cityStateZipCountry);
+            lines.push(escapeHtml(addrObj.cityStateZipCountry.trim()));
+        } else if (isValid(addrObj.cityStateZip)) {
+            console.log('[FENNEC] Using cityStateZip:', addrObj.cityStateZip);
+            lines.push(escapeHtml(addrObj.cityStateZip.trim()));
+        } else {
+            console.log('[FENNEC] No valid city/state/zip field found');
+        }
+        
+        // Fallback: if nothing was captured, build a normalized string and render via string path
+        if (lines.length === 0) {
+            const built = buildAddress(addrObj);
+            return renderAddress(built, isVA);
+        }
+        
+        const display = lines.join('<br>');
+        
+        // Build full address for USPS links
+        const fullAddress = [addrObj.street, (addrObj.cityStateZipCountry || addrObj.cityStateZip)].filter(Boolean).join(', ');
+        const uspsAddr = formatAddressForUSPS(fullAddress);
+        const escFull = escapeHtml(uspsAddr);
+        
+        const extra = isVA
+            ? ` <span class="copilot-tag copilot-tag-green">VA</span>`
+            : `<span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span><span class="copilot-copy-icon" data-copy="${escFull}" title="Copy">⧉</span>`;
+        
+        const result = `<span class="address-wrapper">${display}${extra}</span>`;
+        addrLog('renderAddressFromObject lines=', lines, 'street=', addrObj.street, 'csz/cszc=', addrObj.cityStateZip || addrObj.cityStateZipCountry, 'fullForUSPS=', uspsAddr);
+        return result;
+    }
+
+    function renderAddressWithoutTag(addr) {
+        // If addr is an object (raw address data), build a normalized string first
+        if (typeof addr === 'object' && addr !== null) {
+            const built = buildAddress(addr);
+            addr = built || '';
+        }
+
+        if (!isValidField(addr)) return '';
+        
+        // Otherwise, treat as string and parse it
+        const parts = addr.split(/,\s*/);
+
+        const firstLine = parts.shift() || '';
+        let secondLine = '';
+        let rest = '';
+
+        if (parts.length > 2) {
+            secondLine = parts.shift();
+            rest = parts.join(', ');
+        } else {
+            rest = parts.join(', ');
+        }
+
+        const lines = [firstLine];
+        if (secondLine) lines.push(secondLine);
+        if (rest) lines.push(rest);
+        
+        // Use simple text with line breaks for more reliable display
+        const display = lines.map(escapeHtml).join('<br>');
+        
+        // Use the cleaned address for USPS links
+        const uspsAddr = formatAddressForUSPS(addr);
+        const escFull = escapeHtml(uspsAddr);
+        
+        // Include USPS validation and copy icons, but no VA tag
+        const extra = `<span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span><span class="copilot-copy-icon" data-copy="${escFull}" title="Copy">⧉</span>`;
+        
+        const result = `<span class="address-wrapper">${display}${extra}</span>`;
+        console.log('[FENNEC] DB PRINT - Address without tag:', addr, 'HTML:', result);
+        return result;
+    }
+
+    function renderAddressFromObjectWithoutTag(addrObj) {
+        if (!addrObj) return '';
+        
+        const isValid = val => val && val.trim() && val.trim().toLowerCase() !== 'n/a';
+        
+        const lines = [];
+        
+        // Add street address
+        if (isValid(addrObj.street)) {
+            lines.push(escapeHtml(addrObj.street.trim()));
+        }
+        
+        // Add city, state, zip as a single line - handle both with and without country
+        console.log('[FENNEC] renderAddressFromObjectWithoutTag - cityStateZipCountry:', addrObj.cityStateZipCountry, 'cityStateZip:', addrObj.cityStateZip);
+        if (isValid(addrObj.cityStateZipCountry)) {
+            console.log('[FENNEC] Using cityStateZipCountry:', addrObj.cityStateZipCountry);
+            lines.push(escapeHtml(addrObj.cityStateZipCountry.trim()));
+        } else if (isValid(addrObj.cityStateZip)) {
+            console.log('[FENNEC] Using cityStateZip:', addrObj.cityStateZip);
+            lines.push(escapeHtml(addrObj.cityStateZip.trim()));
+        } else {
+            console.log('[FENNEC] No valid city/state/zip field found');
+        }
+        
+        // Fallback: if nothing was captured, build a normalized string and render via string path
+        if (lines.length === 0) {
+            const built = buildAddress(addrObj);
+            return renderAddressWithoutTag(built);
+        }
+        
+        const display = lines.join('<br>');
+        
+        // Build full address for USPS links
+        const fullAddress = [addrObj.street, (addrObj.cityStateZipCountry || addrObj.cityStateZip)].filter(Boolean).join(', ');
+        const uspsAddr = formatAddressForUSPS(fullAddress);
+        const escFull = escapeHtml(uspsAddr);
+        
+        // Include USPS validation and copy icons, but no VA tag
+        const extra = `<span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span><span class="copilot-copy-icon" data-copy="${escFull}" title="Copy">⧉</span>`;
+        
+        const result = `<span class="address-wrapper">${display}${extra}</span>`;
+        addrLog('renderAddressFromObjectWithoutTag lines=', lines, 'street=', addrObj.street, 'csz/cszc=', addrObj.cityStateZip || addrObj.cityStateZipCountry, 'fullForUSPS=', uspsAddr);
+        return result;
     }
 
     function renderBillingAddress(info) {
@@ -1273,15 +1526,38 @@ class DBLauncher extends Launcher {
     function buildAddress(obj) {
         if (!obj) return '';
 
+        // Warning: Check if this looks like member data (common member addresses)
+        if (obj.street1 && (obj.street1.includes('Pompadour Ct') || obj.street1.includes('6814'))) {
+            console.warn('[FENNEC (MVP) DB SB] WARNING: buildAddress received what appears to be member data:', obj.street1);
+        }
+
         const isValid = val => val && val.trim() && val.trim().toLowerCase() !== 'n/a';
 
         const parts = [];
 
-        // Handle street address
+        // Handle street address - preserve box numbers
         const line1 = isValid(obj.street1) ? obj.street1
                     : isValid(obj.street) ? obj.street
                     : obj.address;
-        if (isValid(line1)) parts.push(line1.trim());
+        if (isValid(line1)) {
+            // Preserve box/suite numbers in street address
+            let streetWithBox = line1.trim();
+            
+            // Check if we need to add box number from other fields
+            if (obj.suiteNumber && isValid(obj.suiteNumber)) {
+                // If suite number is separate, append it to street
+                if (!streetWithBox.includes(obj.suiteNumber)) {
+                    streetWithBox = `${streetWithBox}, Ste ${obj.suiteNumber}`;
+                }
+            } else if (obj.boxNumber && isValid(obj.boxNumber)) {
+                // If box number is separate, append it to street
+                if (!streetWithBox.includes(obj.boxNumber)) {
+                    streetWithBox = `${streetWithBox}, #${obj.boxNumber}`;
+                }
+            }
+            
+            parts.push(streetWithBox);
+        }
         if (isValid(obj.street2)) parts.push(obj.street2.trim());
 
         // Handle city, state, zip, country
@@ -1340,13 +1616,17 @@ class DBLauncher extends Launcher {
         if (!root) return null;
         const rows = Array.from(root.querySelectorAll('.row'));
         const obj = {};
-        rows.forEach(row => {
+        
+        console.log('[FENNEC (MVP) DB SB] extractSingleElement - Root:', root, 'Fields:', fields, 'Rows found:', rows.length);
+        
+        rows.forEach((row, index) => {
             fields.forEach(field => {
                 if (obj[field.name]) return;
                 let label = Array.from(row.querySelectorAll('label')).find(l =>
                     getText(l).toLowerCase().includes(field.label.toLowerCase())
                 );
                 if (label) {
+                    console.log(`[FENNEC (MVP) DB SB] Found label for field "${field.name}":`, getText(label), 'in row', index);
                     let valDiv = label.nextElementSibling;
                     const parent = label.closest('div');
                     if ((!valDiv || !getText(valDiv)) && parent) {
@@ -1364,12 +1644,17 @@ class DBLauncher extends Launcher {
                         }
                     }
                     if (valDiv) {
-                        obj[field.name] = cleanFieldValue(field.name, getText(valDiv));
+                        const value = cleanFieldValue(field.name, getText(valDiv));
+                        obj[field.name] = value;
+                        console.log(`[FENNEC (MVP) DB SB] Extracted value for "${field.name}":`, value);
                     }
                 }
             });
         });
-        return Object.values(obj).some(v => v) ? obj : null;
+        
+        const result = Object.values(obj).some(v => v) ? obj : null;
+        console.log('[FENNEC (MVP) DB SB] extractSingleElement result:', result);
+        return result;
     }
 
     // Scrapea los .row de una sección dada y devuelve array de objetos campo:valor
@@ -1416,13 +1701,21 @@ class DBLauncher extends Launcher {
         if (!root) return null;
         const rows = Array.from(root.querySelectorAll('.row'));
         const obj = {};
-        rows.forEach(row => {
+        
+        console.log('=== EXTRACT SINGLE DEBUG ===');
+        console.log('Section selector:', sectionSel);
+        console.log('Root element found:', !!root);
+        console.log('Number of rows found:', rows.length);
+        console.log('Fields to extract:', fields.map(f => f.name + ':' + f.label));
+        
+        rows.forEach((row, index) => {
             fields.forEach(field => {
                 if (obj[field.name]) return;
                 let label = Array.from(row.querySelectorAll('label')).find(l =>
                     getText(l).toLowerCase().includes(field.label.toLowerCase())
                 );
                 if (label) {
+                    console.log(`Found label for "${field.name}" in row ${index}:`, getText(label));
                     let valDiv = label.nextElementSibling;
                     const parent = label.closest('div');
                     if ((!valDiv || !getText(valDiv)) && parent) {
@@ -1440,12 +1733,18 @@ class DBLauncher extends Launcher {
                         }
                     }
                     if (valDiv) {
-                        obj[field.name] = cleanFieldValue(field.name, getText(valDiv));
+                        const value = cleanFieldValue(field.name, getText(valDiv));
+                        obj[field.name] = value;
+                        console.log(`Extracted "${field.name}":`, value);
                     }
                 }
             });
         });
-        return Object.values(obj).some(v => v) ? obj : null;
+        
+        const result = Object.values(obj).some(v => v) ? obj : null;
+        console.log('Final extraction result:', result);
+        console.log('=== END EXTRACT SINGLE DEBUG ===');
+        return result;
     }
 
     // Extrae miembros (o directores) agrupando por contenedores m-b-10
@@ -1578,64 +1877,592 @@ class DBLauncher extends Launcher {
             dbSections.push(section);
         }
         // 1. COMPANY
+        console.log('=== HTML STRUCTURE VERIFICATION ===');
+        const vcompElement = document.querySelector('#vcomp');
+        const formBodyElement = document.querySelector('#vcomp .form-body');
+        console.log('vcomp element found:', !!vcompElement);
+        console.log('form-body element found:', !!formBodyElement);
+        if (formBodyElement) {
+            const allLabels = Array.from(formBodyElement.querySelectorAll('label'));
+            console.log('Total labels in form-body:', allLabels.length);
+            console.log('Labels with address-related text:', allLabels.filter(l => 
+                getText(l).toLowerCase().includes('street') || 
+                getText(l).toLowerCase().includes('address') || 
+                getText(l).toLowerCase().includes('city') || 
+                getText(l).toLowerCase().includes('state') || 
+                getText(l).toLowerCase().includes('zip') || 
+                getText(l).toLowerCase().includes('physical') || 
+                getText(l).toLowerCase().includes('mailing')
+            ).map(l => getText(l)));
+        }
+        console.log('=== END HTML STRUCTURE VERIFICATION ===');
+        
         const companyRaw = extractSingle('#vcomp .form-body', [
             {name: 'name', label: 'company name'},
             {name: 'stateId', label: 'state id'},
             {name: 'formationDate', label: 'date of formation'},
-            {name: 'state', label: 'state of formation'},
+            {name: 'formationState', label: 'state of formation'},
             {name: 'status', label: 'state status'},
             {name: 'purpose', label: 'purpose'},
-            {name: 'street', label: 'street'},
-            {name: 'street1', label: 'street 1'},
-            {name: 'street2', label: 'street 2'},
-            {name: 'cityStateZipCountry', label: 'city, state, zip, country'},
-            {name: 'cityStateZip', label: 'city, state, zip'},
-            {name: 'country', label: 'country'},
-            {name: 'address', label: 'address'},
             {name: 'avs', label: 'avs'}
         ]);
+        
+        console.log('[FENNEC (MVP) DB SB] Company raw extraction result:', companyRaw);
+        console.log('=== COMPANY RAW EXTRACTION ===');
+        console.log('Company Raw Object:', JSON.stringify(companyRaw, null, 2));
+        console.log('Company Raw Keys:', companyRaw ? Object.keys(companyRaw) : 'NULL');
+        console.log('=== END COMPANY RAW EXTRACTION ===');
 
         const headers = Array.from(
             document.querySelectorAll('#vcomp .form-body h2, #vcomp .form-body h3, #vcomp .form-body h4, #vcomp .form-body h5')
         );
-        const physicalBox = headers.find(h => /physical|principal/i.test(getText(h)));
-        const mailingBox = headers.find(h => /mailing/i.test(getText(h)));
+        const physicalBox = headers.find(h => /physical.*street.*address/i.test(getText(h)));
+        const mailingBox = headers.find(h => /mailing.*address/i.test(getText(h)));
+        
+        console.log('=== HEADER DETECTION ===');
+        console.log('All headers found:', headers.map(h => getText(h)));
+        console.log('Physical box found:', physicalBox ? getText(physicalBox) : 'NOT FOUND');
+        console.log('Mailing box found:', mailingBox ? getText(mailingBox) : 'NOT FOUND');
+        console.log('=== END HEADER DETECTION ===');
 
-        const physicalRaw = physicalBox ?
-            extractSingleElement(physicalBox.closest('.white-box') || physicalBox.parentElement, [
-                {name: 'street', label: 'street'},
-                {name: 'street1', label: 'street 1'},
-                {name: 'street2', label: 'street 2'},
-                {name: 'cityStateZipCountry', label: 'city, state, zip, country'},
-                {name: 'cityStateZip', label: 'city, state, zip'},
-                {name: 'country', label: 'country'},
-                {name: 'address', label: 'address'}
-            ]) : null;
+        // Improved address extraction for physical and mailing addresses
+        let physicalRaw = null;
+        let mailingRaw = null;
+        
+        // Helper function to extract address data from a specific header block
+        function extractAddressFromHeader(headerElement) {
+            if (!headerElement) return null;
+            
+            console.log('[FENNEC (MVP) DB SB] Extracting address from header:', getText(headerElement));
+            console.log('[FENNEC (MVP) DB SB] Header element:', headerElement);
+            
+            const addressData = {};
+            let currentElement = headerElement.nextElementSibling;
+            let rowCount = 0;
+            
+            console.log('[FENNEC (MVP) DB SB] Starting to traverse from header...');
+            
+            // Look for address-related rows that follow this header
+            while (currentElement && currentElement.tagName && 
+                   (!currentElement.classList.contains('white-box') && 
+                    !currentElement.matches('h2, h3, h4, h5'))) {
+                
+                console.log('[FENNEC (MVP) DB SB] Checking element:', currentElement.tagName, currentElement.className);
+                
+                if (currentElement.classList.contains('row') || currentElement.classList.contains('form-group')) {
+                    rowCount++;
+                    const label = currentElement.querySelector('label');
+                    if (label) {
+                        const labelText = getText(label).toLowerCase();
+                        const valueElement = currentElement.querySelector('.col-md-8 p, .col-md-8, .col-md-8 div, .col-md-8 span');
+                        const value = valueElement ? getText(valueElement) : '';
+                        
+                        console.log('[FENNEC (MVP) DB SB] Row', rowCount, '- Found label:', getText(label), 'value:', value);
+                        console.log('[FENNEC (MVP) DB SB] Row', rowCount, '- Value element:', valueElement);
+                        console.log('[FENNEC (MVP) DB SB] Row', rowCount, '- Current element HTML:', currentElement.innerHTML);
+                        
+                        // Map label to field name
+                        if (labelText.includes('street') && !labelText.includes('street 2')) {
+                            addressData.street = value;
+                            addressData.street1 = value;
+                            console.log('[FENNEC (MVP) DB SB] Mapped to street/street1:', value);
+                        } else if (labelText.includes('street 2')) {
+                            addressData.street2 = value;
+                            console.log('[FENNEC (MVP) DB SB] Mapped to street2:', value);
+                        } else if (labelText.includes('suite') || labelText.includes('box')) {
+                            // Capture suite/box numbers
+                            addressData.suiteNumber = value;
+                            addressData.boxNumber = value;
+                            console.log('[FENNEC (MVP) DB SB] Mapped to suiteNumber/boxNumber:', value);
+                        } else if (labelText.includes('city') || labelText.includes('state') || labelText.includes('zip')) {
+                            if (!addressData.cityStateZip) {
+                                addressData.cityStateZip = value;
+                                console.log('[FENNEC (MVP) DB SB] Mapped to cityStateZip:', value);
+                            }
+                        } else if (labelText.includes('country')) {
+                            addressData.country = value;
+                            console.log('[FENNEC (MVP) DB SB] Mapped to country:', value);
+                        } else if (labelText.includes('address')) {
+                            addressData.address = value;
+                            console.log('[FENNEC (MVP) DB SB] Mapped to address:', value);
+                        }
+                    } else {
+                        console.log('[FENNEC (MVP) DB SB] Row', rowCount, '- No label found');
+                    }
+                }
+                
+                currentElement = currentElement.nextElementSibling;
+            }
+            
+            console.log('[FENNEC (MVP) DB SB] Finished traversing. Total rows processed:', rowCount);
+            
+            // Build cityStateZipCountry if we have the components
+            if (addressData.cityStateZip && addressData.country) {
+                addressData.cityStateZipCountry = `${addressData.cityStateZip}, ${addressData.country}`;
+            } else if (addressData.cityStateZip) {
+                addressData.cityStateZipCountry = addressData.cityStateZip;
+            }
+            
+            // Extract box numbers from street address if not already captured
+            if (addressData.street && !addressData.suiteNumber && !addressData.boxNumber) {
+                const boxPatterns = [
+                    /#\s*(\d{3,})/, // #12345
+                    /ste\s*(\d{3,})/i, // Ste 12345
+                    /suite\s*(\d{3,})/i, // Suite 12345
+                    /box\s*(\d{3,})/i // Box 12345
+                ];
+                
+                for (const pattern of boxPatterns) {
+                    const match = addressData.street.match(pattern);
+                    if (match) {
+                        addressData.suiteNumber = match[1];
+                        addressData.boxNumber = match[1];
+                        console.log('[FENNEC (MVP) DB SB] Extracted box number from street:', match[1]);
+                        break;
+                    }
+                }
+            }
+            
+            console.log('[FENNEC (MVP) DB SB] Final extracted address data:', addressData);
+            
+            // Return null if no meaningful data was extracted
+            const hasData = Object.values(addressData).some(v => v && v.trim());
+            console.log('[FENNEC (MVP) DB SB] Has meaningful data:', hasData);
+            
+            return hasData ? addressData : null;
+        }
+        
+        if (physicalBox) {
+            console.log('[FENNEC (MVP) DB SB] Processing physical address extraction...');
+            physicalRaw = extractAddressFromHeader(physicalBox);
+            console.log('[FENNEC (MVP) DB SB] Physical raw extraction result:', physicalRaw);
+            if (physicalRaw && physicalRaw.street && !physicalRaw.cityStateZip && !physicalRaw.cityStateZipCountry) {
+                const csz = findFollowingValue(physicalBox, /city.*state.*zip/);
+                if (csz) physicalRaw.cityStateZip = csz;
+            }
+        }
+        
+        function escapeRegex(str) {
+            return String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
 
-        const mailingRaw = mailingBox ?
-            extractSingleElement(mailingBox.closest('.white-box') || mailingBox.parentElement, [
-                {name: 'street', label: 'street'},
-                {name: 'street1', label: 'street 1'},
-                {name: 'street2', label: 'street 2'},
-                {name: 'cityStateZipCountry', label: 'city, state, zip, country'},
-                {name: 'cityStateZip', label: 'city, state, zip'},
-                {name: 'country', label: 'country'},
-                {name: 'address', label: 'address'}
-            ]) : null;
+        function enrichAddressWithCityStateZip(addrRaw) {
+            if (!addrRaw || (addrRaw.cityStateZip || addrRaw.cityStateZipCountry)) return addrRaw;
+            if (!addrRaw.street) return addrRaw;
+            try {
+                const container = document.querySelector('#vcomp .form-body');
+                const haystack = container ? getText(container) : '';
+                const streetPattern = escapeRegex(addrRaw.street.trim());
+                // Match: "<street>, City, ST 12345" optionally with extra comma and country
+                const re = new RegExp(
+                    streetPattern + 
+                    "\\s*,\\s*" +
+                    "([^,]+)\\s*,\\s*" +
+                    "([A-Z]{2})\\s*,?\\s*" +
+                    "(\\d{5}(?:-\\d{4})?)" +
+                    "(?:\\s*,\\s*(US|USA))?",
+                    'i'
+                );
+                const m = haystack.match(re);
+                if (m) {
+                    const city = (m[1] || '').trim();
+                    const state = (m[2] || '').trim();
+                    const zip = (m[3] || '').trim();
+                    const country = (m[4] || '').trim();
+                    const csz = `${city}, ${state} ${zip}`;
+                    addrRaw.cityStateZip = addrRaw.cityStateZip || csz;
+                    if (country) addrRaw.country = addrRaw.country || country;
+                    if (addrRaw.cityStateZip && addrRaw.country) {
+                        addrRaw.cityStateZipCountry = `${addrRaw.cityStateZip}, ${addrRaw.country}`;
+                    } else if (addrRaw.cityStateZip) {
+                        addrRaw.cityStateZipCountry = addrRaw.cityStateZip;
+                    }
+                }
+            } catch (e) {
+                console.warn('[FENNEC (MVP) DB SB] enrichAddressWithCityStateZip error', e);
+            }
+            return addrRaw;
+        }
+
+        function findFollowingValue(headerElement, labelRegex) {
+            let node = headerElement ? headerElement.nextElementSibling : null;
+            while (node && node.tagName && !node.classList.contains('white-box') && !node.matches('h2, h3, h4, h5')) {
+                const label = node.querySelector('label');
+                if (label) {
+                    const txt = getText(label).toLowerCase();
+                    addrLog('scan sibling row for', labelRegex, 'label=', txt);
+                    if (labelRegex.test(txt)) {
+                        const valueEl = node.querySelector('.col-md-8 p, .col-md-8, .col-md-8 div, .col-md-8 span');
+                        const value = valueEl ? getText(valueEl) : '';
+                        addrLog('matched label; extracted value=', value);
+                        if (value) return value;
+                    }
+                }
+                node = node.nextElementSibling;
+            }
+            return '';
+        }
+
+        if (mailingBox) {
+            console.log('[FENNEC (MVP) DB SB] Processing mailing address extraction...');
+            mailingRaw = extractAddressFromHeader(mailingBox);
+            console.log('[FENNEC (MVP) DB SB] Mailing raw extraction result:', mailingRaw);
+            if (mailingRaw && mailingRaw.street && !mailingRaw.cityStateZip && !mailingRaw.cityStateZipCountry) {
+                const cszc = findFollowingValue(mailingBox, /city.*state.*zip.*(country)?/);
+                if (cszc) {
+                    const parts = cszc.split(',').map(s => s.trim());
+                    if (parts.length >= 3) {
+                        const city = parts[0];
+                        const stateZip = parts[1];
+                        const rest = parts.slice(2).join(', ');
+                        const m = stateZip.match(/^([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/i);
+                        const cityStateZip = m ? `${city}, ${m[1]} ${m[2]}` : `${city}, ${stateZip}`;
+                        mailingRaw.cityStateZip = cityStateZip;
+                        if (rest) mailingRaw.country = rest.replace(/^(US|USA)$/i, 'US');
+                    } else {
+                        mailingRaw.cityStateZip = cszc;
+                    }
+                }
+            }
+        }
+        
+        // Fallback: if we couldn't extract physical/mailing addresses from headers,
+        // try to extract them from the general company section
+        if (!physicalRaw || !mailingRaw) {
+            console.log('[FENNEC (MVP) DB SB] Attempting fallback address extraction from company section...');
+            
+            // Look for physical and mailing address fields in the general company section
+            const allLabels = Array.from(document.querySelectorAll('#vcomp .form-body label'));
+            console.log('[FENNEC (MVP) DB SB] Found', allLabels.length, 'labels in company section');
+            
+            if (!physicalRaw) {
+                // Look for Physical Street Address section
+                const physicalHeader = Array.from(document.querySelectorAll('#vcomp .form-body h5')).find(h => 
+                    /physical.*street.*address/i.test(getText(h))
+                );
+                
+                if (physicalHeader) {
+                    console.log('[FENNEC (MVP) DB SB] Found physical header:', getText(physicalHeader));
+                    let currentElement = physicalHeader.nextElementSibling;
+                    const physicalData = {};
+                    
+                    // Traverse through rows after the physical header
+                    while (currentElement && currentElement.tagName && 
+                           !currentElement.matches('h5') && 
+                           !currentElement.classList.contains('white-box')) {
+                        
+                        if (currentElement.classList.contains('row') || currentElement.classList.contains('form-group')) {
+                            const label = currentElement.querySelector('label');
+                            if (label) {
+                                const labelText = getText(label).toLowerCase();
+                                const valueElement = currentElement.querySelector('.col-md-8 p, .col-md-8, .col-md-8 div, .col-md-8 span');
+                                const value = valueElement ? getText(valueElement) : '';
+                                
+                                console.log('[FENNEC (MVP) DB SB] Physical row - Label:', getText(label), 'Value:', value);
+                                
+                                if (labelText.includes('street')) {
+                                    physicalData.street = value.trim();
+                                } else if (labelText.includes('city') || labelText.includes('state') || labelText.includes('zip')) {
+                                    physicalData.cityStateZip = value.trim();
+                                } else if (labelText.includes('county')) {
+                                    physicalData.country = value.trim();
+                                }
+                            }
+                        }
+                        currentElement = currentElement.nextElementSibling;
+                    }
+                    
+                    if (physicalData.street && physicalData.cityStateZip) {
+                        physicalRaw = physicalData;
+                        console.log('[FENNEC (MVP) DB SB] Extracted physical address:', physicalData);
+                    }
+                }
+            }
+            
+            if (!mailingRaw) {
+                // Look for Mailing Address section
+                const mailingHeader = Array.from(document.querySelectorAll('#vcomp .form-body h5')).find(h => 
+                    /mailing.*address/i.test(getText(h))
+                );
+                
+                if (mailingHeader) {
+                    console.log('[FENNEC (MVP) DB SB] Found mailing header:', getText(mailingHeader));
+                    let currentElement = mailingHeader.nextElementSibling;
+                    const mailingData = {};
+                    
+                    // Traverse through rows after the mailing header
+                    while (currentElement && currentElement.tagName && 
+                           !currentElement.matches('h5') && 
+                           !currentElement.classList.contains('white-box')) {
+                        
+                        if (currentElement.classList.contains('row') || currentElement.classList.contains('form-group')) {
+                            const label = currentElement.querySelector('label');
+                            if (label) {
+                                const labelText = getText(label).toLowerCase();
+                                const valueElement = currentElement.querySelector('.col-md-8 p, .col-md-8, .col-md-8 div, .col-md-8 span');
+                                const value = valueElement ? getText(valueElement) : '';
+                                
+                                console.log('[FENNEC (MVP) DB SB] Mailing row - Label:', getText(label), 'Value:', value);
+                                
+                                if (labelText.includes('street')) {
+                                    mailingData.street = value.trim();
+                                } else if (labelText.includes('city') || labelText.includes('state') || labelText.includes('zip')) {
+                                    mailingData.cityStateZip = value.trim();
+                                } else if (labelText.includes('country')) {
+                                    mailingData.country = value.trim();
+                                } else if (labelText.includes('county')) {
+                                    mailingData.country = value.trim();
+                                }
+                            }
+                        }
+                        currentElement = currentElement.nextElementSibling;
+                    }
+                    
+                    if (mailingData.street && mailingData.cityStateZip) {
+                        mailingRaw = mailingData;
+                        console.log('[FENNEC (MVP) DB SB] Extracted mailing address:', mailingData);
+                    }
+                }
+            }
+        }
+        
+        // Enrich extracted addresses if they are missing city/state/zip
+        physicalRaw = enrichAddressWithCityStateZip(physicalRaw);
+        mailingRaw = enrichAddressWithCityStateZip(mailingRaw);
+
+        // If we still don't have physical/mailing addresses, check if there's a single general address
+        // This handles cases where there's only one address (no separate physical/mailing sections)
+        if (!physicalRaw && !mailingRaw) {
+            console.log('[FENNEC (MVP) DB SB] No physical/mailing addresses found, checking for general address...');
+            const allLabels = Array.from(document.querySelectorAll('#vcomp .form-body label'));
+            
+            // Quick check: what labels do we have?
+            const labelTexts = allLabels.map(l => getText(l).trim()).filter(t => t);
+            console.log('[FENNEC (MVP) DB SB] Available labels:', labelTexts);
+            
+                    // Look for general address fields (Street, City, State, Zip) - more flexible matching
+        const streetLabel = allLabels.find(l => {
+            const labelText = getText(l).trim().toLowerCase();
+            return labelText === 'street' || labelText === 'street:' || labelText.includes('street');
+        });
+        console.log('[FENNEC (MVP) DB SB] Street label found:', streetLabel ? getText(streetLabel) : 'NOT FOUND');
+            
+            if (streetLabel) {
+                const streetRow = streetLabel.closest('.row, .form-group');
+                if (streetRow) {
+                    const streetValue = getText(streetRow.querySelector('.col-md-8 p, .col-md-8, .col-md-8 div, .col-md-8 span'));
+                    
+                    // Find City, State, Zip label directly instead of using nextElementSibling
+                    const cityStateZipLabel = allLabels.find(l => {
+                        const labelText = getText(l).trim().toLowerCase();
+                        return labelText === 'city, state, zip' || labelText === 'city, state, zip:' || labelText.includes('city') && labelText.includes('state') && labelText.includes('zip');
+                    });
+                    
+                    console.log('[FENNEC (MVP) DB SB] City/State/Zip label found:', cityStateZipLabel ? getText(cityStateZipLabel) : 'NOT FOUND');
+                    
+                    let cityStateZipValue = '';
+                    if (cityStateZipLabel) {
+                        const cityStateZipRow = cityStateZipLabel.closest('.row, .form-group');
+                        console.log('[FENNEC (MVP) DB SB] City/State/Zip row found:', !!cityStateZipRow);
+                        
+                        if (cityStateZipRow) {
+                            const valueElement = cityStateZipRow.querySelector('.col-md-8 p, .col-md-8, .col-md-8 div, .col-md-8 span');
+                            console.log('[FENNEC (MVP) DB SB] City/State/Zip value element found:', !!valueElement);
+                            
+                            if (valueElement) {
+                                cityStateZipValue = getText(valueElement);
+                                console.log('[FENNEC (MVP) DB SB] City/State/Zip raw value:', cityStateZipValue);
+                            }
+                        }
+                    }
+                    
+                    // Find County label directly
+                    const countyLabel = allLabels.find(l => {
+                        const labelText = getText(l).trim().toLowerCase();
+                        return labelText === 'county' || labelText === 'county:' || labelText.includes('county');
+                    });
+                    
+                    let countyValue = '';
+                    if (countyLabel) {
+                        const countyRow = countyLabel.closest('.row, .form-group');
+                        if (countyRow) {
+                            countyValue = getText(countyRow.querySelector('.col-md-8 p, .col-md-8, .col-md-8 div, .col-md-8 span'));
+                        }
+                    }
+                    
+
+                    
+                    if (streetValue && cityStateZipValue) {
+                        // When there's only one address, set it as physical address only (not duplicated)
+                        const generalAddress = {
+                            street: streetValue.trim(),
+                            cityStateZip: cityStateZipValue.trim(),
+                            county: countyValue.trim()
+                        };
+                        
+                        physicalRaw = generalAddress;
+                        // Don't duplicate - leave mailingRaw as null when there's only one address
+                        
+
+                    }
+                }
+            } else {
+                // If no street label found, try to find any address-related information
+                console.log('[FENNEC (MVP) DB SB] No street label found, trying alternative address extraction...');
+                
+                // Look for any row that might contain address information
+                const allRows = Array.from(document.querySelectorAll('#vcomp .form-body .row, #vcomp .form-body .form-group'));
+                let foundAddress = false;
+                
+                for (const row of allRows) {
+                    const label = row.querySelector('label');
+                    if (label) {
+                        const labelText = getText(label).trim().toLowerCase();
+                        const valueElement = row.querySelector('.col-md-8 p, .col-md-8, .col-md-8 div, .col-md-8 span');
+                        const value = valueElement ? getText(valueElement) : '';
+                        
+                        // If this looks like an address value (contains street number and state)
+                        if (value && /^\d+/.test(value) && /[A-Z]{2}\s+\d{5}/.test(value)) {
+                            console.log('[FENNEC (MVP) DB SB] Found address value:', value);
+                            
+                            // Try to parse the address
+                            const addressMatch = value.match(/^(.+?),\s*([^,]+),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/);
+                            if (addressMatch) {
+                                const [, street, city, state, zip] = addressMatch;
+                                const generalAddress = {
+                                    street: street.trim(),
+                                    cityStateZip: `${city.trim()}, ${state} ${zip}`.trim()
+                                };
+                                
+                                physicalRaw = generalAddress;
+                                // Don't duplicate - leave mailingRaw as null when there's only one address
+                                foundAddress = true;
+                                
+
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (!foundAddress) {
+                    console.log('[FENNEC (MVP) DB SB] No address found in alternative extraction');
+                    
+                    // Final fallback: look for any text that looks like an address in the company section
+                    const companySection = document.querySelector('#vcomp .form-body');
+                    if (companySection) {
+                        const allText = getText(companySection);
+                        
+                        // Look for address patterns like "123 Main St #123, City, ST 12345" or "123 Main St, City, ST 12345"
+                        const addressPattern = /(\d+[^,]+(?:#[^,]*)?),\s*([^,]+),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)/g;
+                        const matches = [...allText.matchAll(addressPattern)];
+                        
+                        if (matches.length > 0) {
+                            const match = matches[0];
+                            const [, street, city, state, zip] = match;
+                            const generalAddress = {
+                                street: street.trim(),
+                                cityStateZip: `${city.trim()}, ${state} ${zip}`.trim()
+                            };
+                            
+                            physicalRaw = generalAddress;
+                            // Don't duplicate - leave mailingRaw as null when there's only one address
+                            
+
+                        }
+                    }
+                }
+            }
+        }
 
         const headerStatus = getText(document.querySelector('.btn-status-text')) || null;
 
+        // Extract order state from order number or page content
+        function getOrderState() {
+            // Try to extract from order number format like "225072481270 - CA"
+            const orderTitle = document.title;
+            const orderMatch = orderTitle.match(/(\d+)\s*-\s*([A-Z]{2})/);
+            if (orderMatch) {
+                return orderMatch[2];
+            }
+            
+            // Try to extract from page content - look for order number patterns
+            const orderElements = Array.from(document.querySelectorAll('*')).filter(el => {
+                const text = getText(el);
+                return text && /\d+\s*-\s*[A-Z]{2}/.test(text);
+            });
+            
+            for (const el of orderElements) {
+                const text = getText(el);
+                const match = text.match(/(\d+)\s*-\s*([A-Z]{2})/);
+                if (match) {
+                    return match[2];
+                }
+            }
+            
+            // Try to extract from page content - look for standalone state codes
+            const stateElements = Array.from(document.querySelectorAll('*')).filter(el => {
+                const text = getText(el);
+                return text && /^\s*[A-Z]{2}\s*$/.test(text.trim());
+            });
+            
+            if (stateElements.length > 0) {
+                const stateText = getText(stateElements[0]).trim();
+                if (stateText.length === 2) {
+                    return stateText;
+                }
+            }
+            
+            // Fallback to formation state if no order state found
+            return companyRaw ? companyRaw.formationState : null;
+        }
+        
+        const orderState = getOrderState();
+        console.log('[FENNEC (MVP) DB SB] Order state extraction:', {
+            orderState: orderState,
+            formationState: companyRaw ? companyRaw.formationState : null,
+            title: document.title
+        });
+        
         const company = companyRaw ? {
             name: companyRaw.name,
             stateId: companyRaw.stateId,
             formationDate: companyRaw.formationDate,
-            state: companyRaw.state,
+            state: orderState || companyRaw.formationState, // Use order state, fallback to formation state
+            formationState: companyRaw.formationState, // Keep formation state for reference
             status: companyRaw.status || headerStatus,
             purpose: companyRaw.purpose,
-            address: buildAddress(companyRaw),
+            address: null, // We'll handle address display separately in the sidebar
             physicalAddress: physicalRaw ? buildAddress(physicalRaw) : null,
-            mailingAddress: mailingRaw ? buildAddress(mailingRaw) : null
+            mailingAddress: mailingRaw ? buildAddress(mailingRaw) : null,
+            // Store raw data for better rendering
+            physicalRaw: physicalRaw,
+            mailingRaw: mailingRaw
         } : (headerStatus ? { status: headerStatus } : null);
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+        // Additional validation: ensure addresses are not coming from wrong sources
+        if (company && company.physicalAddress) {
+            const physAddr = company.physicalAddress.toLowerCase();
+            if (physAddr.includes('733 s manhattan') || physAddr.includes('unit 404')) {
+                console.warn('[FENNEC (MVP) DB SB] WARNING: Physical address appears to be from member data instead of company data:', company.physicalAddress);
+            }
+        }
+        if (company && company.mailingAddress) {
+            const mailAddr = company.mailingAddress.toLowerCase();
+            if (mailAddr.includes('733 s manhattan') || mailAddr.includes('unit 404')) {
+                console.warn('[FENNEC (MVP) DB SB] WARNING: Mailing address appears to be from member data instead of company data:', company.mailingAddress);
+            }
+        }
 
         // 2. AGENT
         const agentRaw = extractSingle('#vagent .form-body', [
@@ -1806,8 +2633,82 @@ class DBLauncher extends Launcher {
 
         // Virtual Address status from #vvirtual-address section or fallback button
         let hasVA = false;
+        let vaBoxNumbers = []; // Store actual box numbers from VA section
         const vaSection = document.querySelector('#vvirtual-address');
         if (vaSection) {
+            // Enhanced extraction of box numbers from the virtual address section
+            const vaTable = vaSection.querySelector('table');
+            if (vaTable) {
+                const rows = Array.from(vaTable.querySelectorAll('tr'));
+                rows.forEach(row => {
+                    const cells = Array.from(row.querySelectorAll('td'));
+                    cells.forEach(cell => {
+                        const text = getText(cell).trim();
+                        // Look for box/suite numbers in various formats
+                        const boxPatterns = [
+                            /#\s*(\d{3,})/, // #12345
+                            /ste\s*(\d{3,})/i, // Ste 12345
+                            /suite\s*(\d{3,})/i, // Suite 12345
+                            /box\s*(\d{3,})/i, // Box 12345
+                            /(\d{3,})/ // Just the number if it's in a suite column
+                        ];
+                        
+                        for (const pattern of boxPatterns) {
+                            const boxMatch = text.match(pattern);
+                            if (boxMatch) {
+                                const boxNum = boxMatch[1];
+                                if (!vaBoxNumbers.includes(boxNum)) {
+                                    vaBoxNumbers.push(boxNum);
+                                    console.log('[FENNEC] Found VA box number:', boxNum, 'from text:', text);
+                                }
+                                break; // Use first match
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // Also check for suite numbers in the expanded VA details
+            const vaDetails = vaSection.querySelectorAll('.form-body, .va-details, [class*="suite"], [class*="box"]');
+            vaDetails.forEach(detail => {
+                const text = getText(detail).trim();
+                // Look for "Suite Number: #1011" pattern
+                const suiteMatch = text.match(/suite\s*number\s*:\s*#?\s*(\d{3,})/i);
+                if (suiteMatch) {
+                    const boxNum = suiteMatch[1];
+                    if (!vaBoxNumbers.includes(boxNum)) {
+                        vaBoxNumbers.push(boxNum);
+                        console.log('[FENNEC] Found VA suite number from details:', boxNum, 'from text:', text);
+                    }
+                }
+            });
+            
+            // Also check for box numbers in other elements within the VA section
+            const allVaElements = Array.from(vaSection.querySelectorAll('*'));
+            allVaElements.forEach(el => {
+                const text = getText(el).trim();
+                
+                // Look for "Suite Number: #1011" pattern specifically
+                const suiteNumberMatch = text.match(/suite\s*number\s*:\s*#?\s*(\d{3,})/i);
+                if (suiteNumberMatch) {
+                    const boxNum = suiteNumberMatch[1];
+                    if (!vaBoxNumbers.includes(boxNum)) {
+                        vaBoxNumbers.push(boxNum);
+                        console.log('[FENNEC] Found VA suite number from element:', boxNum, 'from text:', text);
+                    }
+                } else {
+                    // Fallback to general box number pattern
+                    const boxMatch = text.match(/#\s*(\d{3,})/);
+                    if (boxMatch) {
+                        const boxNum = boxMatch[1];
+                        if (!vaBoxNumbers.includes(boxNum)) {
+                            vaBoxNumbers.push(boxNum);
+                            console.log('[FENNEC] Found VA box number from element:', boxNum, 'from text:', text);
+                        }
+                    }
+                }
+            });
+            
             const vaTexts = Array.from(vaSection.querySelectorAll('td, span'))
                 .map(el => getText(el).toLowerCase());
             hasVA = vaTexts.some(t => t.includes('active'));
@@ -1823,6 +2724,8 @@ class DBLauncher extends Launcher {
             }
         }
 
+        console.log('[FENNEC] Virtual Address Analysis - hasVA:', hasVA, 'vaBoxNumbers:', vaBoxNumbers);
+
         const raClass = raExpired
             ? "copilot-tag copilot-tag-yellow"
             : (hasRA
@@ -1831,7 +2734,24 @@ class DBLauncher extends Launcher {
         const vaClass = hasVA
             ? 'copilot-tag copilot-tag-green'
             : 'copilot-tag copilot-tag-purple';
-        const isVAAddress = addr => hasVA && /#\s*\d{3,}/.test(addr);
+        
+        // Enhanced VA detection: check if address contains any of the known box numbers
+        const isVAAddress = addr => {
+            if (!hasVA || !addr) return false;
+            
+            // Extract box number from the address
+            const addrBoxMatch = addr.match(/#\s*(\d{3,})/);
+            if (!addrBoxMatch) return false; // No box number in address
+            
+            const addrBoxNum = addrBoxMatch[1];
+            
+            // Check if this box number matches any of the active VA box numbers
+            const isMatchingVA = vaBoxNumbers.some(vaBoxNum => vaBoxNum === addrBoxNum);
+            
+            console.log('[FENNEC] VA Detection - Address:', addr, 'Address Box:', addrBoxNum, 'VA Boxes:', vaBoxNumbers, 'Is VA:', isMatchingVA);
+            
+            return isMatchingVA;
+        };
 
         const addrValues = Object.values(addrMap);
         const addrEntries = addrValues
@@ -1977,20 +2897,131 @@ class DBLauncher extends Launcher {
             const phys = company.physicalAddress;
             const mail = company.mailingAddress;
             
-            // Always show both addresses when they exist, regardless of whether they're the same
+
+            
+            
+            
+            // Handle address display logic
+            console.log('[FENNEC] Address display debug - phys:', !!phys, 'mail:', !!mail, 'physicalRaw:', !!company.physicalRaw, 'mailingRaw:', !!company.mailingRaw);
+            if (company.physicalRaw) console.log('[FENNEC] Physical raw data:', company.physicalRaw);
+            if (company.mailingRaw) console.log('[FENNEC] Mailing raw data:', company.mailingRaw);
+            
             if (phys && mail) {
-                // Show both addresses separately with clean USPS links
-                addrHtml += `<div><b>Physical:</b> ${renderAddress(phys, isVAAddress(phys))}</div>`;
-                addrHtml += `<div><b>Mailing:</b> ${renderAddress(mail, isVAAddress(mail))}</div>`;
+                // Both addresses exist - show with labels and tags
+                const physObj = company.physicalRaw || { street: phys };
+                const mailObj = company.mailingRaw || { street: mail };
+                addrLog('COMP render both - before build', { physObj, mailObj });
+                
+                // Enhanced address building that preserves box numbers
+                const physBuilt = typeof physObj === 'string' ? buildAddress({ street: physObj }) : buildAddress(physObj);
+                const mailBuilt = typeof mailObj === 'string' ? buildAddress({ street: mailObj }) : buildAddress(mailObj);
+                
+                // Fallback: if buildAddress returned only the street, pull City/State/ZIP values in order from the Company section
+                let finalPhys = physBuilt;
+                let finalMail = mailBuilt;
+                const cszNodes = Array.from(document.querySelectorAll('#vcomp .form-body label')).filter(l => /city.*state.*zip/i.test(getText(l)));
+                const cszValues = cszNodes.map(l => {
+                    const row = l.closest('.row, .form-group, .col-md-12');
+                    const valEl = row ? row.querySelector('.col-md-8 p, .col-md-8, .col-md-8 div, .col-md-8 span') : null;
+                    return valEl ? getText(valEl) : '';
+                }).filter(Boolean);
+                const hasCSZ = s => /[A-Z]{2}\s+\d{5}/i.test(s);
+                if (!hasCSZ(finalPhys) && cszValues[0]) finalPhys = `${physBuilt}, ${cszValues[0]}`;
+                if (!hasCSZ(finalMail) && cszValues[1]) finalMail = `${mailBuilt}, ${cszValues[1]}`;
+                
+                // Enhanced address parsing that preserves box numbers
+                const parseAddressWithBox = (addrStr) => {
+                    if (!addrStr) return { street: '', cityStateZip: '' };
+                    
+                    // Look for box/suite patterns in the address
+                    const boxPattern = /(.*?)(?:,\s*)?(?:ste|suite|#)\s*(\d{3,})(?:,\s*)?(.*)/i;
+                    const match = addrStr.match(boxPattern);
+                    
+                    if (match) {
+                        const street = match[1].trim();
+                        const boxNum = match[2];
+                        const rest = match[3] ? match[3].trim() : '';
+                        return {
+                            street: `${street}, Ste ${boxNum}`,
+                            cityStateZip: rest
+                        };
+                    }
+                    
+                    // Fallback to simple comma split - ensure box numbers stay in street line
+                    const parts = addrStr.split(',');
+                    if (parts.length >= 2) {
+                        const street = parts[0] || '';
+                        const secondPart = parts[1] || '';
+                        
+                        // Check if second part contains a box number
+                        const boxMatch = secondPart.match(/(?:ste|suite|#)\s*(\d{3,})/i);
+                        if (boxMatch) {
+                            // Box number is in second part, move it to street
+                            const boxNum = boxMatch[1];
+                            const cleanSecondPart = secondPart.replace(/(?:ste|suite|#)\s*\d{3,}/i, '').trim();
+                            const rest = [cleanSecondPart, ...parts.slice(2)].join(',').trim();
+                            return {
+                                street: `${street}, Ste ${boxNum}`,
+                                cityStateZip: rest
+                            };
+                        }
+                    }
+                    
+                    // Default fallback
+                    const street = parts[0] || '';
+                    const rest = parts.slice(1).join(',').trim();
+                    return { street, cityStateZip: rest };
+                };
+                
+                const physParsed = parseAddressWithBox(finalPhys);
+                const mailParsed = parseAddressWithBox(finalMail);
+                
+                // For mailing address, use the properly extracted data from mailingRaw if available
+                let mailCsz = mailParsed.cityStateZip;
+                if (company.mailingRaw && company.mailingRaw.cityStateZipCountry) {
+                    mailCsz = company.mailingRaw.cityStateZipCountry;
+                } else if (company.mailingRaw && company.mailingRaw.cityStateZip) {
+                    mailCsz = company.mailingRaw.cityStateZip;
+                }
+                
+                const physObj2 = { 
+                    street: physParsed.street, 
+                    cityStateZipCountry: physParsed.cityStateZip || physCsz 
+                };
+                const mailObj2 = { 
+                    street: mailParsed.street, 
+                    cityStateZipCountry: mailCsz 
+                };
+                
+                addrLog('COMP render both - final objects', { physObj2, mailObj2 });
+                addrLog('COMP mailing debug - mailingRaw:', company.mailingRaw, 'mailCsz:', mailCsz, 'cszValues:', cszValues);
+                addrLog('COMP address objects - physObj2:', physObj2, 'mailObj2:', mailObj2);
+                
+                // Use enhanced VA detection that considers box numbers
+                const physIsVA = isVAAddress(finalPhys) || isVAAddress(physParsed.street);
+                const mailIsVA = isVAAddress(finalMail) || isVAAddress(mailParsed.street);
+                
+                addrHtml += `<div><b>Physical:</b> ${renderAddressFromObject(physObj2, physIsVA)}</div>`;
+                addrHtml += `<div><b>Mailing:</b> ${renderAddressFromObject(mailObj2, mailIsVA)}</div>`;
             } else if (phys) {
-                // Only physical address exists
-                addrHtml += `<div><b>Physical:</b> ${renderAddress(phys, isVAAddress(phys))}</div>`;
+                // Only physical address exists - show without tag
+                const physBuilt = typeof (company.physicalRaw || phys) === 'string' ? buildAddress({ street: phys }) : buildAddress(company.physicalRaw || phys);
+                // Check if this is a VA address and preserve box numbers
+                const isPhysVA = isVAAddress(physBuilt);
+                addrHtml = `<div>${isPhysVA ? renderAddress(physBuilt, true) : renderAddressWithoutTag(physBuilt)}</div>`;
             } else if (mail) {
-                // Only mailing address exists
-                addrHtml += `<div><b>Mailing:</b> ${renderAddress(mail, isVAAddress(mail))}</div>`;
-            } else if (company.address) {
-                // Fallback to general company address
-                addrHtml = `<div>${renderAddress(company.address, isVAAddress(company.address))}</div>`;
+                // Only mailing address exists - show without tag
+                const mailBuilt = typeof (company.mailingRaw || mail) === 'string' ? buildAddress({ street: mail }) : buildAddress(company.mailingRaw || mail);
+                // Check if this is a VA address and preserve box numbers
+                const isMailVA = isVAAddress(mailBuilt);
+                addrHtml = `<div>${isMailVA ? renderAddress(mailBuilt, true) : renderAddressWithoutTag(mailBuilt)}</div>`;
+            } else if (company.address && company.address.trim()) {
+                // Fallback to general company address only if it's not empty - show without tag
+                const isAddrVA = isVAAddress(company.address);
+                addrHtml = `<div>${isAddrVA ? renderAddress(company.address, true) : renderAddressWithoutTag(company.address)}</div>`;
+            } else {
+                // If no valid addresses found, show a placeholder
+                addrHtml = `<div style="color:#aaa">No address information available</div>`;
             }
             
             const companyLines = [];
@@ -2002,10 +3033,78 @@ class DBLauncher extends Launcher {
             }
             highlight.push(`<div><b>${nameText} ${renderCopyIcon(company.name)}</b></div>`);
             if (orderIdHighlight) {
-                const typeLabel = currentOrderTypeText
-                    ? ` <span class="copilot-tag copilot-tag-white">${escapeHtml(currentOrderTypeText)}</span>`
-                    : '';
-                highlight.push(`<div><b>${renderCopy(orderIdHighlight)} ${renderCopyIcon(orderIdHighlight)}${typeLabel}</b></div>`);
+                // Get order type and status
+                const orderInfo = getBasicOrderInfo();
+                const orderStatus = getOrderStatus();
+                
+                // Format order type - remove "BUSINESS FORMATION" for formation orders
+                let typeLabel = '';
+                let orderTypeText = currentOrderTypeText || orderInfo.type || '';
+                
+                if (orderTypeText) {
+                    let displayType = orderTypeText;
+                    // More aggressive cleaning of "BUSINESS FORMATION" text
+                    if (orderTypeText.toLowerCase().includes('business formation')) {
+                        // Extract just the package type (SILVER, GOLD, PLATINUM)
+                        const packageMatch = orderTypeText.match(/(SILVER|GOLD|PLATINUM)/i);
+                        if (packageMatch) {
+                            displayType = packageMatch[1];
+                        } else {
+                            // Remove all variations of "Business Formation"
+                            displayType = orderTypeText
+                                .replace(/business\s*formation\s*[-–—]\s*/gi, '')
+                                .replace(/business\s*formation\s*/gi, '')
+                                .trim();
+                        }
+                    }
+                    typeLabel = ` <span class="copilot-tag copilot-tag-white">${escapeHtml(displayType)}</span>`;
+                }
+                
+                // Add status label if available
+                let statusLabel = '';
+                if (orderStatus.status) {
+                    statusLabel = ` <span class="copilot-tag ${orderStatus.statusClass}">${escapeHtml(orderStatus.status)}</span>`;
+                } else if (orderInfo.status) {
+                    // Fallback to status from getBasicOrderInfo
+                    const statusText = orderInfo.status.toLowerCase();
+                    let statusClass = '';
+                    if (statusText.includes('review')) {
+                        statusClass = 'copilot-tag-review';
+                    } else if (statusText.includes('processing')) {
+                        statusClass = 'copilot-tag-processing';
+                    } else if (statusText.includes('hold')) {
+                        statusClass = 'copilot-tag-hold';
+                    } else if (statusText.includes('forwarded')) {
+                        statusClass = 'copilot-tag-forwarded';
+                    } else if (statusText.includes('shipped')) {
+                        statusClass = 'copilot-tag-shipped';
+                    } else if (statusText.includes('canceled') || statusText.includes('cancelled')) {
+                        statusClass = 'copilot-tag-canceled';
+                    }
+                    
+                    if (statusClass) {
+                        statusLabel = ` <span class="copilot-tag ${statusClass}">${escapeHtml(orderInfo.status.toUpperCase())}</span>`;
+                    }
+                }
+                
+                console.log('[FENNEC] Order type and status debug:', { 
+                    orderTypeText, 
+                    displayType: typeLabel ? 'YES' : 'NO', 
+                    orderStatus: orderStatus.status, 
+                    orderInfoStatus: orderInfo.status,
+                    statusLabel: statusLabel ? 'YES' : 'NO' 
+                });
+                
+                // Order ID on its own line
+                highlight.push(`<div><b>${renderCopy(orderIdHighlight)} ${renderCopyIcon(orderIdHighlight)}</b></div>`);
+                
+                // Order type and status tags on their own line
+                if (typeLabel || statusLabel) {
+                    const tagsLine = [];
+                    if (typeLabel) tagsLine.push(typeLabel);
+                    if (statusLabel) tagsLine.push(statusLabel);
+                    highlight.push(`<div>${tagsLine.join(' ')}</div>`);
+                }
             }
             if (company.stateId && company.stateId.toLowerCase() !== 'n/a') {
                 let idHtml = escapeHtml(company.stateId);
@@ -2022,16 +3121,27 @@ class DBLauncher extends Launcher {
                 highlight.push(`<div><b>${escapeHtml(company.formationDate)}</b></div>`);
             }
             const searchIcon = '<span class="company-search-toggle">🔍</span>';
-            companyLines.push(`<div class="company-summary-highlight">${highlight.join('')}${searchIcon}</div>`);
-            companyLines.push(`<div>${renderKb(company.state)}</div>`);
+            // Move state inside the lightbox
+            const stateHtml = company.state ? `<div>${renderKb(company.state)}</div>` : '';
+            companyLines.push(`<div class="company-summary-highlight">${highlight.join('')}${stateHtml}${searchIcon}</div>`);
             companyLines.push(addrHtml);
+
             companyLines.push(`<div class="company-purpose">${renderCopy(company.purpose)}</div>`);
+            // Check if VA is active but not being used in any address
+            const vaNotUsed = hasVA && vaBoxNumbers.length > 0 && !isVAAddress(company.physicalAddress) && !isVAAddress(company.mailingAddress);
+            
             companyLines.push(
                 `<div><span class="${raClass}">RA: ${raExpired ? "EXPIRED" : (hasRA ? "Sí" : "No")}</span> ` +
                 `<span class="${vaClass}">VA: ${hasVA ? "Sí" : "No"}</span></div>`
             );
+            
+            // Add VA not being used legend if applicable
+            if (vaNotUsed) {
+                companyLines.push(`<div style="font-size: 9px; color: #888; margin-top: 2px;">VA IS NOT BEING USED</div>`);
+            }
             const stateAttr = company.state ? ` data-state="${escapeHtml(company.state)}"` : '';
             const compSection = `<div class="section-label">COMPANY:</div><div class="white-box company-box"${stateAttr} style="margin-bottom:10px">${companyLines.join('').trim()}</div>`;
+            console.log('[FENNEC] DB PRINT - Company section HTML:', compSection);
             if (companyLines.length) {
                 html += compSection;
                 dbSections.push(compSection);
@@ -2063,8 +3173,26 @@ class DBLauncher extends Launcher {
             const agentLines = [];
             const nameHtml = renderName(agent.name);
             if (nameHtml) agentLines.push(`<div><b>${nameHtml}</b></div>`);
-            const addrHtml2 = renderAddress(agent.address, isVAAddress(agent.address));
-            if (addrHtml2) agentLines.push(`<div>${addrHtml2}</div>`);
+            
+            // For active agents, show RA tag instead of envelope/copy icons
+            const isActiveAgent = /^yes/i.test(status);
+            if (isActiveAgent) {
+                // Show address with RA tag (like VA tag)
+                const addrHtml2 = renderAddress(agent.address, false); // Don't use VA detection for agents
+                if (addrHtml2) {
+                    // Replace the envelope/copy icons with RA tag
+                    const addrWithRATag = addrHtml2.replace(
+                        /<span class="copilot-usps".*?<\/span><span class="copilot-copy-icon".*?<\/span>/,
+                        ' <span class="copilot-tag copilot-tag-green">RA</span>'
+                    );
+                    agentLines.push(`<div>${addrWithRATag}</div>`);
+                }
+            } else {
+                // Show normal address with envelope/copy icons for inactive agents
+                const addrHtml2 = renderAddress(agent.address, isVAAddress(agent.address));
+                if (addrHtml2) agentLines.push(`<div>${addrHtml2}</div>`);
+            }
+            
             if (showStatus) agentLines.push(`<div>${statusHtml}</div>`);
             if (agentLines.length) {
                 const agentSection = `
@@ -2192,7 +3320,7 @@ class DBLauncher extends Launcher {
             <div id="int-storage-section" style="display:none; margin-top:10px;">
                 <div class="section-label">INT STORAGE:</div>
                 <div id="int-storage-box" class="white-box" style="margin-bottom:10px">
-                    <div style="text-align:center;color:#aaa">Loading...</div>
+                    <div style="text-align:center;color:#aaa">Loading<span class="loading-dots">...</span></div>
                 </div>
             </div>
         `;
@@ -2251,6 +3379,12 @@ class DBLauncher extends Launcher {
             }
             
             attachCommonListeners(body);
+            
+            // Re-attach listeners after a short delay to ensure all content is rendered
+            setTimeout(() => {
+                attachCommonListeners(body);
+            }, 100);
+            
             insertDnaAfterCompany();
             if (typeof applyStandardSectionOrder === 'function') {
                 applyStandardSectionOrder(body.querySelector('#db-summary-section'));
@@ -2260,7 +3394,11 @@ class DBLauncher extends Launcher {
             if (typeof checkLastIssue === 'function') {
                 checkLastIssue(orderInfo.orderId);
             }
-            console.log('[FENNEC (POO) DB SB] About to load INT STORAGE from extractAndShowFormationData with orderId:', orderInfo.orderId);
+            
+            // Setup global drag and drop for INT STORAGE uploads
+            setupGlobalIntStorageDrop(body, orderInfo.orderId);
+            
+            console.log('[FENNEC (MVP) DB SB] About to load INT STORAGE from extractAndShowFormationData with orderId:', orderInfo.orderId);
             loadIntStorage(orderInfo.orderId);
             // Store INT STORAGE data to share with other environments
             chrome.storage.local.set({ 
@@ -2268,19 +3406,19 @@ class DBLauncher extends Launcher {
                 intStorageOrderId: orderInfo.orderId 
             });
             if (miscMode) {
-                console.log('[FENNEC (POO)] MISC mode detected in extractAndShowFormationData, auto-opening family tree');
+                console.log('[FENNEC (MVP)] MISC mode detected in extractAndShowFormationData, auto-opening family tree');
                 // Use multiple attempts to ensure family tree opens
                 const attemptAutoOpen = (attempt = 1) => {
-                    console.log(`[FENNEC (POO)] Auto-open attempt ${attempt} for MISC order`);
+                    console.log(`[FENNEC (MVP)] Auto-open attempt ${attempt} for MISC order`);
                     const ftIcon = document.getElementById('family-tree-icon');
                     if (ftIcon && ftIcon.style.display !== 'none') {
-                        console.log('[FENNEC (POO)] Family tree icon found and visible, triggering auto-open');
+                        console.log('[FENNEC (MVP)] Family tree icon found and visible, triggering auto-open');
                         autoOpenFamilyTree();
                     } else if (attempt < 5) {
-                        console.log(`[FENNEC (POO)] Family tree icon not ready, retrying in ${attempt * 500}ms`);
+                        console.log(`[FENNEC (MVP)] Family tree icon not ready, retrying in ${attempt * 500}ms`);
                         setTimeout(() => attemptAutoOpen(attempt + 1), attempt * 500);
                     } else {
-                        console.warn('[FENNEC (POO)] Family tree icon not found after 5 attempts');
+                        console.warn('[FENNEC (MVP)] Family tree icon not found after 5 attempts');
                     }
                 };
                 
@@ -2291,7 +3429,7 @@ class DBLauncher extends Launcher {
                     });
                 }, 1500);
             } else {
-                console.log('[FENNEC (POO)] Not MISC mode in extractAndShowFormationData, miscMode:', miscMode, 'orderType:', currentOrderTypeText);
+                console.log('[FENNEC (MVP)] Not MISC mode in extractAndShowFormationData, miscMode:', miscMode, 'orderType:', currentOrderTypeText);
             }
         }
     }
@@ -2494,6 +3632,22 @@ class DBLauncher extends Launcher {
         }
         if (info.ekata) {
             const e = info.ekata;
+            
+            // Handle new KOUNT 360 EKATA structure
+            if (e.scores && typeof e.scores === 'object') {
+                const scoreParts = [];
+                Object.entries(e.scores).forEach(([key, value]) => {
+                    if (value && value !== '--') {
+                        const label = key.replace('ekata.', '').replace(/([A-Z])/g, ' $1').trim();
+                        scoreParts.push(`<div><b>${label}:</b> ${escapeHtml(value)}</div>`);
+                    }
+                });
+                if (scoreParts.length) {
+                    parts.push(`<div><b>EKATA SCORES</b><br>${scoreParts.join('')}</div>`);
+                }
+            }
+            
+            // Handle legacy EKATA data structure
             const ipLine = e.ipValid || e.proxyRisk ? `<div><b>IP Valid:</b> ${escapeHtml(e.ipValid || '')} <b>Proxy:</b> ${escapeHtml(e.proxyRisk || '')}</div>` : '';
             const addrLine = e.addressToName || e.residentName ? `<div><b>Address to Name:</b> ${escapeHtml(e.addressToName || '')}<br><b>Resident Name:</b> ${escapeHtml(e.residentName || '')}</div>` : '';
             if (ipLine) parts.push(ipLine);
@@ -2562,14 +3716,14 @@ class DBLauncher extends Launcher {
             const info = getLastIssueInfo();
             fillIssueBox(info, orderId);
         } catch (err) {
-            console.warn('[FENNEC (POO)] Issue extraction failed:', err);
+            console.warn('[FENNEC (MVP)] Issue extraction failed:', err);
             fillIssueBox(null, orderId);
         }
     }
     window.checkLastIssue = checkLastIssue;
 
     function clearSidebar() {
-        console.log('[FENNEC (POO) DB SB] Clearing all storage and resetting sidebar to brand new state');
+        console.log('[FENNEC (MVP) DB SB] Clearing all storage and resetting sidebar to brand new state');
         
         // Clear all session data
         sessionSet({
@@ -2617,7 +3771,7 @@ class DBLauncher extends Launcher {
             'sidebarSnapshot',
             'fennecActiveSession'
         ], () => {
-            console.log('[FENNEC (POO) DB SB] Cleared all storage data during sidebar clear');
+            console.log('[FENNEC (MVP) DB SB] Cleared all storage data during sidebar clear');
         });
         
         // Clear any INT STORAGE data
@@ -2646,7 +3800,7 @@ class DBLauncher extends Launcher {
         
         updateReviewDisplay();
         
-        console.log('[FENNEC (POO) DB SB] Sidebar cleared and reset to brand new state');
+        console.log('[FENNEC (MVP) DB SB] Sidebar cleared and reset to brand new state');
     }
 
     function getBillingInfo() {
@@ -2682,12 +3836,12 @@ class DBLauncher extends Launcher {
 
     function openCancelPopup() {
         const statusBtn = document.querySelector('.btn-status-text');
-        if (!statusBtn) return console.warn('[FENNEC (POO)] Status dropdown not found');
+        if (!statusBtn) return console.warn('[FENNEC (MVP)] Status dropdown not found');
         statusBtn.click();
         setTimeout(() => {
             const cancelLink = Array.from(document.querySelectorAll('.dropdown-menu a'))
                 .find(a => /cancel.*refund/i.test(a.textContent));
-            if (!cancelLink) return console.warn('[FENNEC (POO)] Cancel option not found');
+            if (!cancelLink) return console.warn('[FENNEC (MVP)] Cancel option not found');
             sessionStorage.removeItem('fennecCancelPending');
             cancelLink.click();
             selectCancelReason();
@@ -2725,7 +3879,7 @@ class DBLauncher extends Launcher {
             const yesBtn = document.getElementById('fraud-review-yes-button');
             
             if (modal && yesBtn) {
-                console.log('[FENNEC (POO) DB SB] Found fraud review confirmation dialog, clicking YES');
+                console.log('[FENNEC (MVP) DB SB] Found fraud review confirmation dialog, clicking YES');
                 yesBtn.click();
             } else {
                 // Retry after a short delay
@@ -2889,7 +4043,7 @@ class DBLauncher extends Launcher {
                 });
             }).then(() => {
                 sessionSet({ fennecUploadDone: { time: Date.now(), fileName: file.fileName, origName: file.origName, converted: !!file.converted } }, uploadNext);
-            }).catch(err => { console.warn('[FENNEC (POO)] Upload failed:', err); uploadNext(); });
+            }).catch(err => { console.warn('[FENNEC (MVP)] Upload failed:', err); uploadNext(); });
         };
         uploadNext();
     }
@@ -2991,11 +4145,409 @@ class DBLauncher extends Launcher {
                 })
                 .catch(err => {
                     results.textContent = "Network error";
-                    console.error("[FENNEC (POO)] Coda search error:", err);
+                    console.error("[FENNEC (MVP)] Coda search error:", err);
                 });
         };
         btn.addEventListener('click', runSearch);
         input.addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+    }
+
+    function openEINSearch() {
+        const info = getBasicOrderInfo();
+        const client = getClientInfo();
+        const company = getCompanyInfo();
+        
+        // Open the IRS EIN application page
+        const url = 'https://sa.www4.irs.gov/applyein/';
+        bg.openActiveTab({ url });
+        
+        // Store the data for the EIN automation process
+        sessionStorage.setItem('fennecEINData', JSON.stringify({
+            orderInfo: info,
+            clientInfo: client,
+            companyInfo: company,
+            timestamp: Date.now()
+        }));
+        
+        // Start the EIN automation process after a short delay
+        setTimeout(() => {
+            startEINAutomation();
+        }, 2000);
+        
+        // Also set up a listener for when the page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => {
+                    startEINAutomation();
+                }, 1000);
+            });
+        } else {
+            // Page is already loaded
+            setTimeout(() => {
+                startEINAutomation();
+            }, 1000);
+        }
+    }
+
+    function startEINAutomation() {
+        // Check if we're on the EIN application page
+        if (!location.href.includes('sa.www4.irs.gov/applyein')) {
+            return;
+        }
+
+        const einData = JSON.parse(sessionStorage.getItem('fennecEINData') || '{}');
+        if (!einData.companyInfo || !einData.companyInfo.name) {
+            console.log('[FENNEC] No company data available for EIN automation');
+            return;
+        }
+
+        console.log('[FENNEC] Starting EIN automation process...');
+        
+        // Show detected information summary
+        showEINInfoSummary(einData);
+        
+        // Step 1: Click "Begin Application Now" button
+        const beginButton = document.querySelector('a[aria-label="Begin Application Now"]') || 
+                           Array.from(document.querySelectorAll('a')).find(a => a.textContent.includes('Begin Application Now'));
+        
+        if (beginButton) {
+            console.log('[FENNEC] Clicking Begin Application Now...');
+            beginButton.click();
+            
+            // Wait for page load and continue to next step
+            setTimeout(() => {
+                step2SelectEntityType();
+            }, 3000);
+        } else {
+            console.log('[FENNEC] Begin Application button not found, trying alternative approach...');
+            // Try to find any button that might start the application
+            const startButtons = Array.from(document.querySelectorAll('a, button')).filter(el => 
+                el.textContent.toLowerCase().includes('begin') || 
+                el.textContent.toLowerCase().includes('start') ||
+                el.textContent.toLowerCase().includes('apply')
+            );
+            
+            if (startButtons.length > 0) {
+                console.log('[FENNEC] Found alternative start button, clicking...');
+                startButtons[0].click();
+                setTimeout(() => {
+                    step2SelectEntityType();
+                }, 3000);
+            } else {
+                console.log('[FENNEC] No start button found');
+            }
+        }
+    }
+
+    function step2SelectEntityType() {
+        const einData = JSON.parse(sessionStorage.getItem('fennecEINData') || '{}');
+        const entityType = einData.companyInfo?.type || 'LLC';
+        
+        console.log('[FENNEC] Detected entity type:', entityType);
+        
+        // Select the appropriate entity type
+        let targetRadio = null;
+        
+        if (entityType === 'LLC') {
+            // Look for LLC option
+            targetRadio = document.querySelector('input[type="radio"][value="LLC"]') ||
+                         Array.from(document.querySelectorAll('input[type="radio"]')).find(radio => {
+                             const label = document.querySelector(`label[for="${radio.id}"]`);
+                             return label && label.textContent.includes('Limited Liability Company');
+                         });
+        } else if (entityType === 'CORP') {
+            // Look for Corporation option
+            targetRadio = document.querySelector('input[type="radio"][value="CORP"]') ||
+                         Array.from(document.querySelectorAll('input[type="radio"]')).find(radio => {
+                             const label = document.querySelector(`label[for="${radio.id}"]`);
+                             return label && (label.textContent.includes('Corporation') || 
+                                            label.textContent.includes('Corp'));
+                         });
+        }
+        
+        if (targetRadio) {
+            console.log('[FENNEC] Selecting', entityType, '...');
+            targetRadio.click();
+            targetRadio.checked = true;
+            targetRadio.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            // Find and click the Continue button
+            setTimeout(() => {
+                const continueBtn = document.querySelector('button[type="submit"]') ||
+                                  document.querySelector('input[type="submit"]') ||
+                                  Array.from(document.querySelectorAll('button')).find(btn => 
+                                      btn.textContent.toLowerCase().includes('continue') ||
+                                      btn.textContent.toLowerCase().includes('next')
+                                  );
+                
+                if (continueBtn) {
+                    console.log('[FENNEC] Clicking Continue...');
+                    continueBtn.click();
+                    setTimeout(() => {
+                        step3SelectMemberType();
+                    }, 3000);
+                } else {
+                    console.log('[FENNEC] Continue button not found');
+                }
+            }, 1000);
+        } else {
+            console.log('[FENNEC]', entityType, 'radio button not found');
+        }
+    }
+
+    function step3SelectMemberType() {
+        const einData = JSON.parse(sessionStorage.getItem('fennecEINData') || '{}');
+        const memberType = einData.companyInfo?.memberType || 'single';
+        
+        console.log('[FENNEC] Detected member type:', memberType);
+        
+        // Select the appropriate member type
+        let targetRadio = null;
+        
+        if (memberType === 'single') {
+            // Look for Single Member option
+            targetRadio = document.querySelector('input[type="radio"][value="single"]') ||
+                         Array.from(document.querySelectorAll('input[type="radio"]')).find(radio => {
+                             const label = document.querySelector(`label[for="${radio.id}"]`);
+                             return label && (label.textContent.includes('Single Member') || 
+                                            label.textContent.includes('1 member') ||
+                                            label.textContent.includes('One Member'));
+                         });
+        } else if (memberType === 'multi') {
+            // Look for Multi-Member option
+            targetRadio = document.querySelector('input[type="radio"][value="multi"]') ||
+                         Array.from(document.querySelectorAll('input[type="radio"]')).find(radio => {
+                             const label = document.querySelector(`label[for="${radio.id}"]`);
+                             return label && (label.textContent.includes('Multiple Members') || 
+                                            label.textContent.includes('Multi Member') ||
+                                            label.textContent.includes('2 members') ||
+                                            label.textContent.includes('3 members'));
+                         });
+        }
+        
+        if (targetRadio) {
+            console.log('[FENNEC] Selecting', memberType, 'member...');
+            targetRadio.click();
+            targetRadio.checked = true;
+            targetRadio.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            setTimeout(() => {
+                const continueBtn = document.querySelector('button[type="submit"]') ||
+                                  document.querySelector('input[type="submit"]') ||
+                                  Array.from(document.querySelectorAll('button')).find(btn => 
+                                      btn.textContent.toLowerCase().includes('continue') ||
+                                      btn.textContent.toLowerCase().includes('next')
+                                  );
+                
+                if (continueBtn) {
+                    console.log('[FENNEC] Clicking Continue...');
+                    continueBtn.click();
+                    setTimeout(() => {
+                        step4FillCompanyInfo();
+                    }, 3000);
+                } else {
+                    console.log('[FENNEC] Continue button not found');
+                }
+            }, 1000);
+        } else {
+            console.log('[FENNEC]', memberType, 'member radio button not found');
+        }
+    }
+
+    function step4FillCompanyInfo() {
+        const einData = JSON.parse(sessionStorage.getItem('fennecEINData') || '{}');
+        const companyInfo = einData.companyInfo || {};
+        
+        console.log('[FENNEC] Filling company information:', companyInfo);
+        
+        // Fill in the company name
+        const nameInput = document.querySelector('#legalNameInput, input[name="legalNameInput"]');
+        if (nameInput && companyInfo.name) {
+            console.log('[FENNEC] Filling company name:', companyInfo.name);
+            nameInput.value = companyInfo.name;
+            nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+            nameInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        // Fill in physical address (from EIN section)
+        const einAddress = companyInfo.einAddress || {};
+        if (einAddress.street) {
+            const streetInput = document.querySelector('input[name*="street"], input[name*="address"]');
+            if (streetInput) {
+                streetInput.value = einAddress.street;
+                streetInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+        
+        if (einAddress.city) {
+            const cityInput = document.querySelector('input[name*="city"]');
+            if (cityInput) {
+                cityInput.value = einAddress.city;
+                cityInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+        
+        if (einAddress.state) {
+            const stateInput = document.querySelector('input[name*="state"], select[name*="state"]');
+            if (stateInput) {
+                stateInput.value = einAddress.state;
+                stateInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+        
+        if (einAddress.zip) {
+            const zipInput = document.querySelector('input[name*="zip"], input[name*="postal"]');
+            if (zipInput) {
+                zipInput.value = einAddress.zip;
+                zipInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        }
+
+        // Fill in formation state (state where formation was ordered)
+        if (companyInfo.formationState) {
+            const formationStateInput = document.querySelector('input[name*="formation"], select[name*="formation"]');
+            if (formationStateInput) {
+                formationStateInput.value = companyInfo.formationState;
+                formationStateInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }
+
+        // Set start date to today if available
+        const startDateInput = document.querySelector('#startDateInput, input[name="startDateInput"]');
+        if (startDateInput) {
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+            startDateInput.value = formattedDate;
+            startDateInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        // Fill in county if available
+        const countyInput = document.querySelector('#countyInput, input[name="countyInput"]');
+        if (countyInput && companyInfo.county) {
+            countyInput.value = companyInfo.county;
+            countyInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        console.log('[FENNEC] Company information filled. User can continue manually.');
+        
+        // Show a detailed notification to the user
+        const notificationMessage = `Company information filled:
+• Name: ${companyInfo.name || 'N/A'}
+• Type: ${companyInfo.type || 'N/A'}
+• Members: ${companyInfo.memberType || 'N/A'}
+• Formation State: ${companyInfo.formationState || 'N/A'}
+• Address: ${einAddress.street || 'N/A'}, ${einAddress.city || 'N/A'}, ${einAddress.state || 'N/A'}
+
+Please review and continue with the application.`;
+        
+        showEINNotification(notificationMessage);
+    }
+
+    function showEINNotification(message) {
+        // Create a notification overlay
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            max-width: 400px;
+            max-height: 300px;
+            overflow-y: auto;
+            cursor: pointer;
+            white-space: pre-line;
+            line-height: 1.4;
+        `;
+        notification.textContent = message;
+        notification.title = 'Click to dismiss';
+        notification.onclick = () => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        };
+        document.body.appendChild(notification);
+        
+        // Remove notification after 15 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 15000);
+    }
+
+    // Manual trigger function for EIN automation
+    function triggerEINAutomation() {
+        if (location.href.includes('sa.www4.irs.gov/applyein')) {
+            console.log('[FENNEC] Manual EIN automation triggered');
+            startEINAutomation();
+        } else {
+            console.log('[FENNEC] Not on EIN application page');
+        }
+    }
+
+    // Add keyboard shortcut for manual trigger (Ctrl+Shift+E)
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+            triggerEINAutomation();
+        }
+    });
+
+    // Add a floating button for manual trigger
+    function addEINTriggerButton() {
+        if (location.href.includes('sa.www4.irs.gov/applyein')) {
+            const button = document.createElement('div');
+            button.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: #2196F3;
+                color: white;
+                padding: 10px 15px;
+                border-radius: 5px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                z-index: 10000;
+                font-family: Arial, sans-serif;
+                font-size: 12px;
+                cursor: pointer;
+                user-select: none;
+            `;
+            button.textContent = 'FENNEC EIN';
+            button.title = 'Click to start EIN automation (Ctrl+Shift+E)';
+            button.onclick = triggerEINAutomation;
+            document.body.appendChild(button);
+        }
+    }
+
+    // Add the trigger button when page loads
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', addEINTriggerButton);
+    } else {
+        addEINTriggerButton();
+    }
+
+    function showEINInfoSummary(einData) {
+        const companyInfo = einData.companyInfo || {};
+        const einAddress = companyInfo.einAddress || {};
+        
+        const summary = `📋 EIN Application Information Detected:
+
+🏢 Company: ${companyInfo.name || 'Not found'}
+📋 Type: ${companyInfo.type || 'LLC (default)'}
+👥 Members: ${companyInfo.memberType || 'single (default)'}
+🗺️ Formation State: ${companyInfo.formationState || 'Not found'}
+📍 Physical Address: ${einAddress.street || 'Not found'}
+    ${einAddress.city || ''}, ${einAddress.state || ''} ${einAddress.zip || ''}
+
+🚀 Starting automation in 3 seconds...`;
+        
+        showEINNotification(summary);
     }
 
     // Opens the Coda knowledge base in a popup window covering 70% of the page
@@ -3091,24 +4643,24 @@ class DBLauncher extends Launcher {
     }
 
     function getIntStorageFiles() {
-        console.log('[FENNEC (POO) DB SB] getIntStorageFiles() called');
+        console.log('[FENNEC (MVP) DB SB] getIntStorageFiles() called');
         
         const headers = Array.from(document.querySelectorAll('h3.box-title'));
-        console.log('[FENNEC (POO) DB SB] Found headers:', headers.length, headers.map(h => h.textContent));
+        console.log('[FENNEC (MVP) DB SB] Found headers:', headers.length, headers.map(h => h.textContent));
         
         const header = headers.find(h => /uploaded list/i.test(h.textContent));
-        console.log('[FENNEC (POO) DB SB] Found upload header:', header ? header.textContent : 'null');
+        console.log('[FENNEC (MVP) DB SB] Found upload header:', header ? header.textContent : 'null');
         
         let rows = [];
         if (header) {
             const table = header.parentElement.querySelector('table');
-            console.log('[FENNEC (POO) DB SB] Found table:', !!table);
+            console.log('[FENNEC (MVP) DB SB] Found table:', !!table);
             if (table) {
                 const tbody = table.querySelector('tbody');
-                console.log('[FENNEC (POO) DB SB] Found tbody:', !!tbody);
+                console.log('[FENNEC (MVP) DB SB] Found tbody:', !!tbody);
                 if (tbody) {
                     rows = Array.from(tbody.querySelectorAll('tr'));
-                    console.log('[FENNEC (POO) DB SB] Found rows:', rows.length);
+                    console.log('[FENNEC (MVP) DB SB] Found rows:', rows.length);
                 }
             }
         }
@@ -3167,14 +4719,14 @@ class DBLauncher extends Launcher {
             return { name, uploadedBy, date, url };
         }).filter(Boolean);
         
-        console.log('[FENNEC (POO) DB SB] getIntStorageFiles() returning files:', files.length, files);
+        console.log('[FENNEC (MVP) DB SB] getIntStorageFiles() returning files:', files.length, files);
         return files;
     }
 
     function getBasicOrderInfo() {
         const m = location.pathname.match(/(?:detail|storage\/incfile)\/(\d+)/);
         const orderId = m ? m[1] : '';
-        console.log('[FENNEC (POO)] getBasicOrderInfo() extracting from URL:', { 
+        console.log('[FENNEC (MVP)] getBasicOrderInfo() extracting from URL:', { 
             pathname: location.pathname, 
             match: m, 
             orderId: orderId 
@@ -3192,8 +4744,129 @@ class DBLauncher extends Launcher {
         const date = formatDateLikeParent(dateRaw);
         const status = getText(document.querySelector('.btn-status-text')) || '';
         const result = { orderId, type, date, status };
-        console.log('[FENNEC (POO)] getBasicOrderInfo() returning:', result);
+        console.log('[FENNEC (MVP)] getBasicOrderInfo() returning:', result);
+        
+        // Check if this order needs state info update for family tree
+        chrome.storage.local.get({ fennecPendingStateUpdate: null }, (result) => {
+            if (result.fennecPendingStateUpdate === orderId) {
+                // Extract state from the order page
+                const state = extractStateFromOrderPage();
+                if (state) {
+                    chrome.storage.local.set({ 
+                        fennecOrderStateInfo: { orderId, state },
+                        fennecPendingStateUpdate: null 
+                    });
+                    console.log('[FENNEC (MVP)] State info updated for family tree:', { orderId, state });
+                }
+            }
+        });
+        
         return result;
+    }
+
+    function extractStateFromOrderPage() {
+        console.log('[FENNEC (MVP)] Extracting state from order page');
+        
+        // Valid state abbreviations to avoid false positives like "LC" from "LLC"
+        const validStates = [
+            'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA',
+            'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD',
+            'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ',
+            'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC',
+            'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+            'DC', 'PR', 'VI', 'GU', 'MP', 'AS'
+        ];
+        
+        // Only trust "State of Formation" or the state in the sidebar next to order number
+        const formationElements = Array.from(document.querySelectorAll('*')).filter(el => {
+            const text = getText(el);
+            return text && text.includes('State of Formation:');
+        });
+        
+        for (const element of formationElements) {
+            const text = getText(element);
+            console.log('[FENNEC (MVP)] Checking formation element:', text);
+            const stateMatch = text.match(/State of Formation:\s*([A-Z]{2})/i);
+            if (stateMatch) {
+                const state = stateMatch[1];
+                if (validStates.includes(state)) {
+                    console.log('[FENNEC (MVP)] Found state from State of Formation:', state);
+                    return state;
+                }
+            }
+        }
+        
+        // Try to find state in the sidebar next to order number (like "223030769292 - TX")
+        const sidebarElements = Array.from(document.querySelectorAll('*')).filter(el => {
+            const text = getText(el);
+            return text && /\d{12}\s*-\s*[A-Z]{2}/.test(text); // Order number - State pattern
+        });
+        
+        for (const element of sidebarElements) {
+            const text = getText(element);
+            console.log('[FENNEC (MVP)] Checking sidebar element:', text);
+            const stateMatch = text.match(/\d{12}\s*-\s*([A-Z]{2})/);
+            if (stateMatch) {
+                const state = stateMatch[1];
+                if (validStates.includes(state)) {
+                    console.log('[FENNEC (MVP)] Found state from sidebar order number:', state);
+                    return state;
+                }
+            }
+        }
+        
+        console.log('[FENNEC (MVP)] No state found on order page');
+        return null;
+    }
+
+    function getOrderStatus() {
+        // Look for order status in the page
+        const statusElements = Array.from(document.querySelectorAll('*')).filter(el => {
+            const text = getText(el).toLowerCase();
+            return text.includes('review') || text.includes('processing') || text.includes('hold') || 
+                   text.includes('forwarded') || text.includes('shipped') || text.includes('canceled');
+        });
+        
+        // Check for status in common locations
+        const statusLabels = Array.from(document.querySelectorAll('label')).filter(l => 
+            /status/i.test(getText(l))
+        );
+        
+        let status = '';
+        let statusClass = '';
+        
+        // Try to find status from labels
+        for (const label of statusLabels) {
+            const row = label.closest('.row, .form-group');
+            if (row) {
+                const valueEl = row.querySelector('.col-md-8 p, .col-md-8, .col-md-8 div, .col-md-8 span');
+                if (valueEl) {
+                    const statusText = getText(valueEl).toLowerCase();
+                    if (statusText.includes('review')) {
+                        status = 'REVIEW';
+                        statusClass = 'copilot-tag-review';
+                    } else if (statusText.includes('processing')) {
+                        status = 'PROCESSING';
+                        statusClass = 'copilot-tag-processing';
+                    } else if (statusText.includes('hold')) {
+                        status = 'HOLD';
+                        statusClass = 'copilot-tag-hold';
+                    } else if (statusText.includes('forwarded')) {
+                        status = 'FORWARDED';
+                        statusClass = 'copilot-tag-forwarded';
+                    } else if (statusText.includes('shipped')) {
+                        status = 'SHIPPED';
+                        statusClass = 'copilot-tag-shipped';
+                    } else if (statusText.includes('canceled') || statusText.includes('cancelled')) {
+                        status = 'CANCELED';
+                        statusClass = 'copilot-tag-canceled';
+                    }
+                    if (status) break;
+                }
+            }
+        }
+        
+        return { status, statusClass };
     }
 
     function isExpeditedOrder() {
@@ -3327,6 +5000,255 @@ class DBLauncher extends Launcher {
             }
         }
         return { id: '', orders: '', ltv: '', name: '', email: '', phone: '' };
+    }
+
+        function getCompanyInfo() {
+        const companyInfo = {
+            name: '',
+            type: '', // 'LLC' or 'CORP'
+            memberType: '', // 'single' or 'multi'
+            physicalAddress: {
+                street: '',
+                city: '',
+                state: '',
+                zip: ''
+            },
+            formationState: '', // State where formation was ordered
+            einAddress: {
+                street: '',
+                city: '',
+                state: '',
+                zip: ''
+            }
+        };
+
+        // Get company name
+        const companyNameInput = document.querySelector('#compName1');
+        if (companyNameInput && companyNameInput.value) {
+            companyInfo.name = companyNameInput.value.trim();
+        } else {
+            const amendmentCompanyNameInput = document.querySelector('#amendmentCompName1');
+            if (amendmentCompanyNameInput && amendmentCompanyNameInput.value) {
+                companyInfo.name = amendmentCompanyNameInput.value.trim();
+            } else {
+                // Try to find company name in the page content
+                const companyLabels = Array.from(document.querySelectorAll('label'))
+                    .filter(l => getText(l).toLowerCase().includes('company name'));
+                
+                for (const label of companyLabels) {
+                    const input = label.parentElement.querySelector('input[type="text"]');
+                    if (input && input.value) {
+                        companyInfo.name = input.value.trim();
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Detect entity type (LLC vs CORP)
+        companyInfo.type = detectEntityType();
+        
+        // Detect member type (single vs multi)
+        companyInfo.memberType = detectMemberType();
+        
+        // Get formation state
+        companyInfo.formationState = getFormationState();
+        
+        // Get EIN address (physical location)
+        const einAddress = getEINAddress();
+        if (einAddress) {
+            companyInfo.einAddress = einAddress;
+        }
+        
+        // Get physical address (if different from EIN address)
+        const physicalAddress = getPhysicalAddress();
+        if (physicalAddress) {
+            companyInfo.physicalAddress = physicalAddress;
+        }
+
+        return companyInfo;
+    }
+
+    function detectEntityType() {
+        // Look for entity type indicators in the page
+        const pageText = document.body.textContent.toLowerCase();
+        
+        // Check for LLC indicators
+        if (pageText.includes('llc') || 
+            pageText.includes('limited liability company') ||
+            pageText.includes('limited liability')) {
+            return 'LLC';
+        }
+        
+        // Check for Corporation indicators
+        if (pageText.includes('corporation') || 
+            pageText.includes('corp') ||
+            pageText.includes('inc') ||
+            pageText.includes('incorporated')) {
+            return 'CORP';
+        }
+        
+        // Check form fields for entity type
+        const entityTypeInputs = document.querySelectorAll('input[type="text"], select');
+        for (const input of entityTypeInputs) {
+            const value = input.value.toLowerCase();
+            if (value.includes('llc')) return 'LLC';
+            if (value.includes('corporation') || value.includes('corp')) return 'CORP';
+        }
+        
+        // Default to LLC if no clear indicator
+        return 'LLC';
+    }
+
+    function detectMemberType() {
+        // Look for member count indicators
+        const pageText = document.body.textContent.toLowerCase();
+        
+        // Check for single member indicators
+        if (pageText.includes('single member') || 
+            pageText.includes('1 member') ||
+            pageText.includes('one member')) {
+            return 'single';
+        }
+        
+        // Check for multi-member indicators
+        if (pageText.includes('multiple members') || 
+            pageText.includes('multi member') ||
+            pageText.includes('2 members') ||
+            pageText.includes('3 members') ||
+            pageText.includes('4 members') ||
+            pageText.includes('5 members')) {
+            return 'multi';
+        }
+        
+        // Check form fields for member count
+        const memberInputs = document.querySelectorAll('input[type="number"], input[type="text"]');
+        for (const input of memberInputs) {
+            const value = input.value;
+            if (value === '1' || value === 'one') return 'single';
+            if (parseInt(value) > 1) return 'multi';
+        }
+        
+        // Default to single member
+        return 'single';
+    }
+
+    function getFormationState() {
+        // Look for formation state in the order details
+        const pageText = document.body.textContent;
+        
+        // Common state abbreviations
+        const states = {
+            'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas',
+            'CA': 'California', 'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware',
+            'FL': 'Florida', 'GA': 'Georgia', 'HI': 'Hawaii', 'ID': 'Idaho',
+            'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa', 'KS': 'Kansas',
+            'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+            'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi',
+            'MO': 'Missouri', 'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada',
+            'NH': 'New Hampshire', 'NJ': 'New Jersey', 'NM': 'New Mexico', 'NY': 'New York',
+            'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio', 'OK': 'Oklahoma',
+            'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+            'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah',
+            'VT': 'Vermont', 'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia',
+            'WI': 'Wisconsin', 'WY': 'Wyoming'
+        };
+        
+        // Look for state mentions in formation context
+        for (const [abbr, fullName] of Object.entries(states)) {
+            if (pageText.includes(`formation in ${fullName}`) || 
+                pageText.includes(`formed in ${fullName}`) ||
+                pageText.includes(`state of formation: ${fullName}`) ||
+                pageText.includes(`formation state: ${fullName}`)) {
+                return fullName;
+            }
+        }
+        
+        // Check form fields for formation state
+        const formationInputs = document.querySelectorAll('input[type="text"], select');
+        for (const input of formationInputs) {
+            const value = input.value;
+            if (states[value] || Object.values(states).includes(value)) {
+                return states[value] || value;
+            }
+        }
+        
+        return '';
+    }
+
+    function getEINAddress() {
+        // Look for EIN address section
+        const einSection = findEINSection();
+        if (!einSection) return null;
+        
+        return extractAddressFromSection(einSection);
+    }
+
+    function getPhysicalAddress() {
+        // Look for physical address fields
+        const addressInputs = document.querySelectorAll('input[type="text"]');
+        const address = { street: '', city: '', state: '', zip: '' };
+        
+        for (const input of addressInputs) {
+            const label = document.querySelector(`label[for="${input.id}"]`);
+            if (!label) continue;
+            
+            const labelText = getText(label).toLowerCase();
+            const value = input.value.trim();
+            
+            if (labelText.includes('street') || labelText.includes('address')) {
+                address.street = value;
+            } else if (labelText.includes('city')) {
+                address.city = value;
+            } else if (labelText.includes('state')) {
+                address.state = value;
+            } else if (labelText.includes('zip') || labelText.includes('postal')) {
+                address.zip = value;
+            }
+        }
+        
+        return address;
+    }
+
+    function findEINSection() {
+        // Look for EIN-related sections in the page
+        const sections = document.querySelectorAll('div, section');
+        
+        for (const section of sections) {
+            const text = getText(section).toLowerCase();
+            if (text.includes('ein') || text.includes('employer identification number')) {
+                return section;
+            }
+        }
+        
+        return null;
+    }
+
+    function extractAddressFromSection(section) {
+        const address = { street: '', city: '', state: '', zip: '' };
+        
+        // Look for address fields within the section
+        const inputs = section.querySelectorAll('input[type="text"]');
+        
+        for (const input of inputs) {
+            const label = document.querySelector(`label[for="${input.id}"]`);
+            if (!label) continue;
+            
+            const labelText = getText(label).toLowerCase();
+            const value = input.value.trim();
+            
+            if (labelText.includes('street') || labelText.includes('address')) {
+                address.street = value;
+            } else if (labelText.includes('city')) {
+                address.city = value;
+            } else if (labelText.includes('state')) {
+                address.state = value;
+            } else if (labelText.includes('zip') || labelText.includes('postal')) {
+                address.zip = value;
+            }
+        }
+        
+        return address;
     }
 
 
@@ -3486,20 +5408,20 @@ function getLastHoldUser() {
     window.currentOrderTypeText = currentOrderTypeText;
 
     function loadIntStorage(orderId) {
-        console.log('[FENNEC (POO) DB SB] loadIntStorage called for orderId:', orderId);
+        console.log('[FENNEC (MVP) DB SB] loadIntStorage called for orderId:', orderId);
         
         if (!orderId) {
-            console.warn('[FENNEC (POO) DB SB] loadIntStorage: No orderId provided');
+            console.warn('[FENNEC (MVP) DB SB] loadIntStorage: No orderId provided');
             return;
         }
         
-        console.log('[FENNEC (POO) DB SB] orderId type:', typeof orderId, 'value:', JSON.stringify(orderId));
+        console.log('[FENNEC (MVP) DB SB] orderId type:', typeof orderId, 'value:', JSON.stringify(orderId));
         
         const setLoading = () => {
             const section = document.getElementById('int-storage-section');
             const box = document.getElementById('int-storage-box');
             
-            console.log('[FENNEC (POO) DB SB] INT STORAGE elements check:', {
+            console.log('[FENNEC (MVP) DB SB] INT STORAGE elements check:', {
                 section: !!section,
                 box: !!box,
                 sectionDisplay: section ? section.style.display : 'n/a'
@@ -3507,31 +5429,31 @@ function getLastHoldUser() {
             
             if (section) {
                 section.style.display = 'block';
-                console.log('[FENNEC (POO) DB SB] INT STORAGE section made visible');
+                console.log('[FENNEC (MVP) DB SB] INT STORAGE section made visible');
             } else {
-                console.warn('[FENNEC (POO) DB SB] INT STORAGE section not found');
+                console.warn('[FENNEC (MVP) DB SB] INT STORAGE section not found');
             }
             
             if (box) {
-                box.innerHTML = '<div style="text-align:center;color:#aaa">Loading...</div>';
-                console.log('[FENNEC (POO) DB SB] INT STORAGE loading message set');
+                box.innerHTML = '<div style="text-align:center;color:#aaa">Loading<span class="loading-dots">...</span></div>';
+                console.log('[FENNEC (MVP) DB SB] INT STORAGE loading message set');
             } else {
-                console.warn('[FENNEC (POO) DB SB] INT STORAGE box not found');
+                console.warn('[FENNEC (MVP) DB SB] INT STORAGE box not found');
             }
         };
         
         setLoading();
         
-        bg.send('fetchIntStorage', { orderId }, resp => {
+        bg.send('fetchIntStorage', { orderId, forceRefresh: true }, resp => {
             const box = document.getElementById('int-storage-box');
             if (!box) return;
             
             const files = resp && Array.isArray(resp.files) ? resp.files : null;
             
-            console.log('[FENNEC (POO) DB SB] INT STORAGE DEBUG: Response files:', files);
-            console.log('[FENNEC (POO) DB SB] INT STORAGE DEBUG: Files length:', files ? files.length : 'null');
+            console.log('[FENNEC (MVP) DB SB] INT STORAGE DEBUG: Response files:', files);
+            console.log('[FENNEC (MVP) DB SB] INT STORAGE DEBUG: Files length:', files ? files.length : 'null');
             
-            // Share INT STORAGE data with GM SB
+            // Always overwrite INT STORAGE data with fresh data
             chrome.storage.local.set({ 
                 intStorageData: { 
                     orderId: orderId, 
@@ -3541,7 +5463,7 @@ function getLastHoldUser() {
                 intStorageLoaded: true,
                 intStorageOrderId: orderId
             }, () => {
-                console.log('[FENNEC (POO) DB SB] INT STORAGE DEBUG: Shared data with GM SB - orderId:', orderId, 'files count:', files ? files.length : 'null');
+                console.log('[FENNEC (MVP) DB SB] INT STORAGE DEBUG: Fresh data saved - orderId:', orderId, 'files count:', files ? files.length : 'null');
                 
                 // Signal to GM SB that INT STORAGE loading is complete
                 bg.send('intStorageLoadComplete', { 
@@ -3549,7 +5471,7 @@ function getLastHoldUser() {
                     success: true, 
                     filesCount: files ? files.length : 0 
                 }, (response) => {
-                    console.log('[FENNEC (POO) DB SB] INT STORAGE load complete signal sent, response:', response);
+                    console.log('[FENNEC (MVP) DB SB] INT STORAGE load complete signal sent, response:', response);
                 });
             });
             
@@ -3559,10 +5481,10 @@ function getLastHoldUser() {
             }
             
             const list = files.map((file, idx) => {
-                // Truncate name to 24 chars, show ellipsis if longer
-                let shortName = file.name.length > 24 ? file.name.slice(0, 21) + '...' : file.name;
+                // Truncate name to 20 chars to prevent overflow, show ellipsis if longer
+                let shortName = file.name.length > 20 ? file.name.slice(0, 17) + '...' : file.name;
                 // Show file name on one row, uploader on second row
-                const nameDiv = `<div class="int-doc-name" title="${escapeHtml(file.name)}">${escapeHtml(shortName)}</div>`;
+                const nameDiv = `<div class="int-doc-name" title="${escapeHtml(file.name)}" style="cursor:help;">${escapeHtml(shortName)}</div>`;
                 const uploaderDiv = `<div class="int-doc-uploader">${escapeHtml(file.uploadedBy || 'Unknown')}</div>`;
                 
                 // Format date as MM/DD/YY and time below, with proper error handling
@@ -3585,11 +5507,11 @@ function getLastHoldUser() {
                     dateDiv = `<div class="int-doc-date">--/--/--<br><span class="int-doc-time">--:--</span></div>`;
                 }
                 
-                // Clip icon for remove
-                const clip = `<span class="int-doc-clip" data-idx="${idx}" title="Remove">📎</span>`;
-                // OPEN button, 20% smaller
-                const openBtn = `<button class="copilot-button int-open" style="font-size:11px;padding:5px 8px;" data-url="${escapeHtml(file.url)}">OPEN</button>`;
-                return `<div class="int-row" style="display:flex;align-items:center;gap:8px;margin:4px 0;">${clip}<div class="int-doc-info">${nameDiv}${uploaderDiv}</div>${dateDiv}${openBtn}</div>`;
+                // OPEN button with reduced padding
+                const openBtn = `<button class="copilot-button int-open" style="font-size:11px;padding:3px 6px;min-width:50px;" data-url="${escapeHtml(file.url)}">OPEN</button>`;
+                // Download button - small circle with download symbol
+                const downloadBtn = `<button class="copilot-button int-download" style="font-size:12px;padding:4px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;" data-url="${escapeHtml(file.url)}" title="Download">⬇</button>`;
+                return `<div class="int-row" style="display:flex;align-items:center;gap:8px;margin:4px 0;"><div class="int-doc-info" style="flex:1;min-width:0;">${nameDiv}${uploaderDiv}</div><div class="int-doc-date-container" style="min-width:60px;text-align:center;">${dateDiv}</div><div style="display:flex;gap:4px;min-width:80px;justify-content:flex-end;">${openBtn}${downloadBtn}</div></div>`;
             }).join('');
             const filesHtml = list || '<div style="text-align:center;color:#aaa">No files</div>';
             const uploadHtml = `
@@ -3597,23 +5519,498 @@ function getLastHoldUser() {
                 <input id="int-upload-input" type="file" multiple style="display:none" />
                 <div id="int-upload-list"></div>
                 <div style="display:flex;justify-content:center;"><button id="int-upload-btn" class="copilot-button" style="display:none;margin-top:6px">UPLOAD</button></div>`;
-            box.innerHTML = filesHtml + uploadHtml;
+            
+            // Add refresh button to top right corner with line break to prevent overlap
+            const refreshButton = '<div id="int-refresh-btn" style="position:absolute;top:8px;right:8px;cursor:pointer;font-size:16px;color:#666;" title="Refresh INT STORAGE">↻</div>';
+            box.innerHTML = refreshButton + '<br style="margin-top:20px">' + filesHtml + uploadHtml;
+            
+            // Re-attach common listeners after INT STORAGE content is loaded
+            attachCommonListeners(box);
             box.querySelectorAll('.int-open').forEach(b => {
                 b.addEventListener('click', () => { const u = b.dataset.url; if (u) window.open(u, '_blank'); });
             });
-            // Clip icon remove logic
-            box.querySelectorAll('.int-doc-clip').forEach(clip => {
-                clip.addEventListener('mouseenter', e => { clip.textContent = '✖'; clip.classList.add('int-doc-x'); });
-                clip.addEventListener('mouseleave', e => { clip.textContent = '📎'; clip.classList.remove('int-doc-x'); });
-                clip.addEventListener('click', e => {
-                    const idx = parseInt(clip.dataset.idx);
-                    if (!isNaN(idx)) {
-                        files.splice(idx, 1);
-                        loadIntStorage(orderId);
+            
+            // Download button functionality
+            box.querySelectorAll('.int-download').forEach(b => {
+                b.addEventListener('click', () => { 
+                    const u = b.dataset.url; 
+                    if (u) {
+                        // Create a temporary link to trigger download
+                        const link = document.createElement('a');
+                        link.href = u;
+                        link.download = '';
+                        link.target = '_blank';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
                     }
                 });
             });
+            
+            // Refresh button logic
+            const refreshBtn = box.querySelector('#int-refresh-btn');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    console.log('[FENNEC] Manual refresh of INT STORAGE requested');
+                    refreshIntStorageFromServer(orderId);
+                });
+            }
+            
             setupIntUpload(orderId);
+        });
+    }
+
+    function setupIntStoragePageRefreshDetection() {
+        // Extract order ID from the current URL
+        const orderId = (location.pathname.match(/\/storage\/incfile\/(\d+)/) || [])[1];
+        if (!orderId) {
+            console.warn('[FENNEC] Could not extract order ID from storage page URL');
+            return;
+        }
+        
+        console.log('[FENNEC] Setting up INT STORAGE page refresh detection for orderId:', orderId);
+        
+        // Store the current timestamp to detect page refreshes
+        const currentTime = Date.now();
+        sessionStorage.setItem('fennecStoragePageLoadTime', currentTime.toString());
+        
+        // Check if this is a page refresh (not a fresh navigation)
+        const lastLoadTime = sessionStorage.getItem('fennecStoragePageLastLoadTime');
+        if (lastLoadTime) {
+            const timeDiff = currentTime - parseInt(lastLoadTime);
+            // If the page was loaded within the last 10 seconds, it's likely a refresh after upload
+            if (timeDiff < 10000) {
+                console.log('[FENNEC] Detected page refresh after manual upload, triggering INT STORAGE refresh');
+                
+                // Wait a moment for the page to fully load, then refresh INT STORAGE
+                setTimeout(() => {
+                    console.log('[FENNEC] Refreshing INT STORAGE after manual upload detection');
+                    refreshIntStorageAfterManualUpload(orderId);
+                }, 2000);
+            }
+        }
+        
+        // Store the current load time for future comparisons
+        sessionStorage.setItem('fennecStoragePageLastLoadTime', currentTime.toString());
+    }
+    
+    function refreshIntStorageAfterManualUpload(orderId) {
+        console.log('[FENNEC] Refreshing INT STORAGE after manual upload for orderId:', orderId);
+        
+        // Clear any cached data to force fresh load
+        chrome.storage.local.remove(['intStorageData', 'intStorageCache'], () => {
+            console.log('[FENNEC] Cleared cached INT STORAGE data after manual upload');
+            
+            // Trigger refresh in all environments that might have this order open
+            bg.send('refreshIntStorageInAllEnvironments', { orderId }, (response) => {
+                console.log('[FENNEC] INT STORAGE refresh in all environments response:', response);
+            });
+            
+            // Also refresh the current page's INT STORAGE if it has a sidebar
+            const currentBox = document.getElementById('int-storage-box');
+            if (currentBox) {
+                console.log('[FENNEC] Refreshing INT STORAGE in current page sidebar');
+                loadIntStorage(orderId);
+            }
+        });
+    }
+
+    function setupGlobalIntStorageDrop(body, orderId) {
+        // Remove existing event listeners to prevent duplicates
+        const newBody = body.cloneNode(true);
+        body.parentNode.replaceChild(newBody, body);
+        
+        // Add drag and drop event listeners to the entire sidebar body
+        newBody.addEventListener('dragover', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            newBody.classList.add('dragover');
+        });
+        
+        newBody.addEventListener('dragleave', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            // Only remove dragover class if we're leaving the sidebar entirely
+            if (!newBody.contains(e.relatedTarget)) {
+                newBody.classList.remove('dragover');
+            }
+        });
+        
+        newBody.addEventListener('drop', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            newBody.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) {
+                console.log('[FENNEC] Global drop detected, files:', files.length);
+                if (window.fennecAutoUpload) {
+                    handleGlobalIntStorageUpload(files, orderId);
+                } else {
+                    // Show placeholder with rename + Upload in INT STORAGE section
+                    showManualUploadPlaceholder(files, orderId);
+                }
+            }
+        });
+        
+        // Add click functionality to INT STORAGE title
+        const intStorageLabel = newBody.querySelector('.section-label');
+        if (intStorageLabel && intStorageLabel.textContent.includes('INT STORAGE')) {
+            intStorageLabel.style.cursor = 'pointer';
+            intStorageLabel.title = 'Click to open INT STORAGE tab';
+            intStorageLabel.addEventListener('click', () => {
+                openIntStorageTab(orderId);
+            });
+        }
+    }
+
+    function showManualUploadPlaceholder(fileList, orderId) {
+        const section = document.getElementById('int-storage-section');
+        if (!section) return;
+        let placeholder = document.getElementById('int-upload-placeholder');
+        if (!placeholder) {
+            placeholder = document.createElement('div');
+            placeholder.id = 'int-upload-placeholder';
+            placeholder.className = 'white-box';
+            placeholder.style.marginBottom = '10px';
+            section.insertBefore(placeholder, section.firstChild);
+        }
+        const files = Array.from(fileList).map(f => ({ file: f, name: f.name }));
+        window.intDroppedFilesDB = (window.intDroppedFilesDB || []).concat(files);
+        const rows = window.intDroppedFilesDB.map((item, idx) => {
+            const nameVal = item.name || item.file.name;
+            return `<div class="dropped-file-row"><div class="dropped-file-icon">📎</div><input class="dropped-file-name" data-idx="${idx}" value="${escapeHtml(nameVal)}" /></div>`;
+        }).join('');
+        placeholder.innerHTML = `
+            <div style="margin-bottom:6px;color:#aaa">Files ready to upload to INT STORAGE</div>
+            ${rows}
+            <div style=\"display:flex;gap:6px;margin-top:6px;justify-content:flex-end;\">
+                <button id=\"int-upload-cancel\" class=\"copilot-button\" style=\"background:#555;\">CANCEL</button>
+                <button id=\"int-upload-submit\" class=\"copilot-button\">UPLOAD</button>
+            </div>
+        `;
+        placeholder.querySelectorAll('.dropped-file-name').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const i = Number(e.target.getAttribute('data-idx'));
+                const arr = window.intDroppedFilesDB || [];
+                if (arr[i]) arr[i].name = e.target.value.trim() || arr[i].file.name;
+            });
+        });
+        const cancelBtn = document.getElementById('int-upload-cancel');
+        if (cancelBtn) cancelBtn.onclick = () => {
+            window.intDroppedFilesDB = [];
+            placeholder.remove();
+        };
+        const submitBtn = document.getElementById('int-upload-submit');
+        if (submitBtn) submitBtn.onclick = () => {
+            const arr = (window.intDroppedFilesDB || []).slice();
+            if (!arr.length) { placeholder.remove(); return; }
+            placeholder.innerHTML = '<div style="text-align:center;color:#aaa">Uploading files...</div>';
+            // DB already uploads raw files (server handles PDF). Send as-is with chosen names via FormData
+            const queue = arr.slice();
+            const token = document.querySelector('meta[name="csrf-token"]');
+            const csrf = token ? token.getAttribute('content') : '';
+            const uploadNext = () => {
+                if (!queue.length) { window.intDroppedFilesDB = []; setTimeout(() => placeholder.remove(), 300); refreshIntStorageFromServer(orderId); return; }
+                const it = queue.shift();
+                const renamedFile = new File([it.file], it.name, { type: it.file.type });
+                const form = new FormData();
+                form.append('file', renamedFile, renamedFile.name);
+                fetch(`/storage/incfile/${orderId}/create`, { method: 'POST', body: form, headers: { 'X-CSRF-TOKEN': csrf }, credentials: 'include' })
+                    .then(() => uploadNext())
+                    .catch(() => uploadNext());
+            };
+            uploadNext();
+        };
+    }
+
+    function openIntStorageTab(orderId) {
+        console.log('[FENNEC] Opening INT STORAGE tab for order:', orderId);
+        
+        // Send message to background script to find and activate INT STORAGE tab
+        chrome.runtime.sendMessage({
+            action: 'openIntStorageTab',
+            orderId: orderId
+        }, (response) => {
+            if (response && response.success) {
+                console.log('[FENNEC] INT STORAGE tab opened/activated successfully');
+            } else {
+                console.warn('[FENNEC] Failed to open INT STORAGE tab:', response);
+            }
+        });
+    }
+
+    function handleGlobalIntStorageUpload(files, orderId) {
+        // Show upload progress indicator
+        const box = document.getElementById('int-storage-box');
+        if (box) {
+            box.innerHTML = '<div style="text-align:center;color:#aaa">Uploading files...</div>';
+        }
+        
+        // Make sure INT STORAGE section is visible
+        const section = document.getElementById('int-storage-section');
+        if (section) {
+            section.style.display = 'block';
+        }
+        
+        const token = document.querySelector('meta[name="csrf-token"]');
+        const csrf = token ? token.getAttribute('content') : '';
+        const fileArray = Array.from(files);
+        let uploadedCount = 0;
+        let failedCount = 0;
+        
+        const uploadNext = () => {
+            if (uploadedCount + failedCount >= fileArray.length) {
+                // All uploads completed, wait a moment for server processing then refresh
+                console.log('[FENNEC] All uploads completed. Success:', uploadedCount, 'Failed:', failedCount);
+                
+                // Wait 2 seconds for server to process uploads, then refresh
+                setTimeout(() => {
+                    console.log('[FENNEC] Refreshing INT STORAGE list after uploads...');
+                    refreshIntStorageFromServer(orderId);
+                }, 2000);
+                return;
+            }
+            
+            const file = fileArray[uploadedCount + failedCount];
+            const form = new FormData();
+            form.append('file', file, file.name);
+            
+            fetch(`/storage/incfile/${orderId}/create`, { 
+                method: 'POST', 
+                body: form, 
+                headers: { 'X-CSRF-TOKEN': csrf }, 
+                credentials: 'include' 
+            })
+            .then(response => {
+                if (response.ok) {
+                    uploadedCount++;
+                    console.log('[FENNEC] Upload successful:', file.name);
+                } else {
+                    failedCount++;
+                    console.warn('[FENNEC] Upload failed:', file.name, response.status);
+                }
+            })
+            .catch(err => {
+                failedCount++;
+                console.warn('[FENNEC] Upload error:', file.name, err);
+            })
+            .finally(() => {
+                uploadNext();
+            });
+        };
+        
+        uploadNext();
+    }
+
+    function refreshIntStorageFromServer(orderId) {
+        console.log('[FENNEC] Refreshing INT STORAGE from server for orderId:', orderId);
+        
+        // Show loading state
+        const box = document.getElementById('int-storage-box');
+        if (box) {
+            box.innerHTML = '<div style="text-align:center;color:#aaa">Refreshing...</div>';
+        }
+        
+        // Clear any cached data first
+                chrome.storage.local.remove(['intStorageData', 'intStorageCache'], () => {
+            console.log('[FENNEC] Cleared cached INT STORAGE data');
+                    
+            // Wait a bit longer for server to process uploads, then fetch fresh data directly
+                    setTimeout(() => {
+                console.log('[FENNEC] Fetching fresh INT STORAGE data directly from server');
+                
+                // Directly fetch the storage page to get fresh file data
+                fetch(`/storage/incfile/${orderId}`, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.text();
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                })
+                .then(html => {
+                    console.log('[FENNEC] Successfully fetched fresh INT STORAGE page');
+                    
+                    // Parse the HTML to extract file data
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    // Extract file data from the page - look for table rows in the storage table
+                    const tableRows = doc.querySelectorAll('table.table tbody tr');
+                    const files = [];
+                    
+                    console.log('[FENNEC] Found table rows:', tableRows.length);
+                    
+                    tableRows.forEach((row, index) => {
+                        const cells = row.querySelectorAll('td');
+                        if (cells.length >= 3) {
+                            const fileName = cells[0]?.textContent?.trim() || `File ${index + 1}`;
+                            const fileUploader = cells[1]?.textContent?.trim() || 'Unknown';
+                            const fileDate = cells[2]?.textContent?.trim() || '';
+                            
+                            // Extract file ID from the Open button if available
+                            const openButton = cells[3]?.querySelector('button[onclick]');
+                            let fileId = index;
+                            let fileUrl = '';
+                            if (openButton) {
+                                const onclick = openButton.getAttribute('onclick');
+                                const match = onclick.match(/read\/(\d+)/);
+                                if (match) {
+                                    fileId = match[1];
+                                    fileUrl = `https://db.incfile.com/storage/incfile/read/${fileId}`;
+                                }
+                            }
+                            
+                            files.push({
+                                name: fileName,
+                                date: fileDate,
+                                uploadedBy: fileUploader,
+                                id: fileId,
+                                url: fileUrl
+                            });
+                        }
+                    });
+                    
+                    console.log('[FENNEC] Extracted files from fresh page:', files);
+                    
+                    // Update the INT STORAGE display with fresh data
+                    const box = document.getElementById('int-storage-box');
+                    if (box) {
+                        if (files.length === 0) {
+                            box.innerHTML = '<div style="text-align:center;color:#aaa">No files found</div>';
+                        } else {
+                            const list = files.map((file, idx) => {
+                                // Truncate name to 20 chars to prevent overflow, show ellipsis if longer
+                                let shortName = file.name.length > 20 ? file.name.slice(0, 17) + '...' : file.name;
+                                // Show file name on one row, uploader on second row
+                                const nameDiv = `<div class="int-doc-name" title="${escapeHtml(file.name)}" style="cursor:help;">${escapeHtml(shortName)}</div>`;
+                                const uploaderDiv = `<div class="int-doc-uploader">${escapeHtml(file.uploadedBy || 'Unknown')}</div>`;
+                                
+                                // Format date as MM/DD/YY and time below, with proper error handling
+                                let dateDiv = '';
+                                if (file.date) {
+                                    // Parse date format like "07/08/2025 21:41:34 pm"
+                                    const dateMatch = file.date.match(/(\d{2})\/(\d{2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})\s*(am|pm)/i);
+                                    if (dateMatch) {
+                                        const [, month, day, year, hour, minute, second, ampm] = dateMatch;
+                                        const mm = month;
+                                        const dd = day;
+                                        const yy = year.slice(-2);
+                                        
+                                        // Convert 12-hour to 24-hour format
+                                        let hour24 = parseInt(hour);
+                                        if (ampm.toLowerCase() === 'pm' && hour24 !== 12) {
+                                            hour24 += 12;
+                                        } else if (ampm.toLowerCase() === 'am' && hour24 === 12) {
+                                            hour24 = 0;
+                                        }
+                                        
+                                        const time = `${hour24.toString().padStart(2, '0')}:${minute}`;
+                                        dateDiv = `<div class="int-doc-date">${mm}/${dd}/${yy}<br><span class="int-doc-time">${time}</span></div>`;
+                                    } else {
+                                        // Try to parse as regular date string
+                                        let dateObj = new Date(file.date);
+                                        if (!isNaN(dateObj.getTime())) {
+                                            let mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                                            let dd = String(dateObj.getDate()).padStart(2, '0');
+                                            let yy = String(dateObj.getFullYear()).slice(-2);
+                                            let time = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                                            dateDiv = `<div class="int-doc-date">${mm}/${dd}/${yy}<br><span class="int-doc-time">${time}</span></div>`;
+                                        } else {
+                                            // Invalid date
+                                            dateDiv = `<div class="int-doc-date">--/--/--<br><span class="int-doc-time">--:--</span></div>`;
+                                        }
+                                    }
+                                } else {
+                                    // No date provided
+                                    dateDiv = `<div class="int-doc-date">--/--/--<br><span class="int-doc-time">--:--</span></div>`;
+                                }
+                                
+                                // OPEN button with reduced padding
+                                const openBtn = `<button class="copilot-button int-open" style="font-size:11px;padding:3px 6px;min-width:50px;" data-url="${escapeHtml(file.url)}">OPEN</button>`;
+                                // Download button - small circle with download symbol
+                                const downloadBtn = `<button class="copilot-button int-download" style="font-size:12px;padding:4px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;" data-url="${escapeHtml(file.url)}" title="Download">⬇</button>`;
+                                return `<div class="int-row" style="display:flex;align-items:center;gap:8px;margin:4px 0;"><div class="int-doc-info" style="flex:1;min-width:0;">${nameDiv}${uploaderDiv}</div><div class="int-doc-date-container" style="min-width:60px;text-align:center;">${dateDiv}</div><div style="display:flex;gap:4px;min-width:80px;justify-content:flex-end;">${openBtn}${downloadBtn}</div></div>`;
+                            }).join('');
+                            
+                            const filesHtml = list || '<div style="text-align:center;color:#aaa">No files</div>';
+                            const uploadHtml = `
+                                <div id="int-upload-drop" style="border:1px dashed #666;padding:6px;margin-top:6px;text-align:center;cursor:pointer;">Drop files or click</div>
+                                <input id="int-upload-input" type="file" multiple style="display:none" />
+                                <div id="int-upload-list"></div>
+                                <div style="display:flex;justify-content:center;"><button id="int-upload-btn" class="copilot-button" style="display:none;margin-top:6px">UPLOAD</button></div>`;
+                            
+                            // Add refresh button to top right corner with line break to prevent overlap
+                            const refreshButton = '<div id="int-refresh-btn" style="position:absolute;top:8px;right:8px;cursor:pointer;font-size:16px;color:#666;" title="Refresh INT STORAGE">↻</div>';
+                            box.innerHTML = refreshButton + '<br style="margin-top:20px">' + filesHtml + uploadHtml;
+                            
+                            // Re-attach event listeners
+                            box.querySelectorAll('.int-open').forEach(b => {
+                                b.addEventListener('click', () => { const u = b.dataset.url; if (u) window.open(u, '_blank'); });
+                            });
+                            
+                            // Download button functionality
+                            box.querySelectorAll('.int-download').forEach(b => {
+                                b.addEventListener('click', () => { 
+                                    const u = b.dataset.url; 
+                                    if (u) {
+                                        // Create a temporary link to trigger download
+                                        const link = document.createElement('a');
+                                        link.href = u;
+                                        link.download = '';
+                                        link.target = '_blank';
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                    }
+                                });
+                            });
+                            
+                            // Re-setup upload functionality
+                            setupIntUpload(orderId);
+                            
+                            // Re-attach refresh button functionality
+                            const refreshBtn = box.querySelector('#int-refresh-btn');
+                            if (refreshBtn) {
+                                refreshBtn.addEventListener('click', () => {
+                                    console.log('[FENNEC] Manual refresh button clicked');
+                                    refreshIntStorageFromServer(orderId);
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Update stored data
+                    chrome.storage.local.set({ 
+                        intStorageData: { 
+                            orderId: orderId, 
+                            files: files, 
+                            timestamp: Date.now() 
+                        },
+                        intStorageLoaded: true,
+                        intStorageOrderId: orderId
+                    }, () => {
+                        console.log('[FENNEC] Updated INT STORAGE data with fresh files:', files.length);
+                    });
+                })
+                .catch(error => {
+                    console.error('[FENNEC] Error fetching fresh INT STORAGE data:', error);
+                    
+                    // Fallback: show error message
+                    const box = document.getElementById('int-storage-box');
+                    if (box) {
+                        box.innerHTML = '<div style="text-align:center;color:#aaa">Failed to refresh</div>';
+                    }
+                });
+            }, 3000); // Wait 3 seconds for server to process uploads
         });
     }
 
@@ -3672,7 +6069,7 @@ function getLastHoldUser() {
                 form.append('file', item.file, item.name);
                 fetch(`/storage/incfile/${orderId}/create`, { method:'POST', body: form, headers:{ 'X-CSRF-TOKEN': csrf }, credentials:'include' })
                     .then(() => uploadNext())
-                    .catch(err => { console.warn('[FENNEC (POO)] Upload failed:', err); uploadNext(); });
+                    .catch(err => { console.warn('[FENNEC (MVP)] Upload failed:', err); uploadNext(); });
             };
             uploadNext();
         });
@@ -3699,7 +6096,7 @@ function getLastHoldUser() {
         localStorage.removeItem(adyenFlowKey);
         localStorage.removeItem(kountFlowKey);
         localStorage.removeItem('fraudXrayFinished');
-        console.log('[FENNEC (POO)] Starting new XRAY flow for order:', orderId, '- cleared stale completion flags');
+        console.log('[FENNEC (MVP)] Starting new XRAY flow for order:', orderId, '- cleared stale completion flags');
         
         const key = 'fennecLtvRefreshed_' + orderId;
         const hadPending = sessionStorage.getItem('fraudXrayPending');
@@ -3734,12 +6131,25 @@ function getLastHoldUser() {
             sessionSet({ fennecFraudAdyen: adyenUrl });
 
             function findKountLink() {
+                // First look for the new KOUNT 360 URL pattern (app.kount.com/event-analysis/order/)
+                const direct360 = document.querySelector('a[href*="app.kount.com/event-analysis/order/"]');
+                if (direct360) return direct360.href;
+                
+                // Then look for the old KOUNT URL pattern (kount.net/workflow/detail)
                 const direct = document.querySelector('a[href*="kount.net"][href*="workflow/detail"]');
                 if (direct) return direct.href;
+                
+                // Check iframes for both patterns
                 for (const frame of document.querySelectorAll('iframe')) {
                     try {
                         const doc = frame.contentDocument;
                         if (!doc) continue;
+                        
+                        // Look for new KOUNT 360 pattern first
+                        const a360 = doc.querySelector('a[href*="app.kount.com/event-analysis/order/"]');
+                        if (a360) return a360.href;
+                        
+                        // Then look for old pattern
                         const a = doc.querySelector('a[href*="kount.net"][href*="workflow/detail"]');
                         if (a) return a.href;
                     } catch (e) { /* ignore cross-origin frames */ }
@@ -3750,16 +6160,29 @@ function getLastHoldUser() {
             function openKount(retries = 40) {
                 const url = findKountLink();
                 if (url) {
+                    console.log('[FENNEC (MVP)] Opening KOUNT URL:', url);
+                    // Store the KOUNT URL for the launcher to identify
+                    sessionSet({ fennecFraudKount: url });
+                    // Mark that KOUNT has been opened to prevent duplicates
+                    sessionStorage.setItem('fennecKountOpened', '1');
                     bg.openOrReuseTab({ url, active: true });
                 } else if (retries > 0) {
                     setTimeout(() => openKount(retries - 1), 500);
+                } else {
+                    console.warn('[FENNEC (MVP)] Failed to find KOUNT link after all retries');
                 }
             }
-            openKount();
+            
+            // Check if KOUNT has already been opened to prevent duplicates
+            if (!sessionStorage.getItem('fennecKountOpened')) {
+                openKount();
+            } else {
+                console.log('[FENNEC (MVP)] KOUNT already opened, skipping duplicate');
+            }
         }
         
         // Mark XRAY flow as completed after opening all tabs
-        console.log('[FENNEC (POO)] XRAY flow completed - all tabs opened for order:', orderId);
+        console.log('[FENNEC (MVP)] XRAY flow completed - all tabs opened for order:', orderId);
         fraudXray = false;
     }
 
@@ -3818,7 +6241,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
                 if (isStorage && !reviewMode) {
                     // For storage pages with REVIEW MODE off, don't load stored summary
                     // as it might contain DNA/Kount content
-                    console.log('[FENNEC (POO)] Storage page with REVIEW MODE off - skipping stored summary load');
+                    console.log('[FENNEC (MVP)] Storage page with REVIEW MODE off - skipping stored summary load');
                 } else {
                     loadStoredSummary();
                 }

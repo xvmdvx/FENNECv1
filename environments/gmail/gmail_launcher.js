@@ -1,4 +1,4 @@
-// Injects the FENNEC (POO) sidebar into Gmail pages.
+// Injects the FENNEC (MVP) sidebar into Gmail pages.
 // Pads main panels and the attachment viewer so content stays visible.
 (function persistentSidebar() {
     if (window.top !== window) return;
@@ -45,31 +45,63 @@
             alert('Permiso denegado para abrir la búsqueda SOS.');
         }
         if (msg.action === 'intStorageLoadComplete') {
-            console.log('[FENNEC (POO) GM SB] Received INT STORAGE load complete signal for order:', msg.orderId, 'files count:', msg.filesCount);
+            console.log('[FENNEC (MVP) GM SB] Received INT STORAGE load complete signal for order:', msg.orderId, 'files count:', msg.filesCount);
             
             // Process completion signal for current order
             if (window.currentIntStorageOrderId === msg.orderId) {
-                console.log('[FENNEC (POO) GM SB] INT STORAGE load complete for current order, checking storage for data');
+                console.log('[FENNEC (MVP) GM SB] INT STORAGE load complete for current order, checking storage for data');
                 
                 // Give a moment for the storage to be updated, then check for the data
                 setTimeout(() => {
                     chrome.storage.local.get({ intStorageData: null }, ({ intStorageData }) => {
                         if (intStorageData && intStorageData.orderId === msg.orderId) {
-                            console.log('[FENNEC (POO) GM SB] Found INT STORAGE data after completion signal');
+                            console.log('[FENNEC (MVP) GM SB] Found INT STORAGE data after completion signal');
                             if (intStorageData.error) {
                                 updateIntStorageDisplay(null, msg.orderId, intStorageData.error, 0);
                             } else {
                                 updateIntStorageDisplay(intStorageData.files, msg.orderId, null, 0);
                             }
                         } else {
-                            console.log('[FENNEC (POO) GM SB] No INT STORAGE data found after completion signal');
+                            console.log('[FENNEC (MVP) GM SB] No INT STORAGE data found after completion signal');
                         }
                     });
                 }, 500);
             } else {
-                console.log('[FENNEC (POO) GM SB] INT STORAGE completion signal for different order:', msg.orderId, 'current order:', window.currentIntStorageOrderId);
+                console.log('[FENNEC (MVP) GM SB] INT STORAGE completion signal for different order:', msg.orderId, 'current order:', window.currentIntStorageOrderId);
             }
         }
+        
+        if (msg.action === 'refreshIntStorageForOrder') {
+            console.log('[FENNEC (MVP) GM SB] Received INT STORAGE refresh request for order:', msg.orderId);
+            if (msg.orderId) {
+                // Check if this Gmail tab has INT STORAGE for this order
+                chrome.storage.local.get(['intStorageOrderId'], (result) => {
+                    if (result.intStorageOrderId === msg.orderId) {
+                        console.log('[FENNEC (MVP) GM SB] Refreshing INT STORAGE for current order');
+                        loadIntStorage(msg.orderId);
+                        sendResponse({ success: true, message: 'INT STORAGE refreshed for current order' });
+                    } else {
+                        console.log('[FENNEC (MVP) GM SB] Order ID mismatch, not refreshing INT STORAGE');
+                        sendResponse({ success: false, message: 'Order ID mismatch' });
+                    }
+                });
+            } else {
+                sendResponse({ success: false, error: 'No orderId provided' });
+            }
+            return true;
+        }
+        
+        if (msg.action === 'uspsCmraResult') {
+            console.log('[FENNEC (MVP) GM SB] Received USPS CMRA result:', msg);
+            // The utils.js will handle the icon updates
+            return true;
+        }
+    });
+    
+    // Track auto-upload setting
+    window.fennecAutoUpload = false;
+    chrome.storage.local.get({ autoUpload: false }, ({ autoUpload }) => {
+        window.fennecAutoUpload = !!autoUpload;
     });
     chrome.storage.sync.get({ fennecReviewMode: false, fennecDevMode: false, sidebarWidth: 340 }, ({ fennecReviewMode, fennecDevMode, sidebarWidth }) => {
         chrome.storage.local.get({ extensionEnabled: true, lightMode: false, fennecDevMode: false }, ({ extensionEnabled, lightMode, fennecDevMode: localDev }) => {
@@ -239,10 +271,37 @@
 
             function canonicalizeState(state) {
                 if (!state) return '';
+                
+                // State abbreviation to full name mapping
+                const stateAbbreviations = {
+                    'al': 'Alabama', 'ak': 'Alaska', 'az': 'Arizona', 'ar': 'Arkansas', 'ca': 'California',
+                    'co': 'Colorado', 'ct': 'Connecticut', 'de': 'Delaware', 'dc': 'District of Columbia',
+                    'fl': 'Florida', 'ga': 'Georgia', 'hi': 'Hawaii', 'id': 'Idaho', 'il': 'Illinois',
+                    'in': 'Indiana', 'ia': 'Iowa', 'ks': 'Kansas', 'ky': 'Kentucky', 'la': 'Louisiana',
+                    'me': 'Maine', 'md': 'Maryland', 'ma': 'Massachusetts', 'mi': 'Michigan', 'mn': 'Minnesota',
+                    'ms': 'Mississippi', 'mo': 'Missouri', 'mt': 'Montana', 'ne': 'Nebraska', 'nv': 'Nevada',
+                    'nh': 'New Hampshire', 'nj': 'New Jersey', 'nm': 'New Mexico', 'ny': 'New York',
+                    'nc': 'North Carolina', 'nd': 'North Dakota', 'oh': 'Ohio', 'ok': 'Oklahoma',
+                    'or': 'Oregon', 'pa': 'Pennsylvania', 'ri': 'Rhode Island', 'sc': 'South Carolina',
+                    'sd': 'South Dakota', 'tn': 'Tennessee', 'tx': 'Texas', 'ut': 'Utah', 'vt': 'Vermont',
+                    'va': 'Virginia', 'wa': 'Washington', 'wv': 'West Virginia', 'wi': 'Wisconsin', 'wy': 'Wyoming'
+                };
+                
                 const clean = String(state).trim().toLowerCase();
+                
+                // First check if it's a state abbreviation and convert to full name
+                if (stateAbbreviations[clean]) {
+                    const fullName = stateAbbreviations[clean];
+                    console.log(`[FENNEC (MVP)] Converted state abbreviation "${state}" to "${fullName}"`);
+                    return fullName;
+                }
+                
+                // Then check for exact matches in SOS_URLS keys
                 for (const key of Object.keys(SOS_URLS)) {
                     if (key.toLowerCase() === clean) return key;
                 }
+                
+                console.warn(`[FENNEC (MVP)] Could not canonicalize state: "${state}"`);
                 return String(state).trim();
             }
 
@@ -510,7 +569,15 @@
             if (intStorageSection) {
                 intStorageSection.style.display = 'block';
                 const sectionLabel = intStorageSection.querySelector('.section-label');
-                if (sectionLabel) sectionLabel.style.display = 'block';
+                if (sectionLabel) {
+                    sectionLabel.style.display = 'block';
+                    // Add click functionality to INT STORAGE title
+                    sectionLabel.style.cursor = 'pointer';
+                    sectionLabel.title = 'Click to open INT STORAGE tab';
+                    sectionLabel.addEventListener('click', () => {
+                        openIntStorageTab(window.currentIntStorageOrderId);
+                    });
+                }
             }
             
             if (quick && quick.parentElement !== container) container.prepend(quick);
@@ -951,11 +1018,13 @@
 
             let html = `<div id="order-summary-link" style="text-align:center">`;
             if (reviewMode && storedOrderInfo) {
+                // Create company section with proper container for search functionality
+                const companyLines = [];
                 const nameBase = buildSosUrl(storedOrderInfo.companyState, null, 'name');
                 const companyName = escapeHtml(storedOrderInfo.companyName || '');
                 if (companyName) {
                     const cLink = nameBase ? `<a href="#" id="company-link" class="copilot-sos copilot-link" data-url="${nameBase}" data-query="${companyName}" data-type="name">${companyName}</a>` : companyName;
-                    html += `<div class="order-summary-company"><b>${cLink}</b></div>`;
+                    companyLines.push(`<div class="order-summary-company"><b>${cLink}</b></div>`);
                 }
                 if (storedOrderInfo.companyId) {
                     const idBase = buildSosUrl(storedOrderInfo.companyState, null, 'id');
@@ -964,7 +1033,18 @@
                     const dof = storedOrderInfo.type && storedOrderInfo.type.toLowerCase() !== 'formation' && storedOrderInfo.formationDate
                         ? ` (${escapeHtml(storedOrderInfo.formationDate)})`
                         : '';
-                    html += `<div>${idLink}${dof} ${renderCopyIcon(storedOrderInfo.companyId)}</div>`;
+                    companyLines.push(`<div>${idLink}${dof} ${renderCopyIcon(storedOrderInfo.companyId)}</div>`);
+                }
+                // Add magnifier icon for company search
+                if (storedOrderInfo.companyName || storedOrderInfo.companyId) {
+                    const searchIcon = '<span class="company-search-toggle">🔍</span>';
+                    companyLines.push(`<div class="company-summary-highlight">${searchIcon}</div>`);
+                }
+                
+                // Wrap company information in white-box container for search functionality
+                if (companyLines.length > 0) {
+                    const stateAttr = storedOrderInfo.companyState ? ` data-state="${escapeHtml(storedOrderInfo.companyState)}"` : '';
+                    html += `<div class="white-box company-box"${stateAttr} style="margin-bottom:10px">${companyLines.join('')}</div>`;
                 }
             }
             if (orderId) html += `<div><b><a href="#" id="order-link" class="order-link">${renderCopy(orderId)}</a> ${renderCopyIcon(orderId)}</b></div>`;
@@ -1061,10 +1141,21 @@
 
 
         function loadDbSummary(expectedId) {
+            console.log('[FENNEC (MVP) GM SB] loadDbSummary called with expectedId:', expectedId);
             const container = document.getElementById('db-summary-section');
-            if (!container) return;
+            if (!container) {
+                console.warn('[FENNEC (MVP) GM SB] DB summary container not found');
+                return;
+            }
+            console.log('[FENNEC (MVP) GM SB] DB summary container found, loading data...');
+            
             document.querySelectorAll('#copilot-sidebar #quick-summary').forEach(el => el.remove());
             chrome.storage.local.get({ sidebarDb: [], sidebarOrderId: null, sidebarOrderInfo: null }, ({ sidebarDb, sidebarOrderId, sidebarOrderInfo }) => {
+                console.log('[FENNEC (MVP) GM SB] DB data from storage:', {
+                    sidebarDbLength: sidebarDb ? sidebarDb.length : 0,
+                    sidebarOrderId: sidebarOrderId,
+                    sidebarOrderInfo: sidebarOrderInfo ? 'Present' : 'None'
+                });
                 if (Array.isArray(sidebarDb) && sidebarDb.length && (!expectedId || sidebarOrderId === expectedId)) {
                     container.innerHTML = sidebarDb.join("");
                     container.style.display = 'block';
@@ -1114,23 +1205,27 @@
                     if (intStorageSection) {
                         intStorageSection.style.display = 'block';
                         const sectionLabel = intStorageSection.querySelector('.section-label');
-                        if (sectionLabel) sectionLabel.style.display = 'block';
+                        if (sectionLabel) {
+                            sectionLabel.style.display = 'block';
+                            // Add click functionality to INT STORAGE title
+                            sectionLabel.style.cursor = 'pointer';
+                            sectionLabel.title = 'Click to open INT STORAGE tab';
+                            sectionLabel.addEventListener('click', () => {
+                                openIntStorageTab(storedOrderInfo.orderId);
+                            });
+                        }
                     }
                     
                     // Load ISSUES and INT STORAGE for both review mode and classic mode
                     if (storedOrderInfo && storedOrderInfo.orderId) {
-                        console.log('[FENNEC (POO) GM SB] Loading ISSUES and INT STORAGE for order:', storedOrderInfo.orderId, 'reviewMode:', reviewMode);
+                        console.log('[FENNEC (MVP) GM SB] Loading ISSUES and INT STORAGE for order:', storedOrderInfo.orderId, 'reviewMode:', reviewMode);
                         checkLastIssue(storedOrderInfo.orderId);
                         
-                        // Wait for database tab to load INT STORAGE data in both review mode and classic mode
-                        console.log('[FENNEC (POO) GM SB] Waiting for DB tab to load INT STORAGE data for order:', storedOrderInfo.orderId);
-                        const box = document.getElementById('int-storage-box');
-                        if (box) {
-                            box.style.display = 'block';
-                            box.innerHTML = '<div style="text-align:center;color:#aaa">Waiting for DB tab...</div>';
-                        }
+                        // Trigger INT STORAGE load in DB tab and wait for completion
+                        console.log('[FENNEC (MVP) GM SB] Triggering INT STORAGE load for order:', storedOrderInfo.orderId);
+                        loadIntStorage(storedOrderInfo.orderId);
                     } else {
-                        console.log('[FENNEC (POO) GM SB] Not loading INT STORAGE:', {
+                        console.log('[FENNEC (MVP) GM SB] Not loading INT STORAGE:', {
                             reviewMode: reviewMode,
                             hasStoredOrderInfo: !!storedOrderInfo,
                             orderId: storedOrderInfo ? storedOrderInfo.orderId : null
@@ -1161,7 +1256,7 @@
                 companyHighlights.forEach(highlight => {
                     highlight.classList.add('possible-fraud');
                 });
-                console.log('[FENNEC (POO) GM SB] Applied possible fraud coloring to company summary highlights');
+                console.log('[FENNEC (MVP) GM SB] Applied possible fraud coloring to company summary highlights');
             }
         }
 
@@ -1270,7 +1365,11 @@
         }
 
        function buildDnaHtml(info) {
-            if (!info || !info.payment) return null;
+            console.log('[FENNEC (MVP) GM SB] buildDnaHtml called with info:', info);
+            if (!info || !info.payment) {
+                console.log('[FENNEC (MVP) GM SB] buildDnaHtml: No info or payment data, returning null');
+                return null;
+            }
             const p = info.payment;
             const card = p.card || {};
             const shopper = p.shopper || {};
@@ -1401,7 +1500,11 @@
        }
 
         function buildKountHtml(info) {
-            if (!info) return null;
+            console.log('[FENNEC (MVP) GM SB] buildKountHtml called with info:', info);
+            if (!info) {
+                console.log('[FENNEC (MVP) GM SB] buildKountHtml: No info data, returning null');
+                return null;
+            }
             const parts = [];
             if (info.emailAge) parts.push(`<div><b>Email age:</b> ${escapeHtml(info.emailAge)}</div>`);
             if (info.deviceLocation || info.ip) {
@@ -1424,52 +1527,87 @@
         }
 
         function loadDnaSummary() {
+            console.log('[FENNEC (MVP) GM SB] loadDnaSummary called');
             ensureDnaSections();
             const container = document.getElementById('dna-summary');
-            if (!container) return;
+            if (!container) {
+                console.warn('[FENNEC (MVP) GM SB] DNA summary container not found');
+                return;
+            }
+            console.log('[FENNEC (MVP) GM SB] DNA summary container found, loading data...');
+            
             try {
                 chrome.storage.local.get({ adyenDnaInfo: null }, ({ adyenDnaInfo }) => {
+                    console.log('[FENNEC (MVP) GM SB] DNA data from storage:', adyenDnaInfo);
                     const html = buildDnaHtml(adyenDnaInfo);
+                    console.log('[FENNEC (MVP) GM SB] DNA HTML generated:', html ? 'Yes' : 'No', 'Length:', html ? html.length : 0);
                     container.innerHTML = html || '';
-                    // console.log('[Copilot] ADYEN DNA summary', html ? 'loaded' : 'not found');
                     attachCommonListeners(container);
                     repositionDnaSummary();
                     ensureIssueControls();
                     setupResolveButton();
+                    console.log('[FENNEC (MVP) GM SB] DNA summary loaded and attached');
                 });
             } catch (err) {
-                // console.warn('[Copilot] failed to load ADYEN DNA summary:', err);
+                console.error('[FENNEC (MVP) GM SB] Failed to load ADYEN DNA summary:', err);
             }
         }
 
         function loadKountSummary() {
+            console.log('[FENNEC (MVP) GM SB] loadKountSummary called');
             ensureDnaSections();
             const container = document.getElementById('kount-summary');
-            if (!container) return;
+            if (!container) {
+                console.warn('[FENNEC (MVP) GM SB] KOUNT summary container not found');
+                return;
+            }
+            console.log('[FENNEC (MVP) GM SB] KOUNT summary container found, loading data...');
+            
             chrome.storage.local.get({ kountInfo: null }, ({ kountInfo }) => {
+                console.log('[FENNEC (MVP) GM SB] KOUNT data from storage:', kountInfo);
                 const html = buildKountHtml(kountInfo);
+                console.log('[FENNEC (MVP) GM SB] KOUNT HTML generated:', html ? 'Yes' : 'No', 'Length:', html ? html.length : 0);
                 container.innerHTML = html || '';
-                // console.log('[Copilot] KOUNT summary', html ? 'loaded' : 'not found');
                 attachCommonListeners(container);
+                console.log('[FENNEC (MVP) GM SB] KOUNT summary loaded and attached');
             });
         }
 
         let dnaWatchInterval = null;
         function startDnaWatch() {
-            if (dnaWatchInterval) clearInterval(dnaWatchInterval);
-            // console.log('[Copilot] waiting for ADYEN DNA/KOUNT data...');
+            console.log('[FENNEC (MVP) GM SB] startDnaWatch called');
+            if (dnaWatchInterval) {
+                console.log('[FENNEC (MVP) GM SB] Clearing existing DNA watch interval');
+                clearInterval(dnaWatchInterval);
+            }
+            console.log('[FENNEC (MVP) GM SB] Starting DNA watch interval, checking every 1 second...');
             dnaWatchInterval = setInterval(() => {
                 chrome.storage.local.get({ adyenDnaInfo: null, kountInfo: null }, data => {
+                    console.log('[FENNEC (MVP) GM SB] DNA watch check - data:', {
+                        hasAdyenDnaInfo: !!data.adyenDnaInfo,
+                        hasKountInfo: !!data.kountInfo,
+                        adyenDnaInfo: data.adyenDnaInfo,
+                        kountInfo: data.kountInfo
+                    });
+                    
                     const hasDna = data.adyenDnaInfo && data.adyenDnaInfo.payment;
                     const hasKount = data.kountInfo && (data.kountInfo.emailAge || data.kountInfo.deviceLocation || data.kountInfo.ip || data.kountInfo.ekata);
+                    
+                    console.log('[FENNEC (MVP) GM SB] DNA watch check - conditions:', {
+                        hasDna: hasDna,
+                        hasKount: hasKount,
+                        shouldLoad: hasDna || hasKount
+                    });
+                    
                     if (hasDna || hasKount) {
+                        console.log('[FENNEC (MVP) GM SB] DNA/KOUNT data detected, loading summaries...');
                         ensureDnaSections();
                         loadDnaSummary();
                         loadKountSummary();
                         repositionDnaSummary();
                         clearInterval(dnaWatchInterval);
                         dnaWatchInterval = null;
-                        // console.log('[Copilot] ADYEN DNA/KOUNT data loaded');
+                        console.log('[FENNEC (MVP) GM SB] DNA watch completed and cleared');
                     }
                 });
             }, 1000);
@@ -1578,7 +1716,7 @@
             if (sectionLabel) sectionLabel.style.display = 'block';
             if (box) {
                 box.style.display = 'block';
-                box.innerHTML = '<div style="text-align:center;color:#aaa">Loading...</div>';
+                box.innerHTML = '<div style="text-align:center;color:#aaa">Loading<span class="loading-dots">...</span></div>';
             }
             
             // Store the orderId for data sharing
@@ -1586,23 +1724,28 @@
             
             // Clear any existing data for this order to ensure fresh load
             chrome.storage.local.remove(['intStorageData', 'intStorageLoaded', 'intStorageOrderId'], () => {
-                console.log('[FENNEC (POO) GM SB] Cleared existing INT STORAGE data for fresh load');
+                console.log('[FENNEC (MVP) GM SB] Cleared existing INT STORAGE data for fresh load');
                 
                 // No cleanup needed since we're not using storage listeners anymore
                 
                 // No longer need to listen for storage changes - we'll wait for completion signal
-                console.log('[FENNEC (POO) GM SB] Waiting for DB SB to complete INT STORAGE load');
+                console.log('[FENNEC (MVP) GM SB] Waiting for DB SB to complete INT STORAGE load');
                 
                 // Trigger DB SB to load INT STORAGE data and wait for completion signal
-                console.log('[FENNEC (POO) GM SB] Requesting fresh INT STORAGE data for order:', orderId);
+                console.log('[FENNEC (MVP) GM SB] Requesting fresh INT STORAGE data for order:', orderId);
                 bg.send('triggerIntStorageLoad', { orderId }, (response) => {
-                    console.log('[FENNEC (POO) GM SB] INT STORAGE load trigger response:', response);
+                    console.log('[FENNEC (MVP) GM SB] INT STORAGE load trigger response:', response);
                     
-                    // Don't immediately request data - wait for DB SB to signal completion
+                    // Handle the response appropriately
                     if (response && response.success) {
-                        console.log('[FENNEC (POO) GM SB] DB SB load triggered successfully, waiting for completion signal');
+                        console.log('[FENNEC (MVP) GM SB] DB SB load triggered successfully, waiting for completion signal');
                     } else {
-                        console.error('[FENNEC (POO) GM SB] Failed to trigger DB SB load:', response);
+                        console.error('[FENNEC (MVP) GM SB] Failed to trigger DB SB load:', response);
+                        // Show appropriate error message
+                        const errorMsg = response && response.error ? response.error : 'Failed to load INT STORAGE';
+                        if (box) {
+                            box.innerHTML = `<div style="text-align:center;color:#aaa">${errorMsg}</div>`;
+                        }
                     }
                 });
                 
@@ -1616,7 +1759,7 @@
                 // Set a longer timeout to show "Failed to load" after 30 seconds
                 setTimeout(() => {
                     if (box && (box.innerHTML.includes('Loading...') || box.innerHTML.includes('Waiting for DB...'))) {
-                        console.log('[FENNEC (POO) GM SB] INT STORAGE timeout - no completion signal received after 30 seconds');
+                        console.log('[FENNEC (MVP) GM SB] INT STORAGE timeout - no completion signal received after 30 seconds');
                         box.innerHTML = '<div style="text-align:center;color:#aaa">Failed to load</div>';
                     }
                 }, 30000);
@@ -1624,18 +1767,18 @@
         }
 
         function startIntStorageListener(orderId) {
-            console.log('[FENNEC (POO) GM SB] Starting INT STORAGE listener for order:', orderId);
+            console.log('[FENNEC (MVP) GM SB] Starting INT STORAGE listener for order:', orderId);
             
             // Create a one-time listener that will be removed after processing
             const listener = function(changes, area) {
                 if (area === 'local' && changes.intStorageData) {
                     const newData = changes.intStorageData.newValue;
                     
-                    console.log('[FENNEC (POO) GM SB] INT STORAGE DEBUG: Received storage change for order:', orderId, 'data:', newData);
+                    console.log('[FENNEC (MVP) GM SB] INT STORAGE DEBUG: Received storage change for order:', orderId, 'data:', newData);
                     
                     // Only process if we have data and it's for the current order
                     if (newData && newData.orderId === orderId) {
-                        console.log('[FENNEC (POO) GM SB] INT STORAGE DEBUG: Processing data for order:', orderId, 'files count:', newData.files ? newData.files.length : 'null');
+                        console.log('[FENNEC (MVP) GM SB] INT STORAGE DEBUG: Processing data for order:', orderId, 'files count:', newData.files ? newData.files.length : 'null');
                         
                         // Remove the listener since we got the data
                         chrome.storage.onChanged.removeListener(listener);
@@ -1646,9 +1789,9 @@
                             updateIntStorageDisplay(newData.files, orderId, null, 0);
                         }
                     } else if (newData && newData.orderId !== orderId) {
-                        console.log('[FENNEC (POO) GM SB] INT STORAGE DEBUG: Data mismatch - expected orderId:', orderId, 'received orderId:', newData.orderId);
+                        console.log('[FENNEC (MVP) GM SB] INT STORAGE DEBUG: Data mismatch - expected orderId:', orderId, 'received orderId:', newData.orderId);
                     } else if (!newData) {
-                        console.log('[FENNEC (POO) GM SB] INT STORAGE DEBUG: Received null data for order:', orderId);
+                        console.log('[FENNEC (MVP) GM SB] INT STORAGE DEBUG: Received null data for order:', orderId);
                     }
                 }
             };
@@ -1680,16 +1823,16 @@
                 box.innerHTML = '<div style="text-align:center;color:#aaa">No files</div>';
                 // Retry logic for "No files" - retry up to 3 times
                 if (retryCount < 3) {
-                    console.log(`[FENNEC (POO) GM SB] INT STORAGE: No files found, retrying in 5 seconds (attempt ${retryCount + 1}/3)`);
+                    console.log(`[FENNEC (MVP) GM SB] INT STORAGE: No files found, retrying in 5 seconds (attempt ${retryCount + 1}/3)`);
                     setTimeout(() => {
                         // Trigger a fresh INT STORAGE load from DB
                         bg.send('triggerIntStorageLoad', { orderId }, (response) => {
-                            console.log('[FENNEC (POO) GM SB] INT STORAGE retry triggered:', response);
+                            console.log('[FENNEC (MVP) GM SB] INT STORAGE retry triggered:', response);
                             // Set up a listener to wait for the new data
                             const checkForNewData = () => {
                                 chrome.storage.local.get({ intStorageData: null }, ({ intStorageData }) => {
                                     if (intStorageData && intStorageData.orderId === orderId) {
-                                        console.log('[FENNEC (POO) GM SB] INT STORAGE retry: Found new data');
+                                        console.log('[FENNEC (MVP) GM SB] INT STORAGE retry: Found new data');
                                         if (intStorageData.error) {
                                             updateIntStorageDisplay(null, orderId, intStorageData.error, retryCount + 1);
                                         } else {
@@ -1705,7 +1848,7 @@
                         });
                     }, 5000);
                 } else {
-                    console.log('[FENNEC (POO) GM SB] INT STORAGE: No files found after 3 retries, giving up');
+                    console.log('[FENNEC (MVP) GM SB] INT STORAGE: No files found after 3 retries, giving up');
                 }
                 return;
             }
@@ -1716,16 +1859,16 @@
                 box.innerHTML = '<div style="text-align:center;color:#aaa">No files</div>';
                 // Retry logic for empty files array - retry up to 3 times
                 if (retryCount < 3) {
-                    console.log(`[FENNEC (POO) GM SB] INT STORAGE: Empty files array, retrying in 5 seconds (attempt ${retryCount + 1}/3)`);
+                    console.log(`[FENNEC (MVP) GM SB] INT STORAGE: Empty files array, retrying in 5 seconds (attempt ${retryCount + 1}/3)`);
                     setTimeout(() => {
                         // Trigger a fresh INT STORAGE load from DB
                         bg.send('triggerIntStorageLoad', { orderId }, (response) => {
-                            console.log('[FENNEC (POO) GM SB] INT STORAGE retry triggered:', response);
+                            console.log('[FENNEC (MVP) GM SB] INT STORAGE retry triggered:', response);
                             // Set up a listener to wait for the new data
                             const checkForNewData = () => {
                                 chrome.storage.local.get({ intStorageData: null }, ({ intStorageData }) => {
                                     if (intStorageData && intStorageData.orderId === orderId) {
-                                        console.log('[FENNEC (POO) GM SB] INT STORAGE retry: Found new data');
+                                        console.log('[FENNEC (MVP) GM SB] INT STORAGE retry: Found new data');
                                         if (intStorageData.error) {
                                             updateIntStorageDisplay(null, orderId, intStorageData.error, retryCount + 1);
                                         } else {
@@ -1741,7 +1884,7 @@
                         });
                     }, 5000);
                 } else {
-                    console.log('[FENNEC (POO) GM SB] INT STORAGE: Empty files array after 3 retries, giving up');
+                    console.log('[FENNEC (MVP) GM SB] INT STORAGE: Empty files array after 3 retries, giving up');
                 }
                 return;
             }
@@ -1767,14 +1910,39 @@
                     dateDiv = `<div class="int-doc-date">--/--/--<br><span class="int-doc-time">--:--</span></div>`;
                 }
                 
-                const clip = `<span class="int-doc-clip" data-idx="${idx}" title="Remove">📎</span>`;
-                const openBtn = `<button class="copilot-button int-open" style="font-size:11px;padding:5px 8px;" data-url="${escapeHtml(file.url)}">OPEN</button>`;
-                return `<div class="int-row" style="display:flex;align-items:center;gap:8px;margin:4px 0;">${clip}<div class="int-doc-info">${nameDiv}${uploaderDiv}</div>${dateDiv}${openBtn}</div>`;
+                const openBtn = `<button class="copilot-button int-open" style="font-size:11px;padding:3px 6px;min-width:50px;" data-url="${escapeHtml(file.url)}">OPEN</button>`;
+                const downloadBtn = `<button class="copilot-button int-download" style="font-size:12px;padding:4px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;" data-url="${escapeHtml(file.url)}" title="Download">⬇</button>`;
+                return `<div class="int-row" style="display:flex;align-items:center;gap:8px;margin:4px 0;"><div class="int-doc-info" style="flex:1;min-width:0;">${nameDiv}${uploaderDiv}</div><div class="int-doc-date-container" style="min-width:60px;text-align:center;">${dateDiv}</div><div style="display:flex;gap:4px;min-width:80px;justify-content:flex-end;">${openBtn}${downloadBtn}</div></div>`;
             }).join('');
             
             if (sectionLabel) sectionLabel.style.display = 'block';
             box.style.display = 'block';
             box.innerHTML = list;
+            
+            // Add event listeners to the OPEN buttons
+            box.querySelectorAll('.int-open').forEach(b => {
+                b.addEventListener('click', () => { 
+                    const u = b.dataset.url; 
+                    if (u) {
+                        bg.openOrReuseTab({ url: u, active: false });
+                    }
+                });
+            });
+            // Add event listeners to the DOWNLOAD buttons
+            box.querySelectorAll('.int-download').forEach(b => {
+                b.addEventListener('click', () => { 
+                    const u = b.dataset.url; 
+                    if (u) {
+                        const link = document.createElement('a');
+                        link.href = u;
+                        link.download = '';
+                        link.target = '_blank';
+                        document.body.appendChild(link);
+                        link.click();
+                        setTimeout(() => link.remove(), 0);
+                    }
+                });
+            });
         }
 
         function showDnaLoading() {
@@ -2044,11 +2212,111 @@
                 if (orderId) checkLastIssue(orderId);
                 loadDnaSummary();
                 loadKountSummary();
+                // Ensure global INT STORAGE drag & drop is set up in GM SB
+                setupGlobalIntStorageDropGm();
             });
         }
 
+        function showManualOrderEntryForm() {
+            console.log('[FENNEC (MVP) GM SB] Showing manual order entry form');
+            
+            // Create the manual order entry form
+            const formHtml = `
+                <div class="section-label">MANUAL ORDER ENTRY:</div>
+                <div class="white-box" style="margin-bottom:10px; padding: 10px;">
+                    <div style="margin-bottom: 10px; color: #ccc; font-size: 12px;">
+                        No order number found. Enter manually:
+                    </div>
+                    <input type="text" id="manual-order-input" placeholder="Enter order number (e.g., 225081300084)" 
+                           style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #555; border-radius: 4px; background: #333; color: #fff;">
+                    <button id="manual-order-submit" class="copilot-button" style="width: 100%;">
+                        🔍 LOAD ORDER
+                    </button>
+                </div>
+            `;
+            
+            // Insert the form into the sidebar
+            const dbSummarySection = document.getElementById('db-summary-section');
+            if (dbSummarySection) {
+                // Clear existing content and add the form
+                dbSummarySection.innerHTML = formHtml;
+                
+                // Add event listener for the submit button
+                const submitBtn = document.getElementById('manual-order-submit');
+                const orderInput = document.getElementById('manual-order-input');
+                
+                if (submitBtn && orderInput) {
+                    submitBtn.addEventListener('click', () => {
+                        const orderNumber = orderInput.value.trim();
+                        if (orderNumber && /^\d{12}$/.test(orderNumber)) {
+                            console.log('[FENNEC (MVP) GM SB] Manual order submitted:', orderNumber);
+                            loadOrderByNumber(orderNumber);
+                        } else {
+                            alert('Please enter a valid 12-digit order number');
+                        }
+                    });
+                    
+                    // Allow Enter key to submit
+                    orderInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            submitBtn.click();
+                        }
+                    });
+                    
+                    // Focus on the input
+                    setTimeout(() => orderInput.focus(), 100);
+                }
+            }
+        }
+        
+        function loadOrderByNumber(orderNumber) {
+            console.log('[FENNEC (MVP) GM SB] Loading order by number:', orderNumber);
+            
+            // Open the order in DB
+            const dbOrderUrl = `https://db.incfile.com/incfile/order/detail/${orderNumber}`;
+            bg.openOrReuseTab({ url: dbOrderUrl, active: true });
+            
+            // Clear the manual entry form and show loading
+            const dbSummarySection = document.getElementById('db-summary-section');
+            if (dbSummarySection) {
+                dbSummarySection.innerHTML = '<div style="text-align:center; color:#888; margin-top:20px;">Loading order...</div>';
+            }
+            
+            // Load the order summary
+            loadDbSummary(orderNumber);
+            checkLastIssue(orderNumber);
+        }
+        
+        // Debug function to manually check storage and force load data
+        window.debugFennecData = function() {
+            console.log('[FENNEC (MVP) GM SB] === DEBUG FENNEC DATA ===');
+            
+            chrome.storage.local.get(null, (data) => {
+                console.log('[FENNEC (MVP) GM SB] All storage data:', data);
+                
+                // Check specific keys
+                const keys = ['adyenDnaInfo', 'kountInfo', 'sidebarDb', 'sidebarOrderId', 'sidebarOrderInfo'];
+                keys.forEach(key => {
+                    console.log(`[FENNEC (MVP) GM SB] ${key}:`, data[key]);
+                });
+                
+                // Force load summaries
+                console.log('[FENNEC (MVP) GM SB] Force loading summaries...');
+                loadDnaSummary();
+                loadKountSummary();
+                loadDbSummary();
+                
+                // Check if containers exist
+                const containers = ['dna-summary', 'kount-summary', 'db-summary-section'];
+                containers.forEach(id => {
+                    const container = document.getElementById(id);
+                    console.log(`[FENNEC (MVP) GM SB] Container ${id}:`, container ? 'Found' : 'Not found');
+                });
+            });
+        };
+
         function clearSidebar() {
-            console.log('[FENNEC (POO) GM SB] TAB TRACKING: Clearing fraudReviewSession (setting to null)');
+            console.log('[FENNEC (MVP) GM SB] TAB TRACKING: Clearing fraudReviewSession (setting to null)');
             
             // Clear all local variables
             storedOrderInfo = null;
@@ -2102,7 +2370,7 @@
                 'fennecActiveSession',
                 'fennecFraudAdyen'
             ], () => {
-                console.log('[FENNEC (POO) GM SB] Cleared all storage data during sidebar clear');
+                console.log('[FENNEC (MVP) GM SB] Cleared all storage data during sidebar clear');
             });
             
             // Clear INT STORAGE data
@@ -2124,7 +2392,7 @@
             loadKountSummary();
             repositionDnaSummary();
             
-            console.log('[FENNEC (POO) GM SB] Sidebar cleared and reset to brand new state');
+            console.log('[FENNEC (MVP) GM SB] Sidebar cleared and reset to brand new state');
         }
 
         async function handleEmailSearchClick(xray = false) {
@@ -2181,9 +2449,13 @@
                 if (xray) dbOrderUrl += '?fraud_xray=1';
                 urls.push(dbOrderUrl);
             } else {
-                const dbSearchUrl = "https://db.incfile.com/order-tracker/orders/order-search";
+                const dbSearchUrl = `https://db.incfile.com/order-tracker/orders/order-search?fennec_email=${encodeURIComponent(email)}`;
+                console.log('[FENNEC (MVP) GM SB] Opening DB search with email parameter:', email);
                 urls.push(dbSearchUrl);
                 navigator.clipboard.writeText(email).catch(() => {});
+                
+                // Show manual order entry form in the sidebar
+                showManualOrderEntryForm();
             }
 
             const data = { fennecActiveSession: getFennecSessionId() };
@@ -2217,7 +2489,7 @@
                         patterns: urlPatterns,
                         excludeTabId: currentTabId 
                     }, (response) => {
-                        console.log('[FENNEC (POO) GM SB] Closed existing tabs:', response);
+                        console.log('[FENNEC (MVP) GM SB] Closed existing tabs:', response);
                         
                         // Open new tabs after closing existing ones
                         urls.forEach(url => {
@@ -2230,15 +2502,18 @@
                         if (orderId) {
                 checkLastIssue(orderId);
                 
-                // Set up INT STORAGE listener for order
-                console.log('[FENNEC (POO) GM SB] Setting up INT STORAGE listener for order:', orderId, 'reviewMode:', reviewMode);
+                // Set up INT STORAGE listener for order and trigger load
+                console.log('[FENNEC (MVP) GM SB] Setting up INT STORAGE listener for order:', orderId, 'reviewMode:', reviewMode);
                 window.currentIntStorageOrderId = orderId;
+                
+                // Trigger INT STORAGE load
+                loadIntStorage(orderId);
                 
                 // Set up a listener to wait for INT STORAGE completion signal
                 const checkForIntStorageData = () => {
                     chrome.storage.local.get({ intStorageData: null }, ({ intStorageData }) => {
                         if (intStorageData && intStorageData.orderId === orderId) {
-                            console.log('[FENNEC (POO) GM SB] Found INT STORAGE data from DB tab for order:', orderId);
+                            console.log('[FENNEC (MVP) GM SB] Found INT STORAGE data from DB tab for order:', orderId);
                             if (intStorageData.error) {
                                 updateIntStorageDisplay(null, orderId, intStorageData.error, 0);
                             } else {
@@ -2295,7 +2570,7 @@
                         <div id="int-storage-section" style="display:none; margin-top:10px;">
                             <div class="section-label" style="display:none;">INT STORAGE:</div>
                             <div id="int-storage-box" class="white-box" style="margin-bottom:10px; display:none;">
-                                <div style="text-align:center;color:#aaa">Loading...</div>
+                                <div style="text-align:center;color:#aaa">Loading<span class="loading-dots">...</span></div>
                             </div>
                         </div>
                         ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ''}
@@ -2335,7 +2610,7 @@
                         <div id="int-storage-section" style="display:none; margin-top:10px;">
                             <div class="section-label" style="display:none;">INT STORAGE:</div>
                             <div id="int-storage-box" class="white-box" style="margin-bottom:10px; display:none;">
-                                <div style="text-align:center;color:#aaa">Loading...</div>
+                                <div style="text-align:center;color:#aaa">Loading<span class="loading-dots">...</span></div>
                             </div>
                         </div>
                         ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ``}
@@ -2436,16 +2711,16 @@
                         const idx = e.target.dataset.idx;
                         if (idx !== undefined) {
                             // Handle remove functionality if needed
-                            console.log('[FENNEC (POO) GM SB] Remove INT STORAGE item:', idx);
+                            console.log('[FENNEC (MVP) GM SB] Remove INT STORAGE item:', idx);
                         }
                     }
                 });
             }
             
                     // Test INT STORAGE data sharing (for debugging)
-        console.log('[FENNEC (POO) GM SB] Testing INT STORAGE data sharing...');
+        console.log('[FENNEC (MVP) GM SB] Testing INT STORAGE data sharing...');
         chrome.storage.local.get({ intStorageData: null }, ({ intStorageData }) => {
-            console.log('[FENNEC (POO) GM SB] Current INT STORAGE data in storage:', intStorageData);
+            console.log('[FENNEC (MVP) GM SB] Current INT STORAGE data in storage:', intStorageData);
         });
         
         // Setup cleanup when email tab is closed
@@ -3094,11 +3369,11 @@
 
             // Load ISSUES and INT STORAGE for review mode
             if (reviewMode && orderId) {
-                console.log('[FENNEC (POO) GM SB] XRAY flow - loading ISSUES and INT STORAGE for order:', orderId);
+                console.log('[FENNEC (MVP) GM SB] XRAY flow - loading ISSUES and INT STORAGE for order:', orderId);
                 checkLastIssue(orderId);
                 loadIntStorage(orderId);
             } else {
-                console.log('[FENNEC (POO) GM SB] XRAY flow - not loading INT STORAGE:', {
+                console.log('[FENNEC (MVP) GM SB] XRAY flow - not loading INT STORAGE:', {
                     reviewMode: reviewMode,
                     orderId: orderId
                 });
@@ -3117,7 +3392,7 @@
             // stored a completion flag for this order.
             localStorage.removeItem('fraudXrayCompleted');
 
-            console.log('[FENNEC (POO) GM SB] TAB TRACKING: Setting fraudReviewSession to:', orderId);
+            console.log('[FENNEC (MVP) GM SB] TAB TRACKING: Setting fraudReviewSession to:', orderId);
             const data = {
                 fennecActiveSession: getFennecSessionId(),
                 fraudReviewSession: orderId,
@@ -3158,7 +3433,7 @@
                 // Check if this is the current tab
                 chrome.tabs.getCurrent((currentTab) => {
                     if (currentTab && currentTab.id === tabId) {
-                        console.log('[FENNEC (POO) GM SB] Email tab closed, cleaning up...');
+                        console.log('[FENNEC (MVP) GM SB] Email tab closed, cleaning up...');
                         cleanupEmailSession();
                     }
                 });
@@ -3166,7 +3441,7 @@
             
             // Listen for navigation away from Gmail
             window.addEventListener('beforeunload', () => {
-                console.log('[FENNEC (POO) GM SB] Navigating away from Gmail, cleaning up...');
+                console.log('[FENNEC (MVP) GM SB] Navigating away from Gmail, cleaning up...');
                 cleanupEmailSession();
             });
             
@@ -3177,14 +3452,14 @@
             const checkUrlChange = () => {
                 const newUrl = window.location.href;
                 if (newUrl !== currentUrl) {
-                    console.log('[FENNEC (POO) GM SB] URL changed from', currentUrl, 'to', newUrl);
+                    console.log('[FENNEC (MVP) GM SB] URL changed from', currentUrl, 'to', newUrl);
                     
                     const wasInEmailView = isInEmailView;
                     isInEmailView = newUrl.includes('/mail/u/') && !newUrl.includes('/#inbox') && !newUrl.includes('/#search') && !newUrl.includes('/#sent') && !newUrl.includes('/#drafts');
                     
                     // Check if navigating from email view back to inbox
                     if (wasInEmailView && !isInEmailView) {
-                        console.log('[FENNEC (POO) GM SB] Navigating from email view back to inbox, cleaning up...');
+                        console.log('[FENNEC (MVP) GM SB] Navigating from email view back to inbox, cleaning up...');
                         cleanupEmailSession();
                     }
                     
@@ -3240,7 +3515,7 @@
             if (window.cleanupInProgress) return;
             window.cleanupInProgress = true;
             
-            console.log('[FENNEC (POO) GM SB] TAB CLEANUP: Starting cleanup process');
+            console.log('[FENNEC (MVP) GM SB] TAB CLEANUP: Starting cleanup process');
             
             // Clear INT STORAGE data
             chrome.storage.local.remove(['intStorageData', 'intStorageLoaded', 'intStorageOrderId']);
@@ -3250,12 +3525,12 @@
             
             // Check what tabs are currently tracked before closing
             chrome.storage.local.get({ xrayOpenedTabs: [], fraudReviewSession: null }, ({ xrayOpenedTabs, fraudReviewSession }) => {
-                console.log('[FENNEC (POO) GM SB] TAB CLEANUP: Current tracked tabs:', xrayOpenedTabs);
-                console.log('[FENNEC (POO) GM SB] TAB CLEANUP: Current fraud review session:', fraudReviewSession);
+                console.log('[FENNEC (MVP) GM SB] TAB CLEANUP: Current tracked tabs:', xrayOpenedTabs);
+                console.log('[FENNEC (MVP) GM SB] TAB CLEANUP: Current fraud review session:', fraudReviewSession);
                 
                 // Close all tabs opened by the flow FIRST (before clearing session)
                 bg.send('closeFlowTabs', {}, (response) => {
-                    console.log('[FENNEC (POO) GM SB] TAB CLEANUP: closeFlowTabs response:', response);
+                    console.log('[FENNEC (MVP) GM SB] TAB CLEANUP: closeFlowTabs response:', response);
                     
                     // Clear sidebar and show initial status AFTER tabs are closed
                     clearSidebar();
@@ -3266,8 +3541,118 @@
                     }, 2000);
                 });
             });
+                }
+
+        function openIntStorageTab(orderId) {
+            console.log('[FENNEC] Opening INT STORAGE tab for order:', orderId);
+            
+            // Send message to background script to find and activate INT STORAGE tab
+            chrome.runtime.sendMessage({
+                action: 'openIntStorageTab',
+                orderId: orderId
+            }, (response) => {
+                if (response && response.success) {
+                    console.log('[FENNEC] INT STORAGE tab opened/activated successfully');
+                } else {
+                    console.warn('[FENNEC] Failed to open INT STORAGE tab:', response);
+                }
+            });
         }
 
+        // Gmail global drag & drop for INT STORAGE uploads
+        function setupGlobalIntStorageDropGm() {
+            const body = document.getElementById('copilot-body-content');
+            if (!body || body.dataset.gmDropAttached) return;
+            body.dataset.gmDropAttached = 'true';
+            const onDragOver = (e) => { e.preventDefault(); e.stopPropagation(); body.classList.add('dragover'); };
+            const onDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); if (!body.contains(e.relatedTarget)) body.classList.remove('dragover'); };
+            const onDrop = (e) => {
+                e.preventDefault(); e.stopPropagation(); body.classList.remove('dragover');
+                const files = Array.from((e.dataTransfer && e.dataTransfer.files) || []);
+                if (!files.length) return;
+                const orderId = (storedOrderInfo && storedOrderInfo.orderId) || (currentContext && currentContext.orderNumber);
+                if (!orderId) { alert('No order ID detected for upload.'); return; }
+                const section = document.getElementById('int-storage-section');
+                const box = document.getElementById('int-storage-box');
+                if (section) section.style.display = 'block';
+                if (window.fennecAutoUpload) {
+                    if (box) box.innerHTML = '<div style="text-align:center;color:#aaa">Uploading files...</div>';
+                    Promise.all(files.map(f => convertFileToPdf({ file: f, name: f.name }))).then(uploadList => {
+                        sessionSet({ fennecPendingUpload: { orderId, files: uploadList }, fennecActiveSession: getFennecSessionId() }, () => {
+                            const url = `https://db.incfile.com/storage/incfile/${orderId}`;
+                            bg.openOrReuseTab({ url, active: false });
+                        });
+                    });
+                    return;
+                }
+                window.intDroppedFiles = (window.intDroppedFiles || []).concat(files.map(f => ({ file: f, name: f.name })));
+                renderIntUploadPlaceholder(orderId);
+            };
+            body.addEventListener('dragover', onDragOver);
+            body.addEventListener('dragleave', onDragLeave);
+            body.addEventListener('drop', onDrop);
+        }
+
+        function allFilesPdfSimple(list) {
+            return (list || []).every(item => {
+                const f = item.file || item;
+                return f && (f.type === 'application/pdf' || /\.pdf$/i.test(f.name));
+            });
+        }
+
+        function renderIntUploadPlaceholder(orderId) {
+            const section = document.getElementById('int-storage-section');
+            if (!section) return;
+            let placeholder = document.getElementById('int-upload-placeholder');
+            if (!placeholder) {
+                placeholder = document.createElement('div');
+                placeholder.id = 'int-upload-placeholder';
+                placeholder.className = 'white-box';
+                placeholder.style.marginBottom = '10px';
+                section.insertBefore(placeholder, section.firstChild);
+            }
+            const files = window.intDroppedFiles || [];
+            const rows = files.map((item, idx) => {
+                const nameVal = (item && (item.name || (item.file && item.file.name))) || '';
+                return `<div class="dropped-file-row"><div class="dropped-file-icon">📎</div><input class="dropped-file-name" data-idx="${idx}" value="${escapeHtml(nameVal)}" /></div>`;
+            }).join('');
+            const btnLabel = allFilesPdfSimple(files) ? 'UPLOAD' : 'CONVERT & UPLOAD';
+            placeholder.innerHTML = `
+                <div style="margin-bottom:6px;color:#aaa">Files ready to upload to INT STORAGE</div>
+                ${rows}
+                <div style=\"display:flex;gap:6px;margin-top:6px;justify-content:flex-end;\">
+                    <button id=\"int-upload-cancel\" class=\"copilot-button\" style=\"background:#555;\">CANCEL</button>
+                    <button id=\"int-upload-submit\" class=\"copilot-button\">${btnLabel}</button>
+                </div>
+            `;
+            placeholder.querySelectorAll('.dropped-file-name').forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const i = Number(e.target.getAttribute('data-idx'));
+                    const arr = window.intDroppedFiles || [];
+                    if (arr[i]) arr[i].name = e.target.value.trim() || arr[i].file.name;
+                });
+            });
+            const cancelBtn = document.getElementById('int-upload-cancel');
+            if (cancelBtn) cancelBtn.onclick = () => {
+                window.intDroppedFiles = [];
+                placeholder.remove();
+            };
+            const submitBtn = document.getElementById('int-upload-submit');
+            if (submitBtn) submitBtn.onclick = () => {
+                const arr = (window.intDroppedFiles || []).slice();
+                if (!arr.length) { placeholder.remove(); return; }
+                placeholder.innerHTML = '<div style="text-align:center;color:#aaa">Uploading files...</div>';
+                Promise.all(arr.map(convertFileToPdf)).then(uploadList => {
+                    sessionSet({ fennecPendingUpload: { orderId, files: uploadList }, fennecActiveSession: getFennecSessionId() }, () => {
+                        const url = `https://db.incfile.com/storage/incfile/${orderId}`;
+                        bg.openOrReuseTab({ url, active: false });
+                        window.intDroppedFiles = [];
+                        setTimeout(() => placeholder.remove(), 500);
+                    });
+                });
+            };
+        }
+        
         }); // end fennecActiveSession get
 
     } catch (e) {

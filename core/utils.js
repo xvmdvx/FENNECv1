@@ -1,5 +1,211 @@
-// Common utilities for FENNEC (POO) content scripts.
+// Common utilities for FENNEC (MVP) content scripts.
 // Provides escapeHtml and attachCommonListeners helpers.
+
+// Global USPS click detection - this will catch ALL clicks on USPS elements
+// This is a backup listener that works even if attachCommonListeners fails
+document.addEventListener('click', function(e) {
+    // Check if the clicked element or its parent has the copilot-usps class
+    const uspsElement = e.target.closest('.copilot-usps');
+    if (uspsElement) {
+        // Check if this element already has a listener attached
+        const hasListener = uspsElement.dataset.uspsListenerAdded === 'true';
+        
+        if (!hasListener) {
+            // Mark this element as having a listener to prevent double handling
+            uspsElement.dataset.uspsListenerAdded = 'true';
+            
+            // Let the primary listener handle the click
+            console.log('🔍 [FENNEC GLOBAL] USPS element clicked, marked for primary handler');
+            
+            // Give the primary listener a chance to execute
+            setTimeout(() => {
+                // If the primary listener didn't execute, we'll handle it
+                if (uspsElement.dataset.uspsListenerAdded === 'true' || uspsElement.dataset.uspsListenerAdded !== 'executed') {
+                    console.log('🔍 [FENNEC GLOBAL] Primary handler didn\'t execute, handling click now');
+                    
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const address = uspsElement.dataset.address;
+                    console.log('🔍 [FENNEC GLOBAL] USPS element clicked! Address:', address);
+                    
+                    if (!address) {
+                        console.error('❌ [FENNEC GLOBAL] No address data found in USPS element');
+                        return;
+                    }
+                    
+                    // Always open URL directly since chrome.runtime is not available
+                    console.log('🔍 [FENNEC GLOBAL] Opening USPS URL directly (chrome.runtime not available)');
+                    const url = 'https://tools.usps.com/zip-code-lookup.htm?byaddress&fennec_addr=' + encodeURIComponent(address);
+                    
+                    // Store source tab info for focus return
+                    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.tabs) {
+                        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                            if (tabs.length > 0) {
+                                const sourceTab = tabs[0];
+                                const uspsKey = `usps_source_${address}`;
+                                
+                                chrome.storage.local.set({ [uspsKey]: { tabId: sourceTab.id, url: sourceTab.url } }, () => {
+                                    console.log('🔍 [FENNEC GLOBAL] Stored source tab info for address:', address, 'tabId:', sourceTab.id);
+                                });
+                            }
+                        });
+                    }
+                    
+                    try {
+                        const newWindow = window.open(url, '_blank');
+                        if (newWindow) {
+                            console.log('✅ [FENNEC GLOBAL] USPS URL opened successfully:', url);
+                        } else {
+                            console.error('❌ [FENNEC GLOBAL] USPS URL failed to open (popup blocked?)');
+                            // Fallback: try to open in same window
+                            window.location.href = url;
+                        }
+                    } catch (error) {
+                        console.error('❌ [FENNEC GLOBAL] Error opening USPS URL:', error.message);
+                        // Fallback: try to open in same window
+                        window.location.href = url;
+                    }
+                }
+            }, 100); // 100ms delay
+            
+            return;
+        } else {
+            // If primary listener didn't handle it, we'll handle it here
+            console.log('🔍 [FENNEC GLOBAL] USPS element already has listener, but primary handler didn\'t execute - handling here');
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const address = uspsElement.dataset.address;
+            console.log('🔍 [FENNEC GLOBAL] USPS element clicked! Address:', address);
+            
+            if (!address) {
+                console.error('❌ [FENNEC GLOBAL] No address data found in USPS element');
+                return;
+            }
+            
+            // Always open URL directly since chrome.runtime is not available
+            console.log('🔍 [FENNEC GLOBAL] Opening USPS URL directly (chrome.runtime not available)');
+            const url = 'https://tools.usps.com/zip-code-lookup.htm?byaddress&fennec_addr=' + encodeURIComponent(address);
+            
+            // Store source tab info for focus return
+            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.tabs) {
+                chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                    if (tabs.length > 0) {
+                        const sourceTab = tabs[0];
+                        const uspsKey = `usps_source_${address}`;
+                        
+                        chrome.storage.local.set({ [uspsKey]: { tabId: sourceTab.id, url: sourceTab.url } }, () => {
+                            console.log('🔍 [FENNEC GLOBAL] Stored source tab info for address:', address, 'tabId:', sourceTab.id);
+                        });
+                    }
+                });
+            }
+            
+            try {
+                const newWindow = window.open(url, '_blank');
+                if (newWindow) {
+                    console.log('✅ [FENNEC GLOBAL] USPS URL opened successfully:', url);
+                } else {
+                    console.error('❌ [FENNEC GLOBAL] USPS URL failed to open (popup blocked?)');
+                    // Fallback: try to open in same window
+                    window.location.href = url;
+                }
+            } catch (error) {
+                console.error('❌ [FENNEC GLOBAL] Error opening USPS URL:', error.message);
+                // Fallback: try to open in same window
+                window.location.href = url;
+            }
+        }
+    }
+}, true); // Use capture phase to catch all clicks
+
+// Additional DOM ready listener to ensure USPS elements are detected
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔍 [FENNEC GLOBAL] DOM loaded, checking for USPS elements...');
+        const uspsElements = document.querySelectorAll('.copilot-usps');
+        console.log('🔍 [FENNEC GLOBAL] Found', uspsElements.length, 'USPS elements on DOM load');
+        
+        uspsElements.forEach((el, index) => {
+            console.log(`🔍 [FENNEC GLOBAL] USPS Element ${index + 1}:`, {
+                address: el.dataset.address,
+                innerHTML: el.innerHTML,
+                className: el.className
+            });
+        });
+    });
+} else {
+    // DOM is already loaded
+    console.log('🔍 [FENNEC GLOBAL] DOM already loaded, checking for USPS elements...');
+    const uspsElements = document.querySelectorAll('.copilot-usps');
+    console.log('🔍 [FENNEC GLOBAL] Found', uspsElements.length, 'USPS elements');
+}
+
+// Mutation observer to detect when new USPS elements are added dynamically
+const uspsObserver = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList') {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    // Check if the added node is a USPS element
+                    if (node.classList && node.classList.contains('copilot-usps')) {
+                        console.log('🔍 [FENNEC GLOBAL] New USPS element detected:', {
+                            address: node.dataset.address,
+                            innerHTML: node.innerHTML
+                        });
+                    }
+                    
+                    // Check if the added node contains USPS elements
+                    const uspsElements = node.querySelectorAll ? node.querySelectorAll('.copilot-usps') : [];
+                    uspsElements.forEach(function(el) {
+                        console.log('🔍 [FENNEC GLOBAL] New USPS element found in added node:', {
+                            address: el.dataset.address,
+                            innerHTML: el.innerHTML
+                        });
+                    });
+                }
+            });
+        }
+    });
+});
+
+// Start observing
+uspsObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+});
+
+console.log('🔍 [FENNEC GLOBAL] Mutation observer started for USPS elements');
+
+// Mute tagged console output without affecting control flow
+// (e.g., `return console.warn(...)` still returns undefined).
+if (!self.__fennecLogSilencerInstalled) {
+    try {
+        const TAGS_TO_MUTE = ["[FENNEC (MVP)]", "[FENNEC (MVP) DB SB]"];
+        const originalConsole = {
+            log: console.log.bind(console),
+            info: console.info ? console.info.bind(console) : console.log.bind(console),
+            warn: console.warn ? console.warn.bind(console) : console.log.bind(console),
+            error: console.error ? console.error.bind(console) : console.log.bind(console),
+            debug: console.debug ? console.debug.bind(console) : console.log.bind(console)
+        };
+        const shouldMute = (args) => {
+            const first = args && args[0];
+            return typeof first === 'string' && TAGS_TO_MUTE.some(tag => first.startsWith(tag));
+        };
+        ["log", "info", "warn", "error", "debug"].forEach(method => {
+            console[method] = function(...args) {
+                if (shouldMute(args)) return;
+                return originalConsole[method](...args);
+            };
+        });
+        self.__fennecLogSilencerInstalled = true;
+    } catch (e) {
+        // If anything goes wrong, do not block execution.
+    }
+}
 
 function escapeHtml(text) {
     return String(text)
@@ -33,8 +239,8 @@ function buildSidebarHeader() {
         <div class="copilot-header">
             <span id="qa-toggle" class="quick-actions-toggle">☰</span>
             <div class="copilot-title">
-                <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (POO)" />
-                <span>FENNEC (POO)</span>
+                <img src="${chrome.runtime.getURL('fennec_icon.png')}" class="copilot-icon" alt="FENNEC (MVP)" />
+                <span>FENNEC (MVP)</span>
             </div>
             <button id="copilot-clear-tabs">🗑</button>
             <button id="copilot-close">✕</button>
@@ -55,7 +261,7 @@ window.getFennecSessionId = getFennecSessionId;
 // Handle reset messages from popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'fennecReset' && message.clearStorage) {
-        console.log('[FENNEC (POO)] Clearing all storage for reset...');
+        console.log('[FENNEC (MVP)] Clearing all storage for reset...');
         
         // Clear session storage
         sessionStorage.clear();
@@ -73,7 +279,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
         fennecKeys.forEach(key => localStorage.removeItem(key));
         
-        console.log('[FENNEC (POO)] Storage cleared successfully');
+        console.log('[FENNEC (MVP)] Storage cleared successfully');
         sendResponse({ success: true });
     }
 });
@@ -126,9 +332,23 @@ function abbreviateOrderType(type) {
     if (t.includes('assumed business name')) return 'ABN';
     if (t.includes('sales tax registration')) return 'SALES TAX';
     if (t.includes('registered agent change')) return 'RA CHANGE';
+    if (t.includes('change of agent')) return 'COA';
     if (t.includes('trade name search')) return 'TRADENAME';
     if (t.includes('beneficial ownership information report')) return 'BOIR';
     return type;
+}
+
+function extractStateFromOrderType(type) {
+    const t = (type || '').toUpperCase();
+    // Extract state abbreviation (2 letters) followed by space and word
+    const stateMatch = t.match(/^([A-Z]{2})\s+(.+)$/);
+    if (stateMatch) {
+        return {
+            state: stateMatch[1],
+            orderType: stateMatch[2]
+        };
+    }
+    return null;
 }
 window.abbreviateOrderType = abbreviateOrderType;
 
@@ -151,31 +371,661 @@ function loadSidebarSnapshot(sidebar, cb) {
 }
 window.loadSidebarSnapshot = loadSidebarSnapshot;
 
+// Function to parse address into components
+function parseAddressForSmartCopy(str) {
+    const result = { line1: '', line2: '', city: '', state: '', zip: '' };
+    if (!str) return result;
+
+    // Clean the input string
+    let cleanStr = str.trim();
+    
+    // Remove any potential labels like "Physical:" or "Mailing:" that might have been included
+    cleanStr = cleanStr.replace(/^(physical|mailing|principal):\s*/i, '');
+    
+    // Remove any country codes that might still be present
+    cleanStr = cleanStr.replace(/,\s*(US|USA|United States)\s*$/i, '');
+    
+    const parts = cleanStr.split(',').map(p => p.trim()).filter(Boolean);
+
+    if (parts.length) {
+        const firstPart = parts.shift();
+        // Check if the first part contains line2 information (like "Apt 4B", "Suite 100", etc.)
+        const line2Match = firstPart.match(/^(.*?)\s+(apt|suite|unit|#|ste|floor|fl|room|rm|apartment|building|bldg|office|ofc)\s+(.+)$/i);
+        if (line2Match) {
+            result.line1 = line2Match[1].trim();
+            result.line2 = (line2Match[2] + ' ' + line2Match[3]).trim();
+        } else {
+            result.line1 = firstPart;
+        }
+    }
+    
+    // Check if the second part is line2 information (like "Unit 203", "Suite 125", etc.)
+    if (parts.length >= 1) {
+        const secondPart = parts[0];
+        const line2Match = secondPart.match(/^(apt|suite|unit|#|ste|floor|fl|room|rm|apartment|building|bldg|office|ofc)\s+(.+)$/i);
+        if (line2Match) {
+            result.line2 = (line2Match[1] + ' ' + line2Match[2]).trim();
+            parts.shift(); // Remove the line2 part from the remaining parts
+        }
+    }
+
+    // Handle the remaining parts (city, state, zip)
+    const remaining = parts.join(', ');
+    
+    // First, try to extract ZIP code from the end
+    const zipMatch = remaining.match(/(\d{5}(?:-\d{4})?)\s*$/);
+    let zipCode = '';
+    let remainingWithoutZip = remaining;
+    
+    if (zipMatch) {
+        zipCode = zipMatch[1];
+        remainingWithoutZip = remaining.replace(zipMatch[0], '').trim();
+    }
+    
+    // Now try to extract state from the remaining parts
+    const stateMatch = remainingWithoutZip.match(/([A-Z]{2})\s*$/i);
+    let stateCode = '';
+    let cityPart = remainingWithoutZip;
+    
+    if (stateMatch) {
+        stateCode = stateMatch[1].toUpperCase();
+        cityPart = remainingWithoutZip.replace(stateMatch[0], '').trim();
+    }
+    
+    // Clean up city part (remove trailing commas)
+    cityPart = cityPart.replace(/,\s*$/, '').trim();
+    
+    // Set the results
+    result.city = cityPart;
+    result.state = stateCode;
+    result.zip = zipCode;
+    
+    return result;
+}
+
+// Function to perform smart copy of address
+function smartCopyAddress(address) {
+    const parsed = parseAddressForSmartCopy(address);
+    
+    // Create a structured clipboard data
+    const clipboardData = {
+        fullAddress: address,
+        components: parsed,
+        timestamp: Date.now()
+    };
+    
+    // Store in chrome.storage for form auto-fill (using sync for cross-tab persistence)
+    chrome.storage.sync.set({ 
+        smartCopyAddress: clipboardData 
+    }, () => {
+        console.log('[FENNEC (MVP)] Smart copy stored (sync):', clipboardData);
+    });
+    
+    // Add to address history (keep last 5 addresses) - using sync for cross-tab persistence
+    chrome.storage.sync.get({ addressHistory: [] }, (result) => {
+        let addressHistory = result.addressHistory || [];
+        
+        // Remove duplicate if exists
+        addressHistory = addressHistory.filter(item => 
+            item.fullAddress !== address
+        );
+        
+        // Add new address to beginning
+        addressHistory.unshift(clipboardData);
+        
+        // Keep only last 5 addresses
+        addressHistory = addressHistory.slice(0, 5);
+        
+        // Save updated history using sync storage for cross-tab persistence
+        chrome.storage.sync.set({ addressHistory: addressHistory }, () => {
+            console.log('[FENNEC (MVP)] Address history updated (sync):', addressHistory);
+        });
+    });
+    
+    // Also copy the full address to clipboard for regular use
+    navigator.clipboard.writeText(address).catch(err => 
+        console.warn('[FENNEC (MVP)] Clipboard error:', err));
+    
+    // Show notification
+    showSmartCopyNotification(parsed);
+}
+
+// Function to show smart copy notification
+function showSmartCopyNotification(parsed) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 999999;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        max-width: 300px;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    notification.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 8px;">✅ Smart Copy Ready!</div>
+        <div style="font-size: 12px; margin-bottom: 5px;"><strong>Street:</strong> ${parsed.line1}</div>
+        ${parsed.line2 ? `<div style="font-size: 12px; margin-bottom: 5px;"><strong>Line 2:</strong> ${parsed.line2}</div>` : ''}
+        <div style="font-size: 12px; margin-bottom: 5px;"><strong>City:</strong> ${parsed.city}</div>
+        <div style="font-size: 12px; margin-bottom: 5px;"><strong>State:</strong> ${parsed.state}</div>
+        <div style="font-size: 12px;"><strong>ZIP:</strong> ${parsed.zip}</div>
+        <div style="font-size: 11px; margin-top: 8px; opacity: 0.8;">Click in any form field to auto-fill</div>
+    `;
+    
+    // Add CSS animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 5000);
+}
+
+// Function to update USPS icons based on CMRA results
+function updateUspsIconsFromCmraResults() {
+    chrome.storage.local.get({ uspsCmraResults: {} }, ({ uspsCmraResults }) => {
+        Object.entries(uspsCmraResults).forEach(([address, result]) => {
+            // Find all USPS icons for this address
+            const uspsIcons = document.querySelectorAll(`.copilot-usps[data-address="${address}"]`);
+            uspsIcons.forEach(icon => {
+                if (result.isCMRA) {
+                    // CMRA detected - show yellow warning
+                    icon.innerHTML = ' ⚠️';
+                    icon.title = 'USPS: CMRA Detected (Commercial Mail Receiving Agency)';
+                    icon.style.color = '#ffc107';
+                } else {
+                    // Not CMRA - show green check (residential address)
+                    icon.innerHTML = ' ✅';
+                    icon.title = 'USPS: Residential Address (Not CMRA)';
+                    icon.style.color = '#28a745';
+                }
+            });
+        });
+    });
+}
+
+// Function to handle CMRA results from USPS
+function handleUspsCmraResult(address, isCMRA, cmraValue) {
+    console.log('[FENNEC (MVP)] Handling USPS CMRA result:', { address, isCMRA, cmraValue });
+    
+    // Find all USPS icons for this address
+    const uspsIcons = document.querySelectorAll(`.copilot-usps[data-address="${address}"]`);
+    uspsIcons.forEach(icon => {
+        if (isCMRA) {
+            // CMRA detected - show yellow warning
+            icon.innerHTML = ' ⚠️';
+            icon.title = 'USPS: CMRA Detected (Commercial Mail Receiving Agency)';
+            icon.style.color = '#ffc107';
+        } else {
+            // Not CMRA - show green check (residential address)
+            icon.innerHTML = ' ✅';
+            icon.title = 'USPS: Residential Address (Not CMRA)';
+            icon.style.color = '#28a745';
+        }
+    });
+}
+
+// Listen for CMRA results from background script
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'uspsCmraResult') {
+        handleUspsCmraResult(message.address, message.isCMRA, message.cmraValue);
+    }
+});
+
+// Function to setup context menu for smart paste
+function setupContextMenu() {
+    // Remove existing context menu if present
+    const existingMenu = document.getElementById('fennec-context-menu');
+    if (existingMenu) {
+        existingMenu.remove();
+    }
+    
+    // Create context menu
+    const contextMenu = document.createElement('div');
+    contextMenu.id = 'fennec-context-menu';
+    contextMenu.style.cssText = `
+        position: fixed;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 999999;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        min-width: 200px;
+        display: none;
+        padding: 8px 0;
+    `;
+    
+    document.body.appendChild(contextMenu);
+    
+    // Listen for right-click on address fields
+    document.addEventListener('contextmenu', (e) => {
+        const target = e.target;
+        
+        // Check if right-clicked on an address field
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+            const fieldName = (target.name || target.id || target.placeholder || '').toLowerCase();
+            
+            // More specific detection to avoid triggering on non-address fields
+            if ((fieldName.includes('street1') || fieldName.includes('street2') || fieldName.includes('city') || 
+                 (fieldName.includes('state') && !fieldName.includes('id') && !fieldName.includes('status')) || 
+                 (fieldName.includes('zip') || fieldName.includes('postal'))) &&
+                !fieldName.includes('id') && !fieldName.includes('tracking') && !fieldName.includes('code')) {
+                
+                e.preventDefault();
+                showContextMenu(e.clientX, e.clientY, target);
+            }
+        }
+    });
+    
+    // Hide context menu when clicking elsewhere
+    document.addEventListener('click', () => {
+        contextMenu.style.display = 'none';
+    });
+}
+
+// Function to show context menu with address history
+function showContextMenu(x, y, targetField) {
+    const contextMenu = document.getElementById('fennec-context-menu');
+    if (!contextMenu) return;
+    
+    // Get address history from storage (using sync for cross-tab persistence)
+    chrome.storage.sync.get({ addressHistory: [] }, (result) => {
+        const addressHistory = result.addressHistory || [];
+        
+        // Build menu content
+        let menuContent = `
+            <div style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: bold; color: #333;">
+                FENNEC Smart Paste
+            </div>
+        `;
+        
+        if (addressHistory.length === 0) {
+            menuContent += `
+                <div style="padding: 8px 12px; color: #666; font-style: italic;">
+                    No addresses in history. Copy an address first.
+                </div>
+            `;
+        } else {
+            // Show up to 5 most recent addresses
+            const recentAddresses = addressHistory.slice(0, 5);
+            
+            recentAddresses.forEach((addressData, index) => {
+                const components = addressData.components;
+                const displayText = `${components.line1}${components.line2 ? ', ' + components.line2 : ''}, ${components.city}, ${components.state} ${components.zip}`;
+                
+                menuContent += `
+                    <div class="fennec-menu-item" data-index="${index}" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f5f5f5;">
+                        <div style="font-weight: bold; font-size: 12px;">${displayText}</div>
+                        <div style="font-size: 11px; color: #666; margin-top: 2px;">
+                            ${components.line1} | ${components.city}, ${components.state} ${components.zip}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        contextMenu.innerHTML = menuContent;
+        
+        // Position menu
+        contextMenu.style.left = x + 'px';
+        contextMenu.style.top = y + 'px';
+        contextMenu.style.display = 'block';
+        
+        // Add click handlers for menu items
+        contextMenu.querySelectorAll('.fennec-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const index = parseInt(item.dataset.index);
+                const selectedAddress = addressHistory[index];
+                
+                if (selectedAddress) {
+                    smartPasteAddress(selectedAddress.components, targetField);
+                }
+                
+                contextMenu.style.display = 'none';
+            });
+            
+            // Add hover effects
+            item.addEventListener('mouseenter', () => {
+                item.style.backgroundColor = '#f0f8ff';
+            });
+            
+            item.addEventListener('mouseleave', () => {
+                item.style.backgroundColor = '';
+            });
+        });
+    });
+}
+
+// Function to smart paste address to fields in the same form section
+function smartPasteAddress(components, triggerField) {
+    console.log('[FENNEC (MVP)] Smart pasting address:', components);
+    
+    // Find the form section containing the trigger field
+    const formSection = findFormSection(triggerField);
+    console.log('[FENNEC (MVP)] Form section found:', formSection);
+    
+    // Find address-related fields only within the same form section
+    const sectionFields = formSection ? formSection.querySelectorAll('input, textarea, select') : [];
+    let filledCount = 0;
+    
+    sectionFields.forEach(field => {
+        const fieldName = (field.name || field.id || field.placeholder || '').toLowerCase();
+        
+        // More specific detection to avoid filling non-address fields
+        if (fieldName.includes('street1') || (fieldName.includes('street') && !fieldName.includes('street2'))) {
+            // Exclude fields that are not actually address fields
+            if (!fieldName.includes('id') && !fieldName.includes('tracking') && !fieldName.includes('code')) {
+                // Always replace, even if content is the same
+                field.value = components.line1 || '';
+                field.dispatchEvent(new Event('input', { bubbles: true }));
+                field.dispatchEvent(new Event('change', { bubbles: true }));
+                filledCount++;
+                console.log('[FENNEC (MVP)] Filled street1:', components.line1);
+            }
+            
+        } else if (fieldName.includes('street2') || fieldName.includes('suite') || fieldName.includes('apt')) {
+            // Only fill line2 if it has actual data, don't duplicate line1
+            if (!fieldName.includes('id') && !fieldName.includes('tracking') && !fieldName.includes('code')) {
+                // Always replace line2, even if content is the same
+                if (components.line2 && components.line2.trim()) {
+                    field.value = components.line2;
+                    field.dispatchEvent(new Event('input', { bubbles: true }));
+                    field.dispatchEvent(new Event('change', { bubbles: true }));
+                    filledCount++;
+                    console.log('[FENNEC (MVP)] Filled street2:', components.line2);
+                } else {
+                    // Clear line2 if it's empty in the source data
+                    field.value = '';
+                    field.dispatchEvent(new Event('input', { bubbles: true }));
+                    field.dispatchEvent(new Event('change', { bubbles: true }));
+                    console.log('[FENNEC (MVP)] Cleared street2 (empty in source)');
+                }
+            }
+            
+        } else if (fieldName.includes('city')) {
+            // Exclude fields that are not actually city fields
+            if (!fieldName.includes('id') && !fieldName.includes('tracking') && !fieldName.includes('code')) {
+                // Always replace, even if content is the same
+                field.value = components.city || '';
+                field.dispatchEvent(new Event('input', { bubbles: true }));
+                field.dispatchEvent(new Event('change', { bubbles: true }));
+                filledCount++;
+                console.log('[FENNEC (MVP)] Filled city:', components.city);
+            }
+            
+        } else if (fieldName.includes('state') && !fieldName.includes('id') && !fieldName.includes('status')) {
+            // Only fill state fields, exclude state id and state status
+            // Always replace, even if content is the same
+            field.value = components.state || '';
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+            filledCount++;
+            console.log('[FENNEC (MVP)] Filled state:', components.state);
+            
+        } else if ((fieldName.includes('zip') || fieldName.includes('postal')) && !fieldName.includes('id')) {
+            // Only fill zip fields, exclude zip id
+            // Always replace, even if content is the same
+            field.value = components.zip || '';
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+            filledCount++;
+            console.log('[FENNEC (MVP)] Filled zip:', components.zip);
+        }
+    });
+    
+    // Show success notification
+    showSmartPasteNotification(filledCount, components);
+}
+
+// Function to find the form section containing a field
+function findFormSection(field) {
+    // Start from the field and work up the DOM tree
+    let currentElement = field;
+    
+    while (currentElement && currentElement !== document.body) {
+        // Check for specific Member sections first (highest priority)
+        if (currentElement.id && currentElement.id.startsWith('tblMembers')) {
+            console.log('[FENNEC (MVP)] Found Member section:', currentElement.id);
+            return currentElement;
+        }
+        
+        // Check for specific form sections
+        if (currentElement.classList.contains('white-box')) {
+            console.log('[FENNEC (MVP)] Found white-box section');
+            return currentElement;
+        }
+        
+        // Check for common form section containers
+        const sectionSelectors = [
+            'form',
+            '.form-section',
+            '.address-section',
+            '.physical-address',
+            '.company-info',
+            '.member-info',
+            '.agent-info'
+        ];
+        
+        for (const selector of sectionSelectors) {
+            if (currentElement.matches(selector)) {
+                console.log('[FENNEC (MVP)] Found form section with selector:', selector);
+                return currentElement;
+            }
+        }
+        
+        // Check if current element has address-related fields as children
+        const hasAddressFields = currentElement.querySelector('input[name*="street"], input[name*="address"], input[name*="city"], input[name*="state"], input[name*="zip"]');
+        if (hasAddressFields) {
+            console.log('[FENNEC (MVP)] Found form section with address fields');
+            return currentElement;
+        }
+        
+        // Move up to parent
+        currentElement = currentElement.parentElement;
+    }
+    
+    // If no specific section found, return the closest form or div
+    let fallbackElement = field;
+    while (fallbackElement && fallbackElement !== document.body) {
+        if (fallbackElement.tagName === 'FORM' || fallbackElement.tagName === 'DIV') {
+            console.log('[FENNEC (MVP)] Using fallback form section:', fallbackElement.tagName);
+            return fallbackElement;
+        }
+        fallbackElement = fallbackElement.parentElement;
+    }
+    
+    console.log('[FENNEC (MVP)] No form section found, using document body');
+    return document.body;
+}
+
+// Function to show smart paste notification
+function showSmartPasteNotification(filledCount, components) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 999999;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        max-width: 300px;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    const displayText = `${components.line1}${components.line2 ? ', ' + components.line2 : ''}, ${components.city}, ${components.state} ${components.zip}`;
+    
+    notification.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 8px;">✅ Smart Paste Complete!</div>
+        <div style="font-size: 12px; margin-bottom: 5px;">${filledCount} field${filledCount > 1 ? 's' : ''} filled</div>
+        <div style="font-size: 11px; opacity: 0.8; word-break: break-word;">${displayText}</div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 3000);
+}
+
+// Initialize context menu when the page loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupContextMenu);
+} else {
+    setupContextMenu();
+}
+
 function attachCommonListeners(rootEl) {
     if (!rootEl) return;
-    rootEl.querySelectorAll('.copilot-address').forEach(el => {
+    
+    console.log('[FENNEC (MVP)] attachCommonListeners called for:', rootEl);
+    
+    const addressElements = rootEl.querySelectorAll('.copilot-address');
+    console.log('[FENNEC (MVP)] Found', addressElements.length, 'address elements to attach listeners to');
+    
+    addressElements.forEach((el, index) => {
+        console.log(`[FENNEC (MVP)] Attaching listener to address element ${index + 1}:`, el.dataset.address);
         el.addEventListener('click', e => {
             e.preventDefault();
             const addr = el.dataset.address;
-            if (!addr) return;
-            navigator.clipboard.writeText(addr).catch(err => console.warn('[Copilot] Clipboard', err));
-            window.open('https://www.google.com/search?q=' + encodeURIComponent(addr), '_blank');
+            if (!addr) {
+                console.warn('[FENNEC (MVP)] No address data found in clicked element');
+                return;
+            }
+            
+            console.log('[FENNEC (MVP)] Address clicked:', addr);
+            
+            // Perform SMART COPY of address
+            smartCopyAddress(addr);
+            
+            // Open Google search (NOT Google Maps) for the address
+            const googleSearchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(addr);
+            console.log('[FENNEC (MVP)] Opening Google search for address:', addr);
+            window.open(googleSearchUrl, '_blank');
         });
     });
-    rootEl.querySelectorAll('.copilot-usps').forEach(el => {
-        el.addEventListener('click', e => {
-            e.preventDefault();
-            const addr = el.dataset.address;
-            if (!addr) return;
-            const url = 'https://tools.usps.com/zip-code-lookup.htm?byaddress&fennec_addr=' + encodeURIComponent(addr);
-            window.open(url, '_blank');
+    
+    // Enhanced USPS event listener attachment with better debugging
+    const uspsElements = rootEl.querySelectorAll('.copilot-usps');
+    console.log('[FENNEC (MVP)] Found', uspsElements.length, 'USPS elements to attach listeners to');
+    
+    uspsElements.forEach((el, index) => {
+        console.log(`[FENNEC (MVP)] Processing USPS element ${index + 1}:`, {
+            element: el,
+            address: el.dataset.address,
+            hasListener: el.dataset.uspsListenerAdded,
+            innerHTML: el.innerHTML,
+            className: el.className
         });
+        
+        // Only add listener if it doesn't already have one
+        if (!el.dataset.uspsListenerAdded) {
+            el.dataset.uspsListenerAdded = 'true';
+            
+            // Ensure the element is clickable
+            el.style.cursor = 'pointer';
+            el.style.pointerEvents = 'auto';
+            
+            el.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const addr = el.dataset.address;
+                console.log('[FENNEC (MVP)] USPS icon clicked for address:', addr, 'element:', el);
+                
+                if (!addr) {
+                    console.warn('[FENNEC (MVP)] No address data found in USPS element');
+                    return;
+                }
+                
+                // Mark that the primary handler executed successfully
+                el.dataset.uspsListenerAdded = 'executed';
+                
+                // Always open USPS URL directly since chrome.runtime is not available
+                console.log('[FENNEC (MVP)] Opening USPS URL directly (chrome.runtime not available)');
+                const url = 'https://tools.usps.com/zip-code-lookup.htm?byaddress&fennec_addr=' + encodeURIComponent(addr);
+                
+                // Store source tab info for focus return
+                if (typeof chrome !== 'undefined' && chrome.runtime && chrome.tabs) {
+                    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                        if (tabs.length > 0) {
+                            const sourceTab = tabs[0];
+                            const uspsKey = `usps_source_${addr}`;
+                            
+                            chrome.storage.local.set({ [uspsKey]: { tabId: sourceTab.id, url: sourceTab.url } }, () => {
+                                console.log('[FENNEC (MVP)] Stored source tab info for address:', addr, 'tabId:', sourceTab.id);
+                            });
+                        }
+                    });
+                }
+                
+                try {
+                    const newWindow = window.open(url, '_blank');
+                    if (newWindow) {
+                        console.log('[FENNEC (MVP)] USPS URL opened successfully:', url);
+                    } else {
+                        console.error('[FENNEC (MVP)] USPS URL failed to open (popup blocked?)');
+                        // Fallback: try to open in same window
+                        window.location.href = url;
+                    }
+                } catch (error) {
+                    console.error('[FENNEC (MVP)] Error opening USPS URL:', error.message);
+                    // Fallback: try to open in same window
+                    window.location.href = url;
+                }
+
+            });
+            
+            console.log(`[FENNEC (MVP)] Successfully attached USPS listener to element ${index + 1}`);
+        } else {
+            console.log(`[FENNEC (MVP)] USPS element ${index + 1} already has listener attached`);
+        }
     });
+    
     rootEl.querySelectorAll('.copilot-copy, .copilot-copy-icon').forEach(el => {
         el.addEventListener('click', () => {
             const text = el.dataset.copy;
             if (!text) return;
-            navigator.clipboard.writeText(text).catch(err => console.warn('[Copilot] Clipboard', err));
+            
+            // Check if this is an address (contains street indicators)
+            const isAddress = /\b(street|st\.?|road|rd\.?|ave\.?|avenue|drive|dr\.?|lane|ln\.?|boulevard|blvd\.?|pkwy|parkway|court|ct\.?|hwy|highway|way|loop|circle|cir\.?|place|pl\.?|trail|trl\.?|point|pt\.?|falls?|fls?|bit)\b/i.test(text) && /\d/.test(text);
+            
+            if (isAddress) {
+                // Use SMART COPY for addresses
+                smartCopyAddress(text);
+            } else {
+                // Use regular copy for non-address text
+                navigator.clipboard.writeText(text).catch(err => console.warn('[FENNEC (MVP)] Clipboard error:', err));
+            }
         });
     });
     rootEl.querySelectorAll('.copilot-sos').forEach(el => {
@@ -217,12 +1067,40 @@ function attachCommonListeners(rootEl) {
             navigator.clipboard.writeText(text).catch(err => console.warn('[Copilot] Clipboard', err));
         });
     });
+    
+    // Company search toggle handling
+    const companySearchToggles = rootEl.querySelectorAll('.company-search-toggle');
+    console.log('[FENNEC (MVP)] Found company search toggles:', companySearchToggles.length);
+    
+    companySearchToggles.forEach(el => {
+        // Remove any existing listeners to prevent duplicates
+        el.removeEventListener('click', el._companySearchToggleHandler);
+        
+        // Create a new handler function
+        el._companySearchToggleHandler = () => {
+            console.log('[FENNEC (MVP)] Company search toggle clicked');
+            const box = el.closest('.white-box');
+            if (box && typeof toggleCompanySearch === 'function') {
+                toggleCompanySearch(box);
+            } else {
+                console.error('[FENNEC (MVP)] Could not find white-box or toggleCompanySearch function');
+            }
+        };
+        
+        // Add the new listener
+        el.addEventListener('click', el._companySearchToggleHandler);
+        console.log('[FENNEC (MVP)] Added click listener to company search toggle');
+    });
+
+    // Update USPS icons based on CMRA results
+    updateUspsIconsFromCmraResults();
+    
     // Quick Summary Toggle Handler
     const qsToggle = rootEl.querySelector('#qs-toggle') || document.getElementById('qs-toggle');
     if (qsToggle && !qsToggle.dataset.listenerAttached) {
         qsToggle.dataset.listenerAttached = 'true';
         qsToggle.addEventListener('click', () => {
-            console.log('[FENNEC (POO)] Quick Summary toggle clicked');
+            console.log('[FENNEC (MVP)] Quick Summary toggle clicked');
             const box = document.getElementById('quick-summary');
             if (!box) return;
             if (box.style.maxHeight && parseInt(box.style.maxHeight) > 0) {
@@ -240,15 +1118,15 @@ function attachCommonListeners(rootEl) {
     
     if (ftIcon && !ftIcon.dataset.listenerAttached) {
         ftIcon.dataset.listenerAttached = 'true';
-        console.log('[FENNEC (POO)] Attaching click listener to family tree icon');
+        console.log('[FENNEC (MVP)] Attaching click listener to family tree icon');
         
         // Add a test click listener first to see if events are working
         ftIcon.addEventListener('click', (event) => {
-            console.log('[FENNEC (POO)] TEST: Any click event detected on family tree icon');
+            console.log('[FENNEC (MVP)] TEST: Any click event detected on family tree icon');
         });
         
         ftIcon.addEventListener('click', (event) => {
-            console.log('[FENNEC (POO)] Family Tree icon clicked - handler triggered!', {
+            console.log('[FENNEC (MVP)] Family Tree icon clicked - handler triggered!', {
                 event: event,
                 target: event.target,
                 currentTarget: event.currentTarget
@@ -277,24 +1155,29 @@ function attachCommonListeners(rootEl) {
                 });
                 return;
             }
-            console.log('[FENNEC (POO)] getParentOrderId function available:', typeof getParentOrderId === 'function');
+            console.log('[FENNEC (MVP)] getParentOrderId function available:', typeof getParentOrderId === 'function');
             const parentId = typeof getParentOrderId === 'function' ? getParentOrderId() : null;
-            console.log('[FENNEC (POO)] Detected parent order ID:', parentId);
+            console.log('[FENNEC (MVP)] Detected parent order ID:', parentId);
             if (!parentId) {
-                console.warn('[FENNEC (POO)] Parent order not found');
+                console.warn('[FENNEC (MVP)] Parent order not found');
                 alert('Parent order not found');
                 return;
             }
             
-            console.log('[FENNEC (POO)] Family tree - Setting icon to loading state');
+            console.log('[FENNEC (MVP)] Family tree - Setting icon to loading state');
             ftIcon.style.opacity = '0.5';
             ftIcon.style.pointerEvents = 'none';
             
-            console.log('[FENNEC (POO)] Family tree - Sending fetchChildOrders message for parentId:', parentId);
+            console.log('[FENNEC (MVP)] Family tree - Sending fetchChildOrders message for parentId:', parentId);
+            
+            // Set flag to extract state info when parent order loads
+            chrome.storage.local.set({ fennecPendingStateUpdate: parentId }, () => {
+                console.log('[FENNEC (MVP)] Set pending state update for parent order:', parentId);
+            });
             
             // Add timeout to detect if background script isn't responding
             let timeoutId = setTimeout(() => {
-                console.error('[FENNEC (POO)] Family tree - TIMEOUT: fetchChildOrders request took longer than 15 seconds');
+                console.error('[FENNEC (MVP)] Family tree - TIMEOUT: fetchChildOrders request took longer than 15 seconds');
                 ftIcon.style.opacity = '1';
                 ftIcon.style.pointerEvents = 'auto';
                 alert('Family tree loading timed out. Check console for details.');
@@ -304,19 +1187,19 @@ function attachCommonListeners(rootEl) {
                 clearTimeout(timeoutId);
                 
                 if (chrome.runtime.lastError) {
-                    console.error('[FENNEC (POO)] Family tree - Chrome runtime error:', chrome.runtime.lastError.message);
+                    console.error('[FENNEC (MVP)] Family tree - Chrome runtime error:', chrome.runtime.lastError.message);
                     ftIcon.style.opacity = '1';
                     ftIcon.style.pointerEvents = 'auto';
                     alert('Family tree error: ' + chrome.runtime.lastError.message);
                     return;
                 }
                 
-                console.log('[FENNEC (POO)] Family tree - Received fetchChildOrders response:', resp);
+                console.log('[FENNEC (MVP)] Family tree - Received fetchChildOrders response:', resp);
                 ftIcon.style.opacity = '1';
                 ftIcon.style.pointerEvents = 'auto';
                 
                 if (!resp || !resp.childOrders || !resp.parentInfo) {
-                    console.warn('[FENNEC (POO)] Family tree - Invalid response received:', {
+                    console.warn('[FENNEC (MVP)] Family tree - Invalid response received:', {
                         hasResp: !!resp,
                         hasChildOrders: resp ? !!resp.childOrders : false,
                         hasParentInfo: resp ? !!resp.parentInfo : false
@@ -324,7 +1207,7 @@ function attachCommonListeners(rootEl) {
                     return;
                 }
                 
-                console.log('[FENNEC (POO)] Family tree - Valid response received, building family tree UI');
+                console.log('[FENNEC (MVP)] Family tree - Valid response received, building family tree UI');
                 const box = document.createElement('div');
                 box.className = 'white-box';
                 box.style.marginBottom = '10px';
@@ -347,31 +1230,41 @@ function attachCommonListeners(rootEl) {
                 });
 
                 const pStatusClass =
-                    /shipped/i.test(parent.status) ? 'copilot-tag copilot-tag-green' :
-                    /review|processing/i.test(parent.status) ? 'copilot-tag copilot-tag-yellow' :
-                    /canceled/i.test(parent.status) ? 'copilot-tag copilot-tag-red' :
-                    /hold/i.test(parent.status) ? 'copilot-tag copilot-tag-purple' : 'copilot-tag';
+                    /shipped/i.test(parent.status) ? 'copilot-tag copilot-tag-shipped' :
+                    /review/i.test(parent.status) ? 'copilot-tag copilot-tag-review' :
+                    /processing/i.test(parent.status) ? 'copilot-tag copilot-tag-processing' :
+                    /hold/i.test(parent.status) ? 'copilot-tag copilot-tag-hold' :
+                    /forwarded/i.test(parent.status) ? 'copilot-tag copilot-tag-forwarded' :
+                    /canceled|cancelled/i.test(parent.status) ? 'copilot-tag copilot-tag-canceled' : 'copilot-tag';
                 html += `<div class="section-label">PARENT</div>`;
-                html += `<div class="ft-grid">` +
+                const parentStateInfo = extractStateFromOrderType(parent.type);
+                const parentOrderType = parentStateInfo ? parentStateInfo.orderType : abbreviateOrderType(parent.type);
+                // Initially show without state tag, will be updated when state is extracted
+                html += `<div class="ft-grid" data-parent-id="${escapeHtml(parent.orderId)}">` +
                     `<div><b><a href="#" class="ft-link" data-id="${escapeHtml(parent.orderId)}">${escapeHtml(parent.orderId)}</a></b>` +
                     `${dupIds.has(String(parent.orderId)) ? ` <span class="ft-cancel" data-id="${escapeHtml(parent.orderId)}">❌</span>` : ''}</div>` +
-                    `<div class="ft-type">${escapeHtml(abbreviateOrderType(parent.type)).toUpperCase()}</div>` +
-                    `<div class="ft-date">${escapeHtml(parent.date)}</div>` +
+                    `<div class="ft-type">${escapeHtml(parentOrderType).toUpperCase()}</div>` +
+                    `<div class="ft-date" data-parent-date="${escapeHtml(parent.date)}">${escapeHtml(parent.date)}</div>` +
                     `<div><span class="${pStatusClass} ft-status" data-id="${escapeHtml(parent.orderId)}">${escapeHtml(parent.status)}</span></div>` +
                     `</div>`;
                 html += `<div class="section-label">CHILD</div>`;
                 html += resp.childOrders.map(o => {
                     const cls =
-                        /shipped/i.test(o.status) ? 'copilot-tag copilot-tag-green' :
-                        /review|processing/i.test(o.status) ? 'copilot-tag copilot-tag-yellow' :
-                        /canceled/i.test(o.status) ? 'copilot-tag copilot-tag-red' :
-                        /hold/i.test(o.status) ? 'copilot-tag copilot-tag-purple' : 'copilot-tag';
+                        /shipped/i.test(o.status) ? 'copilot-tag copilot-tag-shipped' :
+                        /review/i.test(o.status) ? 'copilot-tag copilot-tag-review' :
+                        /processing/i.test(o.status) ? 'copilot-tag copilot-tag-processing' :
+                        /hold/i.test(o.status) ? 'copilot-tag copilot-tag-hold' :
+                        /forwarded/i.test(o.status) ? 'copilot-tag copilot-tag-forwarded' :
+                        /canceled|cancelled/i.test(o.status) ? 'copilot-tag copilot-tag-canceled' : 'copilot-tag';
+                    const childStateInfo = extractStateFromOrderType(o.type);
+                    const childOrderType = childStateInfo ? childStateInfo.orderType : abbreviateOrderType(o.type);
+                    const childStateTag = childStateInfo ? `<span class="copilot-tag copilot-tag-black">${escapeHtml(childStateInfo.state)}</span>` : '';
                     return `
                             <div class="ft-grid">
                                 <div><b><a href="#" class="ft-link" data-id="${escapeHtml(o.orderId)}">${escapeHtml(o.orderId)}</a></b>` +
                                 `${dupIds.has(String(o.orderId)) ? ` <span class="ft-cancel" data-id="${escapeHtml(o.orderId)}">❌</span>` : ''}</div>
-                                <div class="ft-type">${escapeHtml(abbreviateOrderType(o.type)).toUpperCase()}</div>
-                                <div class="ft-date">${escapeHtml(o.date)}</div>
+                                <div class="ft-type">${escapeHtml(childOrderType).toUpperCase()}</div>
+                                <div class="ft-date">${childStateTag} ${escapeHtml(o.date)}</div>
                                 <div><span class="${cls} ft-status" data-id="${escapeHtml(o.orderId)}">${escapeHtml(o.status)}</span></div>
                             </div>`;
                 }).join('');
@@ -392,10 +1285,13 @@ function attachCommonListeners(rootEl) {
                         e.preventDefault();
                         const id = a.dataset.id;
                         if (id) {
-                            chrome.runtime.sendMessage({
-                                action: 'openOrReuseTab',
-                                url: `${location.origin}/incfile/order/detail/${id}`,
-                                active: false
+                            // Store the order ID to update state info when the order loads
+                            chrome.storage.local.set({ fennecPendingStateUpdate: id }, () => {
+                                chrome.runtime.sendMessage({
+                                    action: 'openOrReuseTab',
+                                    url: `${location.origin}/incfile/order/detail/${id}`,
+                                    active: false
+                                });
                             });
                         }
                     });
@@ -422,7 +1318,39 @@ function attachCommonListeners(rootEl) {
                             const span = container.querySelector(`.ft-status[data-id="${data.orderId}"]`);
                             if (span) {
                                 span.textContent = 'CANCELED';
-                                span.className = 'copilot-tag copilot-tag-red ft-status';
+                                span.className = 'copilot-tag copilot-tag-canceled ft-status';
+                            }
+                        }
+                        // Listen for state updates from opened orders
+                        if (area === 'local' && changes.fennecOrderStateInfo) {
+                            const data = changes.fennecOrderStateInfo.newValue || {};
+                            if (data.orderId && data.state) {
+                                // Find the parent order in the family tree and update its state tag
+                                const parentGrid = container.querySelector(`.ft-grid[data-parent-id="${data.orderId}"]`);
+                                if (parentGrid) {
+                                    const dateDiv = parentGrid.querySelector('.ft-date');
+                                    if (dateDiv && !dateDiv.querySelector('.copilot-tag-black')) {
+                                        const originalDate = dateDiv.getAttribute('data-parent-date') || dateDiv.textContent;
+                                        const stateTag = `<span class="copilot-tag copilot-tag-black">${data.state}</span> `;
+                                        dateDiv.innerHTML = stateTag + originalDate;
+                                        console.log('[FENNEC (MVP)] Updated parent order state in family tree:', data.state);
+                                    }
+                                } else {
+                                    // Fallback: try to find by link
+                                    const parentLink = container.querySelector('.ft-link[data-id="' + data.orderId + '"]');
+                                    if (parentLink) {
+                                        const parentGrid = parentLink.closest('.ft-grid');
+                                        if (parentGrid) {
+                                            const dateDiv = parentGrid.querySelector('.ft-date');
+                                            if (dateDiv && !dateDiv.querySelector('.copilot-tag-black')) {
+                                                const originalDate = dateDiv.getAttribute('data-parent-date') || dateDiv.textContent;
+                                                const stateTag = `<span class="copilot-tag copilot-tag-black">${data.state}</span> `;
+                                                dateDiv.innerHTML = stateTag + originalDate;
+                                                console.log('[FENNEC (MVP)] Updated parent order state in family tree (fallback):', data.state);
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     });
@@ -451,58 +1379,201 @@ function attachCommonListeners(rootEl) {
             });
         });
     }
-
-    rootEl.querySelectorAll('.company-search-toggle').forEach(el => {
-        el.addEventListener('click', () => {
-            const box = el.closest('.white-box');
-            if (box && typeof toggleCompanySearch === 'function') {
-                toggleCompanySearch(box);
-            }
-        });
-    });
 }
 
 function toggleCompanySearch(box) {
     if (!box) return;
     const mode = box.dataset.mode || 'info';
     const state = box.dataset.state || '';
+    
+    console.log('[FENNEC (MVP)] toggleCompanySearch called:', { mode, state, box });
+    
     if (mode === 'search') {
         box.innerHTML = box.dataset.infoHtml || '';
         box.dataset.mode = 'info';
         attachCommonListeners(box);
         return;
     }
+    
     box.dataset.infoHtml = box.innerHTML;
     box.dataset.mode = 'search';
+    
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.placeholder = 'Search name';
+    nameInput.style.cssText = 'width: 100%; margin-bottom: 5px; padding: 5px; border: 1px solid #ccc; border-radius: 3px;';
+    
     const idInput = document.createElement('input');
     idInput.type = 'text';
     idInput.placeholder = 'Search ID';
+    idInput.style.cssText = 'width: 100%; margin-bottom: 5px; padding: 5px; border: 1px solid #ccc; border-radius: 3px;';
+    
     const form = document.createElement('div');
     form.className = 'company-search-form';
+    form.style.cssText = 'margin-bottom: 10px;';
     form.appendChild(nameInput);
     form.appendChild(idInput);
+    
     box.innerHTML = '';
     box.appendChild(form);
+    
     const searchIcon = document.createElement('span');
     searchIcon.className = 'company-search-toggle';
     searchIcon.textContent = '🔍';
+    searchIcon.style.cssText = 'cursor: pointer; float: right;';
     box.appendChild(searchIcon);
+    
     const doSearch = (type) => {
         const q = type === 'name' ? nameInput.value.trim() : idInput.value.trim();
-        if (!q) return;
-        if (typeof buildSosUrl !== 'function') return;
+        if (!q) {
+            console.log('[FENNEC (MVP)] Search query is empty');
+            return;
+        }
+        
+        console.log('[FENNEC (MVP)] Attempting SOS search:', { type, query: q, state });
+        
+        // Check if buildSosUrl function is available
+        if (typeof buildSosUrl !== 'function') {
+            console.error('[FENNEC (MVP)] buildSosUrl function is not available');
+            
+            // Try to find the function in different scopes
+            let buildSosUrlFunc = null;
+            
+            // Check if it's available in the current window
+            if (window.buildSosUrl) {
+                buildSosUrlFunc = window.buildSosUrl;
+                console.log('[FENNEC (MVP)] Found buildSosUrl in window scope');
+            }
+            
+            // If still not available, show error
+            if (!buildSosUrlFunc) {
+                alert('SOS search is not available for this state. Please check if the state information is properly loaded.');
+                return;
+            }
+            
+            // Use the found function
+            const url = buildSosUrlFunc(state, null, type);
+            if (!url) {
+                console.error('[FENNEC (MVP)] Could not build SOS URL for state:', state);
+                alert(`SOS search is not available for state: ${state}`);
+                return;
+            }
+            
+            console.log('[FENNEC (MVP)] Sending SOS search message:', { url, query: q, searchType: type });
+            
+            // Send the search message to the background script
+            chrome.runtime.sendMessage({ 
+                action: 'sosSearch', 
+                url, 
+                query: q, 
+                searchType: type 
+            }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error('[FENNEC (MVP)] Error sending SOS search message:', chrome.runtime.lastError);
+                } else {
+                    console.log('[FENNEC (MVP)] SOS search message sent successfully');
+                }
+            });
+            return;
+        }
+        
         const url = buildSosUrl(state, null, type);
-        if (!url) return;
-        chrome.runtime.sendMessage({ action: 'sosSearch', url, query: q, searchType: type });
+        if (!url) {
+            console.error('[FENNEC (MVP)] Could not build SOS URL for state:', state);
+            alert(`SOS search is not available for state: ${state}`);
+            return;
+        }
+        
+        console.log('[FENNEC (MVP)] Sending SOS search message:', { url, query: q, searchType: type });
+        
+        // Send the search message to the background script
+        chrome.runtime.sendMessage({ 
+            action: 'sosSearch', 
+            url, 
+            query: q, 
+            searchType: type 
+        }, (response) => {
+            if (chrome.runtime.lastError) {
+                console.error('[FENNEC (MVP)] Error sending SOS search message:', chrome.runtime.lastError);
+            } else {
+                console.log('[FENNEC (MVP)] SOS search message sent successfully');
+            }
+        });
     };
-    nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch('name'); });
-    idInput.addEventListener('keydown', e => { if (e.key === 'Enter') doSearch('id'); });
+    
+    // Add event listeners for Enter key
+    nameInput.addEventListener('keydown', e => { 
+        if (e.key === 'Enter') {
+            console.log('[FENNEC (MVP)] Name search triggered by Enter key');
+            doSearch('name'); 
+        }
+    });
+    
+    idInput.addEventListener('keydown', e => { 
+        if (e.key === 'Enter') {
+            console.log('[FENNEC (MVP)] ID search triggered by Enter key');
+            doSearch('id'); 
+        }
+    });
+    
+    // Add click listeners for search icon to toggle back
+    searchIcon.addEventListener('click', () => {
+        console.log('[FENNEC (MVP)] Search icon clicked, toggling back to info mode');
+        toggleCompanySearch(box);
+    });
+    
+    // Focus on the name input for better UX
+    setTimeout(() => nameInput.focus(), 100);
+    
     attachCommonListeners(box);
 }
 window.toggleCompanySearch = toggleCompanySearch;
+
+// Debug function to test SOS search functionality
+window.debugSosSearch = function() {
+    console.log('[FENNEC (MVP)] Debugging SOS search functionality...');
+    
+    // Check if buildSosUrl is available
+    if (typeof buildSosUrl === 'function') {
+        console.log('[FENNEC (MVP)] buildSosUrl function is available');
+        
+        // Test with a few states
+        const testStates = ['California', 'Texas', 'New York', 'Florida'];
+        testStates.forEach(state => {
+            const nameUrl = buildSosUrl(state, null, 'name');
+            const idUrl = buildSosUrl(state, null, 'id');
+            console.log(`[FENNEC (MVP)] ${state}:`, { nameUrl, idUrl });
+        });
+    } else {
+        console.error('[FENNEC (MVP)] buildSosUrl function is NOT available');
+        
+        // Check if it's in window scope
+        if (window.buildSosUrl) {
+            console.log('[FENNEC (MVP)] buildSosUrl found in window scope');
+        } else {
+            console.error('[FENNEC (MVP)] buildSosUrl not found in window scope either');
+        }
+    }
+    
+    // Check if chrome.runtime is available
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+        console.log('[FENNEC (MVP)] chrome.runtime is available');
+    } else {
+        console.error('[FENNEC (MVP)] chrome.runtime is NOT available');
+    }
+    
+    // Check for company search toggles
+    const toggles = document.querySelectorAll('.company-search-toggle');
+    console.log('[FENNEC (MVP)] Found company search toggles:', toggles.length);
+    
+    // Check for company boxes with state data
+    const companyBoxes = document.querySelectorAll('.white-box.company-box');
+    console.log('[FENNEC (MVP)] Found company boxes:', companyBoxes.length);
+    companyBoxes.forEach((box, index) => {
+        const state = box.dataset.state;
+        console.log(`[FENNEC (MVP)] Company box ${index}: state = "${state}"`);
+    });
+};
 
 // Standardized sidebar template for REVIEW MODE across all environments
 function buildStandardizedReviewModeSidebar(reviewMode = false, devMode = false, includeXrayButton = false) {
@@ -531,9 +1602,9 @@ function buildStandardizedReviewModeSidebar(reviewMode = false, devMode = false,
                 </div>
             </div>
             <div id="int-storage-section" style="display:none; margin-top:10px;">
-                <div class="section-label">INT STORAGE:</div>
+                <div class="section-label" style="cursor:pointer;" title="Click to open INT STORAGE tab">INT STORAGE:</div>
                 <div id="int-storage-box" class="white-box" style="margin-bottom:10px">
-                    <div style="text-align:center;color:#aaa">Loading...</div>
+                    <div style="text-align:center;color:#aaa">Loading<span class="loading-dots">...</span></div>
                 </div>
             </div>
             ${devMode ? `<div class="copilot-footer"><button id="copilot-refresh" class="copilot-button">🔄 REFRESH</button></div>` : ''}
@@ -551,3 +1622,112 @@ function buildStandardizedReviewModeSidebar(reviewMode = false, devMode = false,
     `;
 }
 
+// Function to setup INT STORAGE click functionality
+function setupIntStorageClickHandler(orderId) {
+    const intStorageLabel = document.querySelector('#int-storage-section .section-label');
+    if (intStorageLabel && intStorageLabel.textContent.includes('INT STORAGE')) {
+        intStorageLabel.style.cursor = 'pointer';
+        intStorageLabel.title = 'Click to open INT STORAGE tab';
+        intStorageLabel.addEventListener('click', () => {
+            openIntStorageTab(orderId);
+        });
+    }
+}
+
+// Global function to open INT STORAGE tab
+function openIntStorageTab(orderId) {
+    console.log('[FENNEC] Opening INT STORAGE tab for order:', orderId);
+    
+    // Send message to background script to find and activate INT STORAGE tab
+    chrome.runtime.sendMessage({
+        action: 'openIntStorageTab',
+        orderId: orderId
+    }, (response) => {
+        if (response && response.success) {
+            console.log('[FENNEC] INT STORAGE tab opened/activated successfully');
+        } else {
+            console.warn('[FENNEC] Failed to open INT STORAGE tab:', response);
+        }
+    });
+}
+
+// Utility function to ensure USPS event listeners are attached to all USPS elements
+function ensureUspsListenersAttached(rootElement = document) {
+    console.log('[FENNEC (MVP)] Ensuring USPS listeners are attached to:', rootElement);
+    
+    const uspsElements = rootElement.querySelectorAll('.copilot-usps');
+    console.log('[FENNEC (MVP)] Found', uspsElements.length, 'USPS elements to check');
+    
+    uspsElements.forEach((el, index) => {
+        if (!el.dataset.uspsListenerAdded) {
+            console.log(`[FENNEC (MVP)] Re-attaching USPS listener to element ${index + 1}`);
+            attachCommonListeners(el.parentElement || el);
+        }
+    });
+}
+
+// Make the function globally available
+window.ensureUspsListenersAttached = ensureUspsListenersAttached;
+
+// Debug function to test USPS validation functionality
+window.debugUspsValidation = function() {
+    console.log('[FENNEC (MVP)] === USPS VALIDATION DEBUG ===');
+    
+    // Check for USPS elements
+    const uspsElements = document.querySelectorAll('.copilot-usps');
+    console.log('[FENNEC (MVP)] USPS elements found:', uspsElements.length);
+    
+    if (uspsElements.length === 0) {
+        console.warn('[FENNEC (MVP)] No USPS elements found on page');
+        return;
+    }
+    
+    // Check each USPS element
+    uspsElements.forEach((el, index) => {
+        console.log(`[FENNEC (MVP)] USPS Element ${index + 1}:`, {
+            address: el.dataset.address,
+            hasListener: el.dataset.uspsListenerAdded,
+            innerHTML: el.innerHTML,
+            className: el.className,
+            style: {
+                cursor: el.style.cursor,
+                pointerEvents: el.style.pointerEvents
+            }
+        });
+    });
+    
+    // Check if attachCommonListeners is available
+    if (typeof attachCommonListeners === 'function') {
+        console.log('[FENNEC (MVP)] attachCommonListeners function is available');
+    } else {
+        console.error('[FENNEC (MVP)] attachCommonListeners function is NOT available');
+    }
+    
+    // Check if chrome.runtime is available
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+        console.log('[FENNEC (MVP)] chrome.runtime is available');
+        
+        // Test background script communication
+        chrome.runtime.sendMessage({
+            action: 'testMessage',
+            test: 'USPS validation test'
+        }, (response) => {
+            if (chrome.runtime.lastError) {
+                console.error('[FENNEC (MVP)] Background script communication error:', chrome.runtime.lastError);
+            } else {
+                console.log('[FENNEC (MVP)] Background script communication successful:', response);
+            }
+        });
+    } else {
+        console.error('[FENNEC (MVP)] chrome.runtime is NOT available');
+    }
+    
+    // Test clicking first USPS element
+    const firstUsps = uspsElements[0];
+    if (firstUsps) {
+        console.log('[FENNEC (MVP)] Testing click on first USPS element:', firstUsps.dataset.address);
+        firstUsps.click();
+    }
+    
+    console.log('[FENNEC (MVP)] === END USPS VALIDATION DEBUG ===');
+};
