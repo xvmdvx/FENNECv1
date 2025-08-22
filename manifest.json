@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "FENNEC (POO)",
-  "description": "Barra lateral tipo copilot para Gmail y DB",
-  "version": "0.3.0",
+  "name": "FENNEC (MVP)",
+  "description": "Barra lateral tipo copilot para Gmail y DB - Versión MVP",
+  "version": "1",
   "permissions": [
     "storage",
     "activeTab",
@@ -18,6 +18,9 @@
         "https://coda.io/*",
         "https://ca-live.adyen.com/*",
         "https://direct.sos.state.tx.us/*",
+        "https://app.kount.com/*",
+        "https://awc.kount.net/*",
+        "https://sa.www4.irs.gov/*",
         "http://127.0.0.1:11434/*",
         "https://*/*"
     ],
@@ -29,6 +32,7 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/environment_manager.js",
         "core/sidebar.js",
         "core/launcher.js",
         "core/messenger.js",
@@ -52,6 +56,7 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/environment_manager.js",
         "core/sidebar.js",
         "core/launcher.js",
         "core/messenger.js",
@@ -74,6 +79,7 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/environment_manager.js",
         "core/sidebar.js",
         "core/launcher.js",
         "core/messenger.js",
@@ -121,6 +127,7 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/environment_manager.js",
         "core/sidebar.js",
         "core/launcher.js",
         "core/messenger.js",
@@ -140,6 +147,8 @@
         "https://tools.usps.com/zip-code-lookup.htm*"
       ],
       "js": [
+        "core/utils.js",
+        "core/environment_manager.js",
         "core/sidebar.js",
         "core/launcher.js",
         "core/messenger.js",
@@ -155,6 +164,7 @@
       "all_frames": true,
       "js": [
         "core/utils.js",
+        "core/environment_manager.js",
         "core/sidebar.js",
         "core/launcher.js",
         "core/messenger.js",
@@ -169,34 +179,16 @@
         "styles/sidebar_light.css"
       ]
     },
+
     {
       "matches": [
-        "https://direct.sos.state.tx.us/*"
+        "https://awc.kount.net/workflow/*",
+        "https://app.kount.com/event-analysis/order/*"
       ],
       "all_frames": true,
       "js": [
         "core/utils.js",
-        "core/sidebar.js",
-        "core/launcher.js",
-        "core/messenger.js",
-        "core/floater.js",
-        "core/trial_floater.js",
-        "core/update_floater.js",
-        "core/diagnose_floater.js",
-        "environments/txsos/tx_sos_launcher.js"
-      ],
-      "css": [
-        "styles/sidebar.css",
-        "styles/sidebar_light.css"
-      ]
-    },
-    {
-      "matches": [
-        "https://awc.kount.net/workflow/*"
-      ],
-      "all_frames": true,
-      "js": [
-        "core/utils.js",
+        "core/environment_manager.js",
         "core/sidebar.js",
         "core/launcher.js",
         "core/messenger.js",
@@ -209,6 +201,17 @@
       "css": [
         "styles/sidebar.css",
         "styles/sidebar_light.css"
+      ]
+    },
+    {
+      "matches": [
+        "https://sa.www4.irs.gov/applyein/*"
+      ],
+      "all_frames": true,
+      "js": [
+        "core/utils.js",
+        "core/environment_manager.js",
+        "environments/db/db_launcher.js"
       ]
     }
   ],

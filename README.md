@@ -1,10 +1,10 @@
-# FENNEC (POO)
+# FENNEC (MVP)
 
-FENNEC (POO)'s principal function is injecting a SIDEBAR (SB) as a navigation companion that extracts information from relevant environments and displays it in a reordered manner to improve agents' productivity and reduce mental stress. Each environment has its unique layout depending on the type's necessities.
+FENNEC (MVP)'s principal function is injecting a SIDEBAR (SB) as a navigation companion that extracts information from relevant environments and displays it in a reordered manner to improve agents' productivity and reduce mental stress. Each environment has its unique layout depending on the type's necessities.
 
 ## Directory overview
 
-The extension FENNEC (POO) lives in the `FENNEC/` folder. Key pieces include:
+The extension FENNEC (MVP) lives in the `FENNEC/` folder. Key pieces include:
 
 - `manifest.json` – Manifest V3 configuration. The service worker is `core/background_email_search.js`.
 - `core/` – Shared helpers and the service worker.
@@ -33,7 +33,7 @@ For historical changes refer to the **Changelog**. This document is reset everyt
 
 ### Architecture
 
-FENNEC (POO) follows a modular object‑oriented design.  All reusable classes live in the `core/` folder and are loaded by the service worker at `core/background_email_search.js`.  This worker acts as the central hub: it routes messages, opens or closes tabs and forwards requests to the local Ollama server.
+FENNEC (MVP) follows a modular object‑oriented design.  All reusable classes live in the `core/` folder and are loaded by the service worker at `core/background_email_search.js`.  This worker acts as the central hub: it routes messages, opens or closes tabs and forwards requests to the local Ollama server.
 
 The user interface is created by the `Sidebar` class while overlay panels (Diagnose, Update, Fraud Review, etc.) inherit from the `Floater` base class.  Each supported site provides its own launcher—such as `gmail_launcher.js` or `db_launcher.js`—which extends the generic `Launcher` class to detect the page, extract data and inject the sidebar.  Communication between content scripts and the service worker is handled by the `Messenger` utility and common actions are provided by `utils.js`.  This structure keeps features isolated per environment while sharing a single backbone for consistent behavior across the extension.
 

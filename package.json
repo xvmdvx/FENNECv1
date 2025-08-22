@@ -1,7 +1,7 @@
 {
-  "name": "fennec-extension",
-  "version": "0.1.0",
-  "description": "Prototype Chrome extension for Gmail and DB interface",
+  "name": "fennec-mvp",
+  "version": "1",
+  "description": "FENNEC (MVP) - Chrome extension for Gmail and DB interface",
   "scripts": {
     "test": "node manual-test.js"
   },

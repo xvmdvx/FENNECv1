@@ -3,22 +3,342 @@
 <head>
   <meta charset="UTF-8">
   <style>
-    body { font-family: Arial, sans-serif; min-width: 180px; padding: 10px; }
-    #toggle-wrapper { display: flex; align-items: center; }
-    #extension-toggle { margin-right: 8px; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-width: 280px;
+      max-width: 320px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      padding: 0;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      margin: 6px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 12px 16px;
+      text-align: center;
+      position: relative;
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .header .version {
+      font-size: 11px;
+      opacity: 0.8;
+      margin-top: 1px;
+    }
+
+    .content {
+      padding: 16px;
+    }
+
+    .section {
+      margin-bottom: 18px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 3px;
+      height: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 2px;
+    }
+
+    /* Main Toggle */
+    .main-toggle {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+      border: 2px solid #e9ecef;
+      transition: all 0.3s ease;
+    }
+
+    .main-toggle.active {
+      border-color: #667eea;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    }
+
+    .toggle-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .toggle-label {
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+
+    /* Mode Toggle */
+    .mode-toggle {
+      display: flex;
+      background: #f1f3f4;
+      border-radius: 12px;
+      padding: 3px;
+      margin-bottom: 12px;
+    }
+
+    .mode-option {
+      flex: 1;
+      padding: 6px 10px;
+      text-align: center;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .mode-option.active {
+      background: white;
+      color: #667eea;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .mode-option:not(.active) {
+      color: #666;
+    }
+
+    /* Environment Selection */
+    .environments-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .env-checkbox {
+      display: flex;
+      align-items: center;
+      padding: 6px 10px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 11px;
+    }
+
+    .env-checkbox:hover {
+      background: #e9ecef;
+    }
+
+    .env-checkbox input[type="checkbox"] {
+      margin-right: 6px;
+      accent-color: #667eea;
+    }
+
+    .env-checkbox.hidden {
+      display: none;
+    }
+
+    /* Auto Upload Toggle */
+    .auto-upload-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      background: #f8f9fa;
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    .auto-upload-label {
+      font-weight: 500;
+      color: #333;
+      font-size: 13px;
+    }
+
+    /* Buttons */
+    .button-group {
+      display: flex;
+      gap: 6px;
+      margin-top: 16px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 12px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #666;
+      border: 1px solid #e9ecef;
+    }
+
+    .btn-secondary:hover {
+      background: #e9ecef;
+      color: #333;
+    }
+
+    /* Switch Toggle */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.3s;
+      border-radius: 22px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(18px);
+    }
   </style>
 </head>
 <body>
-  <div id="toggle-wrapper">
-    <input type="checkbox" id="extension-toggle">
-    <label for="extension-toggle">Enable FENNEC</label>
+  <div class="container">
+    <div class="header">
+      <h1>FENNEC</h1>
+      <div class="version">MVP v1.0</div>
+    </div>
+    
+    <div class="content">
+      <!-- Main Toggle -->
+      <div class="main-toggle" id="main-toggle">
+        <div class="toggle-wrapper">
+          <span class="toggle-label">Enable FENNEC</span>
+          <label class="switch">
+            <input type="checkbox" id="extension-toggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Mode Selection -->
+      <div class="section">
+        <div class="section-title">Mode</div>
+        <div class="mode-toggle">
+          <div class="mode-option active" data-mode="classic">CLASSIC</div>
+          <div class="mode-option" data-mode="review">REVIEW</div>
+        </div>
+      </div>
+
+      <!-- Environment Selection -->
+      <div class="section">
+        <div class="section-title">Environments</div>
+        <div class="environments-grid">
+          <label class="env-checkbox" id="env-gmail-container">
+            <input type="checkbox" id="env-gmail" checked>
+            Gmail
+          </label>
+          <label class="env-checkbox" id="env-db-container">
+            <input type="checkbox" id="env-db" checked>
+            Database
+          </label>
+          <label class="env-checkbox" id="env-usps-container">
+            <input type="checkbox" id="env-usps" checked>
+            USPS
+          </label>
+          <label class="env-checkbox" id="env-adyen-container">
+            <input type="checkbox" id="env-adyen" checked>
+            Adyen
+          </label>
+          <label class="env-checkbox" id="env-kount-container">
+            <input type="checkbox" id="env-kount" checked>
+            Kount
+          </label>
+        </div>
+      </div>
+
+      <!-- Auto Upload Toggle -->
+      <div class="section">
+        <div class="section-title">Auto Upload</div>
+        <div class="auto-upload-toggle">
+          <span class="auto-upload-label">Drag & Drop Upload</span>
+          <label class="switch">
+            <input type="checkbox" id="auto-upload-toggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="button-group">
+        <button class="btn btn-primary" id="options-btn">Options</button>
+        <button class="btn btn-secondary" id="reset-btn">Reset</button>
+      </div>
+    </div>
   </div>
-  <div id="review-wrapper" style="margin-top:8px; display:flex; align-items:center;">
-    <input type="checkbox" id="review-toggle" style="margin-right:8px;">
-    <label for="review-toggle">Review Mode</label>
-  </div>
-  <button id="options-btn" style="margin-top:8px; width:100%;">Go to Options</button>
-  <button id="reset-btn" style="margin-top:8px; width:100%;">Reset Extension</button>
+
   <script src="popup.js"></script>
 </body>
 </html>

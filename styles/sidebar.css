@@ -205,9 +205,9 @@
 }
 
 .copilot-button {
-    background-color: #333333;
-    color: white;
-    border: 2px solid white;
+    background: linear-gradient(135deg, #e0e0e0 0%, #c0c0c0 50%, #a0a0a0 100%);
+    color: #333;
+    border: 1px solid #999;
     border-radius: 12px;
     padding: 5px 12px;
     cursor: pointer;
@@ -215,13 +215,15 @@
     font-size: 13px;
     text-align: center;
     white-space: nowrap;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+    transition: all 0.2s ease, transform 0.1s ease;
     width: auto;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .copilot-button:hover {
-    background-color: #222;
+    background: linear-gradient(135deg, #f0f0f0 0%, #d0d0d0 50%, #b0b0b0 100%);
     transform: scale(1.02);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 .copilot-address {
@@ -235,6 +237,7 @@
 .copilot-usps {
     cursor: pointer;
     margin-left: 4px;
+    font-size: 10px;
 }
 .copilot-usps:hover {
     text-decoration: underline;
@@ -396,7 +399,7 @@
     cursor: pointer;
     color: #bbb;
     margin-left: 4px;
-    font-size: 12px;
+    font-size: 10px;
 }
 .copilot-copy-icon:hover {
     color: #fff;
@@ -502,6 +505,53 @@
     opacity: 0.95;
 }
 
+/* Make tags 20% smaller in company box for cleaner view */
+.company-box .copilot-tag {
+    font-size: 8px;
+    line-height: 8px;
+    padding: 1px 4px;
+}
+
+/* RA and VA tags should be same size as ACTIVE label */
+.company-box .copilot-tag-green {
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
+    font-weight: bold;
+}
+
+/* Purple tags (RA/VA when NO) should be same size as green tags */
+.company-box .copilot-tag-purple {
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
+    font-weight: bold;
+}
+
+/* Order type tag should be same size as VA/RA tags */
+.company-box .copilot-tag-white {
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
+}
+
+/* Order status tags should be same size as VA/RA tags in company box */
+.company-box .copilot-tag-review,
+.company-box .copilot-tag-processing,
+.company-box .copilot-tag-hold,
+.company-box .copilot-tag-forwarded,
+.company-box .copilot-tag-shipped,
+.company-box .copilot-tag-canceled {
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
+}
+
+/* All VA/RA/ACTIVE tags should be bold across all sections */
+.copilot-tag-green {
+    font-weight: bold;
+}
+
 .copilot-xray {
     display: inline-block;
     margin-left: 4px;
@@ -520,6 +570,9 @@
     color: #555 !important;
     opacity: 1;
     border: 1px solid #ccc;
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
 }
 .copilot-tag-lightgray {
     background-color: #ddd;
@@ -554,6 +607,9 @@
 .copilot-tag-purple {
     background-color: #800080;
     color: #fff;
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
 }
 .copilot-tag-red {
     background-color: #8B0000;
@@ -566,6 +622,62 @@
 .copilot-tag-black {
     background-color: #000;
     color: #fff;
+}
+
+/* Order status colors */
+.copilot-tag-review {
+    background-color: #f7bc00;
+    color: #000;
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
+    border: 1px solid #d4a017;
+    font-weight: bold;
+}
+.copilot-tag-processing {
+    background-color: #fff;
+    color: #555;
+    border: 1px solid #ccc;
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
+    font-weight: bold;
+}
+.copilot-tag-hold {
+    background-color: #8B0000;
+    color: #fff;
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
+    border: 1px solid #660000;
+    font-weight: bold;
+}
+.copilot-tag-forwarded {
+    background-color: #ffa500;
+    color: #000;
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
+    border: 1px solid #cc8400;
+    font-weight: bold;
+}
+.copilot-tag-shipped {
+    background-color: #2ecc71;
+    color: #fff;
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
+    border: 1px solid #27ae60;
+    font-weight: bold;
+}
+.copilot-tag-canceled {
+    background-color: #000;
+    color: #fff;
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
+    border: 1px solid #333;
+    font-weight: bold;
 }
 
 .dna-tx-table{
@@ -720,12 +832,26 @@
     border-bottom: 1px solid #444;
 }
 
+/* Align order number and date properly */
+#family-tree-orders .ft-item > div:first-child {
+    text-align: center;
+    min-width: 120px;
+}
+
+#family-tree-orders .ft-item > div:nth-child(3) {
+    text-align: left;
+    min-width: 80px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 #family-tree-orders .ft-item:last-child {
     border-bottom: none;
 }
 
 #family-tree-orders .ft-type {
-    font-weight: bold;
+    font-weight: normal;
     color: #ccc;
     font-size: 11px;
     min-width: 50px;
@@ -1013,13 +1139,13 @@
 }
 #fennec-trial-overlay .trial-two-col {
     display: grid;
-    grid-template-columns: 30% 1fr;
-    align-items: flex-start;
+    grid-template-columns: 17% 1fr;
+    align-items: flex-end;
     column-gap: 4px;
 }
 #fennec-trial-overlay .trial-two-col .trial-tag {
     font-weight: normal;
-    font-size: calc(var(--sb-font-size) - 1px);
+    font-size: 0.8em;
     text-align: right;
     margin-right: 0;
 }
@@ -1029,18 +1155,35 @@
 }
 #fennec-trial-overlay .trial-four-col {
     display: grid;
-    grid-template-columns: 30% 1fr 30% 1fr;
-    align-items: flex-start;
+    grid-template-columns: 17% 1fr 17% 1fr;
+    align-items: flex-end;
     column-gap: 4px;
 }
 #fennec-trial-overlay .trial-four-col .trial-tag {
     font-weight: normal;
-    font-size: calc(var(--sb-font-size) - 1px);
+    font-size: 0.8em;
     text-align: right;
 }
 #fennec-trial-overlay .trial-four-col .trial-value {
     text-align: left;
     font-weight: bold;
+}
+#fennec-trial-overlay .trial-tx-header {
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+}
+#fennec-trial-overlay .trial-two-col .trial-value {
+    text-align: left;
+    font-weight: bold;
+    padding-left: 4px;
+}
+#fennec-trial-overlay .trial-two-col {
+    display: grid;
+    grid-template-columns: 17% 1fr;
+    align-items: flex-end;
+    column-gap: 4px;
+    min-height: 1.2em;
 }
 #fennec-trial-overlay .member-list {
     margin: 0;
@@ -1072,6 +1215,8 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    min-width: 0;
+    width: 33.33%;
 }
 #fennec-trial-overlay .trial-col-title {
     font-weight: bold;
@@ -1086,6 +1231,9 @@
     padding: 8px;
     border-radius: 8px;
     width: 100%;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
 }
 #fennec-trial-overlay .trial-summary {
     display: flex;
@@ -1099,9 +1247,12 @@
 
 #fennec-trial-overlay .trial-line {
     margin: 4px 0;
+    text-transform: uppercase;
+    min-height: 1.2em;
 }
 #fennec-trial-overlay .trial-center {
     text-align: center;
+    min-height: auto;
 }
 #fennec-trial-overlay .trial-company-name {
     font-size: calc(var(--sb-font-size) + 12px);
@@ -1127,14 +1278,33 @@
     color: #0a0;
     margin-left: 4px;
     font-weight: bold;
+    cursor: help;
+    font-size: 12px;
 }
 #fennec-trial-overlay .db-adyen-cross {
     color: #000;
     margin-left: 4px;
     font-weight: bold;
+    cursor: help;
+    font-size: 12px;
+}
+#fennec-trial-overlay .db-adyen-warning {
+    color: #ffa500;
+    margin-left: 4px;
+    font-weight: bold;
+    cursor: help;
+    font-size: 12px;
+}
+#fennec-trial-overlay .db-adyen-usps-mismatch {
+    color: #ff0000;
+    margin-left: 4px;
+    font-weight: bold;
+    cursor: help;
+    font-size: 12px;
 }
 #fennec-trial-overlay .name-match {
     margin-left: 4px;
+    cursor: help;
 }
 #fennec-trial-overlay .name-match.check {
     color: #0a0;
@@ -1384,6 +1554,33 @@
     animation: fennecFlash 1s infinite;
 }
 
+@keyframes loadingDots {
+    0%, 20% {
+        color: #aaa;
+        text-shadow: 0.25em 0 0 #aaa, 0.5em 0 0 #aaa;
+    }
+    40% {
+        color: #fff;
+        text-shadow: 0.25em 0 0 #aaa, 0.5em 0 0 #aaa;
+    }
+    60% {
+        color: #aaa;
+        text-shadow: 0.25em 0 0 #fff, 0.5em 0 0 #aaa;
+    }
+    80% {
+        color: #aaa;
+        text-shadow: 0.25em 0 0 #aaa, 0.5em 0 0 #fff;
+    }
+    100% {
+        color: #aaa;
+        text-shadow: 0.25em 0 0 #aaa, 0.5em 0 0 #aaa;
+    }
+}
+
+.loading-dots {
+    animation: loadingDots 1.4s infinite;
+}
+
 #copilot-sidebar .state-count {
     padding: 2px 0;
 }
@@ -1449,5 +1646,45 @@
 }
 #int-upload-btn {
   margin: 0 auto;
+}
+
+/* Global drag and drop styling for INT STORAGE */
+#copilot-body-content.dragover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 2px dashed #666 !important;
+  transition: all 0.2s ease;
+}
+
+#copilot-body-content.dragover::after {
+  content: "Drop files to upload to INT STORAGE";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+/* INT STORAGE refresh button styling */
+#int-refresh-btn {
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  padding: 2px;
+}
+
+#int-refresh-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff !important;
+  transform: scale(1.1);
+}
+
+#int-refresh-btn:active {
+  transform: scale(0.95);
 }
 
