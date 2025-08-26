@@ -348,13 +348,20 @@
             }
 
             mainPanels.forEach(el => {
-                // Usamos margin-right para no desplazar
-                // elementos de paginación fuera de la vista
-                el.style.setProperty("margin-right", SIDEBAR_WIDTH + "px", "important");
-                el.style.setProperty("transition", "margin-right 0.2s", "important");
+                // Evitar doble desplazamiento: usar margin-right SOLO en elementos normales
+                // y usar right SOLO en overlays (fixed/absolute)
                 const style = getComputedStyle(el);
-                if (style.position === 'fixed' || style.position === 'absolute') {
+                const isOverlay = style.position === 'fixed' || style.position === 'absolute';
+
+                if (isOverlay) {
+                    // Paneles/visores fijados (e.g. visor de adjuntos)
+                    el.style.removeProperty('margin-right');
                     el.style.setProperty('right', SIDEBAR_WIDTH + 'px', 'important');
+                } else {
+                    // Contenido principal desplazable
+                    el.style.setProperty('margin-right', SIDEBAR_WIDTH + 'px', 'important');
+                    el.style.setProperty('transition', 'margin-right 0.2s', 'important');
+                    el.style.removeProperty('right');
                 }
             });
 
@@ -1026,6 +1033,7 @@
                     const cLink = nameBase ? `<a href="#" id="company-link" class="copilot-sos copilot-link" data-url="${nameBase}" data-query="${companyName}" data-type="name">${companyName}</a>` : companyName;
                     companyLines.push(`<div class="order-summary-company"><b>${cLink}</b></div>`);
                 }
+                // STATE ID moved right after company name
                 if (storedOrderInfo.companyId) {
                     const idBase = buildSosUrl(storedOrderInfo.companyState, null, 'id');
                     const compId = escapeHtml(storedOrderInfo.companyId);
@@ -1033,7 +1041,7 @@
                     const dof = storedOrderInfo.type && storedOrderInfo.type.toLowerCase() !== 'formation' && storedOrderInfo.formationDate
                         ? ` (${escapeHtml(storedOrderInfo.formationDate)})`
                         : '';
-                    companyLines.push(`<div>${idLink}${dof} ${renderCopyIcon(storedOrderInfo.companyId)}</div>`);
+                    companyLines.push(`<div><b>${idLink}${dof} ${renderCopyIcon(storedOrderInfo.companyId)}</b></div>`);
                 }
                 // Add magnifier icon for company search
                 if (storedOrderInfo.companyName || storedOrderInfo.companyId) {
@@ -1064,6 +1072,12 @@
                 });
             }
             attachCommonListeners(summaryBox);
+            
+            // Ensure company box listeners are properly attached
+            if (typeof ensureCompanyBoxListeners === 'function') {
+                console.log('[FENNEC (MVP) GM SB] Ensuring company box listeners are attached');
+                ensureCompanyBoxListeners();
+            }
         }
 
         function fillIntelBox(context) {
@@ -1924,7 +1938,7 @@
                 b.addEventListener('click', () => { 
                     const u = b.dataset.url; 
                     if (u) {
-                        bg.openOrReuseTab({ url: u, active: false });
+                        openFileInPopup(u);
                     }
                 });
             });
@@ -2661,8 +2675,11 @@
             // Botón de cierre
             document.getElementById('copilot-close').onclick = () => {
                 sidebar.remove();
-                // Limpiar el margin aplicado a los paneles
-                mainPanels.forEach(el => el.style.marginRight = '');
+                // Limpiar estilos aplicados
+                mainPanels.forEach(el => {
+                    el.style.removeProperty('margin-right');
+                    el.style.removeProperty('right');
+                });
                 // Clear the navigation check interval
                 clearInterval(navigationCheckInterval);
                 sessionStorage.setItem("fennecSidebarClosed", "true");

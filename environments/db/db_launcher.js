@@ -1233,7 +1233,7 @@ class DBLauncher extends Launcher {
             ? ` <span class="copilot-tag copilot-tag-green">VA</span>`
             : `<span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span><span class="copilot-copy-icon" data-copy="${escFull}" title="Copy">⧉</span>`;
         
-        const result = `<span class="address-wrapper">${display}${extra}</span>`;
+        const result = `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${escFull}">${display}</a>${extra}</span>`;
         console.log('[FENNEC] DB PRINT - Address:', addr, 'HTML:', result);
         return result;
     }
@@ -1279,7 +1279,7 @@ class DBLauncher extends Launcher {
             ? ` <span class="copilot-tag copilot-tag-green">VA</span>`
             : `<span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span><span class="copilot-copy-icon" data-copy="${escFull}" title="Copy">⧉</span>`;
         
-        const result = `<span class="address-wrapper">${display}${extra}</span>`;
+        const result = `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${escFull}">${display}</a>${extra}</span>`;
         addrLog('renderAddressFromObject lines=', lines, 'street=', addrObj.street, 'csz/cszc=', addrObj.cityStateZip || addrObj.cityStateZipCountry, 'fullForUSPS=', uspsAddr);
         return result;
     }
@@ -1321,7 +1321,7 @@ class DBLauncher extends Launcher {
         // Include USPS validation and copy icons, but no VA tag
         const extra = `<span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span><span class="copilot-copy-icon" data-copy="${escFull}" title="Copy">⧉</span>`;
         
-        const result = `<span class="address-wrapper">${display}${extra}</span>`;
+        const result = `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${escFull}">${display}</a>${extra}</span>`;
         console.log('[FENNEC] DB PRINT - Address without tag:', addr, 'HTML:', result);
         return result;
     }
@@ -1366,7 +1366,7 @@ class DBLauncher extends Launcher {
         // Include USPS validation and copy icons, but no VA tag
         const extra = `<span class="copilot-usps" data-address="${escFull}" title="USPS Lookup"> ✉️</span><span class="copilot-copy-icon" data-copy="${escFull}" title="Copy">⧉</span>`;
         
-        const result = `<span class="address-wrapper">${display}${extra}</span>`;
+        const result = `<span class="address-wrapper"><a href="#" class="copilot-address" data-address="${escFull}">${display}</a>${extra}</span>`;
         addrLog('renderAddressFromObjectWithoutTag lines=', lines, 'street=', addrObj.street, 'csz/cszc=', addrObj.cityStateZip || addrObj.cityStateZipCountry, 'fullForUSPS=', uspsAddr);
         return result;
     }
@@ -3032,6 +3032,21 @@ class DBLauncher extends Launcher {
                 nameText = `<a href="#" class="copilot-sos" data-url="${nameBase}" data-query="${escapeHtml(company.name)}" data-type="name">${nameText}</a>`;
             }
             highlight.push(`<div><b>${nameText} ${renderCopyIcon(company.name)}</b></div>`);
+            
+            // STATE ID moved right after company name
+            if (company.stateId && company.stateId.toLowerCase() !== 'n/a') {
+                let idHtml = escapeHtml(company.stateId);
+                const idBase = buildSosUrl(company.state, null, 'id');
+                if (idBase) {
+                    idHtml = `<a href="#" class="copilot-sos" data-url="${idBase}" data-query="${escapeHtml(company.stateId)}" data-type="id">${idHtml}</a>`;
+                    idHtml += ' ' + renderCopyIcon(company.stateId);
+                } else {
+                    idHtml += ' ' + renderCopyIcon(company.stateId);
+                }
+                highlight.push(`<div><b>${idHtml}</b></div>`);
+            }
+            
+            // Order type and status tags (without order ID)
             if (orderIdHighlight) {
                 // Get order type and status
                 const orderInfo = getBasicOrderInfo();
@@ -3095,27 +3110,13 @@ class DBLauncher extends Launcher {
                     statusLabel: statusLabel ? 'YES' : 'NO' 
                 });
                 
-                // Order ID on its own line
-                highlight.push(`<div><b>${renderCopy(orderIdHighlight)} ${renderCopyIcon(orderIdHighlight)}</b></div>`);
-                
-                // Order type and status tags on their own line
+                // Order type and status tags on their own line (ORDER ID REMOVED)
                 if (typeLabel || statusLabel) {
                     const tagsLine = [];
                     if (typeLabel) tagsLine.push(typeLabel);
                     if (statusLabel) tagsLine.push(statusLabel);
                     highlight.push(`<div>${tagsLine.join(' ')}</div>`);
                 }
-            }
-            if (company.stateId && company.stateId.toLowerCase() !== 'n/a') {
-                let idHtml = escapeHtml(company.stateId);
-                const idBase = buildSosUrl(company.state, null, 'id');
-                if (idBase) {
-                    idHtml = `<a href="#" class="copilot-sos" data-url="${idBase}" data-query="${escapeHtml(company.stateId)}" data-type="id">${idHtml}</a>`;
-                    idHtml += ' ' + renderCopyIcon(company.stateId);
-                } else {
-                    idHtml += ' ' + renderCopyIcon(company.stateId);
-                }
-                highlight.push(`<div><b>${idHtml}</b></div>`);
             }
             if (company.formationDate && company.formationDate.toLowerCase() !== 'n/a') {
                 highlight.push(`<div><b>${escapeHtml(company.formationDate)}</b></div>`);
@@ -3380,9 +3381,18 @@ class DBLauncher extends Launcher {
             
             attachCommonListeners(body);
             
+            // Ensure company box listeners are properly attached
+            if (typeof ensureCompanyBoxListeners === 'function') {
+                console.log('[FENNEC (MVP) DB SB] Ensuring company box listeners are attached');
+                ensureCompanyBoxListeners();
+            }
+            
             // Re-attach listeners after a short delay to ensure all content is rendered
             setTimeout(() => {
                 attachCommonListeners(body);
+                if (typeof ensureCompanyBoxListeners === 'function') {
+                    ensureCompanyBoxListeners();
+                }
             }, 100);
             
             insertDnaAfterCompany();
@@ -4796,6 +4806,25 @@ Please review and continue with the application.`;
             }
         }
         
+        // Try to find state in the left-info panel next to order number (like "225061344749 - KY")
+        const leftInfoElements = Array.from(document.querySelectorAll('.left-info *')).filter(el => {
+            const text = getText(el);
+            return text && /\d{6,12}\s*-\s*[A-Z]{2}/.test(text); // Order number - State pattern (6-12 digits)
+        });
+        
+        for (const element of leftInfoElements) {
+            const text = getText(element);
+            console.log('[FENNEC (MVP)] Checking left-info element:', text);
+            const stateMatch = text.match(/\d{6,12}\s*-\s*([A-Z]{2})/);
+            if (stateMatch) {
+                const state = stateMatch[1];
+                if (validStates.includes(state)) {
+                    console.log('[FENNEC (MVP)] Found state from left-info order number:', state);
+                    return state;
+                }
+            }
+        }
+        
         // Try to find state in the sidebar next to order number (like "223030769292 - TX")
         const sidebarElements = Array.from(document.querySelectorAll('*')).filter(el => {
             const text = getText(el);
@@ -5527,7 +5556,7 @@ function getLastHoldUser() {
             // Re-attach common listeners after INT STORAGE content is loaded
             attachCommonListeners(box);
             box.querySelectorAll('.int-open').forEach(b => {
-                b.addEventListener('click', () => { const u = b.dataset.url; if (u) window.open(u, '_blank'); });
+                b.addEventListener('click', () => { const u = b.dataset.url; if (u) openFileInPopup(u); });
             });
             
             // Download button functionality
@@ -5953,9 +5982,9 @@ function getLastHoldUser() {
                             box.innerHTML = refreshButton + '<br style="margin-top:20px">' + filesHtml + uploadHtml;
                             
                             // Re-attach event listeners
-                            box.querySelectorAll('.int-open').forEach(b => {
-                                b.addEventListener('click', () => { const u = b.dataset.url; if (u) window.open(u, '_blank'); });
-                            });
+                                        box.querySelectorAll('.int-open').forEach(b => {
+                b.addEventListener('click', () => { const u = b.dataset.url; if (u) openFileInPopup(u); });
+            });
                             
                             // Download button functionality
                             box.querySelectorAll('.int-download').forEach(b => {

@@ -1157,7 +1157,7 @@ class KountLauncher extends Launcher {
                 const filesHtml = list || '<div style="text-align:center;color:#aaa">No files</div>';
                 box.innerHTML = filesHtml;
                 box.querySelectorAll('.int-open').forEach(b => {
-                    b.addEventListener('click', () => { const u = b.dataset.url; if (u) window.open(u, '_blank'); });
+                    b.addEventListener('click', () => { const u = b.dataset.url; if (u) openFileInPopup(u); });
                 });
             });
         }
@@ -2221,6 +2221,12 @@ class KountLauncher extends Launcher {
                     if (sb) {
                         sb.innerHTML = changes.sidebarSnapshot.newValue;
                         attachCommonListeners(sb);
+                        
+                        // Ensure company box listeners are properly attached
+                        if (typeof ensureCompanyBoxListeners === 'function') {
+                            console.log('[FENNEC (MVP) KOUNT SB] Ensuring company box listeners are attached');
+                            ensureCompanyBoxListeners();
+                        }
                     }
                 }
             });

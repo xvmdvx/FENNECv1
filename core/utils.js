@@ -325,7 +325,12 @@ function applyStandardSectionOrder(container = document.getElementById('db-summa
 window.applyStandardSectionOrder = applyStandardSectionOrder;
 
 function abbreviateOrderType(type) {
-    const t = (type || '').toLowerCase();
+    // Normalize and strip optional leading state prefix like "NY Good Standing"
+    const raw = (type || '').toString();
+    const normalized = raw.trim();
+    // If string begins with two letters and a space, drop the state to evaluate order type
+    const stateStripped = normalized.replace(/^[A-Za-z]{2}\s+/, '');
+    const t = stateStripped.toLowerCase();
     if (t.includes('annual report')) return 'AR';
     if (t.includes('state filings bundle')) return 'SFB';
     if (t.includes('foreign qualification')) return 'FQ';
@@ -334,6 +339,7 @@ function abbreviateOrderType(type) {
     if (t.includes('registered agent change')) return 'RA CHANGE';
     if (t.includes('change of agent')) return 'COA';
     if (t.includes('trade name search')) return 'TRADENAME';
+    if (t.includes('certificate of good standing') || t.includes('good standing')) return 'COGS';
     if (t.includes('beneficial ownership information report')) return 'BOIR';
     return type;
 }
@@ -385,21 +391,24 @@ function parseAddressForSmartCopy(str) {
     // Remove any country codes that might still be present
     cleanStr = cleanStr.replace(/,\s*(US|USA|United States)\s*$/i, '');
     
+    // Split by commas and clean up
     const parts = cleanStr.split(',').map(p => p.trim()).filter(Boolean);
-
-    if (parts.length) {
-        const firstPart = parts.shift();
-        // Check if the first part contains line2 information (like "Apt 4B", "Suite 100", etc.)
-        const line2Match = firstPart.match(/^(.*?)\s+(apt|suite|unit|#|ste|floor|fl|room|rm|apartment|building|bldg|office|ofc)\s+(.+)$/i);
-        if (line2Match) {
-            result.line1 = line2Match[1].trim();
-            result.line2 = (line2Match[2] + ' ' + line2Match[3]).trim();
-        } else {
-            result.line1 = firstPart;
-        }
+    
+    if (parts.length === 0) return result;
+    
+    // Handle street address (first part)
+    let streetPart = parts.shift();
+    
+    // Check if street part contains line2 information (like "Apt 4B", "Suite 100", etc.)
+    const line2Match = streetPart.match(/^(.*?)\s+(apt|suite|unit|#|ste|floor|fl|room|rm|apartment|building|bldg|office|ofc)\s+(.+)$/i);
+    if (line2Match) {
+        result.line1 = line2Match[1].trim();
+        result.line2 = (line2Match[2] + ' ' + line2Match[3]).trim();
+    } else {
+        result.line1 = streetPart;
     }
     
-    // Check if the second part is line2 information (like "Unit 203", "Suite 125", etc.)
+    // Check if second part is line2 information (like "Unit 203", "Suite 125", etc.)
     if (parts.length >= 1) {
         const secondPart = parts[0];
         const line2Match = secondPart.match(/^(apt|suite|unit|#|ste|floor|fl|room|rm|apartment|building|bldg|office|ofc)\s+(.+)$/i);
@@ -408,37 +417,70 @@ function parseAddressForSmartCopy(str) {
             parts.shift(); // Remove the line2 part from the remaining parts
         }
     }
-
+    
     // Handle the remaining parts (city, state, zip)
-    const remaining = parts.join(', ');
+    if (parts.length === 0) return result;
     
-    // First, try to extract ZIP code from the end
-    const zipMatch = remaining.match(/(\d{5}(?:-\d{4})?)\s*$/);
-    let zipCode = '';
-    let remainingWithoutZip = remaining;
+    // Find the last part that contains a ZIP code
+    let zipPart = '';
+    let cityStateParts = [];
     
-    if (zipMatch) {
-        zipCode = zipMatch[1];
-        remainingWithoutZip = remaining.replace(zipMatch[0], '').trim();
+    for (let i = parts.length - 1; i >= 0; i--) {
+        const part = parts[i];
+        const zipMatch = part.match(/(\d{5}(?:-\d{4})?)\s*$/);
+        if (zipMatch) {
+            zipPart = zipMatch[1];
+            // Remove ZIP from this part
+            const withoutZip = part.replace(zipMatch[0], '').trim();
+            if (withoutZip) {
+                cityStateParts.unshift(withoutZip);
+            }
+            // Add remaining parts before this one
+            cityStateParts.unshift(...parts.slice(0, i));
+            break;
+        } else {
+            cityStateParts.unshift(part);
+        }
     }
     
-    // Now try to extract state from the remaining parts
-    const stateMatch = remainingWithoutZip.match(/([A-Z]{2})\s*$/i);
+    // If no ZIP found, use all remaining parts
+    if (!zipPart && parts.length > 0) {
+        cityStateParts = parts;
+    }
+    
+    // Extract state from the last part
     let stateCode = '';
-    let cityPart = remainingWithoutZip;
+    let cityParts = [];
     
-    if (stateMatch) {
-        stateCode = stateMatch[1].toUpperCase();
-        cityPart = remainingWithoutZip.replace(stateMatch[0], '').trim();
+    for (let i = cityStateParts.length - 1; i >= 0; i--) {
+        const part = cityStateParts[i];
+        const stateMatch = part.match(/([A-Z]{2})\s*$/i);
+        if (stateMatch) {
+            stateCode = stateMatch[1].toUpperCase();
+            // Remove state from this part
+            const withoutState = part.replace(stateMatch[0], '').trim();
+            if (withoutState) {
+                cityParts.unshift(withoutState);
+            }
+            // Add remaining parts before this one
+            cityParts.unshift(...cityStateParts.slice(0, i));
+            break;
+        } else {
+            cityParts.unshift(part);
+        }
     }
     
-    // Clean up city part (remove trailing commas)
-    cityPart = cityPart.replace(/,\s*$/, '').trim();
+    // If no state found, use all city parts
+    if (!stateCode && cityStateParts.length > 0) {
+        cityParts = cityStateParts;
+    }
     
     // Set the results
-    result.city = cityPart;
+    result.city = cityParts.join(', ').replace(/,\s*$/, '').trim();
     result.state = stateCode;
-    result.zip = zipCode;
+    result.zip = zipPart;
+    
+    console.log('[FENNEC (MVP)] Parsed address:', { original: str, parsed: result });
     
     return result;
 }
@@ -589,6 +631,32 @@ function handleUspsCmraResult(address, isCMRA, cmraValue) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'uspsCmraResult') {
         handleUspsCmraResult(message.address, message.isCMRA, message.cmraValue);
+    }
+});
+
+// Listen for smart copy data from USPS context menu
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'sync' && changes.smartCopyAddress) {
+        const data = changes.smartCopyAddress.newValue;
+        if (data && data.source === 'usps_context_menu') {
+            console.log('[FENNEC (MVP)] Smart copy data received from USPS context menu:', data);
+            
+            // Parse the address components
+            const parsed = parseAddressForSmartCopy(data.fullAddress);
+            
+            // Update the stored data with parsed components
+            chrome.storage.sync.set({ 
+                smartCopyAddress: {
+                    ...data,
+                    components: parsed
+                }
+            }, () => {
+                console.log('[FENNEC (MVP)] Smart copy data updated with parsed components');
+                
+                // Show smart copy notification
+                showSmartCopyNotification(parsed);
+            });
+        }
     }
 });
 
@@ -776,13 +844,134 @@ function smartPasteAddress(components, triggerField) {
             }
             
         } else if (fieldName.includes('state') && !fieldName.includes('id') && !fieldName.includes('status')) {
-            // Only fill state fields, exclude state id and state status
-            // Always replace, even if content is the same
-            field.value = components.state || '';
-            field.dispatchEvent(new Event('input', { bubbles: true }));
-            field.dispatchEvent(new Event('change', { bubbles: true }));
-            filledCount++;
-            console.log('[FENNEC (MVP)] Filled state:', components.state);
+            // Handle state fields (including dropdowns)
+            if (field.tagName === 'SELECT') {
+                // For dropdowns, find and select the option that matches the state
+                const stateValue = components.state || '';
+                if (stateValue) {
+                    console.log('[FENNEC (MVP)] Attempting to select state:', stateValue, 'in dropdown:', field.name || field.id);
+                    
+                    // Log all available options for debugging
+                    const allOptions = Array.from(field.options).map(opt => ({
+                        value: opt.value,
+                        text: opt.textContent.trim(),
+                        selected: opt.selected
+                    }));
+                    console.log('[FENNEC (MVP)] Available dropdown options:', allOptions);
+                    
+                    // Try multiple matching strategies
+                    let option = null;
+                    
+                    // Strategy 1: Exact value match
+                    option = field.querySelector(`option[value="${stateValue}"]`);
+                    if (option) {
+                        console.log('[FENNEC (MVP)] Found by exact value match');
+                    }
+                    
+                    // Strategy 2: Exact text match
+                    if (!option) {
+                        option = Array.from(field.options).find(opt => 
+                            opt.textContent.trim().toUpperCase() === stateValue.toUpperCase()
+                        );
+                        if (option) {
+                            console.log('[FENNEC (MVP)] Found by exact text match');
+                        }
+                    }
+                    
+                    // Strategy 3: Partial text match (for cases like "New York" vs "NY")
+                    if (!option) {
+                        option = Array.from(field.options).find(opt => 
+                            opt.textContent.trim().toUpperCase().includes(stateValue.toUpperCase()) ||
+                            stateValue.toUpperCase().includes(opt.textContent.trim().toUpperCase())
+                        );
+                        if (option) {
+                            console.log('[FENNEC (MVP)] Found by partial text match');
+                        }
+                    }
+                    
+                    // Strategy 4: State abbreviation mapping
+                    if (!option) {
+                        const stateMap = {
+                            'NY': 'New York',
+                            'CA': 'California',
+                            'TX': 'Texas',
+                            'FL': 'Florida',
+                            'IL': 'Illinois',
+                            'PA': 'Pennsylvania',
+                            'OH': 'Ohio',
+                            'GA': 'Georgia',
+                            'NC': 'North Carolina',
+                            'MI': 'Michigan',
+                            'NJ': 'New Jersey',
+                            'VA': 'Virginia',
+                            'WA': 'Washington',
+                            'AZ': 'Arizona',
+                            'MA': 'Massachusetts',
+                            'TN': 'Tennessee',
+                            'IN': 'Indiana',
+                            'MO': 'Missouri',
+                            'MD': 'Maryland',
+                            'CO': 'Colorado',
+                            'MN': 'Minnesota',
+                            'WI': 'Wisconsin',
+                            'AL': 'Alabama',
+                            'SC': 'South Carolina',
+                            'LA': 'Louisiana',
+                            'KY': 'Kentucky',
+                            'OR': 'Oregon',
+                            'OK': 'Oklahoma',
+                            'CT': 'Connecticut',
+                            'UT': 'Utah',
+                            'IA': 'Iowa',
+                            'NV': 'Nevada',
+                            'AR': 'Arkansas',
+                            'MS': 'Mississippi',
+                            'KS': 'Kansas',
+                            'NM': 'New Mexico',
+                            'NE': 'Nebraska',
+                            'ID': 'Idaho',
+                            'WV': 'West Virginia',
+                            'HI': 'Hawaii',
+                            'NH': 'New Hampshire',
+                            'ME': 'Maine',
+                            'RI': 'Rhode Island',
+                            'MT': 'Montana',
+                            'DE': 'Delaware',
+                            'SD': 'South Dakota',
+                            'ND': 'North Dakota',
+                            'AK': 'Alaska',
+                            'VT': 'Vermont',
+                            'WY': 'Wyoming'
+                        };
+                        
+                        const fullStateName = stateMap[stateValue.toUpperCase()];
+                        if (fullStateName) {
+                            option = Array.from(field.options).find(opt => 
+                                opt.textContent.trim().toUpperCase() === fullStateName.toUpperCase()
+                            );
+                            if (option) {
+                                console.log('[FENNEC (MVP)] Found by state abbreviation mapping:', fullStateName);
+                            }
+                        }
+                    }
+                    
+                    if (option) {
+                        field.value = option.value;
+                        field.dispatchEvent(new Event('change', { bubbles: true }));
+                        filledCount++;
+                        console.log('[FENNEC (MVP)] Successfully selected state in dropdown:', stateValue, '->', option.textContent.trim());
+                    } else {
+                        console.log('[FENNEC (MVP)] State option not found in dropdown after all strategies:', stateValue);
+                    }
+                }
+            } else {
+                // For text inputs, set the value directly
+                field.value = components.state || '';
+                field.dispatchEvent(new Event('input', { bubbles: true }));
+                field.dispatchEvent(new Event('change', { bubbles: true }));
+                filledCount++;
+                console.log('[FENNEC (MVP)] Filled state text field:', components.state);
+            }
             
         } else if ((fieldName.includes('zip') || fieldName.includes('postal')) && !fieldName.includes('id')) {
             // Only fill zip fields, exclude zip id
@@ -904,6 +1093,56 @@ if (document.readyState === 'loading') {
     setupContextMenu();
 }
 
+// Global delegated click handler as a safety net for sidebar interactions
+// Ensures Google search and SMART COPY work even if per-element listeners were missed
+if (!window.__fennecDelegatedListenerInstalled) {
+    window.__fennecDelegatedListenerInstalled = true;
+    document.addEventListener('click', function(event) {
+        const target = event.target && event.target.closest('.copilot-address, .copilot-copy, .copilot-copy-icon');
+        if (!target) return;
+        
+        // Only handle clicks originating inside the sidebar
+        const sidebar = target.closest('#copilot-sidebar');
+        const inSidebar = !!sidebar;
+        if (!inSidebar) return;
+        
+        console.log('[FENNEC (MVP)] Global click handler triggered for:', target.className, 'in sidebar:', !!sidebar);
+        
+        event.preventDefault();
+        event.stopPropagation();
+        
+        if (target.classList.contains('copilot-address')) {
+            const addr = target.dataset.address || target.dataset.copy || (target.textContent || '').trim();
+            if (!addr) {
+                console.warn('[FENNEC (MVP)] No address data found in clicked element');
+                return;
+            }
+            console.log('[FENNEC (MVP)] Address clicked via global handler:', addr);
+            
+            // Smart copy first
+            try { smartCopyAddress(addr); } catch (e) { console.error('[FENNEC (MVP)] Smart copy error:', e); }
+            
+            // Open Google Search (not Maps)
+            try {
+                const googleSearchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(addr);
+                console.log('[FENNEC (MVP)] Opening Google search:', googleSearchUrl);
+                window.open(googleSearchUrl, '_blank');
+            } catch (e) { console.error('[FENNEC (MVP)] Google search error:', e); }
+            return;
+        }
+        
+        // Handle copy icons/text
+        const text = target.dataset.copy || target.dataset.address || (target.textContent || '').trim();
+        if (!text) return;
+        const isAddress = /\b(street|st\.?|road|rd\.?|ave\.?|avenue|drive|dr\.?|lane|ln\.?|boulevard|blvd\.?|pkwy|parkway|court|ct\.?|hwy|highway|way|loop|circle|cir\.?|place|pl\.?|trail|trl\.?|point|pt\.?|falls?|fls?|bit)\b/i.test(text) && /\d/.test(text);
+        if (isAddress) {
+            try { smartCopyAddress(text); } catch (e) { console.error('[FENNEC (MVP)] Smart copy error:', e); }
+        } else {
+            try { navigator.clipboard.writeText(text).catch(() => {}); } catch (e) { console.error('[FENNEC (MVP)] Clipboard error:', e); }
+        }
+    }, true);
+}
+
 function attachCommonListeners(rootEl) {
     if (!rootEl) return;
     
@@ -913,25 +1152,48 @@ function attachCommonListeners(rootEl) {
     console.log('[FENNEC (MVP)] Found', addressElements.length, 'address elements to attach listeners to');
     
     addressElements.forEach((el, index) => {
-        console.log(`[FENNEC (MVP)] Attaching listener to address element ${index + 1}:`, el.dataset.address);
-        el.addEventListener('click', e => {
+        console.log(`[FENNEC (MVP)] Attaching listener to address element ${index + 1}:`, {
+            address: el.dataset.address,
+            className: el.className,
+            innerHTML: el.innerHTML.substring(0, 100) + '...'
+        });
+        
+        // Remove any existing listeners to prevent duplicates
+        el.removeEventListener('click', el._addressClickHandler);
+        
+        // Create a new handler function
+        el._addressClickHandler = (e) => {
             e.preventDefault();
+            e.stopPropagation();
+            
             const addr = el.dataset.address;
             if (!addr) {
                 console.warn('[FENNEC (MVP)] No address data found in clicked element');
                 return;
             }
             
-            console.log('[FENNEC (MVP)] Address clicked:', addr);
+            console.log('[FENNEC (MVP)] Address clicked via direct listener:', addr);
             
             // Perform SMART COPY of address
-            smartCopyAddress(addr);
+            try {
+                smartCopyAddress(addr);
+            } catch (e) {
+                console.error('[FENNEC (MVP)] Smart copy error:', e);
+            }
             
             // Open Google search (NOT Google Maps) for the address
-            const googleSearchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(addr);
-            console.log('[FENNEC (MVP)] Opening Google search for address:', addr);
-            window.open(googleSearchUrl, '_blank');
-        });
+            try {
+                const googleSearchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(addr);
+                console.log('[FENNEC (MVP)] Opening Google search for address:', addr);
+                window.open(googleSearchUrl, '_blank');
+            } catch (e) {
+                console.error('[FENNEC (MVP)] Google search error:', e);
+            }
+        };
+        
+        // Add the new listener
+        el.addEventListener('click', el._addressClickHandler);
+        console.log(`[FENNEC (MVP)] Successfully attached listener to address element ${index + 1}`);
     });
     
     // Enhanced USPS event listener attachment with better debugging
@@ -1028,15 +1290,67 @@ function attachCommonListeners(rootEl) {
             }
         });
     });
+    // Only attach SOS listeners if they don't already have them from ensureCompanyBoxListeners
     rootEl.querySelectorAll('.copilot-sos').forEach(el => {
+        // Skip if this element already has a listener from ensureCompanyBoxListeners
+        if (el._sosClickHandler) {
+            console.log('[FENNEC (MVP)] Skipping SOS listener attachment - already has handler from ensureCompanyBoxListeners');
+            return;
+        }
+        
         el.addEventListener('click', e => {
             e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('[FENNEC (MVP)] Copilot-SOS clicked via attachCommonListeners:', {
+                url: el.dataset.url,
+                query: el.dataset.query,
+                type: el.dataset.type
+            });
+            
             const url = el.dataset.url;
             const query = el.dataset.query;
             const type = el.dataset.type || 'name';
-            if (!url || !query) return;
-            navigator.clipboard.writeText(query).catch(err => console.warn('[Copilot] Clipboard', err));
-            chrome.runtime.sendMessage({ action: 'sosSearch', url, query, searchType: type });
+            
+            if (!url || !query) {
+                console.error('[FENNEC (MVP)] Missing URL or query for SOS search');
+                return;
+            }
+            
+            // Apply deduplication logic BEFORE attempting to open the tab
+            if (typeof tabDeduplication !== 'undefined' && !tabDeduplication.shouldOpenTab(url)) {
+                console.log('[FENNEC (MVP)] Tab deduplication: Preventing opening of duplicate tab for URL:', url);
+                return; // Stop here if it's a duplicate
+            }
+            
+            // Copy query to clipboard
+            navigator.clipboard.writeText(query).catch(err => console.warn('[FENNEC (MVP)] Clipboard error:', err));
+            
+            // Try to send message via chrome.runtime, with a fallback to window.open
+            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+                console.log('[FENNEC (MVP)] Attempting to send SOS search message via chrome.runtime.sendMessage');
+                chrome.runtime.sendMessage({ 
+                    action: 'sosSearch', 
+                    url, 
+                    query, 
+                    searchType: type 
+                }, (response) => {
+                    if (chrome.runtime.lastError) {
+                        console.error('[FENNEC (MVP)] Error sending SOS search message:', chrome.runtime.lastError);
+                        console.log('[FENNEC (MVP)] Falling back to window.open for URL:', url);
+                        // If sendMessage fails, window.open will be called.
+                        // The window.open override already has the deduplication logic,
+                        // but since we already passed it once, it will open.
+                        // This is fine as the initial check prevented the first duplicate.
+                        window.open(url, '_blank');
+                    } else {
+                        console.log('[FENNEC (MVP)] SOS search message sent successfully');
+                    }
+                });
+            } else {
+                console.log('[FENNEC (MVP)] chrome.runtime.sendMessage not available, falling back to window.open for URL:', url);
+                window.open(url, '_blank');
+            }
         });
     });
     rootEl.querySelectorAll('.copilot-kb').forEach(el => {
@@ -1068,28 +1382,40 @@ function attachCommonListeners(rootEl) {
         });
     });
     
-    // Company search toggle handling
+    // Company search toggle handling - only attach if not already handled by ensureCompanyBoxListeners
     const companySearchToggles = rootEl.querySelectorAll('.company-search-toggle');
     console.log('[FENNEC (MVP)] Found company search toggles:', companySearchToggles.length);
     
     companySearchToggles.forEach(el => {
+        // Skip if this element already has a listener from ensureCompanyBoxListeners
+        if (el._searchClickHandler) {
+            console.log('[FENNEC (MVP)] Skipping search toggle listener attachment - already has handler from ensureCompanyBoxListeners');
+            return;
+        }
+        
         // Remove any existing listeners to prevent duplicates
         el.removeEventListener('click', el._companySearchToggleHandler);
         
         // Create a new handler function
-        el._companySearchToggleHandler = () => {
-            console.log('[FENNEC (MVP)] Company search toggle clicked');
+        el._companySearchToggleHandler = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('[FENNEC (MVP)] Company search toggle clicked via attachCommonListeners');
             const box = el.closest('.white-box');
             if (box && typeof toggleCompanySearch === 'function') {
+                console.log('[FENNEC (MVP)] Calling toggleCompanySearch for box:', box);
                 toggleCompanySearch(box);
             } else {
                 console.error('[FENNEC (MVP)] Could not find white-box or toggleCompanySearch function');
+                console.log('[FENNEC (MVP)] Box found:', !!box);
+                console.log('[FENNEC (MVP)] toggleCompanySearch available:', typeof toggleCompanySearch === 'function');
             }
         };
         
         // Add the new listener
         el.addEventListener('click', el._companySearchToggleHandler);
-        console.log('[FENNEC (MVP)] Added click listener to company search toggle');
+        console.log('[FENNEC (MVP)] Added click listener to company search toggle via attachCommonListeners');
     });
 
     // Update USPS icons based on CMRA results
@@ -1173,6 +1499,11 @@ function attachCommonListeners(rootEl) {
             // Set flag to extract state info when parent order loads
             chrome.storage.local.set({ fennecPendingStateUpdate: parentId }, () => {
                 console.log('[FENNEC (MVP)] Set pending state update for parent order:', parentId);
+                // Proactively extract state on the current (parent) page
+                try {
+                    const info = getBasicOrderInfo();
+                    console.log('[FENNEC (MVP)] Triggered getBasicOrderInfo() after setting pending state:', info);
+                } catch (e) { /* noop */ }
             });
             
             // Add timeout to detect if background script isn't responding
@@ -1238,13 +1569,14 @@ function attachCommonListeners(rootEl) {
                     /canceled|cancelled/i.test(parent.status) ? 'copilot-tag copilot-tag-canceled' : 'copilot-tag';
                 html += `<div class="section-label">PARENT</div>`;
                 const parentStateInfo = extractStateFromOrderType(parent.type);
-                const parentOrderType = parentStateInfo ? parentStateInfo.orderType : abbreviateOrderType(parent.type);
-                // Initially show without state tag, will be updated when state is extracted
+                const parentOrderType = abbreviateOrderType(parent.type);
+                const parentStateTag = parentStateInfo ? `<span class="copilot-tag copilot-tag-black">${escapeHtml(parentStateInfo.state)}</span> ` : '';
+                // Show state tag immediately if present
                 html += `<div class="ft-grid" data-parent-id="${escapeHtml(parent.orderId)}">` +
                     `<div><b><a href="#" class="ft-link" data-id="${escapeHtml(parent.orderId)}">${escapeHtml(parent.orderId)}</a></b>` +
                     `${dupIds.has(String(parent.orderId)) ? ` <span class="ft-cancel" data-id="${escapeHtml(parent.orderId)}">❌</span>` : ''}</div>` +
                     `<div class="ft-type">${escapeHtml(parentOrderType).toUpperCase()}</div>` +
-                    `<div class="ft-date" data-parent-date="${escapeHtml(parent.date)}">${escapeHtml(parent.date)}</div>` +
+                    `<div class="ft-date" data-parent-date="${escapeHtml(parent.date)}">${parentStateTag}${escapeHtml(parent.date)}</div>` +
                     `<div><span class="${pStatusClass} ft-status" data-id="${escapeHtml(parent.orderId)}">${escapeHtml(parent.status)}</span></div>` +
                     `</div>`;
                 html += `<div class="section-label">CHILD</div>`;
@@ -1257,7 +1589,7 @@ function attachCommonListeners(rootEl) {
                         /forwarded/i.test(o.status) ? 'copilot-tag copilot-tag-forwarded' :
                         /canceled|cancelled/i.test(o.status) ? 'copilot-tag copilot-tag-canceled' : 'copilot-tag';
                     const childStateInfo = extractStateFromOrderType(o.type);
-                    const childOrderType = childStateInfo ? childStateInfo.orderType : abbreviateOrderType(o.type);
+                    const childOrderType = abbreviateOrderType(o.type);
                     const childStateTag = childStateInfo ? `<span class="copilot-tag copilot-tag-black">${escapeHtml(childStateInfo.state)}</span>` : '';
                     return `
                             <div class="ft-grid">
@@ -1280,6 +1612,24 @@ function attachCommonListeners(rootEl) {
                     container.style.maxHeight = (container.scrollHeight + extra) + 'px';
                     container.classList.remove('ft-collapsed');
                 });
+
+                // If state was already extracted and stored before the listener attached, render it now
+                try {
+                    chrome.storage.local.get({ fennecOrderStateInfo: null }, ({ fennecOrderStateInfo }) => {
+                        const data = fennecOrderStateInfo || null;
+                        if (data && data.orderId && data.state) {
+                            const parentGrid = container.querySelector(`.ft-grid[data-parent-id="${data.orderId}"]`);
+                            if (parentGrid) {
+                                const dateDiv = parentGrid.querySelector('.ft-date');
+                                if (dateDiv && !dateDiv.querySelector('.copilot-tag-black')) {
+                                    const originalDate = dateDiv.getAttribute('data-parent-date') || dateDiv.textContent;
+                                    const stateTag = `<span class="copilot-tag copilot-tag-black">${data.state}</span> `;
+                                    dateDiv.innerHTML = stateTag + originalDate;
+                                }
+                            }
+                        }
+                    });
+                } catch (e) { /* noop */ }
                 container.querySelectorAll('.ft-link').forEach(a => {
                     a.addEventListener('click', e => {
                         e.preventDefault();
@@ -1433,51 +1783,23 @@ function toggleCompanySearch(box) {
         console.log('[FENNEC (MVP)] Attempting SOS search:', { type, query: q, state });
         
         // Check if buildSosUrl function is available
-        if (typeof buildSosUrl !== 'function') {
+        let buildSosUrlFunc = null;
+        
+        if (typeof buildSosUrl === 'function') {
+            buildSosUrlFunc = buildSosUrl;
+        } else if (window.buildSosUrl) {
+            buildSosUrlFunc = window.buildSosUrl;
+            console.log('[FENNEC (MVP)] Found buildSosUrl in window scope');
+        }
+        
+        if (!buildSosUrlFunc) {
             console.error('[FENNEC (MVP)] buildSosUrl function is not available');
-            
-            // Try to find the function in different scopes
-            let buildSosUrlFunc = null;
-            
-            // Check if it's available in the current window
-            if (window.buildSosUrl) {
-                buildSosUrlFunc = window.buildSosUrl;
-                console.log('[FENNEC (MVP)] Found buildSosUrl in window scope');
-            }
-            
-            // If still not available, show error
-            if (!buildSosUrlFunc) {
-                alert('SOS search is not available for this state. Please check if the state information is properly loaded.');
-                return;
-            }
-            
-            // Use the found function
-            const url = buildSosUrlFunc(state, null, type);
-            if (!url) {
-                console.error('[FENNEC (MVP)] Could not build SOS URL for state:', state);
-                alert(`SOS search is not available for state: ${state}`);
-                return;
-            }
-            
-            console.log('[FENNEC (MVP)] Sending SOS search message:', { url, query: q, searchType: type });
-            
-            // Send the search message to the background script
-            chrome.runtime.sendMessage({ 
-                action: 'sosSearch', 
-                url, 
-                query: q, 
-                searchType: type 
-            }, (response) => {
-                if (chrome.runtime.lastError) {
-                    console.error('[FENNEC (MVP)] Error sending SOS search message:', chrome.runtime.lastError);
-                } else {
-                    console.log('[FENNEC (MVP)] SOS search message sent successfully');
-                }
-            });
+            alert('SOS search is not available for this state. Please check if the state information is properly loaded.');
             return;
         }
         
-        const url = buildSosUrl(state, null, type);
+        // Use the found function
+        const url = buildSosUrlFunc(state, null, type);
         if (!url) {
             console.error('[FENNEC (MVP)] Could not build SOS URL for state:', state);
             alert(`SOS search is not available for state: ${state}`);
@@ -1486,19 +1808,26 @@ function toggleCompanySearch(box) {
         
         console.log('[FENNEC (MVP)] Sending SOS search message:', { url, query: q, searchType: type });
         
-        // Send the search message to the background script
-        chrome.runtime.sendMessage({ 
-            action: 'sosSearch', 
-            url, 
-            query: q, 
-            searchType: type 
-        }, (response) => {
-            if (chrome.runtime.lastError) {
-                console.error('[FENNEC (MVP)] Error sending SOS search message:', chrome.runtime.lastError);
-            } else {
-                console.log('[FENNEC (MVP)] SOS search message sent successfully');
-            }
-        });
+        // Try to send message via chrome.runtime, fallback to direct URL opening
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+            chrome.runtime.sendMessage({ 
+                action: 'sosSearch', 
+                url, 
+                query: q, 
+                searchType: type 
+            }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error('[FENNEC (MVP)] Chrome runtime error, opening URL directly:', chrome.runtime.lastError);
+                    window.open(url, '_blank');
+                } else {
+                    console.log('[FENNEC (MVP)] SOS search message sent successfully');
+                }
+            });
+        } else {
+            console.log('[FENNEC (MVP)] Chrome runtime not available, opening URL directly');
+            window.open(url, '_blank');
+        }
+        return;
     };
     
     // Add event listeners for Enter key
@@ -1528,6 +1857,52 @@ function toggleCompanySearch(box) {
     attachCommonListeners(box);
 }
 window.toggleCompanySearch = toggleCompanySearch;
+
+// Tab deduplication system
+const tabDeduplication = {
+    lastOpenedUrl: null,
+    lastOpenedTime: 0,
+    deduplicationWindow: 1000, // 1 second window
+    
+    shouldOpenTab: function(url) {
+        const now = Date.now();
+        const isDuplicate = this.lastOpenedUrl === url && 
+                           (now - this.lastOpenedTime) < this.deduplicationWindow;
+        
+        if (isDuplicate) {
+            console.log('[FENNEC (MVP)] Tab deduplication: Preventing duplicate tab for URL:', url);
+            return false;
+        }
+        
+        this.lastOpenedUrl = url;
+        this.lastOpenedTime = now;
+        return true;
+    },
+    
+    reset: function() {
+        this.lastOpenedUrl = null;
+        this.lastOpenedTime = 0;
+    }
+};
+
+// Override window.open to prevent duplicates
+const originalWindowOpen = window.open;
+window.open = function(url, target, features) {
+    if (tabDeduplication.shouldOpenTab(url)) {
+        console.log('[FENNEC (MVP)] Opening tab with deduplication:', url);
+        return originalWindowOpen.call(this, url, target, features);
+    } else {
+        console.log('[FENNEC (MVP)] Tab deduplication: Blocked duplicate tab for:', url);
+        return null;
+    }
+};
+
+// Make deduplication system globally available
+window.tabDeduplication = tabDeduplication;
+window.resetTabDeduplication = function() {
+    tabDeduplication.reset();
+    console.log('[FENNEC (MVP)] Tab deduplication system reset');
+};
 
 // Debug function to test SOS search functionality
 window.debugSosSearch = function() {
@@ -1731,3 +2106,180 @@ window.debugUspsValidation = function() {
     
     console.log('[FENNEC (MVP)] === END USPS VALIDATION DEBUG ===');
 };
+
+// Debug function to test SOS search functionality
+window.debugSosSearch = function() {
+    console.log('[FENNEC (MVP)] Debugging SOS search functionality...');
+    
+    // Check if buildSosUrl is available
+    if (typeof buildSosUrl === 'function') {
+        console.log('[FENNEC (MVP)] buildSosUrl function is available');
+        
+        // Test with a few states
+        const testStates = ['California', 'Texas', 'New York', 'Florida'];
+        testStates.forEach(state => {
+            const nameUrl = buildSosUrl(state, null, 'name');
+            const idUrl = buildSosUrl(state, null, 'id');
+            console.log(`[FENNEC (MVP)] ${state}:`, { nameUrl, idUrl });
+        });
+    } else {
+        console.error('[FENNEC (MVP)] buildSosUrl function is NOT available');
+        
+        // Check if it's in window scope
+        if (window.buildSosUrl) {
+            console.log('[FENNEC (MVP)] buildSosUrl found in window scope');
+        } else {
+            console.error('[FENNEC (MVP)] buildSosUrl not found in window scope either');
+        }
+    }
+    
+    // Check if chrome.runtime is available
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+        console.log('[FENNEC (MVP)] chrome.runtime is available');
+    } else {
+        console.error('[FENNEC (MVP)] chrome.runtime is NOT available');
+    }
+    
+    // Check if company boxes exist
+    const companyBoxes = document.querySelectorAll('.company-box');
+    console.log('[FENNEC (MVP)] Company boxes found:', companyBoxes.length);
+    
+    companyBoxes.forEach((box, index) => {
+        console.log(`[FENNEC (MVP)] Company box ${index + 1}:`, {
+            state: box.dataset.state,
+            sosLinks: box.querySelectorAll('.copilot-sos').length,
+            searchToggles: box.querySelectorAll('.company-search-toggle').length
+        });
+    });
+};
+
+// Function to ensure company box listeners are properly attached
+window.ensureCompanyBoxListeners = function() {
+    console.log('[FENNEC (MVP)] Ensuring company box listeners are attached...');
+    
+    const sidebar = document.getElementById('copilot-sidebar');
+    if (sidebar && typeof attachCommonListeners === 'function') {
+        console.log('[FENNEC (MVP)] Re-attaching common listeners to sidebar');
+        attachCommonListeners(sidebar);
+    } else {
+        console.error('[FENNEC (MVP)] Could not find sidebar or attachCommonListeners function');
+    }
+    
+    // Also try to attach listeners directly to company boxes
+    const companyBoxes = document.querySelectorAll('.company-box');
+    console.log('[FENNEC (MVP)] Found company boxes for direct listener attachment:', companyBoxes.length);
+    
+    companyBoxes.forEach((box, index) => {
+        console.log(`[FENNEC (MVP)] Attaching listeners to company box ${index + 1}`);
+        
+        // Attach listeners to copilot-sos links
+        const sosLinks = box.querySelectorAll('.copilot-sos');
+        sosLinks.forEach((link, linkIndex) => {
+            console.log(`[FENNEC (MVP)] Attaching listener to SOS link ${linkIndex + 1}`);
+            
+            // Remove existing listeners
+            link.removeEventListener('click', link._sosClickHandler);
+            
+            // Create new handler
+            link._sosClickHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('[FENNEC (MVP)] SOS link clicked via direct listener');
+                
+                const url = link.dataset.url;
+                const query = link.dataset.query;
+                const type = link.dataset.type || 'name';
+                
+                if (!url || !query) {
+                    console.error('[FENNEC (MVP)] Missing URL or query for SOS search');
+                    return;
+                }
+                
+                // Apply deduplication logic BEFORE attempting to open the tab
+                if (typeof tabDeduplication !== 'undefined' && !tabDeduplication.shouldOpenTab(url)) {
+                    console.log('[FENNEC (MVP)] Tab deduplication: Preventing opening of duplicate tab for URL:', url);
+                    return; // Stop here if it's a duplicate
+                }
+                
+                // Copy query to clipboard
+                navigator.clipboard.writeText(query).catch(err => console.warn('[FENNEC (MVP)] Clipboard error:', err));
+                
+                // Open URL directly
+                console.log('[FENNEC (MVP)] Opening SOS URL directly:', url);
+                window.open(url, '_blank');
+            };
+            
+            // Add listener
+            link.addEventListener('click', link._sosClickHandler);
+        });
+        
+        // Attach listeners to search toggles
+        const searchToggles = box.querySelectorAll('.company-search-toggle');
+        searchToggles.forEach((toggle, toggleIndex) => {
+            console.log(`[FENNEC (MVP)] Attaching listener to search toggle ${toggleIndex + 1}`);
+            
+            // Remove existing listeners
+            toggle.removeEventListener('click', toggle._searchClickHandler);
+            
+            // Create new handler
+            toggle._searchClickHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                console.log('[FENNEC (MVP)] Search toggle clicked via direct listener');
+                
+                if (typeof toggleCompanySearch === 'function') {
+                    console.log('[FENNEC (MVP)] Calling toggleCompanySearch');
+                    toggleCompanySearch(box);
+                } else {
+                    console.error('[FENNEC (MVP)] toggleCompanySearch function not available');
+                }
+            };
+            
+            // Add listener
+            toggle.addEventListener('click', toggle._searchClickHandler);
+        });
+    });
+};
+
+// Function to open files in a popup window covering 70% of the original space
+function openFileInPopup(url) {
+    if (!url) {
+        console.error('[FENNEC] No URL provided for popup window');
+        return;
+    }
+    
+    // Calculate 70% of the current window dimensions
+    const width = Math.floor(window.innerWidth * 0.7);
+    const height = Math.floor(window.innerHeight * 0.7);
+    
+    // Calculate center position
+    const left = Math.floor((window.screen.width - width) / 2);
+    const top = Math.floor((window.screen.height - height) / 2);
+    
+    // Create popup window with specific dimensions and position
+    const popup = window.open(
+        url,
+        'fennec_file_popup',
+        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no`
+    );
+    
+    if (popup) {
+        console.log('[FENNEC] File opened in popup window:', url);
+        
+        // Focus the popup window
+        popup.focus();
+        
+        // Add event listener to handle popup close
+        popup.addEventListener('beforeunload', () => {
+            console.log('[FENNEC] File popup window closed');
+        });
+    } else {
+        console.error('[FENNEC] Failed to open popup window (popup blocked?)');
+        // Fallback to regular window.open
+        window.open(url, '_blank');
+    }
+}
+
+window.openFileInPopup = openFileInPopup;

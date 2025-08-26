@@ -51,10 +51,28 @@ registerMistralRule();
 // Background script functionality
 chrome.runtime.onInstalled.addListener(() => {
     // Extension installed/updated
+    try {
+        chrome.contextMenus.removeAll(() => {
+            chrome.contextMenus.create({
+                id: 'fennec_usps_verify',
+                title: 'USPS VERIFY “%s”',
+                contexts: ['selection']
+            });
+        });
+    } catch {}
 });
 
 chrome.runtime.onStartup.addListener(() => {
     // Browser startup
+    try {
+        chrome.contextMenus.removeAll(() => {
+            chrome.contextMenus.create({
+                id: 'fennec_usps_verify',
+                title: 'USPS VERIFY “%s”',
+                contexts: ['selection']
+            });
+        });
+    } catch {}
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -1302,4 +1320,130 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     
     // Debug: Log unhandled messages
     console.log('[FENNEC (MVP)] Message reached end without handling:', message.action, message);
+});
+
+// Normalize freeform text into best-effort USPS address string
+function normalizeAddressForUsps(input) {
+    if (!input) return '';
+    const STATE_MAP = {
+        'ALABAMA':'AL','ALASKA':'AK','ARIZONA':'AZ','ARKANSAS':'AR','CALIFORNIA':'CA','COLORADO':'CO','CONNECTICUT':'CT','DELAWARE':'DE','FLORIDA':'FL','GEORGIA':'GA','HAWAII':'HI','IDAHO':'ID','ILLINOIS':'IL','INDIANA':'IN','IOWA':'IA','KANSAS':'KS','KENTUCKY':'KY','LOUISIANA':'LA','MAINE':'ME','MARYLAND':'MD','MASSACHUSETTS':'MA','MICHIGAN':'MI','MINNESOTA':'MN','MISSISSIPPI':'MS','MISSOURI':'MO','MONTANA':'MT','NEBRASKA':'NE','NEVADA':'NV','NEW HAMPSHIRE':'NH','NEW JERSEY':'NJ','NEW MEXICO':'NM','NEW YORK':'NY','NORTH CAROLINA':'NC','NORTH DAKOTA':'ND','OHIO':'OH','OKLAHOMA':'OK','OREGON':'OR','PENNSYLVANIA':'PA','RHODE ISLAND':'RI','SOUTH CAROLINA':'SC','SOUTH DAKOTA':'SD','TENNESSEE':'TN','TEXAS':'TX','UTAH':'UT','VERMONT':'VT','VIRGINIA':'VA','WASHINGTON':'WA','WEST VIRGINIA':'WV','WISCONSIN':'WI','WYOMING':'WY','DISTRICT OF COLUMBIA':'DC'
+    };
+    const toAbbr = (s) => {
+        if (!s) return '';
+        const up = s.trim().toUpperCase();
+        if (/^[A-Z]{2}$/.test(up)) return up;
+        return STATE_MAP[up] || '';
+    };
+
+    // Break into lines first to filter noise like company names/county
+    const raw = String(input).replace(/[\t\r]+/g, '\n');
+    let lines = raw.split(/\n+/).map(s => s.trim()).filter(Boolean);
+
+    // Remove obvious non-address lines
+    lines = lines.filter(l => !/^company\b/i.test(l))
+                 .filter(l => !/\bcounty\b/i.test(l))
+                 .filter(l => !/United States|USA\b/i.test(l));
+    // Remove labels
+    lines = lines.map(l => l.replace(/^(physical|mailing|principal|address):\s*/i, '').trim());
+
+    // Pick street line: first line that starts with a number
+    let street = lines.find(l => /^\d{1,7}\s+/.test(l)) || '';
+    // If not found, try in the whole string
+    if (!street) {
+        const m = raw.match(/\b(\d{1,7}[^\n,]*)/);
+        if (m) street = m[1].trim();
+    }
+
+    // Find line with city/state/zip across remaining text
+    const joined = lines.join(' ');
+    let city = '', state = '', zip = '';
+    let m = joined.match(/([A-Za-z\.\-\s']+?),?\s+(?:([A-Za-z]{2})|([A-Za-z][A-Za-z\s]+))\s+(\d{5}(?:-\d{4})?)/);
+    if (m) {
+        city = (m[1] || '').trim();
+        state = toAbbr(m[2] || m[3] || '');
+        zip = (m[4] || '').trim();
+    }
+
+    // Extract line2 if present anywhere
+    const line2Match = joined.match(/\b(apt|suite|ste|unit|#|floor|fl|room|rm)\b\s*([\w-]+)\b/i);
+    const line2 = line2Match ? `${line2Match[1]} ${line2Match[2]}`.replace(/\s+/g,' ').toUpperCase() : '';
+
+    // Fallback: if we still cannot detect city/state/zip, try comma-based parse
+    if (!city || !state || !zip) {
+        let text = String(input).replace(/[\t\n\r]+/g, ' ');
+        text = text.replace(/\s{2,}/g, ' ').replace(/,?\s*(US|USA|United States)\s*$/i, '');
+        const m2 = text.match(/(.+?),\s*([^,]+?),\s*([A-Za-z]{2}|[A-Za-z][A-Za-z\s]+)\s+(\d{5}(?:-\d{4})?)/);
+        if (m2) {
+            street = street || (m2[1] || '').trim();
+            city = city || (m2[2] || '').trim();
+            state = state || toAbbr(m2[3] || '');
+            zip = zip || (m2[4] || '').trim();
+        }
+    }
+
+    // Build canonical string: Street[, Line2], City, ST ZIP
+    let parts = [];
+    if (street) parts.push(street);
+    if (line2) parts.push(line2);
+    let head = parts.join(', ');
+    let tail = [city, state, zip].filter(Boolean).join(' ').replace(/\s{2,}/g,' ').trim();
+    if (city && state) tail = `${city}, ${state} ${zip}`.trim();
+    const normalized = head && tail ? `${head}, ${tail}` : (head || tail);
+    return (normalized || String(input).trim()).trim();
+}
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId !== 'fennec_usps_verify') return;
+    const raw = info.selectionText || '';
+    const address = normalizeAddressForUsps(raw);
+    if (!address) return;
+    
+    // Perform smart copy of the address
+    console.log('[FENNEC (MVP) BG] USPS validation triggered for address:', address);
+    
+    // Store the address for smart copy in the content script
+    chrome.storage.sync.set({ 
+        smartCopyAddress: {
+            fullAddress: address,
+            components: null, // Will be parsed by content script
+            timestamp: Date.now(),
+            source: 'usps_context_menu'
+        }
+    }, () => {
+        console.log('[FENNEC (MVP) BG] Smart copy data stored for USPS validation');
+    });
+    
+    // Add to address history
+    chrome.storage.sync.get({ addressHistory: [] }, (result) => {
+        let addressHistory = result.addressHistory || [];
+        
+        // Remove duplicate if exists
+        addressHistory = addressHistory.filter(item => 
+            item.fullAddress !== address
+        );
+        
+        // Add new address to beginning
+        const newEntry = {
+            fullAddress: address,
+            components: null, // Will be parsed by content script
+            timestamp: Date.now(),
+            source: 'usps_context_menu'
+        };
+        addressHistory.unshift(newEntry);
+        
+        // Keep only last 5 addresses
+        addressHistory = addressHistory.slice(0, 5);
+        
+        // Save updated history
+        chrome.storage.sync.set({ addressHistory: addressHistory }, () => {
+            console.log('[FENNEC (MVP) BG] Address history updated for USPS validation');
+        });
+    });
+    
+    // Open USPS validation page
+    const url = 'https://tools.usps.com/zip-code-lookup.htm?byaddress&fennec_addr=' + encodeURIComponent(address);
+    // Store source tab and open USPS in background then focus
+    chrome.storage.local.set({ ['usps_source_' + address]: { tabId: tab?.id, url: tab?.url || '' } }, () => {
+        chrome.tabs.create({ url, active: true }, () => {});
+    });
 });

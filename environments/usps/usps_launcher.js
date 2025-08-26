@@ -36,73 +36,44 @@ class UspsLauncher extends Launcher {
         function parseAddress(str) {
             const result = { line1: '', line2: '', city: '', state: '', zip: '' };
             if (!str) return result;
+            let s = String(str).trim();
+            s = s.replace(/\s{2,}/g, ' ').replace(/[\t\r\n]+/g, ' ');
+            s = s.replace(/^(physical|mailing|principal|address):\s*/i, '');
+            s = s.replace(/,\s*(US|USA|United States)\s*$/i, '');
 
-            // Clean the input string
-            let cleanStr = str.trim();
-            
-            // Remove any potential labels like "Physical:" or "Mailing:" that might have been included
-            cleanStr = cleanStr.replace(/^(physical|mailing|principal):\s*/i, '');
-            
-            // Remove any country codes that might still be present
-            cleanStr = cleanStr.replace(/,\s*(US|USA|United States)\s*$/i, '');
-            
-            
-            const parts = cleanStr.split(',').map(p => p.trim()).filter(Boolean);
+            // Fast path: “Street[, Line2], City, ST ZIP”
+            let m = s.match(/^(.+?)(?:,\s*(apt|suite|ste|unit|#|fl|floor|room|rm)\s*([\w-]+))?,\s*([^,]+?),\s*([A-Za-z]{2}|[A-Za-z][A-Za-z\s]+)\s+(\d{5}(?:-\d{4})?)$/i);
+            if (m) {
+                result.line1 = m[1].trim();
+                if (m[2] && m[3]) result.line2 = (m[2] + ' ' + m[3]).toUpperCase();
+                result.city = m[4].trim();
+                result.state = /[A-Za-z]{2}/.test(m[5]) && m[5].length === 2 ? m[5].toUpperCase() : m[5].trim();
+                result.zip = m[6];
+                return result;
+            }
 
+            // Fallback: split by commas and infer pieces
+            const parts = s.split(',').map(p => p.trim()).filter(Boolean);
             if (parts.length) {
-                const firstPart = parts.shift();
-                // Check if the first part contains line2 information (like "Apt 4B", "Suite 100", etc.)
-                const line2Match = firstPart.match(/^(.*?)\s+(apt|suite|unit|#|ste|floor|fl|room|rm|apartment|building|bldg|office|ofc)\s+(.+)$/i);
-                if (line2Match) {
-                    result.line1 = line2Match[1].trim();
-                    result.line2 = (line2Match[2] + ' ' + line2Match[3]).trim();
+                const first = parts.shift();
+                const l2 = first.match(/^(.*?)\s+(apt|suite|ste|unit|#|fl|floor|room|rm)\s*([\w-]+)$/i);
+                if (l2) {
+                    result.line1 = l2[1].trim();
+                    result.line2 = (l2[2] + ' ' + l2[3]).toUpperCase();
                 } else {
-                    result.line1 = firstPart;
+                    result.line1 = first;
                 }
             }
-            
-            // Check if the second part is line2 information (like "Unit 203", "Suite 125", etc.)
-            if (parts.length >= 1) {
-                const secondPart = parts[0];
-                const line2Match = secondPart.match(/^(apt|suite|unit|#|ste|floor|fl|room|rm|apartment|building|bldg|office|ofc)\s+(.+)$/i);
-                if (line2Match) {
-                    result.line2 = (line2Match[1] + ' ' + line2Match[2]).trim();
-                    parts.shift(); // Remove the line2 part from the remaining parts
-                }
-            }
-
-            // Handle the remaining parts (city, state, zip)
-            const remaining = parts.join(', ');
-            
-            // First, try to extract ZIP code from the end
-            const zipMatch = remaining.match(/(\d{5}(?:-\d{4})?)\s*$/);
-            let zipCode = '';
-            let remainingWithoutZip = remaining;
-            
-            if (zipMatch) {
-                zipCode = zipMatch[1];
-                remainingWithoutZip = remaining.replace(zipMatch[0], '').trim();
-            }
-            
-            // Now try to extract state from the remaining parts
-            const stateMatch = remainingWithoutZip.match(/([A-Z]{2})\s*$/i);
-            let stateCode = '';
-            let cityPart = remainingWithoutZip;
-            
+            const tail = parts.join(', ');
+            const zipMatch = tail.match(/(\d{5}(?:-\d{4})?)\s*$/);
+            if (zipMatch) result.zip = zipMatch[1];
+            const stateMatch = tail.replace(/(\d{5}(?:-\d{4})?)\s*$/, '').match(/([A-Z]{2})\s*$/i);
             if (stateMatch) {
-                stateCode = stateMatch[1].toUpperCase();
-                cityPart = remainingWithoutZip.replace(stateMatch[0], '').trim();
+                result.state = stateMatch[1].toUpperCase();
+                result.city = tail.replace(/(\d{5}(?:-\d{4})?)\s*$/, '').replace(stateMatch[0], '').replace(/,\s*$/, '').trim();
+            } else {
+                result.city = tail.replace(/,\s*$/, '').trim();
             }
-            
-            // Clean up city part (remove trailing commas)
-            cityPart = cityPart.replace(/,\s*$/, '').trim();
-            
-            // Set the results
-            result.city = cityPart;
-            result.state = stateCode;
-            result.zip = zipCode;
-            
-            
             return result;
         }
 
@@ -112,16 +83,29 @@ class UspsLauncher extends Launcher {
                 
                 // Debug logging
 
-                // Try multiple selectors for address input
-                const addressInput = document.querySelector('#tAddress') || 
-                                   document.querySelector('input[name="tAddress"]') ||
-                                   document.querySelector('input[placeholder*="address"]') ||
-                                   document.querySelector('input[type="text"]');
+                // Helpers to get inputs robustly
+                const pick = (...sels) => sels.map(s => {
+                        try { return document.querySelector(s); } catch(_) { return null; }
+                    }).find(Boolean);
+                const visible = (el) => el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length);
+                
+                // Address input (Street Address)
+                const addressInput = [
+                    '#tAddress',
+                    '#address-byaddress',
+                    'input[name="tAddress"]',
+                    'input[name="address-byaddress"]',
+                    'input[aria-label*="Street Address" i]',
+                    'input[placeholder*="Street Address" i]'
+                ].map(pick).find(visible) || document.querySelector('#tAddress');
                 
                 if (addressInput) {
                     addressInput.focus();
+                    addressInput.value = '';
+                    addressInput.dispatchEvent(new Event('input', { bubbles: true }));
                     addressInput.value = parsed.line1;
                     addressInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    addressInput.dispatchEvent(new Event('change', { bubbles: true }));
                     console.log('[FENNEC (MVP) USPS] Filled address line 1:', parsed.line1);
                 } else {
                     console.warn('[FENNEC (MVP) USPS] Address input not found');
@@ -220,50 +204,94 @@ class UspsLauncher extends Launcher {
                 }
 
                 // Try multiple selectors for city input
-                const cityInput = document.querySelector('#tCity') || 
-                                document.querySelector('input[name="tCity"]') ||
-                                document.querySelector('input[placeholder*="city"]');
+                const cityInput = [
+                    '#tCity',
+                    '#city-byaddress',
+                    'input[name="tCity"]',
+                    'input[name="city-byaddress"]',
+                    'input[aria-label*="City" i]',
+                    'input[placeholder*="City" i]'
+                ].map(pick).find(visible);
                 
                 if (cityInput && parsed.city) {
+                    cityInput.focus();
+                    cityInput.value = '';
+                    cityInput.dispatchEvent(new Event('input', { bubbles: true }));
                     cityInput.value = parsed.city;
                     cityInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    cityInput.dispatchEvent(new KeyboardEvent('keyup', { key: 'a', bubbles: true }));
+                    cityInput.dispatchEvent(new Event('change', { bubbles: true }));
                     console.log('[FENNEC (MVP) USPS] Filled city:', parsed.city);
                 } else {
                     console.warn('[FENNEC (MVP) USPS] City input not found or no city parsed');
                 }
 
                 // Try multiple selectors for state select
-                const stateSelect = document.querySelector('#tState') || 
-                                  document.querySelector('select[name="tState"]') ||
-                                  document.querySelector('select');
+                const stateSelect = [
+                    '#tState',
+                    '#state-byaddress',
+                    'select[name="tState"]',
+                    'select[name="state-byaddress"]',
+                    'select[aria-label*="State" i]'
+                ].map(pick).find(visible) || document.querySelector('#tState');
                 
                 if (stateSelect && parsed.state) {
-                    stateSelect.value = parsed.state.toUpperCase();
-                    stateSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                    console.log('[FENNEC (MVP) USPS] Filled state:', parsed.state);
+                    // Try by value (DE) or by visible text (Delaware)
+                    const setState = (sel, code) => {
+                        sel.value = code;
+                        sel.dispatchEvent(new Event('change', { bubbles: true }));
+                        if (sel.value !== code && sel.options) {
+                            const opt = Array.from(sel.options).find(o => (o.text || '').trim().toUpperCase() === code);
+                            if (opt) {
+                                sel.value = opt.value;
+                                sel.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        }
+                    };
+                    setState(stateSelect, parsed.state.toUpperCase());
+                    // If not set, try matching by full state name
+                    if (!stateSelect.value || stateSelect.value === '' || /select/i.test(stateSelect.value)) {
+                        const STATE_FULL = {
+                            'AL':'ALABAMA','AK':'ALASKA','AZ':'ARIZONA','AR':'ARKANSAS','CA':'CALIFORNIA','CO':'COLORADO','CT':'CONNECTICUT','DE':'DELAWARE','FL':'FLORIDA','GA':'GEORGIA','HI':'HAWAII','ID':'IDAHO','IL':'ILLINOIS','IN':'INDIANA','IA':'IOWA','KS':'KANSAS','KY':'KENTUCKY','LA':'LOUISIANA','ME':'MAINE','MD':'MARYLAND','MA':'MASSACHUSETTS','MI':'MICHIGAN','MN':'MINNESOTA','MS':'MISSISSIPPI','MO':'MISSOURI','MT':'MONTANA','NE':'NEBRASKA','NV':'NEVADA','NH':'NEW HAMPSHIRE','NJ':'NEW JERSEY','NM':'NEW MEXICO','NY':'NEW YORK','NC':'NORTH CAROLINA','ND':'NORTH DAKOTA','OH':'OHIO','OK':'OKLAHOMA','OR':'OREGON','PA':'PENNSYLVANIA','RI':'RHODE ISLAND','SC':'SOUTH CAROLINA','SD':'SOUTH DAKOTA','TN':'TENNESSEE','TX':'TEXAS','UT':'UTAH','VT':'VERMONT','VA':'VIRGINIA','WA':'WASHINGTON','WV':'WEST VIRGINIA','WI':'WISCONSIN','WY':'WYOMING','DC':'DISTRICT OF COLUMBIA'
+                        };
+                        const full = STATE_FULL[parsed.state.toUpperCase()];
+                        if (full && stateSelect.options) {
+                            const optByText = Array.from(stateSelect.options).find(o => (o.text || '').trim().toUpperCase() === full);
+                            if (optByText) {
+                                stateSelect.value = optByText.value;
+                                stateSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        }
+                    }
+                    console.log('[FENNEC (MVP) USPS] Filled state:', parsed.state, 'final:', stateSelect.value);
                 } else {
                     console.warn('[FENNEC (MVP) USPS] State select not found or no state parsed');
                 }
 
                 // Try multiple selectors for ZIP input
-                const zipInput = document.querySelector('#tZip-byaddress') || 
-                               document.querySelector('input[name="tZip-byaddress"]') ||
-                               document.querySelector('input[placeholder*="zip"]') ||
-                               document.querySelector('input[placeholder*="postal"]');
+                const zipInput = [
+                    '#tZip-byaddress',
+                    'input[name="tZip-byaddress"]',
+                    '#zip-byaddress-input',
+                    'input[aria-label*="ZIP" i]',
+                    'input[placeholder*="ZIP" i]',
+                    'input[placeholder*="Postal" i]'
+                ].map(pick).find(visible);
                 
                 if (zipInput && parsed.zip) {
+                    zipInput.focus();
+                    zipInput.value = '';
+                    zipInput.dispatchEvent(new Event('input', { bubbles: true }));
                     zipInput.value = parsed.zip;
                     zipInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    zipInput.dispatchEvent(new Event('change', { bubbles: true }));
                     console.log('[FENNEC (MVP) USPS] Filled ZIP:', parsed.zip);
                 } else {
                     console.warn('[FENNEC (MVP) USPS] ZIP input not found or no ZIP parsed');
                 }
 
                 // Try multiple selectors for submit button
-                const findBtn = document.querySelector('#zip-by-address') || 
-                              document.querySelector('input[type="submit"]') ||
-                              document.querySelector('button[type="submit"]') ||
-                              document.querySelector('button');
+                const findBtn = pick('#zip-by-address', 'button#zip-by-address', 'input[type="submit"]', 'button[type="submit"]', 'button[aria-label*="Find" i]', 'button');
                 
                 if (findBtn) {
                     console.log('[FENNEC (MVP) USPS] Clicking submit button');
