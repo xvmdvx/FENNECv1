@@ -2246,40 +2246,47 @@ window.ensureCompanyBoxListeners = function() {
 // Function to open files in a popup window covering 70% of the original space
 function openFileInPopup(url) {
     if (!url) {
-        console.error('[FENNEC] No URL provided for popup window');
+        console.error('[FENNEC] No URL provided to openFileInPopup');
         return;
     }
     
-    // Calculate 70% of the current window dimensions
-    const width = Math.floor(window.innerWidth * 0.7);
-    const height = Math.floor(window.innerHeight * 0.7);
+    // Calculate 70% of current window dimensions
+    const width = Math.floor(window.screen.width * 0.7);
+    const height = Math.floor(window.screen.height * 0.7);
     
     // Calculate center position
     const left = Math.floor((window.screen.width - width) / 2);
     const top = Math.floor((window.screen.height - height) / 2);
     
-    // Create popup window with specific dimensions and position
-    const popup = window.open(
-        url,
-        'fennec_file_popup',
-        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no`
-    );
+    // Window features for popup
+    const features = [
+        `width=${width}`,
+        `height=${height}`,
+        `left=${left}`,
+        `top=${top}`,
+        'scrollbars=yes',
+        'resizable=yes',
+        'toolbar=no',
+        'menubar=no',
+        'location=no',
+        'status=no'
+    ].join(',');
     
-    if (popup) {
-        console.log('[FENNEC] File opened in popup window:', url);
-        
-        // Focus the popup window
-        popup.focus();
-        
-        // Add event listener to handle popup close
-        popup.addEventListener('beforeunload', () => {
-            console.log('[FENNEC] File popup window closed');
-        });
-    } else {
-        console.error('[FENNEC] Failed to open popup window (popup blocked?)');
+    try {
+        const popup = window.open(url, '_blank', features);
+        if (popup) {
+            popup.focus();
+            console.log('[FENNEC] File opened in popup window:', url);
+        } else {
+            console.warn('[FENNEC] Popup blocked, falling back to regular window.open');
+            window.open(url, '_blank');
+        }
+    } catch (error) {
+        console.error('[FENNEC] Error opening popup:', error);
         // Fallback to regular window.open
         window.open(url, '_blank');
     }
 }
 
+// Add to global scope for use across environments
 window.openFileInPopup = openFileInPopup;

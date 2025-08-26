@@ -29,7 +29,7 @@ class DBLauncher extends Launcher {
     // Tracks whether Review Mode is active across DB pages
     let reviewMode = false;
     let devMode = false;
-    const diagnoseFloater = new DiagnoseFloater();
+    let diagnoseFloater = null;
     let fraudXray = new URLSearchParams(location.search).get('fraud_xray') === '1';
     let intStorageMode = new URLSearchParams(location.search).get('fennec_int_storage') === '1';
     if (fraudXray) {
@@ -798,6 +798,15 @@ class DBLauncher extends Launcher {
         }
         
         try {
+        // Initialize DiagnoseFloater safely
+        try {
+            diagnoseFloater = new DiagnoseFloater();
+            console.log('[FENNEC] DiagnoseFloater initialized successfully');
+        } catch (floaterError) {
+            console.warn('[FENNEC] Failed to initialize DiagnoseFloater:', floaterError);
+            diagnoseFloater = null;
+        }
+        
         function initSidebar() {
             if (sessionStorage.getItem("fennecSidebarClosed") === "true") { showFloatingIcon(); return; }
             if (!document.getElementById('copilot-sidebar')) {
@@ -5290,6 +5299,10 @@ Please review and continue with the application.`;
         }
         originType = originType || (typeof currentOrderTypeText !== 'undefined' ? currentOrderTypeText : '');
         const isReinstatement = /reinstat/i.test(originType);
+        if (!diagnoseFloater) {
+            console.warn('[FENNEC] DiagnoseFloater not available, skipping diagnostic overlay');
+            return;
+        }
         diagnoseFloater.remove();
         diagnoseFloater.build();
         diagnoseFloater.attach();
@@ -5982,9 +5995,9 @@ function getLastHoldUser() {
                             box.innerHTML = refreshButton + '<br style="margin-top:20px">' + filesHtml + uploadHtml;
                             
                             // Re-attach event listeners
-                                        box.querySelectorAll('.int-open').forEach(b => {
-                b.addEventListener('click', () => { const u = b.dataset.url; if (u) openFileInPopup(u); });
-            });
+                            box.querySelectorAll('.int-open').forEach(b => {
+                                b.addEventListener('click', () => { const u = b.dataset.url; if (u) openFileInPopup(u); });
+                            });
                             
                             // Download button functionality
                             box.querySelectorAll('.int-download').forEach(b => {

@@ -2721,7 +2721,7 @@
                     if (e.target.classList.contains('int-open')) {
                         const url = e.target.dataset.url;
                         if (url) {
-                            bg.openOrReuseTab({ url, active: false });
+                            openFileInPopup(url);
                         }
                     }
                     if (e.target.classList.contains('int-doc-clip')) {
