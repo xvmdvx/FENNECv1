@@ -341,6 +341,14 @@
     padding: 2px 6px;
 }
 
+/* RA: EXPIRED tag size in company box (light mode) */
+.fennec-light-mode #copilot-sidebar .company-box .copilot-tag-yellow {
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
+    font-weight: bold;
+}
+
 /* Order status tags should be same size as VA/RA tags in company box for light mode */
 .fennec-light-mode #copilot-sidebar .company-box .copilot-tag-review,
 .fennec-light-mode #copilot-sidebar .company-box .copilot-tag-processing,

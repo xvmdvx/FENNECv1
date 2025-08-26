@@ -1,276 +1,193 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FENNEC Popup Test</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        .test-container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
-            background: white;
             padding: 20px;
-            border-radius: 8px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
         .test-section {
-            margin-bottom: 20px;
-            padding: 15px;
+            margin: 20px 0;
+            padding: 20px;
             border: 1px solid #ddd;
             border-radius: 5px;
+            background-color: #fafafa;
         }
-        .test-section h3 {
-            margin-top: 0;
-            color: #333;
-        }
-        .status {
-            padding: 10px;
-            border-radius: 4px;
-            margin: 10px 0;
-        }
-        .status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .status.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-        button {
+        .test-button {
             background: #007bff;
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
+            padding: 10px 20px;
+            border-radius: 5px;
             cursor: pointer;
             margin: 5px;
+            font-size: 14px;
         }
-        button:hover {
+        .test-button:hover {
             background: #0056b3;
         }
-        .storage-display {
+        .description {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .url-display {
             background: #f8f9fa;
             padding: 10px;
-            border-radius: 4px;
+            border-radius: 3px;
             font-family: monospace;
             font-size: 12px;
-            max-height: 200px;
-            overflow-y: auto;
+            margin: 10px 0;
+            word-break: break-all;
         }
     </style>
 </head>
 <body>
-    <div class="test-container">
-        <h1>FENNEC Extension Popup Test</h1>
+    <div class="container">
+        <h1>FENNEC Popup Functionality Test</h1>
         
         <div class="test-section">
-            <h3>Storage Test</h3>
-            <button onclick="testStorage()">Test Storage Operations</button>
-            <button onclick="clearStorage()">Clear Storage</button>
-            <div id="storage-result" class="status info">Click "Test Storage Operations" to see current storage state</div>
+            <h3>Test 1: PDF Files</h3>
+            <div class="description">Test opening PDF files in popup windows</div>
+            <div class="url-display">https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf</div>
+            <button class="test-button" onclick="testPopup('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf')">
+                Open PDF File
+            </button>
         </div>
 
         <div class="test-section">
-            <h3>Environment Detection Test</h3>
-            <button onclick="testEnvironmentDetection()">Test Environment Detection</button>
-            <div id="environment-result" class="status info">Click to test environment detection</div>
+            <h3>Test 2: Image Files</h3>
+            <div class="description">Test opening image files in popup windows</div>
+            <div class="url-display">https://picsum.photos/800/600</div>
+            <button class="test-button" onclick="testPopup('https://picsum.photos/800/600')">
+                Open Image File
+            </button>
         </div>
 
         <div class="test-section">
-            <h3>Message Passing Test</h3>
-            <button onclick="testMessagePassing()">Test Message Passing</button>
-            <div id="message-result" class="status info">Click to test message passing</div>
+            <h3>Test 3: HTML Files</h3>
+            <div class="description">Test opening HTML files in popup windows</div>
+            <div class="url-display">https://example.com</div>
+            <button class="test-button" onclick="testPopup('https://example.com')">
+                Open HTML File
+            </button>
         </div>
 
         <div class="test-section">
-            <h3>Current Storage State</h3>
-            <div id="storage-display" class="storage-display">Loading...</div>
+            <h3>Test 4: Text Files</h3>
+            <div class="description">Test opening text files in popup windows</div>
+            <div class="url-display">https://www.w3.org/TR/PNG/iso_8859-1.txt</div>
+            <button class="test-button" onclick="testPopup('https://www.w3.org/TR/PNG/iso_8859-1.txt')">
+                Open Text File
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 5: Invalid URL</h3>
+            <div class="description">Test error handling with invalid URL</div>
+            <button class="test-button" onclick="testPopup('')">
+                Test Invalid URL
+            </button>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 6: Custom URL</h3>
+            <div class="description">Test with a custom URL</div>
+            <input type="text" id="customUrl" placeholder="Enter URL to test" style="width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #ddd; border-radius: 3px;">
+            <button class="test-button" onclick="testCustomUrl()">
+                Test Custom URL
+            </button>
         </div>
     </div>
 
     <script>
-        // Mock Chrome API for testing
-        if (typeof chrome === 'undefined') {
-            window.chrome = {
-                storage: {
-                    local: {
-                        get: function(keys, callback) {
-                            const mockData = {
-                                extensionEnabled: true,
-                                fennecReviewMode: false,
-                                environments: {
-                                    gmail: true,
-                                    db: true,
-                                    usps: true,
-                                    adyen: true,
-                                    kount: true,
-                                    txsos: true
-                                },
-                                autoUpload: false
-                            };
-                            callback(mockData);
-                        },
-                        set: function(data, callback) {
-                            console.log('Mock storage set:', data);
-                            if (callback) callback();
-                        },
-                        clear: function(callback) {
-                            console.log('Mock storage cleared');
-                            if (callback) callback();
-                        }
-                    },
-                    sync: {
-                        get: function(keys, callback) {
-                            const mockData = { fennecReviewMode: false };
-                            callback(mockData);
-                        },
-                        set: function(data, callback) {
-                            console.log('Mock sync storage set:', data);
-                            if (callback) callback();
-                        },
-                        clear: function(callback) {
-                            console.log('Mock sync storage cleared');
-                            if (callback) callback();
-                        }
-                    }
-                },
-                runtime: {
-                    sendMessage: function(message, callback) {
-                        console.log('Mock runtime message:', message);
-                        if (callback) callback({ success: true });
-                    },
-                    onMessage: {
-                        addListener: function(callback) {
-                            console.log('Mock message listener added');
-                        }
-                    }
-                },
-                tabs: {
-                    query: function(query, callback) {
-                        console.log('Mock tabs query:', query);
-                        callback([]);
-                    },
-                    sendMessage: function(tabId, message, callback) {
-                        console.log('Mock tab message:', message);
-                        if (callback) callback();
-                    },
-                    reload: function(tabId, options, callback) {
-                        console.log('Mock tab reload:', tabId);
-                        if (callback) callback();
-                    }
-                }
-            };
-        }
-
-        function testStorage() {
-            const resultDiv = document.getElementById('storage-result');
-            
-            chrome.storage.local.get({
-                extensionEnabled: true,
-                fennecReviewMode: false,
-                environments: {
-                    gmail: true,
-                    db: true,
-                    usps: true,
-                    adyen: true,
-                    kount: true,
-                    txsos: true
-                },
-                autoUpload: false
-            }, (result) => {
-                resultDiv.className = 'status success';
-                resultDiv.innerHTML = `
-                    <strong>Storage Test Successful!</strong><br>
-                    Extension Enabled: ${result.extensionEnabled}<br>
-                    Review Mode: ${result.fennecReviewMode}<br>
-                    Auto Upload: ${result.autoUpload}<br>
-                    Environments: ${JSON.stringify(result.environments, null, 2)}
-                `;
-                updateStorageDisplay();
-            });
-        }
-
-        function clearStorage() {
-            chrome.storage.local.clear(() => {
-                chrome.storage.sync.clear(() => {
-                    const resultDiv = document.getElementById('storage-result');
-                    resultDiv.className = 'status success';
-                    resultDiv.textContent = 'Storage cleared successfully!';
-                    updateStorageDisplay();
-                });
-            });
-        }
-
-        function testEnvironmentDetection() {
-            const resultDiv = document.getElementById('environment-result');
-            const url = window.location.href;
-            
-            let environment = 'unknown';
-            if (url.includes('mail.google.com')) {
-                environment = 'gmail';
-            } else if (url.includes('incfile.com')) {
-                environment = 'db';
-            } else if (url.includes('tools.usps.com')) {
-                environment = 'usps';
-            } else if (url.includes('adyen.com')) {
-                environment = 'adyen';
-            } else if (url.includes('kount.com')) {
-                environment = 'kount';
-            } else if (url.includes('sos.state.tx.us')) {
-                environment = 'txsos';
+        // Simulate the openFileInPopup function
+        function openFileInPopup(url) {
+            if (!url) {
+                console.error('[FENNEC] No URL provided to openFileInPopup');
+                alert('Error: No URL provided');
+                return;
             }
             
-            resultDiv.className = 'status success';
-            resultDiv.innerHTML = `
-                <strong>Environment Detection Test</strong><br>
-                Current URL: ${url}<br>
-                Detected Environment: ${environment}
-            `;
-        }
-
-        function testMessagePassing() {
-            const resultDiv = document.getElementById('message-result');
+            // Calculate 70% of current window dimensions
+            const width = Math.floor(window.screen.width * 0.7);
+            const height = Math.floor(window.screen.height * 0.7);
             
-            chrome.runtime.sendMessage({
-                action: 'testMessage',
-                data: 'Test message from popup test page'
-            }, (response) => {
-                if (response && response.success) {
-                    resultDiv.className = 'status success';
-                    resultDiv.innerHTML = `
-                        <strong>Message Passing Test Successful!</strong><br>
-                        Response: ${JSON.stringify(response)}
-                    `;
+            // Calculate center position
+            const left = Math.floor((window.screen.width - width) / 2);
+            const top = Math.floor((window.screen.height - height) / 2);
+            
+            // Window features for popup
+            const features = [
+                `width=${width}`,
+                `height=${height}`,
+                `left=${left}`,
+                `top=${top}`,
+                'scrollbars=yes',
+                'resizable=yes',
+                'toolbar=no',
+                'menubar=no',
+                'location=no',
+                'status=no'
+            ].join(',');
+            
+            try {
+                const popup = window.open(url, '_blank', features);
+                if (popup) {
+                    popup.focus();
+                    console.log('[FENNEC] File opened in popup window:', url);
+                    console.log('[FENNEC] Popup dimensions:', width, 'x', height);
+                    console.log('[FENNEC] Popup position:', left, ',', top);
                 } else {
-                    resultDiv.className = 'status error';
-                    resultDiv.textContent = 'Message passing test failed';
+                    console.warn('[FENNEC] Popup blocked, falling back to regular window.open');
+                    window.open(url, '_blank');
                 }
-            });
+            } catch (error) {
+                console.error('[FENNEC] Error opening popup:', error);
+                // Fallback to regular window.open
+                window.open(url, '_blank');
+            }
         }
 
-        function updateStorageDisplay() {
-            const displayDiv = document.getElementById('storage-display');
-            
-            chrome.storage.local.get(null, (result) => {
-                displayDiv.textContent = JSON.stringify(result, null, 2);
-            });
+        function testPopup(url) {
+            console.log('[TEST] Testing popup with URL:', url);
+            openFileInPopup(url);
         }
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            updateStorageDisplay();
-        });
+        function testCustomUrl() {
+            const url = document.getElementById('customUrl').value.trim();
+            if (url) {
+                testPopup(url);
+            } else {
+                alert('Please enter a URL to test');
+            }
+        }
+
+        // Add to global scope for testing
+        window.openFileInPopup = openFileInPopup;
+        window.testPopup = testPopup;
+        window.testCustomUrl = testCustomUrl;
+
+        console.log('[TEST] FENNEC Popup Test Page Loaded');
+        console.log('[TEST] Screen dimensions:', window.screen.width, 'x', window.screen.height);
+        console.log('[TEST] Expected popup dimensions:', Math.floor(window.screen.width * 0.7), 'x', Math.floor(window.screen.height * 0.7));
     </script>
 </body>
 </html>

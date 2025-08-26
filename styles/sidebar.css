@@ -535,6 +535,14 @@
     padding: 2px 6px;
 }
 
+/* RA: EXPIRED tag should match VA/RA tag size in company box */
+.company-box .copilot-tag-yellow {
+    font-size: 10px;
+    line-height: 10px;
+    padding: 2px 6px;
+    font-weight: bold;
+}
+
 /* Order status tags should be same size as VA/RA tags in company box */
 .company-box .copilot-tag-review,
 .company-box .copilot-tag-processing,

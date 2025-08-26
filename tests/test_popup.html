@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FENNEC Popup Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>FENNEC File Popup Test</h1>
+        
+        <div class="info">
+            <h3>Test Instructions:</h3>
+            <p>Click the buttons below to test the popup functionality. The popup should:</p>
+            <ul>
+                <li>Open in a window covering 70% of the current window size</li>
+                <li>Be centered on the screen</li>
+                <li>Have scrollbars and be resizable</li>
+                <li>Focus automatically</li>
+            </ul>
+        </div>
+
+        <h3>Test Files:</h3>
+        <button class="test-button" onclick="testPopup('https://www.google.com')">Test Google (External)</button>
+        <button class="test-button" onclick="testPopup('https://httpbin.org/html')">Test HTML Page</button>
+        <button class="test-button" onclick="testPopup('https://jsonplaceholder.typicode.com/posts/1')">Test JSON API</button>
+        <button class="test-button" onclick="testPopup('https://example.com')">Test Example.com</button>
+        
+        <h3>Current Window Info:</h3>
+        <p>Window size: <span id="window-size"></span></p>
+        <p>Screen size: <span id="screen-size"></span></p>
+        <p>Expected popup size: <span id="popup-size"></span></p>
+        
+        <script>
+            // Simulate the openFileInPopup function
+            function openFileInPopup(url) {
+                if (!url) {
+                    console.error('[FENNEC] No URL provided for popup window');
+                    return;
+                }
+                
+                // Calculate 70% of the current window dimensions
+                const width = Math.floor(window.innerWidth * 0.7);
+                const height = Math.floor(window.innerHeight * 0.7);
+                
+                // Calculate center position
+                const left = Math.floor((window.screen.width - width) / 2);
+                const top = Math.floor((window.screen.height - height) / 2);
+                
+                // Create popup window with specific dimensions and position
+                const popup = window.open(
+                    url,
+                    'fennec_file_popup',
+                    `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no`
+                );
+                
+                if (popup) {
+                    console.log('[FENNEC] File opened in popup window:', url);
+                    
+                    // Focus the popup window
+                    popup.focus();
+                    
+                    // Add event listener to handle popup close
+                    popup.addEventListener('beforeunload', () => {
+                        console.log('[FENNEC] File popup window closed');
+                    });
+                } else {
+                    console.error('[FENNEC] Failed to open popup window (popup blocked?)');
+                    // Fallback to regular window.open
+                    window.open(url, '_blank');
+                }
+            }
+            
+            function testPopup(url) {
+                console.log('Testing popup with URL:', url);
+                openFileInPopup(url);
+            }
+            
+            // Update display info
+            function updateInfo() {
+                document.getElementById('window-size').textContent = `${window.innerWidth} x ${window.innerHeight}`;
+                document.getElementById('screen-size').textContent = `${window.screen.width} x ${window.screen.height}`;
+                
+                const popupWidth = Math.floor(window.innerWidth * 0.7);
+                const popupHeight = Math.floor(window.innerHeight * 0.7);
+                document.getElementById('popup-size').textContent = `${popupWidth} x ${popupHeight}`;
+            }
+            
+            // Update info on load and resize
+            window.addEventListener('load', updateInfo);
+            window.addEventListener('resize', updateInfo);
+        </script>
+    </div>
+</body>
+</html>
